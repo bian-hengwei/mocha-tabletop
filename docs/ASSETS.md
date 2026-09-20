@@ -31,9 +31,11 @@ id,tier,colorIndex,points,white,blue,green,red,black
 
 新增游戏封面 SVG 为项目自行绘制，词语游戏使用自行整理的中英文词库；页面名称、角色展示和猫牌称谓采用原创命名，内部游戏 ID 保持兼容旧存档。
 
-## 中式棋牌封面
+## 中式棋牌牌面与封面
 
-`public/art/doudizhu.svg`、`guandan.svg`、`mahjong.svg` 为本项目原创 SVG，沿用现有矢量游戏封面形式。`src/ui/ClassicCardArt.tsx` 绘制完整 SVG 牌面：扑克具有标准花色排列、双向人头牌和两色小丑；麻将含筒圈、竹节、一索雀鸟、万子及七种字牌。字牌为原创路径，牌面不依赖中文字体。封面使用相同牌面组合，不使用第三方游戏素材。
+扑克使用 [Adrian Kennard 的免费牌组](https://www.me.uk/cards/)，麻将使用 [FluffyStuff 的麻将牌面](https://github.com/FluffyStuff/riichi-mahjong-tiles)。两者均按 CC0-1.0 提供。SVG 已下载到 public/art/classic/，无运行时外链。完整许可见该目录的 LICENSE-CC0.txt；作者、固定版本、生成参数、牌值映射和文件校验值见 SOURCES.json。
+
+扑克采用标准花色、双向人头牌和红黑龙形大小王；麻将采用万、筒、条与七种字牌，白板保留传统空白牌面。移除 SVG 编辑器元数据，保留原画路径。麻将底板与牌面叠放，暗牌采用墨绿背面；封面在 Mocha 桌面背景上组合相同授权牌面。可访问名称与真实牌值由游戏状态提供。
 
 ## 2026-09-20 插画更新
 
