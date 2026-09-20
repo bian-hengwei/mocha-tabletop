@@ -8,12 +8,20 @@ interface Session {profile:Player;code:string;invite?:string;token:string;savedA
 export interface SavedSession {profile:Player;code:string;savedAt:number;expiresAt:number}
 const SESSION_KEY='mocha-room-session';
 const SESSION_TTL=6*60*60*1000;
+function availableStorage(localFirst=false):Storage[]{
+ const stores:Storage[]=[];
+ for(const key of localFirst?['localStorage','sessionStorage'] as const:['sessionStorage','localStorage'] as const){
+  try{const storage=globalThis[key];if(storage)stores.push(storage);}catch{/* Accessing the storage property can itself throw. */}
+ }
+ return stores;
+}
 interface Peer {pc:RTCPeerConnection;dc?:RTCDataChannel;proven:boolean;nonce:string;lastHeard:number;pending:RTCIceCandidateInit[];pairingTimer?:ReturnType<typeof setTimeout>}
 /** One client per tab. Cloud sockets hibernate; LAN game traffic never enters the signaling socket. */
 export class RoomClient {
  state:ClientState=initial();private listeners=new Set<(state:ClientState)=>void>();
  private ws?:WebSocket;private session?:Session;private stopped=true;private reconnects=0;private reconnectTimer?:ReturnType<typeof setTimeout>;private handshakeTimer?:ReturnType<typeof setTimeout>;
  private socketHeartbeat?:ReturnType<typeof setInterval>;private lastSocketMessage=0;
+ private networkToken?:string;
  private peers=new Map<string,Peer>();private localMatch?:MatchState;private heartbeat?:ReturnType<typeof setInterval>;private connectGeneration=0;private starting=false;private peerRetry=new Map<string,ReturnType<typeof setTimeout>>();private peerAttempts=new Map<string,number>();
  constructor(){window.addEventListener('online',this.onOnline);document.addEventListener('visibilitychange',this.onVisible);}
  subscribe(listener:(state:ClientState)=>void){this.listeners.add(listener);listener(this.state);return()=>{this.listeners.delete(listener);};}
@@ -21,7 +29,14 @@ export class RoomClient {
  clearError(){this.patch({error:undefined});}
  private fail(error:unknown){this.patch({error:error instanceof Error?error.message:String(error)});}
  private terminal(error:string,preserve=false){if(!preserve){this.removeLocal();this.clearSavedSession();}this.reset();this.patch({...initial(),error});}
- private get token(){let t=localStorage.getItem('mocha-network-token');if(!t){t=randomToken();localStorage.setItem('mocha-network-token',t);}return t;}
+ private get token(){
+  if(this.networkToken)return this.networkToken;
+  const stores=availableStorage(true);
+  for(const storage of stores)try{const value=storage.getItem('mocha-network-token');if(value&&/^[a-f0-9]{48,128}$/.test(value)){this.networkToken=value;break;}}catch{}
+  this.networkToken??=randomToken();
+  for(const storage of stores)try{storage.setItem('mocha-network-token',this.networkToken);}catch{}
+  return this.networkToken;
+ }
  async create(profile:Player,kind:GameKind,mode:RoomMode,options?:GameOptions){
   this.reset();const generation=this.connectGeneration;try{this.patch({status:'connecting',selfID:profile.id,mode});const result=await this.http('/api/create',{profile,kind,mode,options,token:this.token});if(generation!==this.connectGeneration)return;await this.join(profile,result.code,result.invite);}catch(e){if(generation!==this.connectGeneration)return;this.patch({status:'idle'});this.fail(e);}
  }
@@ -35,16 +50,16 @@ export class RoomClient {
  /** Close only this connection attempt; retain the room credential for a later resume. */
  cancelConnection(){this.reset();this.patch(initial());}
  /** Only available outside a room; affects this browser's identity, never other players. */
- resetIdentity(){if(this.state.room||this.state.status==='connecting'||this.state.status==='reconnecting')throw new Error('请先离开牌桌，再重置本机用户');this.clearSavedSession();this.reset();for(const storage of [localStorage,sessionStorage]){storage.removeItem('mocha-network-token');for(let i=storage.length-1;i>=0;i--){const key=storage.key(i);if(key?.startsWith('mocha-host-'))storage.removeItem(key);}}this.patch(initial());}
+ resetIdentity(){if(this.state.room||this.state.status==='connecting'||this.state.status==='reconnecting')throw new Error('请先离开牌桌，再重置本机用户');this.clearSavedSession();this.reset();this.networkToken=undefined;for(const storage of availableStorage())try{storage.removeItem('mocha-network-token');for(let i=storage.length-1;i>=0;i--){const key=storage.key(i);if(key?.startsWith('mocha-host-'))storage.removeItem(key);}}catch{}this.patch(initial());}
  /** Restore the last room even after closing the tab, or retry a dropped connection. */
  async connect(){if(this.session){this.stopped=false;this.reconnects=0;this.patch({status:'reconnecting'});this.openSocket();return;}const s=this.readSession();if(s){this.reset();this.session=s;this.stopped=false;this.patch({status:'connecting',selfID:s.profile.id});this.openSocket();}}
  private readSession():Session|undefined {
-  for(const storage of [sessionStorage,localStorage]){try{const raw=storage.getItem(SESSION_KEY);if(!raw)continue;const s=JSON.parse(raw) as Session;validProfile(s.profile);if(!/^[A-Z2-9]{6}$/.test(s.code)||typeof s.token!=='string'||!/^[a-f0-9]{48,128}$/.test(s.token))throw new Error('invalid session');
+  for(const storage of availableStorage()){try{const raw=storage.getItem(SESSION_KEY);if(!raw)continue;const s=JSON.parse(raw) as Session;validProfile(s.profile);if(!/^[A-Z2-9]{6}$/.test(s.code)||typeof s.token!=='string'||!/^[a-f0-9]{48,128}$/.test(s.token))throw new Error('invalid session');
    s.savedAt=typeof s.savedAt==='number'?s.savedAt:Date.now();s.expiresAt=typeof s.expiresAt==='number'?s.expiresAt:s.savedAt+SESSION_TTL;if(s.expiresAt<=Date.now())throw new Error('expired session');return s;
   }catch{try{storage.removeItem(SESSION_KEY);}catch{}}}return undefined;
  }
- private saveSession(){if(!this.session)return;const raw=JSON.stringify(this.session);let saved=false;for(const storage of [sessionStorage,localStorage])try{storage.setItem(SESSION_KEY,raw);saved=true;}catch{}if(!saved)this.fail('浏览器无法保存房间；关闭网页后可能无法恢复');}
- private clearSavedSession(){for(const storage of [sessionStorage,localStorage])try{const raw=storage.getItem(SESSION_KEY);if(!this.session||!raw||JSON.parse(raw).code===this.session.code)storage.removeItem(SESSION_KEY);}catch{}}
+ private saveSession(){if(!this.session)return;const raw=JSON.stringify(this.session);let saved=false;for(const storage of availableStorage())try{storage.setItem(SESSION_KEY,raw);saved=true;}catch{}if(!saved)this.fail('浏览器无法保存房间；关闭网页后可能无法恢复');}
+ private clearSavedSession(){for(const storage of availableStorage())try{const raw=storage.getItem(SESSION_KEY);if(!this.session||!raw||JSON.parse(raw).code===this.session.code)storage.removeItem(SESSION_KEY);}catch{}}
  async discover():Promise<RoomCandidate[]>{try{return await this.http('/api/discover');}catch(e){this.fail(e);return [];}}
  ready(ready:boolean){this.control({type:'ready',ready});}
  removePlayer(playerID:string){this.control({type:'removePlayer',playerID});}
@@ -92,8 +107,7 @@ export class RoomClient {
   if(room.mode==='cloud'){this.dropPeers();this.localMatch=undefined;this.patch({transport:'cloud',view:msg.view,actionRevision:msg.actionRevision||0,paused:!!msg.paused});return;}
   if(!room.started){this.localMatch=undefined;this.removeLocal();this.patch({view:undefined,actionRevision:0});}
   else if(host&&!this.localMatch){
-   let saved:string|null=null;try{saved=localStorage.getItem('mocha-host-'+room.code)||sessionStorage.getItem('mocha-host-'+room.code);}catch{}
-   if(saved){try{const restored=JSON.parse(saved);if((!room.matchID||restored.matchID===room.matchID)&&restored.kind===room.kind&&restored.players===room.players.map(p=>p.id).join(',')&&optionsKey(room.kind,restored.options,room.hostID)===optionsKey(room.kind,room.options,room.hostID))this.localMatch=validateMatchForRoom(restored.match,room);}catch{}}
+   for(const storage of availableStorage(true)){try{const saved=storage.getItem('mocha-host-'+room.code);if(!saved)continue;const restored=JSON.parse(saved);if((!room.matchID||restored.matchID===room.matchID)&&restored.kind===room.kind&&restored.players===room.players.map(p=>p.id).join(',')&&optionsKey(room.kind,restored.options,room.hostID)===optionsKey(room.kind,room.options,room.hostID)){const match=validateMatchForRoom(restored.match,room);if(!this.localMatch||match.revision>this.localMatch.revision)this.localMatch=match;}}catch{}}
    if(!this.localMatch&&(this.starting||old&&!old.started)){this.localMatch=createMatch(room.kind,room.players,room.options);this.persistLocal();}
    if(!this.localMatch){this.patch({paused:true,error:'房主本机的牌局状态已丢失，请结束本局重新开始'});}
   }
@@ -101,8 +115,8 @@ export class RoomClient {
  }
  private reset(){this.stopped=true;this.reconnects=0;this.starting=false;++this.connectGeneration;clearTimeout(this.reconnectTimer);clearTimeout(this.handshakeTimer);clearInterval(this.socketHeartbeat);this.ws?.close();this.ws=undefined;this.session=undefined;this.dropPeers();this.localMatch=undefined;this.state=initial();}
  private dropPeers(){for(const timer of this.peerRetry.values())clearTimeout(timer);this.peerRetry.clear();this.peerAttempts.clear();clearInterval(this.heartbeat);this.heartbeat=undefined;for(const peer of this.peers.values()){clearTimeout(peer.pairingTimer);peer.dc?.close();peer.pc.close();}this.peers.clear();}
- private removeLocal(){if(this.state.room)for(const storage of [sessionStorage,localStorage])try{storage.removeItem('mocha-host-'+this.state.room.code);}catch{}}
- private persistLocal(){const r=this.state.room;if(r&&this.localMatch){const raw=JSON.stringify({kind:r.kind,options:r.options,matchID:r.matchID,expiresAt:r.expiresAt,players:r.players.map(p=>p.id).join(','),match:this.localMatch});for(const storage of [sessionStorage,localStorage])try{storage.setItem('mocha-host-'+r.code,raw);}catch{this.fail('本地牌局存档失败，请保持房主页打开或切换云端');}}}
+ private removeLocal(){if(this.state.room)for(const storage of availableStorage())try{storage.removeItem('mocha-host-'+this.state.room.code);}catch{}}
+ private persistLocal(){const r=this.state.room;if(r&&this.localMatch){const raw=JSON.stringify({kind:r.kind,options:r.options,matchID:r.matchID,expiresAt:r.expiresAt,players:r.players.map(p=>p.id).join(','),match:this.localMatch});let saved=false;for(const storage of availableStorage())try{storage.setItem('mocha-host-'+r.code,raw);saved=true;}catch{}if(!saved)this.fail('本地牌局存档失败，请保持房主页打开或切换云端');}}
  private ensurePeers(){
   const r=this.state.room;if(!r||r.mode!=='lan'||!this.session)return;
   if(typeof RTCPeerConnection==='undefined'){this.fail('此浏览器不支持直连，请由房主切换云端');return;}

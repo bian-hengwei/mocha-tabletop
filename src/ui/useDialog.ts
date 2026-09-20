@@ -58,6 +58,8 @@ export function useDialog<T extends HTMLElement = HTMLElement>(open: boolean, on
         if (!element.contains(document.activeElement)) focusDialog(element);
         const onKey = (event: KeyboardEvent) => {
             if (dialogs.at(-1) !== entry) return;
+            // Escape/Tab can cancel or navigate IME candidates without leaving the field.
+            if (event.isComposing || event.keyCode === 229) return;
             if (event.key === 'Escape') {
                 event.preventDefault();
                 event.stopImmediatePropagation();
