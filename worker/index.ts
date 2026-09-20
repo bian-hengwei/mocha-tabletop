@@ -29,10 +29,12 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
    const result=await directory.fetch(forwarded);const headers=new Headers(result.headers);headers.set('Access-Control-Allow-Origin',origin||url.origin);headers.set('Vary','Origin');return new Response(result.body,{status:result.status,headers});
   }
   const match=url.pathname.match(/^\/api\/rooms\/([A-Z2-9]{6})$/);
-  if(match&&request.headers.get('Upgrade')?.toLowerCase()==='websocket'){
+  if(match&&request.method==='GET'){
    const allowed=await directory.fetch(new Request('https://internal/api/guard',{method:'POST',headers:{'X-Client-IP':ip}}));
    if(!allowed.ok)return allowed;
-   return env.ROOMS.getByName(match[1]).fetch(new Request('https://internal/socket',request));
+   if(request.headers.get('Upgrade')?.toLowerCase()==='websocket')return env.ROOMS.getByName(match[1]).fetch(new Request('https://internal/socket',request));
+   const result=await env.ROOMS.getByName(match[1]).fetch(new Request('https://internal/status'));
+   const headers=new Headers(result.headers);headers.set('Access-Control-Allow-Origin',origin||url.origin);headers.set('Vary','Origin');return new Response(result.body,{status:result.status,headers});
   }
   return json({error:'不存在'},404);
  }catch(e){return json({error:error(e)},400);}
@@ -76,14 +78,14 @@ export class RoomDirectory extends DurableObject<Env>{
  async alarm(){const now=Date.now();for(const [key,value]of await this.ctx.storage.list<any>()){if(key.startsWith('room:')&&value.expires<now||key.startsWith('limit:')&&value.since+600000<now)await this.ctx.storage.delete(key);}await this.ctx.storage.setAlarm(now+3600000);}
 }
 interface StoredRoom {info:RoomInfo;tokens:Record<string,string>;pendingTokens:Record<string,string>;invite:string;match?:MatchState;ended?:boolean;expires:number;controlSeen:Record<string,string[]>}
-interface Attachment {id?:string;authenticated?:boolean;pending?:boolean;opened:number;messages?:number;window?:number}
+interface Attachment {id?:string;authenticated?:boolean;pending?:boolean;opened:number;messages?:number;window?:number;lastSeen?:number}
 export class GameRoom extends DurableObject<Env>{
  private data?:StoredRoom;
- constructor(ctx:DurableObjectState,env:Env){super(ctx,env);ctx.blockConcurrencyWhile(async()=>{this.data=await ctx.storage.get<StoredRoom>('room');});}
+ constructor(ctx:DurableObjectState,env:Env){super(ctx,env);ctx.blockConcurrencyWhile(async()=>{this.data=await ctx.storage.get<StoredRoom>('room');if(this.data?.info.started&&this.data.info.mode==='cloud'&&!this.data.info.matchID){this.data.info.matchID=crypto.randomUUID();await this.save();}});}
  private async save(){if(this.data)await this.ctx.storage.put('room',this.data);}
  private sockets(id?:string){return this.ctx.getWebSockets().filter(ws=>{const a=ws.deserializeAttachment() as Attachment;return a.authenticated&&(!id||a.id===id);});}
  private connected(id:string){return this.sockets(id).length>0;}
- private infoFor(id:string):RoomInfo{const r=this.data!.info;return {...r,pending:id===r.hostID?r.pending:[],players:r.players.map(p=>({...p,connected:this.connected(p.id)}))};}
+ private infoFor(id:string):RoomInfo{const r=this.data!.info;return {...r,expiresAt:this.data!.expires,pending:id===r.hostID?r.pending:[],players:r.players.map(p=>({...p,connected:this.connected(p.id)}))};}
  private snapshot(ws:WebSocket){const a=ws.deserializeAttachment() as Attachment;const d=this.data;if(!d||!a.id||!a.authenticated)return;
   if(a.pending){send(ws,{type:'pending'});return;}
   const info=this.infoFor(a.id);const match=d.match&&info.mode==='cloud'?viewMatch(d.match,info.kind,a.id):{};
@@ -101,6 +103,8 @@ export class GameRoom extends DurableObject<Env>{
     await this.save();await this.ctx.storage.setAlarm(this.data.expires);return json({ok:true});
    }
    if(!this.data||this.data.ended||this.data.expires<Date.now())return json({error:'房间已结束或不存在'},404);
+   // Existence only: browser WebSocket errors do not expose HTTP 404 status.
+   if(path==='/status')return json({ok:true});
    if(this.ctx.getWebSockets().length>44)return json({error:'房间连接过多'},429);
    const pair=new WebSocketPair();const [client,server]=Object.values(pair);this.ctx.acceptWebSocket(server);server.serializeAttachment({opened:Date.now()});
    await this.ctx.storage.setAlarm(Math.min(this.data.expires,Date.now()+30000));
@@ -111,8 +115,8 @@ export class GameRoom extends DurableObject<Env>{
  async webSocketMessage(ws:WebSocket,message:string|ArrayBuffer){
   try{
    if(typeof message!=='string'||message.length>150000)throw new Error('消息过大');
-   const a=ws.deserializeAttachment() as Attachment;const now=Date.now();if(!a.window||now-a.window>10000){a.window=now;a.messages=0;}a.messages=(a.messages||0)+1;if(a.messages>100)throw new Error('操作太频繁');ws.serializeAttachment(a);
-   const msg=JSON.parse(message);const d=this.data;if(!d||d.ended)throw new Error('房间已结束');const r=d.info;
+   const a=ws.deserializeAttachment() as Attachment;const now=Date.now();if(!a.window||now-a.window>10000){a.window=now;a.messages=0;}a.lastSeen=now;a.messages=(a.messages||0)+1;if(a.messages>100)throw new Error('操作太频繁');ws.serializeAttachment(a);
+   const msg=JSON.parse(message);const d=this.data;if(!d||d.ended||d.expires<=now)throw new Error('房间已结束');const r=d.info;
    if(msg.type==='hello'){
     const p=validProfile(msg.profile);if(!goodToken(msg.token))throw new Error('身份无效');
     if(d.tokens[p.id]&&d.tokens[p.id]!==msg.token||d.pendingTokens[p.id]&&d.pendingTokens[p.id]!==msg.token)throw new Error('身份不匹配');
@@ -128,6 +132,7 @@ export class GameRoom extends DurableObject<Env>{
    }
    if(!a.authenticated||!a.id)throw new Error('请先连接房间');
    const id=a.id;
+   if(msg.type==='ping'){send(ws,{type:'pong'});return;}
    if(a.pending){if(msg.type==='leave'){r.pending=r.pending.filter(p=>p.id!==id);delete d.pendingTokens[id];await this.save();ws.close(1000,'已离开');this.broadcast();return;}throw new Error('正在等待房主同意');}
    if(msg.type==='signal'){
     if(r.mode!=='lan')throw new Error('当前不是局域网模式');
@@ -148,6 +153,10 @@ export class GameRoom extends DurableObject<Env>{
     if(msg.accept){d.tokens[p.id]=d.pendingTokens[p.id];r.players.push({...p,ready:false,connected:this.connected(p.id)});for(const target of this.sockets(p.id)){const att=target.deserializeAttachment() as Attachment;target.serializeAttachment({...att,pending:false});}}
     else for(const target of this.sockets(p.id)){send(target,{type:'rejected',error:'房主婉拒了入桌申请'});target.close(4003,'入桌未获批准');}
     delete d.pendingTokens[p.id];
+   }else if(msg.type==='removePlayer'){
+    if(id!==r.hostID||r.started)throw new Error('只有房主能在准备室移除离线玩家');
+    if(msg.playerID===id||!r.players.some(p=>p.id===msg.playerID)||this.connected(msg.playerID))throw new Error('只能移除离线玩家');
+    r.players=r.players.filter(p=>p.id!==msg.playerID);delete d.tokens[msg.playerID];delete d.controlSeen[msg.playerID];
    }else if(msg.type==='ready'){
     if(r.started)throw new Error('牌局已开始');r.players=r.players.map(p=>p.id===id?{...p,ready:!!msg.ready}:p);
    }else if(msg.type==='start'){
@@ -155,9 +164,9 @@ export class GameRoom extends DurableObject<Env>{
     if(r.players.length<roomLimits(r.kind,r.options).min||r.players.length>roomLimits(r.kind,r.options).max)throw new Error(`需要 ${roomLimits(r.kind,r.options).min}–${roomLimits(r.kind,r.options).max} 人`);
     if(r.players.some(p=>!p.ready||!this.connected(p.id)))throw new Error('请等待所有玩家准备');
     if(r.mode==='lan'&&(!Array.isArray(msg.directPeers)||r.players.some(p=>p.id!==id&&!msg.directPeers.includes(p.id))))throw new Error('等待局域网直连完成');
-    if(r.mode==='cloud')d.match=createMatch(r.kind,r.players,r.options);r.started=true;
+    if(r.mode==='cloud')d.match=createMatch(r.kind,r.players,r.options);r.started=true;r.matchID=crypto.randomUUID();
    }else if(msg.type==='replay'||msg.type==='endGame'){
-    if(id!==r.hostID)throw new Error('只有房主能结束本局');r.started=false;delete d.match;r.players=r.players.map(p=>({...p,ready:p.id===id}));
+    if(id!==r.hostID)throw new Error('只有房主能结束本局');r.started=false;delete r.matchID;delete d.match;r.players=r.players.map(p=>({...p,ready:p.id===id}));
    }else if(msg.type==='selectGame'){
     if(id!==r.hostID||r.started)throw new Error('请先回到房间');validKind(msg.kind);const options=normalizeGameOptions(msg.kind,msg.options,r.hostID);if(r.players.length>roomLimits(msg.kind,options).max)throw new Error('当前人数超过上限');r.kind=msg.kind;r.options=options;r.players=r.players.map(p=>({...p,ready:p.id===id}));
    }else if(msg.type==='switchToCloud'){
@@ -172,7 +181,13 @@ export class GameRoom extends DurableObject<Env>{
    d.controlSeen[id]=[...(d.controlSeen[id]||[]),msg.requestID].slice(-128);r.revision++;await this.save();this.broadcast();if(msg.type!=='action'&&msg.type!=='ready')await this.index();
   }catch(e){send(ws,{type:'error',error:error(e)});}
  }
- async webSocketClose(ws:WebSocket){const a=ws.deserializeAttachment() as Attachment;ws.serializeAttachment({opened:0});if(this.data&&a.id){this.data.info.revision++;await this.save();this.broadcast();}}
+ async webSocketClose(ws:WebSocket){const a=ws.deserializeAttachment() as Attachment;ws.serializeAttachment({opened:0});try{ws.close(1000,'连接已关闭');}catch{}if(this.data&&a.id){if(a.pending){this.data.info.pending=this.data.info.pending.filter(p=>p.id!==a.id);delete this.data.pendingTokens[a.id];}this.data.info.revision++;await this.save();this.broadcast();}}
  async webSocketError(ws:WebSocket){await this.webSocketClose(ws);try{ws.close(1011,'连接中断');}catch{}}
- async alarm(){for(const ws of this.ctx.getWebSockets()){const a=ws.deserializeAttachment() as Attachment;if(!a.authenticated&&a.opened<Date.now()-25000)ws.close(4000,'验证超时');}if(this.data&&this.data.expires>Date.now())await this.ctx.storage.setAlarm(this.data.expires);if(this.data&&this.data.expires<=Date.now()){this.data.ended=true;for(const ws of this.sockets()){send(ws,{type:'ended',error:'房间已到期，请重新建房'});ws.close(1000,'房间到期');}await this.index();await this.ctx.storage.deleteAll();this.data=undefined;}}
+ async alarm(){
+  const now=Date.now();let changed=false;
+  for(const ws of this.ctx.getWebSockets()){const a=ws.deserializeAttachment() as Attachment;if(!a.authenticated&&a.opened<now-25000||a.authenticated&&(a.lastSeen||a.opened)<now-65000){ws.serializeAttachment({opened:0});ws.close(4000,'连接超时，请重新连接');if(a.pending&&a.id&&this.data){this.data.info.pending=this.data.info.pending.filter(p=>p.id!==a.id);delete this.data.pendingTokens[a.id];}changed=true;}}
+  if(changed&&this.data){this.data.info.revision++;await this.save();this.broadcast();}
+  if(this.data&&this.data.expires>now)await this.ctx.storage.setAlarm(this.ctx.getWebSockets().length?Math.min(this.data.expires,now+30000):this.data.expires);
+  if(this.data&&this.data.expires<=now){this.data.ended=true;for(const ws of this.sockets()){send(ws,{type:'ended',error:'房间已到期，请重新建房'});ws.close(1000,'房间到期');}await this.index();await this.ctx.storage.deleteAll();this.data=undefined;}
+ }
 }

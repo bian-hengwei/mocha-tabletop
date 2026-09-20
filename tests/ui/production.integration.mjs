@@ -7,12 +7,12 @@ const browser=await(safari?webkit.launch({headless:true}):chromium.launch({headl
 const contexts=[],pages=[],errors=[];
 fs.mkdirSync('test-results',{recursive:true});
 const scenarios=[
- {title:'宝石商人',count:2,selector:'.g-table',key:'gems'},
- {title:'炸弹猫',count:2,selector:'.bt-table',key:'bombs'},
- {title:'狼人杀',count:6,selector:'.social-table-v2',key:'werewolf-standard',mode:'玩家操作'},
- {title:'阿瓦隆',count:5,selector:'.social-table-v2',key:'avalon'},
- {title:'狼人杀',count:7,selector:'.social-table-v2',key:'werewolf-judge',mode:'法官主持'},
- {title:'狼人杀',count:6,selector:'.social-table-v2',key:'werewolf-deal',mode:'只发身份'},
+ {title:'晶石商会',count:2,selector:'.g-table',key:'gems'},
+ {title:'喵喵危机',count:2,selector:'.bt-table',key:'bombs'},
+ {title:'月夜议会',count:6,selector:'.social-table-v2',key:'werewolf-standard',mode:'玩家操作'},
+ {title:'迷雾远征',count:5,selector:'.social-table-v2',key:'avalon'},
+ {title:'月夜议会',count:7,selector:'.social-table-v2',key:'werewolf-judge',mode:'法官主持'},
+ {title:'月夜议会',count:6,selector:'.social-table-v2',key:'werewolf-deal',mode:'只发身份'},
 ];
 const reveal=async page=>{
  await expect(page.getByRole('dialog',{name:'我的秘密身份'})).toHaveCount(0);
@@ -29,7 +29,7 @@ try{
   // Keep this identity across reloads, just as the real profile does.
   const profile={id:`acceptance-${i}-${crypto.randomUUID()}`,name:`验收${i+1}`,avatar:['🦊','🐼','🐱','🐻','🐰','🐨','🐯'][i]};
   await page.addInitScript(profile=>localStorage.setItem('mocha-profile',JSON.stringify(profile)),profile);
-  await page.goto(base);await page.getByRole('button',{name:'选择宝石商人',exact:true}).waitFor();
+  await page.goto(base);await page.getByRole('button',{name:'选择晶石商会',exact:true}).waitFor();
  }
  const host=pages[0];
  for(const {title,count,selector,key,mode}of scenarios){
@@ -86,22 +86,22 @@ try{
   }
   await host.screenshot({path:`test-results/${safari?'webkit':'chrome'}-${key}-cloud.png`});
   await host.getByRole('button',{name:'牌桌菜单',exact:true}).click();host.once('dialog',d=>d.accept());await host.getByRole('button',{name:'离开牌桌',exact:true}).click();
-  for(let i=0;i<count;i++)await pages[i].getByRole('button',{name:'选择宝石商人',exact:true}).waitFor();
+  for(let i=0;i<count;i++)await pages[i].getByRole('button',{name:'选择晶石商会',exact:true}).waitFor();
   for(let i=0;i<count;i++){const dismiss=pages[i].getByRole('button',{name:'关闭提示',exact:true});if(await dismiss.count())await dismiss.click();}
   console.log('PASS live UI room',key,count,'people');
  }
- const manifest=await host.evaluate(async()=>await(await fetch(document.querySelector('link[rel=manifest]').href)).json());assert.equal(manifest.orientation,'landscape');assert.equal(manifest.display,'standalone');
+ const manifest=await host.evaluate(async()=>await(await fetch(document.querySelector('link[rel=manifest]').href)).json());assert.equal(manifest.orientation,'any');assert.equal(manifest.display,'standalone');
  if(skipOffline)console.log('SKIP service worker/offline checks (TEST_SKIP_OFFLINE=1); manifest checked');
  else{
   await host.evaluate(()=>navigator.serviceWorker.ready);await host.waitForFunction(async()=>{const names=await caches.keys(),name=names.find(n=>n.startsWith('mocha-'));if(!name)return false;return(await(await caches.open(name)).keys()).length>=10;});
   if(!safari){
-   await contexts[0].setOffline(true);await host.reload();await host.getByRole('button',{name:'选择宝石商人',exact:true}).waitFor();
-   for(const title of ['宝石商人','炸弹猫','狼人杀','阿瓦隆']){
+   await contexts[0].setOffline(true);await host.reload();await host.getByRole('button',{name:'选择晶石商会',exact:true}).waitFor();
+   for(const title of ['晶石商会','喵喵危机','月夜议会','迷雾远征','寿司小宴','香料商旅','七彩接龙','密语行动','异词同伴']){
     await host.getByRole('button',{name:'选择'+title,exact:true}).click();await host.getByRole('button',{name:'同屏试玩',exact:true}).click();await host.locator('.game-surface').waitFor();
     await host.getByRole('button',{name:'牌桌菜单',exact:true}).click();host.once('dialog',d=>d.accept());await host.getByRole('button',{name:'结束试玩',exact:true}).click();
    }
    assert.equal(await host.locator('.game-cover img').evaluateAll(imgs=>imgs.every(i=>i.complete&&i.naturalWidth>0)),true);
-   console.log('PASS service worker installation, offline reload, all four offline practices, cached cover images');
+   console.log('PASS service worker installation, offline reload, all nine offline practices, cached cover images');
   }else console.log('PASS WebKit manifest + 10 cached resources; offline navigation not asserted: Playwright service-worker automation only supports Chromium (https://playwright.dev/docs/service-workers)');
  }
  assert.deepEqual(errors,[]);console.log('PASS production acceptance',safari?'WebKit':'Chromium',base);

@@ -8,7 +8,7 @@ const artifacts=process.env.CARD_ARTIFACTS||'test-results/cards';
 await fs.mkdir(artifacts,{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||undefined});
 const context=await browser.newContext({viewport:{width:844,height:390},deviceScaleFactor:2,isMobile:true,hasTouch:true});
-await context.addInitScript(()=>localStorage.setItem('mocha-profile',JSON.stringify({id:'ui-cards',name:'测试商人',avatar:'🦊'})));
+await context.addInitScript(()=>{localStorage.setItem('mocha-profile',JSON.stringify({id:'ui-cards',name:'测试商人',avatar:'🦊'}));localStorage.removeItem('mocha-practice-v1');});
 const page=await context.newPage(),errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 page.on('dialog',dialog=>dialog.accept());

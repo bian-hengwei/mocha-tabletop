@@ -24,20 +24,28 @@ npx playwright install chromium webkit
 
 | 命令 | 验证范围 |
 | --- | --- |
-| `node tests/ui/install.integration.mjs` | 名称、图标、横竖屏安装说明 |
-| `node tests/ui/cards.integration.mjs` | 宝石商人、炸弹猫的实际界面操作 |
+| `node tests/ui/language.integration.mjs` | 九款英文入口与双版本规则，检查未翻译文本 |
+| `node tests/ui/i18n.integration.mjs` | 九款牌桌正文/无障碍标签英文检查、词库独立切换、确认出牌、私密 +4 核验与手机/短横屏 |
+| `node tests/ui/uno-selection.integration.mjs` | 接龙选牌高亮/抬升/取消、确认出牌、万能选色、换座清理、质疑开关与双语三尺寸 |
+| `node tests/ui/new-games.integration.mjs` | 寿司、香料、七彩接龙实际回合操作 |
+| `node tests/ui/word-games.integration.mjs` | 两款词语游戏中英文终局与切换语言保留词面 |
+| `node tests/ui/offline.integration.mjs` | 生产预览 5176 的缓存、断网重载及九款试玩 |
+| `node tests/ui/install.integration.mjs` | 直接安装提示、取消/完成状态、iOS/桌面帮助与竖屏 |
+| `node tests/ui/personal.integration.mjs` | 48 头像、身份保存、试玩恢复、战绩去重/删除、重置身份、存储禁用 |
+| `node tests/ui/responsive.integration.mjs` | 320px 手机至桌面、短横屏、数字溢出、全部座位与操作可达性 |
+| `node tests/ui/cards.integration.mjs` | 晶石商会、喵喵危机的实际界面操作 |
 | `node tests/ui/gems-layout.integration.mjs` | 宝石牌桌布局 |
-| `node tests/ui/bombs-table.integration.mjs` | 炸弹猫牌桌布局 |
-| `node tests/ui/social.integration.mjs` | 狼人杀与阿瓦隆界面 |
-| `node tests/ui/social-hosted.integration.mjs` | 狼人杀法官、发身份界面 |
+| `node tests/ui/bombs-table.integration.mjs` | 喵喵危机牌桌布局 |
+| `node tests/ui/social.integration.mjs` | 月夜议会与迷雾远征界面 |
+| `node tests/ui/social-hosted.integration.mjs` | 月夜议会法官、发身份界面 |
 | `node tests/ui/social-max.integration.mjs` | 最大人数的身份和座位布局 |
-| `node tests/ui/social-modes.integration.mjs` | 从首页进入狼人杀不同模式 |
+| `node tests/ui/social-modes.integration.mjs` | 从首页进入月夜议会不同模式 |
 | `node tests/network/cloud.integration.mjs` | 云端加入、权限与房间指令 |
 | `node tests/network/discovery.integration.mjs` | 房间发现 |
 | `node tests/network/lan.integration.mjs` | WebRTC 直连与断线行为 |
 | `node tests/network/client-terminal.integration.mjs` | 客户端退出及终止状态 |
-| `node tests/network/werewolf-options.integration.mjs` | 狼人杀模式切换和联机流程 |
-| `node tests/network/werewolf-capacity.integration.mjs` | 狼人杀人数与法官席位 |
+| `node tests/network/werewolf-options.integration.mjs` | 月夜议会模式切换和联机流程 |
+| `node tests/network/werewolf-capacity.integration.mjs` | 月夜议会人数与法官席位 |
 
 浏览器测试默认使用 Playwright 安装的 Chromium。需要本机 Chrome 时可设置 `CHROME_PATH`；支持双引擎的脚本可以用 `TEST_BROWSER=webkit` 切换。界面脚本用 `BASE_URL` 指定前端地址，网络浏览器脚本用 `TEST_FRONTEND`，纯 API 脚本使用 `TEST_API_BASE`。具体脚本支持的变量见文件开头。
 

@@ -24,3 +24,9 @@ id,tier,colorIndex,points,white,blue,green,red,black
 ```
 
 颜色索引按白、蓝、绿、红、黑排列。来源为 [anicolao/splendor](https://github.com/anicolao/splendor) 的 `data/verified_card_properties.csv`，并以 [bouk/splendimax 的数值表](https://github.com/bouk/splendimax/blob/master/Splendor%20Cards.csv) 交叉核对。修改规则表时不应从待测实现自动生成这份期望数据，否则会失去独立校验作用。
+
+## 香料商旅基础牌表
+
+`centuryCatalog.ts` 使用 43 张市场商人（34 交易、8 收获、1 升级）与 36 张订单的基础数值，不使用近似定价公式。数值由 [spice-trader 数据表](https://github.com/yohanlaunay/spice-trader/blob/master/src/games/spices/data.js) 整理，逐张与 [独立卡牌编码](https://github.com/phate09/century-spice-road-env/blob/main/century_env/cards.py) 比较；测试 fixture 保留后者的独立编码次序。另对照 [Java 订单数据](https://github.com/ShaPhi7/CenturySpiceRoad/blob/main/src/main/resources/point-card-deck.csv)。只使用数值，不使用这些项目的图片或游戏逻辑。流程依据 [发行方基础规则](https://cdn.svc.asmodee.net/production-nextmove/uploads/sites/4/2024/06/EN-Century-Spice-Road-Rules_2024_compressed.pdf)。
+
+新增游戏封面 SVG 为项目自行绘制，词语游戏使用自行整理的中英文词库；页面名称、角色展示和猫牌称谓采用原创命名，内部游戏 ID 保持兼容旧存档。

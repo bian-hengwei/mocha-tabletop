@@ -3,6 +3,7 @@ import { action, assertPlayers, seeded, shuffle, validateCommand, type Action, t
 export type WolfRole='wolf'|'villager'|'seer'|'witch'|'hunter'|'guard';
 type Stage='signup'|'electionSpeech'|'electionVote'|'nightFirst'|'nightSecond'|'discussion'|'vote'|'pk'|'hunter'|'badge';
 export interface WerewolfState {
+  options?:GameOptions;
   players:Player[]; roles:Record<string,WolfRole>; alive:string[]; stage:Stage; submissions:Record<string,string>;
   candidates:string[]; electionRunoff:boolean; electionPending:boolean; electionExplosions:number; dayRunoff:boolean;
   sheriff:string|null; night:number; previousGuard:string|null; guarded:string|null; victim:string|null; poisoned:string|null;
@@ -11,11 +12,20 @@ export interface WerewolfState {
   publicVotes:Record<string,string>;
 }
 const labels:Record<WolfRole,string>={wolf:'狼人',villager:'平民',seer:'预言家',witch:'女巫',hunter:'猎人',guard:'守卫'};
-export function werewolfPreset(n:number):WolfRole[]{
+export function werewolfPreset(n:number,preset:NonNullable<GameOptions['werewolfPreset']>='auto'):WolfRole[]{
+  if(!['auto','hunter','guard'].includes(preset))throw new Error('狼人角色预设无效');
+  if(preset!=='auto'&&n<8)throw new Error('预女猎或预女守需要至少 8 位玩家');
   if(!Number.isInteger(n)||n<6||n>18)throw new Error('狼人杀需要 6–18 人');
   const roles:WolfRole[]=[...Array(Math.floor(n/3)).fill('wolf'),'seer','witch'];
-  if(n>=8)roles.push('hunter');if(n>=12)roles.push('guard');
+  if(preset==='hunter'||preset==='auto'&&n>=8)roles.push('hunter');if(preset==='guard'||preset==='auto'&&n>=12)roles.push('guard');
   return [...roles,...Array(n-roles.length).fill('villager')];
+}
+export function werewolfVictory(roles:WolfRole[],rule:NonNullable<GameOptions['werewolfWin']>='sides'):string|null{
+  if(!['sides','parity'].includes(rule))throw new Error('狼人胜负规则无效');
+  const wolves=roles.filter(r=>r==='wolf').length;
+  if(!wolves)return '好人获胜 · 狼人全部出局';
+  if(rule==='parity')return wolves>=roles.length-wolves?'狼人获胜 · 达成人数平衡':null;
+  return !roles.includes('villager')||!roles.some(r=>r!=='wolf'&&r!=='villager')?'狼人获胜 · 屠边成功':null;
 }
 const name=(s:WerewolfState,id:string)=>s.players.find(p=>p.id===id)?.name??id;
 const living=(s:WerewolfState)=>s.players.map(p=>p.id).filter(id=>s.alive.includes(id));
@@ -53,9 +63,7 @@ function beginNight(s:WerewolfState){
   s.candidates=s.electionPending&&s.electionExplosions>0?s.candidates.filter(id=>s.alive.includes(id)):[];
 }
 function evaluateWinner(s:WerewolfState){
-  const roles=living(s).map(id=>s.roles[id]);
-  if(!roles.includes('wolf'))s.winner='好人获胜 · 狼人全部出局';
-  else if(!roles.includes('villager')||!roles.some(r=>r!=='wolf'&&r!=='villager'))s.winner='狼人获胜 · 屠边成功';
+  s.winner=werewolfVictory(living(s).map(id=>s.roles[id]),s.options?.werewolfWin);
 }
 function resume(s:WerewolfState){s.submissions={};if(s.continuation==='nightFirst'){s.night++;beginNight(s);}else s.stage='discussion';}
 function afterDeath(s:WerewolfState){
@@ -93,9 +101,9 @@ function resolveVote(s:WerewolfState){
   }
 }
 export const standardWerewolf:GameModule<WerewolfState>={
-  create(players,seed){
-    assertPlayers(players,6,18);const deck=shuffle(werewolfPreset(players.length),seeded(seed));
-    return {players:structuredClone(players),roles:Object.fromEntries(players.map((p,i)=>[p.id,deck[i]])),alive:players.map(p=>p.id),stage:'nightFirst',submissions:{},candidates:[],electionRunoff:false,electionPending:true,electionExplosions:0,dayRunoff:false,sheriff:null,night:1,previousGuard:null,guarded:null,victim:null,poisoned:null,rescued:false,antidote:true,poison:true,investigations:{},hunterID:null,badgeOwner:null,continuation:'discussion',winner:null,log:[`${players.length} 人局 · 屠边 · 首夜结束后竞选警长`],revealed:[],publicVotes:{}};
+  create(players,seed,options){
+    assertPlayers(players,6,18);werewolfVictory(['wolf','villager','seer'],options?.werewolfWin);const deck=shuffle(werewolfPreset(players.length,options?.werewolfPreset),seeded(seed));
+    return {options:{...options,werewolfMode:'standard'},players:structuredClone(players),roles:Object.fromEntries(players.map((p,i)=>[p.id,deck[i]])),alive:players.map(p=>p.id),stage:'nightFirst',submissions:{},candidates:[],electionRunoff:false,electionPending:true,electionExplosions:0,dayRunoff:false,sheriff:null,night:1,previousGuard:null,guarded:null,victim:null,poisoned:null,rescued:false,antidote:true,poison:true,investigations:{},hunterID:null,badgeOwner:null,continuation:'discussion',winner:null,log:[`${players.length} 人局 · ${options?.werewolfWin==='parity'?'人数平衡':'屠边'} · 首夜结束后竞选警长`],revealed:[],publicVotes:{}};
   },
   view(s,id){
     if(!s.players.some(p=>p.id===id))throw new Error('不是本局玩家');
@@ -110,7 +118,7 @@ export const standardWerewolf:GameModule<WerewolfState>={
     const stages:Record<Stage,string>={signup:'警长竞选 · 上警',electionSpeech:s.electionRunoff?'警长竞选 · PK':'警长竞选 · 发言',electionVote:'警长竞选 · 投票',nightFirst:`第 ${s.night} 夜`,nightSecond:`第 ${s.night} 夜`,discussion:`第 ${s.night} 天 · 发言`,vote:s.dayRunoff?'PK 复投':'放逐投票',pk:'平票 PK',hunter:'猎人开枪',badge:'警徽移交'};
     const actions=actionsFor(s,id);
     const candidates=['electionSpeech','electionVote','pk'].includes(s.stage)||(s.stage==='vote'&&s.dayRunoff)?s.candidates:[];
-    return {kind:'werewolf',phase:s.winner??stages[s.stage],instruction:s.winner?'本局结束':actions.length?'轮到你了':'等待其他玩家',finished:!!s.winner,actions,sections:[{id:'identity',title:'你的身份',private:true,items:knowledge}],log:[...s.log],board:{stage:s.winner?'finished':night?'night':s.stage,night:s.night,ownRole:labels[role],ownKnowledge:knowledge,players:s.players.map(p=>({...p,alive:s.alive.includes(p.id),sheriff:s.sheriff===p.id,candidate:candidates.includes(p.id),...(p.id===id||s.winner||s.revealed.includes(p.id)?{role:labels[s.roles[p.id]]}:{})})),candidates:[...candidates],sheriff:s.sheriff,publicVotes:{...s.publicVotes},winner:s.winner}};
+    return {kind:'werewolf',phase:s.winner??stages[s.stage],instruction:s.winner?'本局结束':actions.length?'轮到你了':'等待其他玩家',finished:!!s.winner,actions,sections:[{id:'identity',title:'你的身份',private:true,items:knowledge}],log:[...s.log],board:{preset:s.options?.werewolfPreset||'auto',winRule:s.options?.werewolfWin||'sides',stage:s.winner?'finished':night?'night':s.stage,night:s.night,ownRole:labels[role],ownKnowledge:knowledge,players:s.players.map(p=>({...p,alive:s.alive.includes(p.id),sheriff:s.sheriff===p.id,candidate:candidates.includes(p.id),...(p.id===id||s.winner||s.revealed.includes(p.id)?{role:labels[s.roles[p.id]]}:{})})),candidates:[...candidates],sheriff:s.sheriff,publicVotes:{...s.publicVotes},winner:s.winner}};
   },
   apply(state,id,command){
     validateCommand(standardWerewolf.view(state,id),command);const s=structuredClone(state),value=command.values[0]??'ready';
@@ -139,7 +147,7 @@ export const standardWerewolf:GameModule<WerewolfState>={
 function createWerewolf(players:Player[],seed:number):WerewolfState;
 function createWerewolf(players:Player[],seed:number,options:GameOptions&{werewolfMode:'judge'|'deal'}):HostedWerewolfState;
 function createWerewolf(players:Player[],seed:number,options?:GameOptions):WerewolfState|HostedWerewolfState;
-function createWerewolf(players:Player[],seed:number,options?:GameOptions){return options?.werewolfMode==='judge'||options?.werewolfMode==='deal'?werewolfHosted.create(players,seed,options):standardWerewolf.create(players,seed);}
+function createWerewolf(players:Player[],seed:number,options?:GameOptions){return options?.werewolfMode==='judge'||options?.werewolfMode==='deal'?werewolfHosted.create(players,seed,options):standardWerewolf.create(players,seed,options);}
 function applyWerewolf(state:WerewolfState,id:string,command:Command):WerewolfState;
 function applyWerewolf(state:HostedWerewolfState,id:string,command:Command):HostedWerewolfState;
 function applyWerewolf(state:WerewolfState|HostedWerewolfState,id:string,command:Command):WerewolfState|HostedWerewolfState;
