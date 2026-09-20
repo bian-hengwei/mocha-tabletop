@@ -53,4 +53,5 @@ jobs:
           node tests/ui/proactive-new-games.integration.mjs
           node tests/ui/word-usability.integration.mjs
           curl -fsS "$BASE_URL/api/health"
+          node tests/network/message-text.integration.mjs
           node tests/ui/lobby-layout.integration.mjs
