@@ -1,7 +1,8 @@
+import {useCardDoubleTap} from './useCardDoubleTap';
 import { useDialog } from './useDialog';
 import { t } from '../i18n';
 function tx<T>(value: T): T | string { return typeof value === 'string' ? t(value) : value; }
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode, type MouseEvent, type PointerEvent } from 'react';
 import { ArrowRight, Bomb, Check, ChevronDown, Cloud, Eye, FastForward, Hand, Leaf, Moon, PawPrint, Scissors, Shuffle, Skull, Star, Sun, X, Zap } from 'lucide-react';
 import type { Action, Command, GameView } from '../core/types';
 import { BOMB_TITLES, type BombCard, type BombKind } from '../core/games/bombs';
@@ -46,14 +47,15 @@ function CatArt({ kind }: {
     {tx(kind.endsWith('Cat') && <path d="M46 70Q60 75 75 70L70 78 61 74 51 79Z" fill={color}/>)}
   </svg>;
 }
-export function BombsIllustratedCard({ card, selected = false, onClick, small = false, order }: {
+export function BombsIllustratedCard({ card, selected = false, onClick, onPointerDown, small = false, order }: {
     card: BombCard;
     selected?: boolean;
-    onClick?: () => void;
+    onClick?: (event:MouseEvent<HTMLButtonElement>) => void;
+    onPointerDown?: (event:PointerEvent<HTMLButtonElement>) => void;
     small?: boolean;
     order?: number;
 }) {
-    return <button type="button" disabled={!onClick} className={`bt-card ${small ? 'bt-small' : ''} ${selected ? 'bt-selected' : ''}`} style={{ '--card-accent': accents[card.kind] } as CSSProperties} aria-label={tx(titles[card.kind])} aria-pressed={onClick ? selected : undefined} onClick={onClick}>
+    return <button type="button" disabled={!onClick} className={`bt-card ${small ? 'bt-small' : ''} ${selected ? 'bt-selected' : ''}`} style={{ '--card-accent': accents[card.kind] } as CSSProperties} aria-label={tx(titles[card.kind])} aria-pressed={onClick ? selected : undefined} onClick={onClick} onPointerDown={onPointerDown}>
     <span className="bt-card-heading"><b>{tx(titles[card.kind])}</b><KindIcon kind={card.kind} size={13}/></span><CatArt kind={card.kind}/><span className="bt-card-foot">{tx(short[card.kind])}</span>{tx(selected && <span className="bt-card-check"><Check size={13}/></span>)}{tx(order !== undefined && <span className="bt-order">{tx(order)}</span>)}
   </button>;
 }
@@ -61,7 +63,9 @@ export function BombsTable({ view, selfID, command }: Props) {
     const b = view.board, hand = (b.hand as BombCard[] || []), [selected, setSelected] = useState<string[]>([]), [insertion, setInsertion] = useState(0), [explosionPrompt, setExplosionPrompt] = useState(false);
     const confirmationDialog = useDialog(explosionPrompt, () => setExplosionPrompt(false));
     const get = (id: string) => view.actions.find(a => a.id === id);
-    useEffect(() => { setSelected([]); setInsertion(0); setExplosionPrompt(false); }, [b.phase, b.current, selfID]);
+    const handIDs=hand.map(c=>c.id).join('|'),context=[selfID,b.phase,b.current,handIDs,b.discard[0]?.id].join(':');
+    const taps=useCardDoubleTap(context);
+    useEffect(() => { setSelected([]); setInsertion(0); setExplosionPrompt(false); }, [context]);
     const cards = hand.filter(c => selected.includes(c.id)), first = cards[0];
     const single = cards.length === 1 ? view.actions.find(a => ['play', 'nope', 'give'].includes(a.id) && a.choices.some(c => c.id === first.id)) : undefined;
     const combo = cards.length >= 2 && cards.length <= 3 && cards.every(c => c.kind === first.kind) ? get(cards.length === 2 ? 'pair' : 'triple') : undefined;
@@ -70,7 +74,12 @@ export function BombsTable({ view, selfID, command }: Props) {
     const target = get('target'), request = get('request'), give = get('give'), response = b.response, draw = get('draw'), mine = b.current === selfID;
     const displayName = (id: string) => b.players.find((p: any) => p.id === id)?.name || t('玩家');
     const run = (action: string, values: string[] = []) => { command({ action, values }); setSelected([]); };
-    const pick = (card: BombCard) => setSelected(old => old.includes(card.id) ? old.filter(id => id !== card.id) : give || get('nope') ? [card.id] : old.length >= 3 ? [card.id] : [...old, card.id]);
+    const pick = (card: BombCard) => setSelected(old => old.includes(card.id) ? old.filter(id => id !== card.id) : give || get('nope') ? [card.id] : old.length >= 3 || old.some(id=>hand.find(c=>c.id===id)?.kind!==card.kind) ? [card.id] : [...old, card.id]);
+    const selectCard=(card:BombCard,event:MouseEvent<HTMLButtonElement>)=>{
+        const action=view.actions.find(a=>['play','nope','give'].includes(a.id)&&a.choices.some(choice=>choice.id===card.id));
+        if(taps.isDoubleTap(card.id,event)&&action&&selected.length===1&&selected[0]===card.id)run(action.id,[card.id]);
+        else pick(card);
+    };
     const actionTitle = single?.id === 'give' ? '交给对方' : single?.id === 'nope' ? (response?.cancelled ? '恢复效果' : '否决这张') : single ? '打出这张' : validCombo ? (cards.length === 2 ? '随机拿一张' : '指定牌名') : '';
     const play = () => {
         const a = single || validCombo;
@@ -104,7 +113,7 @@ export function BombsTable({ view, selfID, command }: Props) {
                     run('target', [p.id]);
             }}><span className="bt-avatar">{tx(p.alive ? p.avatar : <Skull size={21}/>)}</span><span><b>{p.name}{tx(p.id === selfID && <small>{t("我")}</small>)}</b><em>{tx(p.alive ? <><span className="bt-tiny-back"/>{tx(p.count)}</> : '已出局')}</em></span>{tx(p.id === b.current && p.alive && <span className="bt-seat-turn"/>)}</button>))}</div>
     <div className="bt-arena"><div className="bt-piles"><button className={`bt-deck ${draw ? 'available' : ''}`} aria-label={tx(`抽牌，剩余 ${b.deckCount} 张`)} disabled={!draw} onClick={() => run('draw')}><span className="bt-deck-corners">{t("✦")}</span><CatArt kind="bomb"/><b>{tx(draw ? '抽一张' : '抽牌堆')}</b><small>{tx(b.deckCount)}</small></button><div className="bt-discard" aria-label={t("弃牌堆")}>{tx(b.discard[0] ? <BombsIllustratedCard card={b.discard[0]} small/> : <span className="bt-empty"><PawPrint size={25}/><small>{t("弃牌")}</small></span>)}</div></div>{tx(focus)}</div>
-    <div className="bt-hand-zone"><div className="bt-hand-label"><span>{t("我的手牌") + " "}<b>{tx(hand.length)}</b></span>{tx(selected.length > 0 ? <button onClick={() => setSelected([])}><X size={12}/>{t("清空选择")}</button> : <small>{tx(get('give') ? '选一张交给对方' : get('nope') ? '否决牌可响应' : get('play') ? '同名牌相邻 · 可组合' : '轻点查看牌的效果')}</small>)}</div><div className={`bt-hand ${hand.length > 8 ? 'bt-long-hand' : ''}`} aria-label={t("我的手牌，可左右滑动")}>{tx(sorted.map((c, i) => <div className="bt-hand-slot" key={c.id} style={{ '--fan': `${Math.max(-5, Math.min(5, (i - (hand.length - 1) / 2) * 1.2))}deg`, '--lift': `${Math.abs(i - (hand.length - 1) / 2) * .35}px` } as CSSProperties}><BombsIllustratedCard card={c} selected={selected.includes(c.id)} onClick={() => pick(c)}/></div>))}{tx(!hand.length && <span className="bt-empty-hand">{tx(b.players.find((p: any) => p.id === selfID)?.alive ? '手里空了，也能继续抽牌' : '本局先看朋友们的表演')}</span>)}</div></div>
+    <div className="bt-hand-zone"><div className="bt-hand-label"><span>{t("我的手牌") + " "}<b>{tx(hand.length)}</b></span>{tx(selected.length > 0 ? <button onClick={() => setSelected([])}><X size={12}/>{t("清空选择")}</button> : <small>{tx(get('give') ? '选一张交给对方' : get('nope') ? '否决牌可响应' : get('play') ? '单牌可双击 · 同名可组合' : '轻点查看牌的效果')}</small>)}</div><div className={`bt-hand ${hand.length > 8 ? 'bt-long-hand' : ''}`} aria-label={t("我的手牌，可左右滑动")}>{tx(sorted.map((c, i) => <div className="bt-hand-slot" key={c.id} style={{ '--fan': `${Math.max(-5, Math.min(5, (i - (hand.length - 1) / 2) * 1.2))}deg`, '--lift': `${Math.abs(i - (hand.length - 1) / 2) * .35}px` } as CSSProperties}><BombsIllustratedCard card={c} selected={selected.includes(c.id)} onPointerDown={taps.onPointerDown} onClick={event=>selectCard(c,event)}/></div>))}{tx(!hand.length && <span className="bt-empty-hand">{tx(b.players.find((p: any) => p.id === selfID)?.alive ? '手里空了，也能继续抽牌' : '本局先看朋友们的表演')}</span>)}</div></div>
     {tx(explosionPrompt && <div className="bt-confirm-shade"><section ref={confirmationDialog} tabIndex={-1} role="dialog" aria-modal="true" aria-label={t("确认放弃拆弹")}><Bomb size={28}/><h2>{t("这局就到这里？")}</h2><p>{t("放弃拆弹后，你会立即出局。")}</p><div className="bt-action-row"><button className="bt-secondary" onClick={() => setExplosionPrompt(false)}>{t("再想想")}</button><button className="bt-primary" onClick={() => { setExplosionPrompt(false); run('explode'); }}>{t("确认出局")}</button></div></section></div>)}
   </div>;
 }
