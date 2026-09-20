@@ -1,0 +1,181 @@
+/* Table positions are relative to the viewer. Names remain upright while tiles face their owners. */
+.seat-turn-label{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);padding:2px 7px;border-radius:8px;background:#ebcd8b;color:#173b30;font-size:9px;white-space:nowrap;line-height:1.2}
+.classic-table-mark>span:last-child{display:none}
+.mahjong-table .classic-arena{min-height:280px}
+.mahjong-table .classic-seat.seat-across{top:8px;left:50%;max-width:170px}
+.mahjong-table .classic-seat.seat-left,.mahjong-table .classic-seat.seat-right{top:42%;width:76px;max-width:76px;flex-direction:column;text-align:center;gap:3px;padding:6px 3px}
+.mahjong-table .classic-seat.seat-left{left:8px}
+.mahjong-table .classic-seat.seat-right{right:8px}
+.mahjong-table .classic-seat b{max-width:68px}
+.mahjong-table .classic-seat small{display:block}
+.mahjong-table .classic-seat.seat-self{display:none}
+.mahjong-table .mahjong-public{position:absolute;inset:77px 100px 12px;display:block}
+.mahjong-table .mahjong-rivers{position:absolute;inset:0;display:block}
+.mahjong-table .river-seat{position:absolute;margin:0;display:flex;flex-direction:column;padding:4px;border:0;background:none;gap:2px;overflow:hidden}
+.mahjong-table .river-across,.mahjong-table .river-self{left:26%;width:48%;height:31%}
+.mahjong-table .river-across{top:0}
+.mahjong-table .river-self{bottom:0}
+.mahjong-table .river-left,.mahjong-table .river-right{top:31%;width:30%;height:38%}
+.mahjong-table .river-left{left:0}
+.mahjong-table .river-right{right:0}
+.mahjong-table .river-seat>header{font-size:10px;gap:4px;flex-shrink:0}
+.mahjong-table .river-seat>header>span{font-size:9px}
+.mahjong-table .river{display:flex;flex-wrap:wrap;align-content:flex-start;justify-content:center;align-items:flex-start;gap:2px;overflow:auto;min-height:24px;padding:2px;flex:1;scrollbar-width:thin}
+.mahjong-table .river .classic-face.mini{width:23px;min-width:23px;max-width:23px}
+.mahjong-table .river-across .river .classic-face{transform:rotate(180deg)}
+.mahjong-table .river-left .river .classic-face{transform:rotate(90deg);margin:3px}
+.mahjong-table .river-right .river .classic-face{transform:rotate(-90deg);margin:3px}
+.mahjong-table .mahjong-melds{max-width:100%;max-height:31px;flex-wrap:nowrap;overflow:auto;gap:3px;flex-shrink:0}
+.mahjong-table .mahjong-melds .classic-face.mini{width:18px;min-width:18px}
+.mahjong-table .mahjong-center{position:absolute;left:33%;top:32%;width:34%;height:36%;display:flex;flex-direction:column;gap:5px}
+.mahjong-table .mahjong-compass{width:60px;height:60px;transform:none;border-radius:12px;flex-shrink:0;font:9px system-ui}
+.mahjong-table .mahjong-compass>*{transform:none}
+.mahjong-table .mahjong-compass>b{font:19px Georgia,serif}
+.mahjong-table .mahjong-center-mark{display:none}
+.mahjong-table .mahjong-center:has(.mahjong-latest) .mahjong-compass{display:none}
+.mahjong-table .mahjong-latest .classic-face{width:38px}
+.mahjong-table .mahjong-latest>small{display:block;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;max-width:70px}
+.opponent-racks{position:absolute;inset:0;pointer-events:none}
+.opponent-rack{position:absolute;display:flex;gap:1px;justify-content:center}
+.opponent-rack .classic-face.mini{width:16px;min-width:0}
+.rack-across{left:27%;right:27%;top:56px;transform:rotate(180deg)}
+.rack-left,.rack-right{top:25%;bottom:18%;width:20px;flex-direction:column;align-items:center;gap:0}
+.rack-left{left:86px}.rack-right{right:86px}
+.rack-left .classic-face,.rack-right .classic-face{width:17px;height:12px;aspect-ratio:auto}
+.rack-left .classic-face{transform:rotate(90deg)}.rack-right .classic-face{transform:rotate(-90deg)}
+.mahjong-table .classic-hand,.game-table-doudizhu .classic-hand{grid-template-columns:repeat(var(--hand-total),minmax(44px,1fr));grid-template-rows:1fr;min-width:calc(var(--hand-total)*48px - 4px);gap:4px}
+.mahjong-table .classic-card.drawn{margin-left:9px}
+.mahjong-table .classic-hand{padding-right:10px}
+.game-table-doudizhu .classic-arena{border-radius:45%;min-height:220px}
+.game-table-doudizhu .classic-seat.seat-left,.game-table-doudizhu .classic-seat.seat-right{top:24%}
+.game-table-doudizhu .classic-seat.seat-self{left:50%;bottom:9px;transform:translateX(-50%)}
+.game-table-doudizhu .classic-felt{inset:12px 20px 58px;justify-content:center}
+.game-table-doudizhu .classic-bottom{position:absolute;top:0;left:50%;transform:translateX(-50%);padding:5px 10px;border:1px solid #decc9d30;border-radius:9px;background:#102e2955}
+.game-table-doudizhu .poker-play-area{margin-top:64px;max-width:62%;min-height:70px}
+.game-table-doudizhu .play-left{align-self:flex-start;margin-left:8%;text-align:left}
+.game-table-doudizhu .play-right{align-self:flex-end;margin-right:8%;text-align:right}
+.game-table-doudizhu .play-self{align-self:center}
+.game-table-doudizhu .played .classic-face{width:42px}
+.game-table-doudizhu .classic-cards.played{justify-content:flex-start;gap:2px}
+.game-table-doudizhu .classic-table-mark{top:46%;font-size:18px;opacity:.65}
+@media(max-width:740px){
+ .mahjong-table .classic-arena{min-height:270px}
+ .mahjong-table .classic-seat.seat-left,.mahjong-table .classic-seat.seat-right{width:47px;max-width:47px;top:40%;padding:4px 2px;gap:2px}
+ .mahjong-table .classic-seat.seat-left{left:4px}.mahjong-table .classic-seat.seat-right{right:4px}
+ .mahjong-table .classic-seat.seat-across{top:6px;max-width:170px}
+ .mahjong-table .classic-seat b{max-width:43px;font-size:9px}
+ .mahjong-table .classic-seat.seat-across b{max-width:105px}
+ .mahjong-table .classic-avatar{width:26px;height:26px;font-size:18px}
+ .mahjong-table .classic-seat small{font-size:7px}
+ .mahjong-table .mahjong-public{inset:70px 58px 9px}
+ .rack-across{top:49px;left:23%;right:23%}
+ .rack-left{left:49px}.rack-right{right:49px}
+ .rack-left,.rack-right{width:13px}
+ .rack-left .classic-face,.rack-right .classic-face{width:13px;height:9px}
+ .mahjong-table .river-across,.mahjong-table .river-self{left:16%;width:68%;height:32%}
+ .mahjong-table .river-left,.mahjong-table .river-right{top:32%;width:31%;height:36%}
+ .mahjong-table .river-seat{padding:0;gap:0}
+ .mahjong-table .river-seat>header{font-size:8px;gap:1px}
+ .mahjong-table .river-seat>header>span{font-size:7px}
+ .mahjong-table .river .classic-face.mini{width:19px;min-width:19px;max-width:19px}
+ .mahjong-table .mahjong-melds{max-height:25px}
+ .mahjong-table .mahjong-melds .classic-face.mini{width:14px;min-width:14px}
+ .mahjong-table .mahjong-compass{width:37px;height:37px;border-radius:8px;font-size:6px}
+ .mahjong-table .mahjong-compass>b{font-size:14px}
+ .mahjong-table .mahjong-latest .classic-face{width:27px}
+ .mahjong-table .mahjong-latest>b{font-size:7px}
+ .mahjong-table .mahjong-latest>small{max-width:40px;font-size:7px}
+ .game-table-doudizhu .classic-arena{min-height:210px;border-radius:25px}
+ .game-table-doudizhu .classic-seat.seat-left,.game-table-doudizhu .classic-seat.seat-right{top:55px;max-width:105px}
+ .game-table-doudizhu .classic-felt{inset:7px 10px 39px}
+ .game-table-doudizhu .poker-play-area{margin-top:96px;max-width:82%;min-height:70px}
+ .game-table-doudizhu .played-caption{font-size:10px;margin-bottom:3px}
+ .game-table-doudizhu .played .classic-face{width:32px}
+ .game-table-doudizhu .classic-seat.seat-self{bottom:5px}
+}
+@media(max-height:650px) and (orientation:portrait){
+ .mahjong-table .classic-arena{min-height:244px}
+ .mahjong-table .classic-card,.game-table-doudizhu .classic-card{max-width:48px;height:64px;aspect-ratio:auto}
+ .mahjong-table .classic-hand-scroll,.game-table-doudizhu .classic-hand-scroll{padding-top:7px;padding-bottom:5px}
+ .mahjong-table .classic-hand-panel,.game-table-doudizhu .classic-hand-panel{padding-top:4px;padding-bottom:5px}
+ .game-table-doudizhu .classic-arena{min-height:220px}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .mahjong-table .classic-arena{min-height:149px}
+ .mahjong-table .classic-seat.seat-left,.mahjong-table .classic-seat.seat-right{top:33%!important;flex-direction:row;width:105px;max-width:105px}
+ .mahjong-table .classic-seat.seat-across{top:3px!important}
+ .mahjong-table .classic-seat b{max-width:67px}
+ .mahjong-table .mahjong-public{inset:31px 117px 4px}
+ .mahjong-table .river-across,.mahjong-table .river-self{left:27%;width:46%;height:36%}
+ .mahjong-table .river-left,.mahjong-table .river-right{top:22%;width:26%;height:65%}
+ .mahjong-table .river{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;min-height:23px}
+ .mahjong-table .river-seat{display:flex;padding:0;gap:0}
+ .mahjong-table .river-seat .mahjong-melds{max-width:100%;max-height:20px;min-height:0}
+ .mahjong-table .river-seat:has(.mahjong-melds:not(:empty)){overflow-y:auto}
+ .mahjong-table .river .classic-face.mini{width:17px;min-width:17px;max-width:17px}
+ .mahjong-table .river-left .river .classic-face,.mahjong-table .river-right .river .classic-face{margin:2px}
+ .mahjong-table .river-seat>header{font-size:8px;line-height:10px}
+ .mahjong-table .river-seat>header>span{font-size:7px}
+ .mahjong-table .mahjong-center{top:36%;height:28%;left:38%;width:24%}
+ .mahjong-table .mahjong-compass{width:29px;height:29px;font-size:5px;border-radius:6px}
+ .mahjong-table .mahjong-compass>b{font-size:11px}
+ .mahjong-table .mahjong-latest{gap:0}
+ .mahjong-table .mahjong-latest .classic-face{width:22px}
+ .mahjong-table .mahjong-latest>small{display:none}
+ .mahjong-table .mahjong-latest>b{font-size:6px}
+ .rack-across{display:none}
+ .rack-left{left:107px}.rack-right{right:107px}
+ .rack-left,.rack-right{top:20%;bottom:10%}
+ .rack-left .classic-face,.rack-right .classic-face{height:7px;width:11px}
+ .mahjong-table .classic-hand-panel,.game-table-doudizhu .classic-hand-panel{grid-template-columns:minmax(0,1fr) minmax(158px,27%);padding:4px 8px}
+ .mahjong-table .classic-card,.game-table-doudizhu .classic-card{height:60px;width:44px;max-width:44px}
+ .mahjong-table .classic-action-panel,.game-table-doudizhu .classic-action-panel{max-height:104px}
+ .game-table-doudizhu .classic-arena{min-height:150px;border-radius:25px}
+ .game-table-doudizhu .classic-seat.seat-left,.game-table-doudizhu .classic-seat.seat-right{top:22%!important}
+ .game-table-doudizhu .classic-felt{inset:5px 10px 28px;flex-direction:column}
+ .game-table-doudizhu .classic-bottom{padding:2px 8px}
+ .game-table-doudizhu .poker-play-area{margin-top:45px;min-height:50px;max-width:65%}
+ .game-table-doudizhu .played .classic-face{width:25px}
+ .game-table-doudizhu .classic-seat.seat-self{bottom:3px}
+ .game-table-doudizhu .played-caption{font-size:9px}
+ .seat-turn-label{font-size:7px;bottom:-7px;padding:1px 5px}
+}
+@media(max-height:350px) and (orientation:landscape){
+ .game-table-doudizhu .classic-arena,.mahjong-table .classic-arena{min-height:124px}
+ .game-table-doudizhu .poker-play-area{margin-top:37px;min-height:40px}
+ .game-table-doudizhu .played .classic-face{width:22px}
+ .mahjong-table .mahjong-public{top:27px}
+ .mahjong-table .classic-hand-panel,.game-table-doudizhu .classic-hand-panel{grid-template-rows:16px auto;gap:0 7px}
+ .mahjong-table .classic-hand-panel>header,.game-table-doudizhu .classic-hand-panel>header{min-height:16px}
+ .mahjong-table .classic-hand-scroll,.game-table-doudizhu .classic-hand-scroll{padding-top:6px;padding-bottom:3px}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .mahjong-table .classic-controls:has(.history-button){grid-template-columns:repeat(3,minmax(44px,1fr))}
+}
+.seat-call{position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);font-size:12px;white-space:nowrap;color:#f4dba0;font-weight:600}
+.latest-river>header{color:#f4d28c!important}
+.mahjong-table .mahjong-compass{overflow:hidden}
+@media(max-height:500px) and (orientation:landscape){.seat-call{font-size:9px;top:calc(100% + 4px)}}
+.game-table-doudizhu .poker-play-area.has-play{width:max-content;min-width:85px}
+.game-table-doudizhu .play-right .classic-cards.played{justify-content:flex-end}
+.game-table-doudizhu .play-self .classic-cards.played{justify-content:center}
+.game-table-doudizhu .classic-seat.seat-self{bottom:14px;max-width:220px;opacity:1}
+.game-table-doudizhu .classic-seat.seat-self>div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 6px;align-items:center}
+.game-table-doudizhu .classic-seat.seat-self small:last-child{display:block;grid-column:1/-1;text-align:center}
+@media(max-height:500px) and (orientation:landscape){
+ .mahjong-table .mahjong-public{top:40px}
+ .mahjong-table .river-across,.mahjong-table .river-self{height:39%}
+ .mahjong-table .mahjong-center{top:39%;height:22%}
+ .game-table-doudizhu .classic-seat.seat-self{bottom:10px}
+ .game-table-doudizhu .classic-felt{bottom:43px}
+}
+@media(max-height:350px) and (orientation:landscape){
+ .game-table-doudizhu .classic-arena,.mahjong-table .classic-arena{min-height:134px}
+ .mahjong-table .mahjong-compass{width:24px;height:24px}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .mahjong-table .river-across:has(.mahjong-melds:not(:empty)),.mahjong-table .river-self:has(.mahjong-melds:not(:empty)){display:grid;grid-template-columns:minmax(0,36%) minmax(0,1fr);grid-template-rows:10px minmax(24px,1fr);column-gap:3px;overflow:hidden}
+ .mahjong-table :is(.river-across,.river-self)>header{grid-column:1/-1;grid-row:1}
+ .mahjong-table :is(.river-across,.river-self) .mahjong-melds{grid-column:1;grid-row:2;max-height:none;align-items:center}
+ .mahjong-table :is(.river-across,.river-self) .river{grid-column:2;grid-row:2;min-width:0;align-items:center}
+}
