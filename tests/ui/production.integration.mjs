@@ -11,6 +11,11 @@ const scenarios=[
  {title:'喵喵危机',count:2,selector:'.bt-table',key:'bombs'},
  {title:'月夜议会',count:6,selector:'.social-table-v2',key:'werewolf-standard',mode:'玩家操作'},
  {title:'迷雾远征',count:5,selector:'.social-table-v2',key:'avalon'},
+ {title:'寿司小宴',count:2,selector:'.ng-table',key:'sushi'},
+ {title:'香料商旅',count:2,selector:'.ng-table',key:'century'},
+ {title:'七彩接龙',count:2,selector:'.ng-table',key:'uno'},
+ {title:'密语行动',count:4,selector:'.wg-table',key:'codenames'},
+ {title:'异词同伴',count:3,selector:'.wg-table',key:'undercover'},
  {title:'月夜议会',count:7,selector:'.social-table-v2',key:'werewolf-judge',mode:'法官主持'},
  {title:'月夜议会',count:6,selector:'.social-table-v2',key:'werewolf-deal',mode:'只发身份'},
 ];
@@ -32,7 +37,7 @@ try{
   await page.goto(base);await page.getByRole('button',{name:'选择晶石商会',exact:true}).waitFor();
  }
  const host=pages[0];
- for(const {title,count,selector,key,mode}of scenarios){
+ for(const {title,count,selector,key,mode}of scenarios.filter(s=>!process.env.TEST_GAMES||process.env.TEST_GAMES.split(',').includes(s.key))){
   await host.getByRole('button',{name:'选择'+title,exact:true}).click();
   if(mode)await host.locator('.wolf-mode-picker button').filter({hasText:mode}).click();
   await host.getByRole('button',{name:/云端联机/}).click();await host.getByRole('button',{name:'创建牌桌',exact:true}).click();
@@ -80,6 +85,15 @@ try{
    }
    await pages[1].reload();await expect(pages[1].locator('.personal-seat small')).toHaveText('第 2 次发牌');
    await expect(pages[1].getByRole('button',{name:'重新发身份',exact:true})).toHaveCount(0);
+  }else if(['sushi','century','uno','codenames','undercover'].includes(key)){
+   // Every recipient restores the authoritative board after reconnecting.
+   for(const p of pages.slice(0,count)){
+    await p.reload();await expect(p.locator(selector)).toBeVisible();
+    await expect(p.locator('.connection')).toHaveText('云端联机');
+    assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,key+' cloud overflow');
+   }
+   if(key==='codenames')for(const p of pages.slice(0,count))await expect(p.locator('.wg-word.wg-assassin')).toHaveCount(0);
+   if(key==='undercover')for(const p of pages.slice(0,count))await expect(p.locator('.wg-secret.wg-open')).toHaveCount(0);
   }else{
    for(const p of pages.slice(0,count)){await expect(p.getByRole('dialog',{name:'我的秘密身份'})).toHaveCount(0);await expect(p.locator('.seat')).toHaveCount(count);}
    await reveal(host);

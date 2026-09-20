@@ -24,8 +24,8 @@ describe('card table decision information',()=>{
   it('shows triple target and requested kind even after a Nope is discarded',()=>{
     const state=bombs.create(players,1),cards=[1,2,3].map(i=>({id:`cat-${i}`,kind:'moonCat' as const,title:'月亮猫'}));
     state.phase={kind:'response',effect:{actor:'a',cards,target:'b',requested:'defuse',cancelled:true,passed:[]}};
-    state.discard=[...cards,{id:'last-nope',kind:'nope',title:'等等'}];
+    state.discard=[...cards,{id:'last-nope',kind:'nope',title:'否决'}];
     const html=renderToStaticMarkup(h(BombsBoard,{view:bombs.view(state,'b'),selfID:"b",command:noop,open:noop}));
-    expect(html).toContain('3 张同名组合');expect(html).toContain('→ 乙');expect(html).toContain('索要安抚');expect(html).toContain('效果已等等');
+    expect(html).toContain('3 张同名组合');expect(html).toContain('→ 乙');expect(html).toContain('索要拆弹');expect(html).toContain('效果已否决');
   });
 });
