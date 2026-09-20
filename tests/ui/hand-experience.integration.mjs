@@ -1,0 +1,48 @@
+import {chromium,webkit,expect} from '@playwright/test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+const base=process.env.BASE_URL||'http://127.0.0.1:5174',safari=process.env.TEST_BROWSER==='webkit';
+const browser=await(safari?webkit.launch():chromium.launch({executablePath:process.env.CHROME_PATH||undefined}));
+const out=`test-results/hand-experience-${safari?'webkit':'chrome'}`;await fs.mkdir(out,{recursive:true});const errors=[];
+const sizes=[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900],[568,320]];
+try{
+ for(const locale of ['zh','en'])for(const [width,height]of sizes){
+  const context=await browser.newContext({viewport:{width,height},hasTouch:true});await context.addInitScript(l=>localStorage.setItem('mocha-locale',l),locale);
+  const page=await context.newPage();page.setDefaultTimeout(6000);page.on('pageerror',e=>errors.push(e.message));
+  const go=kind=>page.goto(`${base}/tests/ui/i18n.fixture.html?kind=${kind}`);
+  const fit=async locator=>{const r=await locator.boundingBox();assert(r&&r.x>=0&&r.y>=0&&r.x+r.width<=width+1&&r.y+r.height<=height+1,JSON.stringify(r));};
+  await go('sushi');const cards=page.locator('.ng-sushi-hand-panel .ng-sushi-card');assert.equal(await cards.count(),10);
+  const row=await cards.evaluateAll(xs=>xs.map(x=>x.getBoundingClientRect().y));assert(Math.max(...row)-Math.min(...row)<1);
+  await fit(page.locator('.ng-sushi-hand-panel'));await cards.first().click();await expect(cards.first()).toHaveAttribute('aria-pressed','true');
+  await page.waitForTimeout(350);await cards.first().click();await expect(cards.first()).toHaveAttribute('aria-pressed','false');
+  await cards.first().focus();await page.keyboard.press('Enter');await page.keyboard.press('Enter');await expect(cards.first()).toHaveAttribute('aria-pressed','false');
+  await cards.last().scrollIntoViewIfNeeded();const touch=await cards.last().boundingBox();await page.touchscreen.tap(touch.x+touch.width/2,touch.y+touch.height/2);await page.touchscreen.tap(touch.x+touch.width/2,touch.y+touch.height/2);await expect(page.locator('.ng-sushi-hand-panel .ng-sushi-card:enabled')).toHaveCount(0);await expect(page.locator('.ng-sushi-card.ng-selected')).toHaveCount(1);
+  await page.getByRole('button',{name:locale==='zh'?'重新选牌':'Choose again',exact:true}).click();await expect(page.locator('.ng-sushi-card.ng-selected')).toHaveCount(0);
+  await cards.first().dblclick();await expect(page.locator('.ng-sushi-card.ng-selected')).toHaveCount(1);
+  await page.getByRole('combobox',{name:'Seat',exact:true}).selectOption('english-player-1');await expect(page.locator('.ng-sushi-card.ng-selected')).toHaveCount(0);
+  await page.screenshot({path:`${out}/sushi-${locale}-${width}.png`});
+  await go('sushi&scenario=chopsticks');
+  await cards.first().dblclick();await expect(page.locator('.ng-sushi-hand-panel .ng-sushi-card:enabled')).toHaveCount(10);await expect(page.locator('.ng-sushi-card.ng-selected')).toHaveCount(0);
+  await cards.first().click();await cards.nth(1).click();await expect(cards.first().locator('.ng-order')).toHaveText('1');await expect(cards.nth(1).locator('.ng-order')).toHaveText('2');
+  await page.setViewportSize({width:height,height:width});await expect(page.locator('.ng-sushi-card.ng-selected')).toHaveCount(2);await page.setViewportSize({width,height});
+  await fit(page.locator('.ng-sushi-confirm'));await page.locator('.ng-sushi-confirm>.ng-action').click();await expect(page.locator('.ng-sushi-card.ng-selected')).toHaveCount(2);
+  await go('century');await fit(page.locator('.ng-century-hand-dock'));await fit(page.locator('.ng-century-hand-panel .ng-spice-card').first());
+  await page.locator('.ng-century-overview').evaluate(e=>e.scrollTop=e.scrollHeight);await fit(page.locator('.ng-century-hand-dock'));
+  await page.locator('.ng-century-hand-panel .ng-spice-card').nth(1).click();await fit(page.locator('.ng-pocket-active'));await expect(page.locator('.ng-century-hand-panel')).toHaveCount(0);
+  await page.getByRole('button',{name:locale==='zh'?'再升级 2 次':'Up to 2 more upgrades',exact:true}).click();await page.setViewportSize({width:height,height:width});
+  assert(await page.locator('.action-sheet').evaluate(e=>{const r=e.getBoundingClientRect();return r.x>=0&&r.y>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1;}));
+  await page.keyboard.press('Escape');await page.setViewportSize({width,height});
+  await page.getByRole('button',{name:locale==='zh'?'结束升级':'Finish upgrading',exact:true}).click();await expect(page.locator('.ng-pocket-active')).toHaveCount(0);
+  await page.screenshot({path:`${out}/century-${locale}-${width}.png`});
+  await go('bombs');if(width<=600&&height>=451)await fit(page.locator('.bt-hand-zone'));const hand=page.locator('.bt-hand .bt-card');const attack=hand.filter({hasText:locale==='zh'?'攻击':'Attack'}).first(),skip=hand.filter({hasText:locale==='zh'?'跳过':'Skip'}).first();
+  await attack.click();await skip.click();await expect(page.locator('.bt-hand .bt-selected')).toHaveCount(1);await expect(skip).toHaveAttribute('aria-pressed','true');
+  await page.waitForTimeout(350);await skip.click();await expect(page.locator('.bt-hand .bt-selected')).toHaveCount(0);
+  const count=await hand.count();await attack.dblclick();await expect(hand).toHaveCount(count-1);await expect(page.locator('.bt-response')).toBeVisible();
+  await page.screenshot({path:`${out}/bombs-${locale}-${width}.png`});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  await go('bombs&scenario=combo');const pair=hand.filter({hasText:locale==='zh'?'跳过':'Skip'});await pair.nth(0).click();await pair.nth(1).click();await pair.nth(1).dblclick();await expect(page.locator('.bt-hand .bt-selected')).toHaveCount(2);await expect(page.locator('.bt-response')).toHaveCount(0);
+  await page.locator('.bt-focus .bt-primary').click();await expect(page.locator('.bt-phase-target')).toBeVisible();
+  await page.getByRole('combobox',{name:'Seat',exact:true}).selectOption('english-player-1');await expect(page.locator('.bt-hand .bt-selected')).toHaveCount(0);
+  await context.close();console.log(`PASS hand usability ${locale} ${width}x${height}`);
+ }
+ assert.deepEqual(errors,[]);
+}finally{await browser.close();}
