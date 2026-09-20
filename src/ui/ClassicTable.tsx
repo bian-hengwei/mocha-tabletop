@@ -1,4 +1,4 @@
-import {useEffect,useState,type CSSProperties} from 'react';
+import {useEffect,useState,type CSSProperties,type MouseEvent} from 'react';
 import {t} from '../i18n';
 import {History,X} from 'lucide-react';
 import type {Action,Command,GameView} from '../core/types';
@@ -6,6 +6,7 @@ import {combinationKey,legalPokerCombinations,pokerTitle,rankName,type PokerCard
 import {MAHJONG_MODES,tileTitle,type Tile} from '../core/games/mahjong';
 import {MahjongArt,PokerArt} from './ClassicCardArt';
 import {useDialog} from './useDialog';
+import {useCardDoubleTap} from './useCardDoubleTap';
 import './classic-table.css';
 import './table-layout.css';
 type Props={view:GameView;selfID:string;command:(c:Command)=>void;open:(a:Action,selected?:string[])=>void};
@@ -20,12 +21,19 @@ export function ClassicTable({view,selfID,command,open}:Props){
  const selectAction=view.actions.find(a=>['play','discard','exchange','return'].includes(a.id));
  const signature=hand.map(c=>c.id).join('|');
  useEffect(()=>setSelected([]),[selfID,b.current,b.phase,b.turn,b.round,signature]);
+ const taps=useCardDoubleTap([selfID,b.current,b.phase,b.turn,b.round,signature].join(':'));
  const chosen=hand.filter(c=>selected.includes(c.id));
  const combinations=!isMahjong&&chosen.length?legalPokerCombinations(chosen as PokerCard[],view.kind as 'doudizhu'|'guandan',b.level,b.last?.combo):[];
  useEffect(()=>setDeclaration(''),[selected.join('|'),selfID,b.current]);
  const combo=combinations.find(c=>combinationKey(c)===declaration)||combinations[0];
  const valid=!!selectAction&&selected.length>=selectAction.min&&selected.length<=selectAction.max&&selected.every(id=>selectAction.choices.some(c=>c.id===id))&&(selectAction.id!=='play'||!!combo)&&(selectAction.id!=='exchange'||new Set((chosen as Tile[]).map(c=>Math.floor(c.value/9))).size===1);
  const toggle=(id:string)=>setSelected(old=>old.includes(id)?old.filter(x=>x!==id):selectAction?.max===1?[id]:old.length<(selectAction?.max||0)?[...old,id]:old);
+ const selectCard=(id:string,event:MouseEvent<HTMLButtonElement>)=>{
+  const repeat=taps.isDoubleTap(id,event);
+  if(isMahjong&&selectAction?.id==='discard'&&repeat&&selectAction.choices.some(c=>c.id===id)){
+   setSelected([]);command({action:'discard',values:[id]});
+  }else toggle(id);
+ };
  const meIndex=b.players.findIndex((p:any)=>p.id===selfID),me=b.players[meIndex];
  const position=(i:number)=>{const offset=(i-meIndex+b.players.length)%b.players.length;return offset===0?'self':offset===1?'right':offset===b.players.length-1?'left':'across';};
  const rows=isMahjong||view.kind==='doudizhu'?1:hand.length>10?2:1,columns=Math.ceil(hand.length/rows);
@@ -47,8 +55,8 @@ export function ClassicTable({view,selfID,command,open}:Props){
    </section>}
   </div>
   <section className="classic-hand-panel">
-   <header><h3><span className="hand-avatar">{me.avatar}</span>{t('我的手牌')} <small>{hand.length}</small><span className="hand-score">{me.score} {t('分')}</span></h3><span className="hand-gesture">{t(selectAction?.id==='exchange'?'同花色三张':selectAction?.id==='return'?'选择还贡牌':'选牌后确认')}<small>{t('手牌可左右滑动')}</small></span></header>
-   <div className="classic-hand-scroll" tabIndex={0} aria-label={t('手牌可左右滑动')}><div className="classic-cards classic-hand" style={{'--hand-columns':columns,'--hand-total':hand.length,'--hand-rows':rows} as CSSProperties} aria-label={t('我的手牌')}>{hand.map(c=><button type="button" key={c.id} className={`classic-card ${selected.includes(c.id)?'selected':''} ${isMahjong&&c.id===b.drawn?'drawn':''} ${!isMahjong&&view.kind==='guandan'&&(c as PokerCard).suit===1&&(c as PokerCard).rank===(b.level===2?15:b.level)||isMahjong&&(c as Tile).value===b.wildValue?'wild-card':''}`} aria-label={t(isMahjong?tileTitle(c as Tile):pokerTitle(c as PokerCard))} aria-pressed={selected.includes(c.id)} disabled={!selectAction?.choices.some(x=>x.id===c.id)} onClick={()=>toggle(c.id)}><Face card={c} mahjong={isMahjong}/><span className="card-selected-mark" aria-hidden="true">✓</span>{isMahjong&&c.id===b.drawn&&<span className="drawn-marker" aria-hidden="true"/>}</button>)}</div></div>
+   <header><h3><span className="hand-avatar">{me.avatar}</span>{t('我的手牌')} <small>{hand.length}</small><span className="hand-score">{me.score} {t('分')}</span></h3><span className="hand-gesture">{t(selectAction?.id==='exchange'?'同花色三张':selectAction?.id==='return'?'选择还贡牌':isMahjong&&selectAction?.id==='discard'?'选牌后确认，或双击打出':'选牌后确认')}<small>{t('手牌可左右滑动')}</small></span></header>
+   <div className="classic-hand-scroll" tabIndex={0} aria-label={t('手牌可左右滑动')}><div className="classic-cards classic-hand" style={{'--hand-columns':columns,'--hand-total':hand.length,'--hand-rows':rows} as CSSProperties} aria-label={t('我的手牌')}>{hand.map(c=><button type="button" key={c.id} className={`classic-card ${selected.includes(c.id)?'selected':''} ${isMahjong&&c.id===b.drawn?'drawn':''} ${!isMahjong&&view.kind==='guandan'&&(c as PokerCard).suit===1&&(c as PokerCard).rank===(b.level===2?15:b.level)||isMahjong&&(c as Tile).value===b.wildValue?'wild-card':''}`} aria-label={t(isMahjong?tileTitle(c as Tile):pokerTitle(c as PokerCard))} aria-pressed={selected.includes(c.id)} disabled={!selectAction?.choices.some(x=>x.id===c.id)} onPointerDown={taps.onPointerDown} onClick={e=>selectCard(c.id,e)}><Face card={c} mahjong={isMahjong}/><span className="card-selected-mark" aria-hidden="true">✓</span>{isMahjong&&c.id===b.drawn&&<span className="drawn-marker" aria-hidden="true"/>}</button>)}</div></div>
    <div className="classic-action-panel"><div className={`classic-selection ${view.actions.length?'actionable':''}`} aria-live="polite">{selected.length?`${t('已选')} ${selected.length} · ${t(combo?.type||(valid?'可以确认':'请调整选牌'))}`:t(isMahjong&&me?.won&&b.mode==='bloodflow'?'已胡牌：只打新摸牌':view.instruction)}</div>
     {selectAction?.id==='play'&&combinations.length>1&&<label className="classic-declare">{t('出牌牌型')}<select aria-label={t('出牌牌型')} value={combo?combinationKey(combo):''} onChange={e=>setDeclaration(e.target.value)}>{combinations.map(c=><option key={combinationKey(c)} value={combinationKey(c)}>{t(c.type)}{c.bomb>=100?'':` · ${t(rankName(view.kind==='guandan'&&c.power===17?(b.level===2?15:b.level):view.kind==='guandan'&&c.power>=18?c.power-2:c.power))}`}</option>)}</select></label>}
     <div className="classic-controls">{selectAction&&<><button className="compact primary" disabled={!valid} onClick={submit}>{t(selectAction.id==='play'?'出牌':selectAction.id==='discard'?'打出':selectAction.id==='exchange'?'确认换牌':'确认还贡')}{selected.length?` (${selected.length})`:''}</button>{!isMahjong&&selectAction.id==='play'&&<button className="compact" disabled={!b.hint?.length} onClick={()=>setSelected(b.hint)}>{t(b.hint?.length?'提示':'无可压过的牌')}</button>}<button className="compact" disabled={!selected.length} onClick={()=>setSelected([])}>{t('清空选择')}</button></>}{view.actions.filter(a=>a!==selectAction).map(a=>a.id==='bid'?a.choices.map(c=><button key={c.id} className="compact primary" onClick={()=>command({action:a.id,values:[c.id]})}>{c.id==='0'?t('不叫'):`${t('叫分')} ${c.id}`}</button>):<button key={a.id} className={`compact ${['hu','nextRound'].includes(a.id)?'primary':''}`} onClick={()=>a.choices.length?open(a):command({action:a.id,values:[]})}>{t(a.title)}</button>)}{isMahjong&&b.wins.length>0&&<button className="compact history-button" aria-label={`${t('胡牌记录')} (${b.wins.length})`} onClick={()=>setHistoryOpen(true)}><History size={15}/><span>{b.wins.length}</span></button>}</div>

@@ -43,6 +43,8 @@ jobs:
           node tests/ui/language.integration.mjs
           node tests/ui/i18n.integration.mjs
           node tests/ui/mahjong-actions.integration.mjs
+          node tests/ui/mahjong-experience.integration.mjs
+          node tests/ui/uno-experience.integration.mjs
           node tests/ui/poker-declaration.integration.mjs
           node tests/ui/identity-portraits.integration.mjs
           node tests/ui/illustrated-games.integration.mjs
