@@ -1,6 +1,7 @@
 import {beforeEach,expect,it} from 'vitest';
 import {makeRecord,saveRecord,readHistory,deleteRecord,readProfile} from '../src/local/storage';
 import type {GameView,Player} from '../src/core/types';
+import { standardWerewolf } from '../src/core/games/werewolf';
 const entries=new Map<string,string>();
 const storage={getItem:(k:string)=>entries.get(k)||null,setItem:(k:string,v:string)=>entries.set(k,v),removeItem:(k:string)=>entries.delete(k)};
 const player:Player={id:'player-0001',name:'小猫',avatar:'🐱'};
@@ -13,3 +14,24 @@ it('handles teams, shared winners, and moderator records',()=>{expect(makeRecord
 it('reports storage failures rather than claiming success',()=>{Object.defineProperty(globalThis,'localStorage',{value:{...storage,setItem:()=>{throw Error('quota');}},configurable:true});expect(()=>saveRecord(makeRecord(view({}),'a',player.id,player,'cloud')!)).toThrow('quota');});
 
 it('records a shared team victory as a win rather than a draw',()=>{for(const kind of ['codenames','undercover'] as const)expect(makeRecord(view({winners:[player.id,'teammate']},kind),'team',player.id,player,'cloud')?.result).toBe('win');});
+
+it('records Wolf King team results correctly for current views and legacy views without role keys',()=>{
+ const roster=Array.from({length:12},(_,i)=>({...player,id:`history-wolf-${i}`,name:`玩家${i}`}));
+ for(const preset of ['wolfKing','idiot'] as const){
+  const game=standardWerewolf.create(roster,51,{werewolfPreset:preset});
+  for(const wolfVictory of [true,false]){
+   game.winner=wolfVictory?'狼人获胜 · 屠边成功':'好人获胜 · 狼人全部出局';
+   for(const p of roster){
+    const v=standardWerewolf.view(game,p.id),wolfTeam=game.roles[p.id]==='wolf'||game.roles[p.id]==='wolfKing';
+    for(const legacy of [false,true]){
+     const terminal=structuredClone(v);if(legacy)delete terminal.board.ownRoleKey;
+     const record=makeRecord(terminal,`${preset}-${wolfVictory}-${p.id}-${legacy}`,p.id,p,'cloud')!;
+     expect(record.result).toBe(wolfTeam===wolfVictory?'win':'loss');
+     expect(saveRecord(record)).toBe(true);
+     expect(readHistory()[0].result).toBe(record.result);
+     expect(Object.keys(record)).not.toContain('roles');
+    }
+   }
+  }
+ }
+});

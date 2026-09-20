@@ -1,5 +1,7 @@
 /** Complete engine and connection copy. Keys remain the engine's stable Chinese text. */
 export const gameText:Record<string,string>={
+'身份牌配置与房间不一致':'Saved role lineup does not match this table',
+'开枪':'Shoot','白痴翻牌，警徽流失。':'The Fool reveals and the leader badge is destroyed.',
  '七彩接龙质疑设置无效':'Invalid Color Dash challenge setting','七彩接龙存档质疑设置与房间不一致':'Color Dash checkpoint challenge setting does not match the room',
  '仅无当前颜色时可出；下一家自动抽 4 张并跳过':'Only playable without the current color. The next player automatically draws four and skips.',
  '单局模式 · 手动喊剩一张 · +4 自动验证':'Single round · Manual last-card call · +4 legality enforced',
@@ -146,6 +148,10 @@ export const gameText:Record<string,string>={
 /** Anchored sentence templates. Translate captured text recursively before substitution. */
 const spiceUnit='(🟡|🔴|🟢|🟤) (姜黄|藏红花|豆蔻|肉桂) (\\d+)';
 export const gamePatterns:[RegExp,string,number[]?][]=[
+ [/^(.+) · 开枪$/,'$1 · Shoot'],
+ [/^(.+) 开枪带走了 (.+)。$/,'$1 shot $2.'],
+ [/^(.+) 翻开白痴身份，免于放逐，失去投票权。$/,'$1 reveals as the Fool, survives exile and loses their vote.'],
+ [/^此角色预设需要 (\d+) 位玩家$/,'This role preset requires $1 players'],
  [/^((?:🟡|🔴|🟢|🟤).+?) → ((?:🟡|🔴|🟢|🟤).+)$/,'$1 → $2',[1,2]],
  ...[4,3,2,1].map((n):[RegExp,string,number[]]=>[new RegExp('^'+Array(n).fill(spiceUnit).join(' · ')+'$'),Array.from({length:n},(_,i)=>'$'+(i*3+1)+' $'+(i*3+2)+' $'+(i*3+3)).join(' · '),Array.from({length:n},(_,i)=>i*3+2)]),
  [/^(\d+) 人局 · 人数平衡 · 首夜结束后竞选警长$/,'$1 players · Population-parity rules · Speaker election after the first night'],
