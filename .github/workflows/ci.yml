@@ -25,7 +25,9 @@ jobs:
         run: |
           npm run dev -- --port 5174 --strictPort > "$RUNNER_TEMP/mocha-vite.log" 2>&1 &
           server_pid=$!
-          trap 'kill "$server_pid"' EXIT
+          npx wrangler dev --local --port 8787 --persist-to "$RUNNER_TEMP/mocha-worker" > "$RUNNER_TEMP/mocha-worker.log" 2>&1 &
+          worker_pid=$!
+          trap 'kill "$server_pid" "$worker_pid"' EXIT
           for attempt in {1..30}; do
             if curl -fsS "$BASE_URL" > /dev/null; then break; fi
             sleep 1
@@ -38,3 +40,5 @@ jobs:
           node tests/ui/werewolf-lineups.integration.mjs
           node tests/ui/proactive-new-games.integration.mjs
           node tests/ui/word-usability.integration.mjs
+          curl -fsS "$BASE_URL/api/health"
+          node tests/ui/lobby-layout.integration.mjs
