@@ -28,6 +28,9 @@ npx playwright install chromium webkit
 | `node tests/ui/illustrated-games.integration.mjs` | 寿司/商旅/接龙双语插画、牌面数值与手机/桌面尺寸 |
 | `node tests/ui/word-privacy.integration.mjs` | 秘密信息换座再切回隐藏、完整重开与词语游戏布局 |
 | `node tests/ui/app-usability.integration.mjs` | 首次进入语言切换、原生语言名称、语言记忆、精确教程和多层弹窗键盘操作 |
+| `node tests/ui/profile-input.integration.mjs` | 中英昵称输入：输入法候选确认不提前提交，普通回车保存、关闭及刷新记忆；支持 WebKit |
+| `node tests/ui/dialog-boundaries.integration.mjs` | 安装说明焦点约束、背景不可交互、旋转和关闭后焦点恢复；输入法 Escape/Tab 不触发弹窗快捷键；支持 WebKit |
+| `node tests/ui/storage-boundaries.integration.mjs` | 存储区属性不可读时首屏、临时身份及标签页恢复入口可用；恢复 socket 在测试内拦截，不连接真实房间；支持 WebKit |
 | `node tests/ui/lobby-usability.integration.mjs` | 开局等待原因、访客只读规则、修改规则后重新准备和手机布局 |
 | `node tests/ui/lobby-layout.integration.mjs` | 狼人杀长规则与待审批入桌请求的中英七尺寸旋转、按钮触控、实际批准/准备/开局；需要本地 Worker，支持 WebKit |
 | `node tests/ui/dialogs.integration.mjs` | 宝石、卡牌与秘密身份弹窗的焦点保护、Escape 和恢复 |
@@ -79,3 +82,5 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `tests/ui/werewolf-lineups.integration.mjs`：四种固定板型的中英选择、角色配比、三模式、独立身份插画、刷新后重开保留规则（支持 TEST_BROWSER=webkit）。
 - `tests/ui/proactive-new-games.integration.mjs`：手机付款/升级操作无需滚动、UNO无可出牌时抽牌优先、寿司确认状态。
 - `tests/ui/word-usability.integration.mjs`：异步拒绝保留线索、成功清空、隐藏词后准备、投票和发言进度。
+
+输入法回归使用浏览器 DOM 键盘事件覆盖 `isComposing` 和兼容性的 `keyCode=229` 路径，随后用真实键盘事件验证普通 Enter/Escape；这不等同于系统输入法真机验收。事件边界依据 [MDN 的 IME 键盘事件说明](https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event#keydown_events_with_ime)。
