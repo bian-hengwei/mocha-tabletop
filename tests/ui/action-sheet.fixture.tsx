@@ -1,0 +1,22 @@
+import {useEffect,useState} from 'react';
+import {createRoot} from 'react-dom/client';
+import {ActionDock,ActionSheet} from '../../src/ui/Boards';
+import {avalon} from '../../src/core/games/avalon';
+import {action,type Action,type Command} from '../../src/core/types';
+import {useLocale} from '../../src/i18n';
+import '../../src/ui/style.css';
+const players=Array.from({length:10},(_,i)=>({id:`player-${i}`,name:['Mocha','梅林','UNO爱好者','同意','🌻'][i%5]+` ${i+1}`,avatar:'🦊'}));
+const state=avalon.create(players,4),initial=avalon.view(state,players[state.leader].id),proposal=initial.actions[0];
+const scenario=new URLSearchParams(location.search).get('scenario');
+const initialAction=scenario==='zero'?action('explode','自爆',[],0,0,'公开狼人身份，自爆后立即结束白天。'):scenario==='range'?action('pick','确认选牌',proposal.choices,1,2):proposal;
+function Fixture(){useLocale();const [current,setCurrent]=useState<Action|null>(initialAction),[selected,setSelected]=useState<Action|null>(null),[sent,setSent]=useState<Command[]>([]);
+ const view={...initial,actions:current?[current]:[],instruction:'轮到你了'};
+ useEffect(()=>{const receive=(event:Event)=>{const kind=(event as CustomEvent<string>).detail;
+  if(kind==='remove')setCurrent(null);
+  if(kind==='shrink')setCurrent({...proposal,title:'选择 1 名队员',help:'两张失败牌才会失败',min:1,max:1,choices:proposal.choices.slice(1)});
+  if(kind==='refresh')setCurrent({...proposal,choices:proposal.choices.slice(1)});
+ };window.addEventListener('action-update',receive);return()=>window.removeEventListener('action-update',receive);},[]);
+ const submit=(cmd:Command)=>{if(cmd.values.includes('player-0'))throw Error('选择已失效，请重新选择');setSent(old=>[...old,cmd]);};
+ return <main className="app in-game"><header className="topbar"><b>Action sheet audit</b><output data-testid="commands">{JSON.stringify(sent)}</output></header><ActionDock view={view} command={submit} open={setSelected}/>{selected&&<ActionSheet action={selected} selected={[]} view={view} onSubmit={submit} onClose={()=>setSelected(null)}/>}</main>;
+}
+createRoot(document.getElementById('root')!).render(<Fixture/>);

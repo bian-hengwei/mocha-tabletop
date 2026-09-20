@@ -40,6 +40,8 @@ npx playwright install chromium webkit
 | `node tests/ui/word-privacy.integration.mjs` | 秘密信息换座再切回隐藏、完整重开与词语游戏布局 |
 | `node tests/ui/app-usability.integration.mjs` | 首次进入语言切换、原生语言名称、语言记忆、精确教程和多层弹窗键盘操作 |
 | `node tests/ui/player-names.integration.mjs` | 中英昵称与系统术语隔离：座位、秘密情报、法官面板、选人及真实库存弹窗；支持 WebKit |
+| `node tests/ui/action-sheet.integration.mjs` | 最新操作与失效选项、数量范围、错误恢复、取消，以及真实投票昵称和牌面词确认；中英七尺寸与旋转，需 Vite，支持 WebKit |
+| `node tests/ui/pwa-update.integration.mjs` | 独立临时 HTTP 服务上的真实 Service Worker 升级、安装等待、旧缓存清理、断网资源与 API 不缓存；Chromium，无需启动应用服务 |
 | `node tests/ui/history-names.integration.mjs` | 历史记录、附近房主及离线名单在中英切换后保留原名；本地模拟网络；支持 WebKit |
 | `node tests/ui/profile-input.integration.mjs` | 中英昵称输入：输入法候选确认不提前提交，普通回车保存、关闭及刷新记忆；支持 WebKit |
 | `node tests/ui/dialog-boundaries.integration.mjs` | 安装说明焦点约束、背景不可交互、旋转和关闭后焦点恢复；输入法 Escape/Tab 不触发弹窗快捷键；支持 WebKit |
@@ -83,7 +85,7 @@ BASE_URL=https://mocha-tabletop-web.pages.dev node tests/ui/production.integrati
 TEST_BROWSER=webkit BASE_URL=https://mocha-tabletop-web.pages.dev node tests/ui/production.integration.mjs
 ```
 
-它覆盖九款游戏的真实多人房间、断线恢复、三种狼人模式和缓存资源。可用 `TEST_GAMES=gems,bombs,avalon,undercover` 选择补充浏览器的联机场景；默认运行全部。连续验收应遵守每 IP 每 10 分钟最多创建 15 个房间的限制，本地大批量测试可以使用独立的 Wrangler `--persist-to` 临时目录。离线导航由 Chromium 回归验证；WebKit 自动化不等同于真实 iPhone 的主屏幕安装和离线行为，这部分仍需真机检查。
+它覆盖九款游戏的真实多人房间、断线恢复、三种狼人模式和缓存资源。可用 `TEST_GAMES=gems,bombs,avalon,undercover` 选择补充浏览器的联机场景；默认运行全部，未知或空的场景名称会在创建房间前报错。连续验收应遵守每 IP 每 10 分钟最多创建 15 个房间的限制，本地大批量测试可以使用独立的 Wrangler `--persist-to` 临时目录。离线检查等待已激活的页面控制器及当前页面所需缓存资源，而非仅统计缓存条数。离线导航由 Chromium 回归验证；WebKit 仅验证控制器和缓存资源，因为测试环境中的最小独立 Service Worker 也无法通过模拟断网导航。真实 iPhone 的主屏幕安装和离线行为仍需真机检查。针对联机的单独复测可设置 `TEST_SKIP_OFFLINE=1`，输出会明确标记跳过。
 
 ## 独立副本验收
 
