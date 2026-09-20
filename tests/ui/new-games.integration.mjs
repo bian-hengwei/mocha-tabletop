@@ -44,7 +44,7 @@ try{
  let returned=false,claimed=false,traded=false;const coverage=new Set(['acquire','payment','upgrade']);
  // Pick actions exclusively from visible cards and resource labels. No engine or stored game access.
  const counts=async()=>panel('你的商队').locator('.ng-cubes b').evaluateAll(xs=>xs.map(x=>Number(x.textContent)));
- const parse=(text)=>{const symbols=['🟡','🔴','🟢','🟤'];return symbols.map(x=>Number(text.match(new RegExp(x+'\\s*(?:姜黄|藏红花|豆蔻|肉桂)?\\s*(\\d+)'))?.[1]||0));};
+ const parse=(text)=>{const names=['姜黄','藏红花','豆蔻','肉桂'];return names.map(name=>Number(text.match(new RegExp(name+'\\s*(\\d+)'))?.[1]||0));};
  for(let step=0;step<320&&!(returned&&claimed&&traded);step++){
    await active();
    const discard=page.getByRole('button',{name:/^归还 \d+ 枚香料/});
@@ -53,7 +53,7 @@ try{
    // With no upgradable cubes the phase exposes only its finish action.
    if(await endUpgrade.count()&&!await upgrade.count()){await endUpgrade.click();coverage.add('empty-upgrade');continue;}
    if(await upgrade.count()){
-     const cubes=await counts(),goals=await panel('公开订单').locator('.ng-goal>span').allTextContents();const target=goals.map(parse).sort((a,b)=>a.reduce((n,v,i)=>n+Math.max(0,v-cubes[i])*(i+1),0)-b.reduce((n,v,i)=>n+Math.max(0,v-cubes[i])*(i+1),0))[0];
+     const cubes=await counts(),goals=await panel('公开订单').locator('.ng-goal>.ng-order-cost').allTextContents();const target=goals.map(parse).sort((a,b)=>a.reduce((n,v,i)=>n+Math.max(0,v-cubes[i])*(i+1),0)-b.reduce((n,v,i)=>n+Math.max(0,v-cubes[i])*(i+1),0))[0];
      const index=cubes.findIndex((v,i)=>i<3&&v>target[i]&&target.some((t,j)=>j>i&&t>cubes[j]));
      if(index<0)await page.getByRole('button',{name:'结束升级',exact:true}).click();else{await upgrade.click();await page.locator('.action-sheet .choice').filter({hasText:['姜黄','藏红花','豆蔻'][index]}).click();await confirm();}continue;
    }

@@ -2,15 +2,20 @@ import {t} from '../i18n';
 function tx<T>(value: T): T | string { return typeof value === 'string' ? t(value) : value; }
 import { useId } from 'react';
 const roleKeys = ['wolf', 'seer', 'witch', 'hunter', 'guard', 'villager', 'merlin', 'percival', 'morgana', 'assassin', 'loyal', 'evil'];
-export function RoleArt({ role, className = '', align = 'center' }: {
+export function RoleArt({ role, className = '', align = 'center', fit = 'cover' }: {
     role: string;
     className?: string;
     align?: 'top' | 'center';
+    fit?: 'cover' | 'contain';
 }) {
+    const clipID = useId().replace(/:/g, '');
     const aliases: Record<string, string> = { servant: 'loyal', minion: 'evil', moderator: 'seer' };
     const index = Math.max(0, roleKeys.indexOf(aliases[role] || role));
     const tile = index % 6;
-    return <svg className={`role-art ${className}`} viewBox={`${tile % 3 * 100} ${Math.floor(tile / 3) * 150} 100 150`} preserveAspectRatio={align === 'top' ? 'xMidYMin slice' : 'xMidYMid slice'} aria-hidden="true"><image href={`/art/roles-${index < 6 ? 'wolf' : 'avalon'}-v2.jpg`} width="300" height="300"/></svg>;
+    const x = tile % 3 * 100, y = Math.floor(tile / 3) * 150;
+    // Clip the sprite before fitting it: letterboxing must never reveal an
+    // adjacent role from the shared illustration sheet.
+    return <svg className={`role-art ${className}`} viewBox={`${x} ${y} 100 150`} preserveAspectRatio={`${align === 'top' ? 'xMidYMin' : 'xMidYMid'} ${fit === 'contain' ? 'meet' : 'slice'}`} aria-hidden="true"><defs><clipPath id={clipID}><rect x={x} y={y} width="100" height="150"/></clipPath></defs><image clipPath={`url(#${clipID})`} href={`/art/roles-${index < 6 ? 'wolf' : 'avalon'}-v2.jpg`} width="300" height="300"/></svg>;
 }
 export function CardArt({ card, className = '' }: {
     card: {
