@@ -97,7 +97,7 @@ export const gameText:Record<string,string>={
  '不用药':'Use no remedy','无人':'Nobody','解药已用，不再获知刀口':'The rescue remedy is used; the Wolf attack is no longer shown','退水':'Withdraw candidacy','自爆':'Reveal and leave',
  '好人获胜 · 狼人全部出局':'Council wins · All Werewolves have left','狼人获胜 · 屠边成功':'Werewolves win · One council group has no players left',
  '本局无警长。':'There is no council speaker.','连续两次警上自爆，警徽流失。':'Two election reveals in a row; the speaker badge is removed.',
- '警长竞选推迟到次日。':'The speaker election moves to the next day.','警长选票：':'Speaker votes: ','放逐选票：':'Removal votes: ','弃票':'Abstain',
+ '：':': ','；':'; ','警长竞选推迟到次日。':'The speaker election moves to the next day.','警长选票：':'Speaker votes: ','放逐选票：':'Removal votes: ','弃票':'Abstain',
  '警长竞选未产生结果。':'The election produced no speaker.','无人被放逐。':'Nobody was voted out.','狼人阵营':'Evil team','好人阵营':'Council team','狼队友':'Fellow Werewolves',
  '狼队刀口':'Wolf attacks','空刀':'No selection','药剂':'Remedies','有':'Available','警长竞选 · 上警':'Speaker election · Candidates','警长竞选 · PK':'Speaker election · Runoff',
  '警长竞选 · 发言':'Speaker election · Speeches','警长竞选 · 投票':'Speaker election · Vote','放逐投票':'Removal vote','平票 PK':'Tiebreak discussion','警徽移交':'Badge handover',
@@ -178,8 +178,9 @@ export const gamePatterns:[RegExp,string,number[]?][]=[
  [/^(姜黄|藏红花|豆蔻|肉桂) · (\d+)$/,'$1 · $2',[1]],
  [/^(红色|黄色|绿色|蓝色) (\d+|跳过|反转|\+2)$/,'$1 $2',[1,2]],
  [/^ → (红色|黄色|绿色|蓝色)$/,' → $1',[1]],
+ [/^ → (.+)$/,' → $1'],
  [/^([^；]+) → 弃票$/,'$1 → Abstain'],
- [/^([^；]+)：空刀$/,'$1: No selection'],
+
  [/^(.+) · (\d+) 张同名组合( · 已暂停)?$/,'$1 · $2 matching cards$3',[3]],
 
  [/^需要 (\d+)[–-](\d+) 位不同玩家$/,'Needs $1–$2 distinct players'],[/^需要 (\d+)[–-](\d+) 人$/,'Needs $1–$2 players'],
@@ -188,6 +189,7 @@ export const gamePatterns:[RegExp,string,number[]?][]=[
  [/^刺客选择了 (.+)。$/,'The Assassin chose $1.'],[/^表决：(.+)$/,'Votes: $1',[1]],[/^([^；]+) (赞成|反对)$/,'$1: $2',[2]],
  [/^(\d+) 张同名组合$/,'$1 matching cards'],[/^(\d+) 张(.+)$/,'$1 × $2',[2]],
  [/^(.+) 调皮离场$/,'$1 leaves the round'],[/^(.+) 成为最后的留桌伙伴$/,'$1 is the last kitten at the table'],
+ [/^(.+) 打出 ?(借一张|索取|\d+ 张同名组合) → (.+)$/,'$1 played $2 → $3',[2]],
  [/^(.+) 打出 ?(.+?)( → .+)?$/,'$1 played $2$3',[2,3]],[/^(.+) 从 (.+) 获得一张牌$/,'$1 took a card from $2'],[/^(.+) 没有取得牌$/,'$1 did not receive a card'],
  [/^(.+) 需要完成 (\d+) 个回合$/,'$1 has $2 turns to complete'],[/^等待 (.+) 选择目标$/,'Waiting for $1 to choose a player'],
  [/^等待 (.+) 指定牌名$/,'Waiting for $1 to name a card'],[/^等待 (.+) 放回闹闹牌$/,'Waiting for $1 to return Bomb'],[/^等待 (.+)$/,'Waiting for $1'],
@@ -224,10 +226,12 @@ export const gamePatterns:[RegExp,string,number[]?][]=[
  [/^(.+) 退出警长竞选。$/,'$1 withdrew from the speaker election.'],[/^猎人带走了 (.+)。$/,'The Hunter chose $1 to leave with them.'],
  [/^警徽移交给 (.+)。$/,'The council badge passed to $1.'],[/^(\d+) 号$/,'Seat $1'],
  [/^(.+) · 猎人开枪$/,'$1 · Hunter’s farewell choice'],[/^(.+) · 移交警徽$/,'$1 · Pass the council badge'],
- [/^第 (\d+) (夜|天) · (.+)$/,'$2 $1 · $3',[2,3]],[/^第 (\d+) 夜守护：(.+)$/,'Night $1 protection: $2',[2]],
- [/^第 (\d+) 夜刀口：(.+)$/,'Night $1 Wolf attack: $2',[2]],[/^第 (\d+) 夜用药：(.+)$/,'Night $1 remedy: $2',[2]],
+ [/^第 (\d+) (夜|天) · (.+)$/,'$2 $1 · $3',[2,3]],[/^第 (\d+) 夜守护：空守$/,'Night $1 protection: No protection'],[/^第 (\d+) 夜守护：(.+)$/,'Night $1 protection: $2'],
+ [/^第 (\d+) 夜刀口：空刀$/,'Night $1 Wolf attack: No selection'],[/^第 (\d+) 夜刀口：(.+)$/,'Night $1 Wolf attack: $2'],[/^第 (\d+) 夜用药：(.+)$/,'Night $1 remedy: $2',[2]],
  [/^第 (\d+) 夜查验：(.+) · (狼人|好人)$/,'Night $1 check: $2 · $3',[3]],
  [/^(.+) 警上自爆，(竞选延至次日|警徽流失)。$/,'$1 revealed during the election · $2.',[2]],
  [/^(.+) 公开狼人身份并自爆。$/,'$1 revealed as a Werewolf and left.'],
+ // Name-only fragments follow the more specific game/system templates.
+ [/^([^；]+)：空刀$/,'$1: No selection'],
+ [/^([^；]+) → ([^；]+)$/,'$1 → $2'],
 ];
-

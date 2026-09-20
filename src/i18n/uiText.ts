@@ -297,7 +297,7 @@ export const uiText: Record<string,string> = {
   "打出倒数第二张后，明确选择报单或不报。漏报时其他玩家可抓漏报，令你抽 2 张；也可全部选择放过。不用计时器，也不比网络速度。": "After playing your second-to-last card, explicitly announce your last card or choose not to. Others may catch a missed call, making you draw 2, or all may let it pass. There is no timer or race based on network speed.",
   "+4 可以被质疑。出牌者当时若持有原颜色牌，质疑成功，出牌者抽 4 张；否则质疑者抽 6 张并跳过。只有质疑者能核验出牌时的手牌。接受 +4 则抽 4 张并跳过。": "You may challenge +4. If the player held the previous color, the challenge succeeds and they draw 4. Otherwise, the challenger draws 6 and skips. Only the challenger sees the hand held at the time. Accepting +4 means drawing 4 and skipping."
 };
-export const uiPatterns: [RegExp,string][] = [
+export const uiPatterns: [RegExp,string,number[]?][] = [
  [/^(\d+) 单 · 金 (\d+) \/ 银 (\d+)$/, '$1 orders · Gold $2 / Silver $3'],
  [/^已选 (\d+) \/ (\d+)$/, 'Selected $1 / $2'],
  [/^已选 (\d+) 张$/, '$1 cards selected'],
@@ -319,5 +319,5 @@ export const uiPatterns: [RegExp,string][] = [
  [/^刀口 · (.+)$/, 'Attack target · $1'],
  [/^(.+)已确认$/, '$1 confirmed'],
  [/^(.+)待响应$/, '$1 awaiting response'],
- [/^删除(.+)战绩$/, 'Delete record: $1'],
+ [/^删除(.+)战绩$/, 'Delete record: $1',[1]],
 ];

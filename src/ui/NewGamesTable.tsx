@@ -32,7 +32,7 @@ function SushiFace({ card, selected, onClick, order, small = false }: {
  card:SushiCard; selected?:boolean; onClick?:()=>void; order?:number; small?:boolean;
 }) {
  const info=SUSHI_INFO[card.kind];
- return <button type="button" disabled={!onClick} aria-label={t(info.title+'：'+info.detail)} aria-pressed={onClick?!!selected:undefined} className={`ng-sushi-card ${selected?'ng-selected':''} ${small?'ng-small':''}`} style={{'--sushi-accent':sushiAccents[card.kind]} as CSSProperties} onClick={onClick}>
+ return <button type="button" disabled={!onClick} aria-label={t(info.title)+t('：')+t(info.detail)} aria-pressed={onClick?!!selected:undefined} className={`ng-sushi-card ${selected?'ng-selected':''} ${small?'ng-small':''}`} style={{'--sushi-accent':sushiAccents[card.kind]} as CSSProperties} onClick={onClick}>
   <span className="ng-sushi-illustration"><IllustratedTile kind="sushi" index={sushiIllustrations[card.kind]}/></span>
   <b>{t(info.title)}</b>{!small&&<small>{t(info.detail)}</small>}
   {order!==undefined&&<span className="ng-order">{order}</span>}

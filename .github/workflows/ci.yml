@@ -33,10 +33,13 @@ jobs:
             sleep 1
           done
           node tests/ui/app-usability.integration.mjs
+          node tests/ui/player-names.integration.mjs
+          node tests/ui/history-names.integration.mjs
           node tests/ui/profile-input.integration.mjs
           node tests/ui/dialog-boundaries.integration.mjs
           node tests/ui/storage-boundaries.integration.mjs
           node tests/ui/language.integration.mjs
+          node tests/ui/i18n.integration.mjs
           node tests/ui/mahjong-actions.integration.mjs
           node tests/ui/poker-declaration.integration.mjs
           node tests/ui/identity-portraits.integration.mjs
