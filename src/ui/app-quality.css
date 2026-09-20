@@ -2,8 +2,6 @@
 .rule-options select:disabled,.rule-options input:disabled{opacity:1;color:inherit;cursor:default}
 .language-toggle{min-height:36px;font-size:12px;padding:7px 10px}
 .rule-tabs button:focus-visible,.language-toggle:focus-visible{outline:2px solid #f5d990;outline-offset:3px}
-
-.setup-game-summary{margin:0 0 12px;color:var(--muted);font-size:14px;line-height:1.6;overflow-wrap:anywhere;}
 .game-cover>.cover-painting,.lobby-art>.cover-painting{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .game-cover>.cover-painting{transition:transform .3s ease;filter:brightness(.87)}.game-cover:hover>.cover-painting{transform:scale(1.025)}
 .nearby-list .cover-painting{width:48px;height:58px;border-radius:7px;flex-shrink:0;overflow:hidden}
