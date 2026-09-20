@@ -48,6 +48,7 @@ jobs:
           node tests/ui/classic-assets.integration.mjs
           node tests/ui/classic-orientation.integration.mjs
           node tests/ui/classic-dense.integration.mjs
+          node tests/ui/table-layout.integration.mjs
           node tests/ui/werewolf-lineups.integration.mjs
           node tests/ui/proactive-new-games.integration.mjs
           node tests/ui/word-usability.integration.mjs

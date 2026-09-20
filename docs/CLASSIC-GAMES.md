@@ -63,3 +63,11 @@
 竖屏把手牌分为两行，横屏使用独立操作列；宽横屏麻将可单行展示。手牌较多时采用有提示的横向滚动，保持完整点击区域，不以极窄重叠牌遮住花色和数值。点选后抬起并显示勾选标记，确认后才执行动作；旋转保留选择，换座和牌局阶段改变清空失效选择。牌河与副露在短横屏分别滚动，胡牌记录使用可关闭、可键盘访问的弹窗。
 
 布局参考公开截图中的“手牌位于底部、对手沿桌边、当前出牌居中、操作与牌面分离”层次：[欢乐麻将界面](https://game.xiaomi.com/viewpoint/1270322523_1686536294223_149)、[欢乐斗地主界面](https://game.xiaomi.com/viewpoint/1359077112_1683765830867_100)。仅参考信息组织，不复用代码、插画、标识或资源。
+
+## Table presentation
+
+Mahjong seats and discard rivers are positioned relative to the viewer: self at the bottom, next seat at the right, opposite above, previous seat at the left. Tile faces in the three opponents' rivers point toward their owners while names and counts remain upright. The central wind indicator rotates its labels with the selected seat; its number is the remaining wall count. Opponent racks contain only backs derived from public hand counts. Dense rivers and melds scroll within their assigned region, and the hand rack remains horizontally scrollable with touch-sized tiles in both orientations.
+
+Dou Dizhu places bottom cards above the table, the viewer below and opponents at either side. The latest play moves toward the player who made it. Bid and pass labels use public authoritative state. Selection remains explicit: tap to select or deselect, then confirm; changing seat or turn clears stale selection. The shared Guan Dan rule handling is unchanged.
+
+Layout references: Tencent's publisher listings for [Mahjong](https://apps.apple.com/cn/app/%E6%AC%A2%E4%B9%90%E9%BA%BB%E5%B0%86/id689180123) and [Dou Dizhu](https://apps.apple.com/cn/app/%E8%85%BE%E8%AE%AF%E6%AC%A2%E4%B9%90%E6%96%97%E5%9C%B0%E4%B8%BB/id446324234), reviewed September 20, 2026. These informed conventional table positioning only. Mocha retains its own jade-and-brass interface and the licensed card assets documented in `public/art/classic/SOURCES.json`.

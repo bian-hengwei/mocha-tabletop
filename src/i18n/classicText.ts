@@ -1,4 +1,5 @@
 export const classicText:Record<string,string>={
+ '行动中':'Playing','座位方位':'Seat directions',
  '叫分抢地主，农民联手，先出完牌获胜':'Bid for landlord, team up as farmers, shed your cards first',
  '双副牌对家合作，从 2 升级到 A':'Two-deck partnership, climbing from 2 to A',
  '广麻、川麻、血流与红中赖子，四人同桌':'Guangdong, Sichuan, Blood Flow and Red Dragon Wild for four',
