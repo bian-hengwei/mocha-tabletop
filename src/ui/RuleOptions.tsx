@@ -1,9 +1,11 @@
+import {MAHJONG_MODES} from '../core/games/mahjong';
 import type {GameKind,GameOptions} from '../core/types';
 import {WEREWOLF_PRESETS,WOLF_ROLE_LABELS,werewolfPreset,type WolfRole} from '../core/werewolfPresets';
 import {t} from '../i18n';
 import {RoleArt} from './Art';
 
 export function RuleOptions({kind,options,onChange,disabled=false,playerCount}:{kind:GameKind;options:GameOptions;disabled?:boolean;playerCount?:number;onChange:(next:GameOptions)=>void}) {
+ if(kind==='mahjong')return <div className="rule-options"><label>{t('麻将玩法')}<select disabled={disabled} aria-label={t('麻将玩法')} value={options.mahjongMode||'guangdong'} onChange={e=>onChange({...options,mahjongMode:e.target.value as GameOptions['mahjongMode']})}>{Object.entries(MAHJONG_MODES).map(([key,label])=><option key={key} value={key}>{t(label)}</option>)}</select></label><small>{t('四人桌 · 可碰可杠，不吃牌 · 查看规则了解计分')}</small></div>;
  if(kind==='uno')return <div className="rule-options"><label>{t('比赛长度')}<select disabled={disabled} aria-label={t('比赛长度')} value={options.unoMode||'match'} onChange={e=>onChange({...options,unoMode:e.target.value as GameOptions['unoMode']})}><option value="match">{t('累计 500 分')}</option><option value="single">{t('只玩一轮')}</option></select></label><label className="uno-challenge-toggle"><span>{t('+4 质疑规则')}</span><input type="checkbox" disabled={disabled} role="switch" aria-label={t('+4 质疑规则')} checked={options.unoChallenge!==false} onChange={e=>onChange({...options,unoChallenge:e.target.checked})}/><small>{t(options.unoChallenge===false?'关闭：系统限制非法 +4，直接罚牌':'开启：允许诈出 +4，下家可质疑')}</small></label></div>;
  if(kind!=='werewolf')return null;
  const preset=WEREWOLF_PRESETS.find(p=>p.id===(options.werewolfPreset||'auto'))||WEREWOLF_PRESETS[0];
