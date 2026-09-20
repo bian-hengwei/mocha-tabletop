@@ -12,3 +12,122 @@
 /* Costs remain readable while the compact inventory follows portrait-phone scrolling. */
 .ng-spice-card:disabled{opacity:.86}.ng-spice-card:not(:disabled){border-color:#e0c68599}.ng-pocket{display:none}
 @media(max-width:600px) and (min-height:451px){.ng-pocket{position:sticky;top:0;z-index:3;display:flex;gap:8px;align-items:center;padding:9px 10px;margin:0 0 12px;background:#1b3029f5;border:1px solid #d9c58f55;border-radius:12px;box-shadow:0 5px 15px #0004;backdrop-filter:blur(12px)}.ng-pocket>span{flex-shrink:0;font-size:10px;color:#e6d9b6;line-height:1.7}.ng-pocket>span>small{display:block;color:#bac7b3;font-size:10px}.ng-pocket .ng-cubes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));flex:1;gap:3px;margin:0}.ng-pocket .ng-cubes>span{min-width:0;padding:3px 1px;gap:2px 3px;background:none}.ng-pocket .ng-cubes i{font-size:13px}.ng-pocket .ng-cubes b{font-size:16px}.ng-pocket .ng-cubes small{font-size:8px;overflow-wrap:anywhere}}
+
+/* Painted editions: real card illustrations, with all rules kept in live, legible type. */
+.game-sushi .game-surface{background:radial-gradient(ellipse at 45% 0,#8e593329,transparent 68%)}
+.game-century .game-surface{background:radial-gradient(ellipse at 50% 10%,#91623525,transparent 70%)}
+.game-uno .game-surface{background:radial-gradient(ellipse at 50% 25%,#344b663b,transparent 75%)}
+.ng-sushi,.ng-century{--ng-muted:#c0c1ab;--ng-accent:#d9be8a}
+.ng-sushi .ng-panel,.ng-century .ng-panel{background:linear-gradient(145deg,#182c25c9,#12251edf);border-color:#cabb8c33;box-shadow:0 5px 22px #0002}
+.ng-sushi .ng-panel>h3,.ng-century .ng-panel>h3{padding-bottom:11px;border-bottom:1px solid #dac89c22;font-size:14px;letter-spacing:.025em}
+.ng-sushi .ng-hand{grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:14px}
+.ng-sushi-card{position:relative;display:flex;flex-direction:column;justify-content:flex-start;gap:0;padding:0 0 10px;min-height:0;overflow:hidden;border:1px solid #d3bc8e;border-radius:10px;background:linear-gradient(115deg,#f2e5c8,#d9c6a3);box-shadow:0 4px 0 #63523d,0 7px 15px #0006;color:#3d3930;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+.ng-sushi-illustration{display:block;width:100%;aspect-ratio:1;overflow:hidden;background:#d2bc93;border-bottom:3px solid var(--sushi-accent);position:relative}
+.ng-sushi-illustration:after{content:'';position:absolute;inset:5px;border:1px solid #fff1d642;pointer-events:none}
+.ng-sushi-illustration>*{display:block;width:100%;height:100%}
+.ng-sushi-card>b{font-family:'Noto Serif SC','Songti SC',Georgia,serif;font-size:14px;font-weight:750;line-height:1.4;text-align:center;padding:10px 7px 4px;min-height:34px;width:100%;color:#39392d}
+.ng-sushi-card>small{font-size:10px;line-height:1.5;text-align:center;padding:0 7px;max-width:100%;color:#5c5848;min-height:30px;text-wrap:balance}
+.ng-sushi-card:disabled{opacity:1;cursor:default}
+.ng-sushi-card:not(:disabled):hover{transform:translateY(-4px);filter:none;box-shadow:0 4px 0 #63523d,0 10px 18px #0008}
+.ng-sushi-card.ng-selected{border-color:#ffe0a0;transform:translateY(-7px);box-shadow:0 0 0 3px #d9a455,0 12px 22px #0008}
+.ng-order{z-index:2;top:9px;right:9px;width:26px;height:26px;line-height:24px;border:1px solid #fff1c9;background:#6f4c2c;box-shadow:0 2px 6px #0005;font-family:Georgia,serif;font-size:15px}
+.ng-sushi-card.ng-small{width:88px;min-height:0;padding:0 0 5px;gap:0;border-radius:7px;box-shadow:0 2px 0 #63523d,0 4px 8px #0003}
+.ng-sushi-card.ng-small>b{font-size:10px;padding:5px 3px 0;min-height:30px;line-height:1.3}
+.ng-sushi-card.ng-small .ng-sushi-illustration{border-bottom-width:2px}
+.ng-sushi .ng-plate{gap:10px;padding:2px 0 5px}
+.ng-sushi-confirm{position:sticky;bottom:0;z-index:3;margin:18px -5px -4px;padding:10px 5px 5px;background:linear-gradient(#173026ef,#173026);border-top:1px solid #c8b78933}
+.ng-sushi-confirm>.ng-action{min-width:155px;box-shadow:0 3px 10px #0003}
+
+.ng-century .ng-market{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:13px}
+.ng-spice-card{position:relative;overflow:hidden;padding:0 0 9px;min-height:0;display:flex;flex-direction:column;gap:0;justify-content:flex-start;background:linear-gradient(120deg,#efe1be,#cbb78f);color:#3e382a;border:1px solid #dbc190;border-radius:9px;box-shadow:0 3px 0 #715735,0 7px 13px #0005;text-align:center}
+.ng-spice-card:disabled{opacity:1;cursor:default}
+.ng-spice-card:not(:disabled){border-color:#ecd5a3;box-shadow:0 3px 0 #90703c,0 0 0 1px #d8bf7926,0 7px 13px #0005}
+.ng-spice-card:not(:disabled):hover{transform:translateY(-3px);filter:brightness(1.035);box-shadow:0 3px 0 #a98954,0 9px 18px #0006}
+.ng-spice-illustration{display:block;width:100%;aspect-ratio:1.12;overflow:hidden;position:relative;background:#a9956f;flex:none;border-bottom:1px solid #8d724647}
+.ng-spice-illustration>*{display:block;width:100%;height:100%}
+.ng-spice-illustration:after{content:'';position:absolute;inset:6px;border:1px solid #f1dbb466;pointer-events:none}
+.ng-spice-card>b{display:block;width:100%;padding:9px 8px 4px;min-height:48px;font-size:12px;line-height:1.65;font-weight:700;color:#3d392d;text-wrap:balance}
+.ng-spice-card>small{color:#645641;font-size:10px;line-height:1.5;padding:1px 7px}
+.ng-spice-card>.ng-route-price{position:absolute;z-index:2;top:8px;left:8px;right:8px;padding:5px 4px;min-height:23px;background:#172e27e8;border:1px solid #e8d1a86b;border-radius:4px;color:#f5e6c5;font-size:10px;line-height:1.4;box-shadow:0 2px 4px #0003}
+.ng-merchant-card .ng-spice-illustration{aspect-ratio:.95}
+.ng-merchant-bonus{margin-top:auto}
+.ng-spice-cube{display:inline-block;width:16px;height:18px;vertical-align:-4px;flex:none;filter:drop-shadow(0 1px 1px #0003)}
+.ng-spice-card .ng-spice-cube{width:15px;height:17px;vertical-align:-4px}
+.ng-spice-card .ng-merchant-bonus .ng-spice-cube{width:12px;height:14px}
+.ng-goal>.ng-spice-illustration{aspect-ratio:1.2}
+.ng-goal>strong{position:absolute;top:11px;left:11px;display:flex;align-items:center;justify-content:center;gap:3px;min-width:52px;height:52px;border-radius:50%;padding:0 6px;font-family:Georgia,serif;font-size:29px;line-height:1;color:#fcebb9;background:radial-gradient(circle at 35% 25%,#987244,#523d28);border:2px solid #e5ce97;outline:1px solid #7d6135;box-shadow:0 3px 8px #0006;text-shadow:0 1px 1px #402d20}
+.ng-goal>strong small{font-family:inherit;font-size:9px;align-self:flex-end;margin-bottom:12px}
+.ng-goal>.ng-order-bonus{position:absolute;top:16px;right:10px;padding:4px 6px;max-width:calc(100% - 78px);background:#203a2eeb;border:1px solid #f1dcac66;border-radius:4px;color:#f5e3b8;font-size:9px;line-height:1.4}
+.ng-goal>.ng-order-cost{display:block;padding:9px 8px 2px;min-height:46px;color:#443d2c;font-size:12px;line-height:1.65;font-weight:650;text-wrap:balance}
+.ng-goal>b{padding-top:3px;font-size:10px;min-height:0;color:#2d5741}
+.ng-cubes>span{background:linear-gradient(#9b996614,#4d65452b);border:1px solid #d1c39725;box-shadow:inset 0 1px #e1d4b20b}
+.ng-cubes i{display:flex;align-items:center;justify-content:center}
+.ng-cubes i .ng-spice-cube{width:24px;height:27px}
+.ng-pocket .ng-cubes>span{border:0;box-shadow:none}
+.ng-pocket .ng-cubes i .ng-spice-cube{width:17px;height:20px}
+
+/* A bespoke engraved four-color deck: live ranks stay crisp at every size. */
+.ng-uno{--ng-muted:#b9c6bf}
+.ng-uno .ng-panel{background:linear-gradient(145deg,#172d2bdb,#102522d9);border-color:#a8bcb03d;box-shadow:0 7px 22px #0003}
+.ng-uno-hand{grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:13px;padding-top:20px}
+.ng-uno-card{position:relative;display:block;aspect-ratio:2/3;min-height:0;height:auto;padding:0;border:2px solid #d8cdb2;border-radius:11px;background:#23403c;color:#f7ecd4;overflow:hidden;box-shadow:0 3px 0 #81775d,0 8px 13px #0005}
+.ng-color-art{position:absolute;inset:0;width:100%;height:100%;border-radius:9px}
+.ng-uno-card>small{position:absolute;z-index:1;top:13px;left:26px;right:15px;color:#f4e5c6;font-size:10px;letter-spacing:.06em;text-align:right;line-height:1.4}
+.ng-uno-card>.ng-uno-corner{position:absolute;top:24px;left:15px;font:700 22px/1 Georgia,serif;color:#f6e9cb;text-shadow:0 1px 2px #0004}
+.ng-uno-card>strong{position:absolute;top:50%;left:8px;right:8px;transform:translateY(-50%);font:800 clamp(36px,4vw,63px)/1.1 Georgia,'Times New Roman',serif;letter-spacing:-.075em;color:#223f3c;text-align:center;text-shadow:0 1px #fff7e7,1px 2px 0 #9283644d}
+.ng-uno-card>b{position:absolute;bottom:17px;left:12px;right:12px;font-size:11px;line-height:1.3;font-weight:650;letter-spacing:.025em;color:#f5e5c5;text-wrap:balance}
+.ng-uno-card>.ng-drawn-label{position:absolute;left:0;right:0;bottom:0;background:#ead394;color:#263d31;padding:3px 1px;font-size:9px;line-height:1.2}
+.ng-uno-card:disabled{opacity:.63;filter:saturate(.65)}
+.ng-uno-center .ng-uno-card:disabled,.ng-challenge .ng-uno-card:disabled{opacity:1;filter:none}
+.ng-uno-center{background:radial-gradient(ellipse at 35% 50%,#5e786640,#122925 72%)!important;padding:19px 24px;gap:40px}
+.ng-uno-center>div:first-child{width:145px;flex:none}
+.ng-uno-center h3{color:#dfcc9f;font-size:12px;letter-spacing:.08em}
+.ng-uno-status{max-width:65%;gap:14px}
+.ng-color-badge{border:1px solid #ece0be80;box-shadow:inset 0 1px #ffffff1a,0 2px 6px #0004;padding:8px 18px}
+.ng-uno-colors button{min-width:48px;border:1px solid #e8dabe7a;box-shadow:inset 0 0 0 3px #00000015}
+.ng-uno-hand .ng-uno-card.ng-uno-selected{border-color:#ffe6a1;box-shadow:0 0 0 2px #dfbd72,0 3px 0 #81775d,0 13px 19px #0009;transform:translateY(-11px) rotateX(-4deg)}
+
+@media(min-width:1100px){.ng-sushi,.ng-century{padding:20px 24px}.ng-sushi .ng-hand{gap:18px}.ng-sushi-card>b{font-size:15px}.ng-sushi-card>small{font-size:11px}.ng-century .ng-market{gap:16px}.ng-spice-card>b,.ng-goal>.ng-order-cost{font-size:13px}.ng-uno-hand{grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:17px}}
+@media(max-width:600px){
+ .ng-sushi .ng-hand{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 8px}
+ .ng-sushi .ng-panel,.ng-century .ng-panel{padding:12px 9px}
+ .ng-sushi-card{border-radius:7px;padding-bottom:7px;box-shadow:0 3px 0 #63523d,0 5px 9px #0004}
+ .ng-sushi-card>b{padding:7px 4px 3px;font-size:12px;min-height:30px}
+ .ng-sushi-card>small{padding:0 4px;font-size:9px;line-height:1.45;min-height:38px}
+ .ng-order{width:22px;height:22px;line-height:20px;top:6px;right:6px;font-size:13px}
+ .ng-sushi-card.ng-small{width:74px}.ng-sushi-card.ng-small>b{font-size:9px}
+ .ng-sushi-confirm{margin-top:12px;padding-top:9px}.ng-sushi-confirm>.ng-action{flex:1;min-width:0}
+ .ng-century .ng-market{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px}
+ .ng-spice-card>b{font-size:12px;min-height:50px;padding:8px 7px 4px}
+ .ng-spice-card>small{font-size:9px}.ng-spice-card>.ng-route-price{top:7px;left:7px;right:7px;font-size:9px;padding:4px}
+ .ng-goal>strong{top:10px;left:10px;height:47px;min-width:47px;font-size:26px}.ng-goal>strong small{font-size:8px;margin-bottom:11px}
+ .ng-goal>.ng-order-bonus{right:7px;top:12px;max-width:calc(100% - 70px);font-size:8px;padding:4px}
+ .ng-goal>.ng-order-cost{font-size:12px;min-height:50px;padding:8px 7px 2px}
+ .ng-uno-hand{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 9px}
+ .ng-uno-card{border-radius:9px}.ng-uno-card>small{top:10px;left:24px;right:10px;font-size:8px;letter-spacing:0}
+ .ng-uno-card>.ng-uno-corner{left:10px;top:22px;font-size:16px}.ng-uno-card>strong{font-size:43px}
+ .ng-uno-card>b{bottom:12px;left:7px;right:7px;font-size:9px}.ng-uno-center{padding:14px 13px;gap:26px}.ng-uno-center>div:first-child{width:122px}
+ .ng-uno-center .ng-uno-card>strong{font-size:51px}.ng-uno-status{gap:11px}.ng-uno-status>strong{font-size:14px}
+}
+@media(max-width:350px){.ng-sushi-card>b{font-size:10px;padding-left:2px;padding-right:2px}.ng-sushi-card>small{font-size:8px;min-height:42px}.ng-sushi .ng-hand{gap:9px 6px}.ng-uno-card>strong{font-size:35px}.ng-uno-card>b{font-size:8px}.ng-uno-center{gap:17px;padding:12px 10px}.ng-uno-center>div:first-child{width:108px}.ng-uno-status>strong{font-size:12px}.ng-uno-status .ng-controls{gap:6px}.ng-spice-card>b,.ng-goal>.ng-order-cost{font-size:11px}.ng-goal>.ng-order-bonus{font-size:7px}}
+@media(max-height:450px){
+ .ng-sushi .ng-hand{grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:12px 9px}.ng-sushi-card>b{font-size:11px;padding-top:6px;min-height:27px}.ng-sushi-card>small{font-size:9px;min-height:30px}.ng-sushi-confirm{padding-top:7px;margin-top:10px}
+ .ng-century .ng-market{grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:10px}.ng-spice-card>b,.ng-goal>.ng-order-cost{font-size:11px}
+ .ng-uno-center{padding:9px 14px;gap:27px}.ng-uno-center>div:first-child{width:104px}.ng-uno-hand{grid-template-columns:repeat(auto-fill,minmax(99px,1fr));gap:11px}.ng-uno-card>strong{font-size:43px}.ng-uno-card>.ng-uno-corner{font-size:17px}.ng-uno-card>b{font-size:9px;bottom:12px}.ng-uno-card>small{font-size:8px}
+}
+@media(max-height:450px){
+ /* Keep the discard and an actionable hand visible together on a horizontal phone. */
+ .ng-uno{display:grid;grid-template-columns:minmax(150px,.34fr) minmax(0,1fr);gap:7px 10px;align-items:start}
+ .ng-uno>.ng-heading,.ng-uno>.ng-players,.ng-uno>.ng-edition,.ng-uno>.ng-rules,.ng-uno>.ng-challenge,.ng-uno>.ng-round-result{grid-column:1/-1;margin-top:0;margin-bottom:0}
+ .ng-uno>.ng-heading>span{display:none}.ng-uno>.ng-heading{justify-content:flex-start}
+ .ng-uno>.ng-uno-center{grid-column:1;display:flex;flex-direction:column;gap:9px;padding:10px 7px;margin:0;min-width:0}
+ .ng-uno>.ng-uno-center>div:first-child{width:84px}.ng-uno>.ng-uno-center h3{font-size:10px;letter-spacing:0}
+ .ng-uno>.ng-uno-center .ng-uno-card>strong{font-size:37px}.ng-uno>.ng-uno-center .ng-uno-card>b{font-size:8px;bottom:11px}
+ .ng-uno>.ng-uno-center .ng-uno-card>small{font-size:7px;top:9px;right:8px}.ng-uno>.ng-uno-center .ng-uno-card>.ng-uno-corner{font-size:13px;left:9px;top:19px}
+ .ng-uno>.ng-uno-center .ng-uno-status{max-width:100%;width:100%;gap:7px;align-items:center;text-align:center}
+ .ng-uno>.ng-uno-center .ng-uno-status>strong{font-size:11px}.ng-uno>.ng-uno-center .ng-uno-status>small{font-size:9px}.ng-uno>.ng-uno-center .ng-color-badge{padding:4px 13px;font-size:10px}
+ .ng-uno>.ng-uno-center .ng-controls{margin:0;justify-content:center}.ng-uno>.ng-uno-center .ng-action{font-size:10px;padding:7px 8px;min-height:36px}
+ .ng-uno>.ng-uno-hand-panel{grid-column:2;padding:9px 8px;margin:0;min-width:0}
+ .ng-uno .ng-uno-hand{grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px 8px;padding:14px 2px 7px}
+ .ng-uno .ng-uno-playbar{gap:7px;padding-top:8px}.ng-uno .ng-uno-selection{font-size:10px}.ng-uno .ng-uno-play-actions{gap:6px;width:100%}.ng-uno .ng-uno-play{min-width:85px;flex:1}.ng-uno .ng-uno-play-actions .ng-action{font-size:10px;min-height:38px;padding:8px 10px}
+}

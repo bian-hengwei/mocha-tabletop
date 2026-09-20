@@ -32,3 +32,6 @@ jobs:
           done
           node tests/ui/app-usability.integration.mjs
           node tests/ui/language.integration.mjs
+          node tests/ui/identity-portraits.integration.mjs
+          node tests/ui/illustrated-games.integration.mjs
+          node tests/ui/word-privacy.integration.mjs

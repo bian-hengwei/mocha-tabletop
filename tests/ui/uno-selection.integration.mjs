@@ -24,7 +24,7 @@ for(const locale of ['zh','en'])for(const viewport of [{width:320,height:568},{w
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Page stays within viewport');
  const bar=await page.locator('.ng-uno-playbar').boundingBox();assert(bar.x>=0&&bar.x+bar.width<=viewport.width+1,'Play bar fits width');
  await wild.click();await expect(play).toBeDisabled();await expect(colors).toHaveCount(0);
- await red7.click();await page.getByRole('combobox',{name:'Seat'}).selectOption('english-player-1');await expect(page.locator('.ng-uno-selected')).toHaveCount(0);await page.getByRole('combobox',{name:'Seat'}).selectOption('english-player-0');await expect(play).toBeDisabled();
+ await red7.click();await page.getByRole('combobox',{name:'Seat'}).selectOption('english-player-1');await expect(page.locator('.ng-uno-selected')).toHaveCount(0);await expect(page.locator('.ng-uno-playbar')).toHaveCount(0);await page.getByRole('combobox',{name:'Seat'}).selectOption('english-player-0');await expect(play).toBeDisabled();
  await red9.click();await play.click();await expect(hand).toHaveCount(4);await expect(page.locator('.ng-uno-selected')).toHaveCount(0);await expect(page.locator('.ng-uno-center .ng-uno-card')).toHaveAttribute('aria-label',locale==='zh'?'红色 9':'Red 9');
  await page.goto(fixture);await wild.click();await colors.nth(3).click();await play.click();await expect(hand).toHaveCount(4);await expect(page.locator('.ng-uno-selected')).toHaveCount(0);await expect(page.locator('.ng-color-badge')).toHaveText(locale==='zh'?'蓝色':'Blue');
  await page.goto(fixture+'&challenge=off');await expect(hand.nth(4)).toBeDisabled();assert.match(await page.locator('.ng-edition').textContent(),locale==='zh'?/质疑已关闭/:/challenge.*off/i);
