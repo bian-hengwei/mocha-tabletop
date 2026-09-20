@@ -37,7 +37,7 @@ try{
   await page.goto(base);await page.getByRole('button',{name:'选择晶石商会',exact:true}).waitFor();
  }
  const host=pages[0];
- for(const {title,count,selector,key,mode}of scenarios){
+ for(const {title,count,selector,key,mode}of scenarios.filter(s=>!process.env.TEST_GAMES||process.env.TEST_GAMES.split(',').includes(s.key))){
   await host.getByRole('button',{name:'选择'+title,exact:true}).click();
   if(mode)await host.locator('.wolf-mode-picker button').filter({hasText:mode}).click();
   await host.getByRole('button',{name:/云端联机/}).click();await host.getByRole('button',{name:'创建牌桌',exact:true}).click();

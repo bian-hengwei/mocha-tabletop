@@ -67,7 +67,7 @@ BASE_URL=https://mocha-tabletop-web.pages.dev node tests/ui/production.integrati
 TEST_BROWSER=webkit BASE_URL=https://mocha-tabletop-web.pages.dev node tests/ui/production.integration.mjs
 ```
 
-它覆盖实际页面、多人房间和缓存资源。离线导航由 Chromium 回归验证；WebKit 自动化不等同于真实 iPhone 的主屏幕安装和离线行为，这部分仍需真机检查。
+它覆盖九款游戏的真实多人房间、断线恢复、三种狼人模式和缓存资源。可用 `TEST_GAMES=gems,bombs,avalon,undercover` 选择补充浏览器的联机场景；默认运行全部。连续验收应遵守每 IP 每 10 分钟最多创建 15 个房间的限制，本地大批量测试可以使用独立的 Wrangler `--persist-to` 临时目录。离线导航由 Chromium 回归验证；WebKit 自动化不等同于真实 iPhone 的主屏幕安装和离线行为，这部分仍需真机检查。
 
 语言选择器刻意使用目标语言的原生名称（中文 / English），不计为未翻译文案。首次昵称填写弹窗也提供语言切换。浏览器回归使用独立上下文，避免影响日常牌局。
 
