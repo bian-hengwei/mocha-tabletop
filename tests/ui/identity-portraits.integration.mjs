@@ -6,8 +6,8 @@ const output = 'test-results/identity-portraits';
 await fs.mkdir(output, { recursive: true });
 const engine = process.env.TEST_BROWSER === 'webkit' ? webkit : chromium;
 const browser = await engine.launch({ headless: true, ...(engine === chromium ? { executablePath: process.env.CHROME_PATH || undefined } : {}) });
-const cases = { avalon: ['merlin','percival','morgana','assassin','servant','minion'], werewolf: ['wolf','seer','witch','hunter','guard','villager'] };
-const viewports = [{width:320,height:568},{width:390,height:844},{width:600,height:800},{width:667,height:375},{width:844,height:390},{width:1280,height:900}];
+const cases = { avalon: ['merlin','percival','morgana','assassin','servant','minion'], werewolf: ['wolf','seer','witch','hunter','guard','villager','idiot','wolfKing'] };
+const viewports = [{width:320,height:568},{width:390,height:844},{width:600,height:800},{width:667,height:375},{width:844,height:390},{width:1280,height:900},{width:430,height:932},{width:932,height:430},{width:768,height:1024},{width:1440,height:900}];
 const errors = [];
 async function fullPicture(page) {
   const result = await page.locator('.identity-portrait-frame').evaluate(frame => {
@@ -50,7 +50,7 @@ try {
     await fullPicture(page);await page.keyboard.press('Escape');
     assert.equal(await page.locator('.identity-curtain').count(),0,'Escape works after rotation');
     await page.close();
-    console.log(`PASS all 12 role illustrations, full tile boundaries, reachable actions, long English journal and rotation at ${viewport.width}x${viewport.height}`);
+    console.log(`PASS all 14 role illustrations, full tile boundaries, reachable actions, long English journal and rotation at ${viewport.width}x${viewport.height}`);
   }
   assert.deepEqual(errors,[]);
 } finally { await browser.close(); }

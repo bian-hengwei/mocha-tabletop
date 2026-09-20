@@ -12,10 +12,11 @@ export function RoleArt({ role, className = '', align = 'center', fit = 'cover' 
     const aliases: Record<string, string> = { servant: 'loyal', minion: 'evil', moderator: 'seer' };
     const index = Math.max(0, roleKeys.indexOf(aliases[role] || role));
     const tile = index % 6;
-    const x = tile % 3 * 100, y = Math.floor(tile / 3) * 150;
+    const expanded = role === 'idiot' || role === 'wolfKing';
+    const x = expanded ? (role === 'idiot' ? 0 : 100) : tile % 3 * 100, y = expanded ? 0 : Math.floor(tile / 3) * 150;
     // Clip the sprite before fitting it: letterboxing must never reveal an
     // adjacent role from the shared illustration sheet.
-    return <svg className={`role-art ${className}`} viewBox={`${x} ${y} 100 150`} preserveAspectRatio={`${align === 'top' ? 'xMidYMin' : 'xMidYMid'} ${fit === 'contain' ? 'meet' : 'slice'}`} aria-hidden="true"><defs><clipPath id={clipID}><rect x={x} y={y} width="100" height="150"/></clipPath></defs><image clipPath={`url(#${clipID})`} href={`/art/roles-${index < 6 ? 'wolf' : 'avalon'}-v2.jpg`} width="300" height="300"/></svg>;
+    return <svg className={`role-art ${className}`} viewBox={`${x} ${y} 100 150`} preserveAspectRatio={`${align === 'top' ? 'xMidYMin' : 'xMidYMid'} ${fit === 'contain' ? 'meet' : 'slice'}`} aria-hidden="true"><defs><clipPath id={clipID}><rect x={x} y={y} width="100" height="150"/></clipPath></defs><image clipPath={`url(#${clipID})`} href={expanded ? '/art/roles-wolf-expanded-v1.jpg' : `/art/roles-${index < 6 ? 'wolf' : 'avalon'}-v2.jpg`} width={expanded ? 200 : 300} height={expanded ? 150 : 300}/></svg>;
 }
 export function CardArt({ card, className = '' }: {
     card: {

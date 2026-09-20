@@ -14,9 +14,9 @@ type Props = {
     command: (c: Command) => void;
     open: (a: Action, selected?: string[]) => void;
 };
-const roleKeys: Record<string, string> = { '狼人': 'wolf', '平民': 'villager', '预言家': 'seer', '女巫': 'witch', '猎人': 'hunter', '守卫': 'guard', '梅林': 'merlin', '派西维尔': 'percival', '忠臣': 'servant', '莫甘娜': 'morgana', '刺客': 'assassin', '爪牙': 'minion', '法官': 'moderator' };
-const roleRules: Record<string, string> = { wolf: '每晚与狼队共同选择袭击目标。', villager: '白天讨论并投票放逐。', seer: '每晚查验一名玩家的阵营。', witch: '一瓶解药，一瓶毒药；同夜限用一瓶。', hunter: '被刀或放逐时可开枪；被毒不能开枪。', guard: '每晚守护一人，不能连续守同一人。', merlin: '知道邪恶玩家；三次任务成功后须躲过刺杀。', percival: '知道梅林与莫甘娜的位置，但无法区分。', servant: '任务中只能提交成功。', morgana: '会被派西维尔误认为梅林。', assassin: '三次任务成功后，选择一人刺杀梅林。', minion: '任务中可提交失败。', moderator: '主持流程，不参与阵营胜负。' };
-const evilRoles = new Set(['wolf', 'morgana', 'assassin', 'minion']);
+const roleKeys: Record<string, string> = { '狼人': 'wolf', '平民': 'villager', '预言家': 'seer', '女巫': 'witch', '猎人': 'hunter', '守卫': 'guard', '白痴': 'idiot', '狼王': 'wolfKing', '梅林': 'merlin', '派西维尔': 'percival', '忠臣': 'servant', '莫甘娜': 'morgana', '刺客': 'assassin', '爪牙': 'minion', '法官': 'moderator' };
+const roleRules: Record<string, string> = { idiot: '被放逐时翻牌存活，失去投票权；被刀、毒或枪击仍会出局。', wolfKing: '每夜与狼队行动；出局可开枪，被毒或自爆除外。最后一狼出局直接结算。', wolf: '每晚与狼队共同选择袭击目标。', villager: '白天讨论并投票放逐。', seer: '每晚查验一名玩家的阵营。', witch: '一瓶解药，一瓶毒药；同夜限用一瓶。', hunter: '被刀或放逐时可开枪；被毒不能开枪。', guard: '每晚守护一人，不能连续守同一人。', merlin: '知道邪恶玩家；三次任务成功后须躲过刺杀。', percival: '知道梅林与莫甘娜的位置，但无法区分。', servant: '任务中只能提交成功。', morgana: '会被派西维尔误认为梅林。', assassin: '三次任务成功后，选择一人刺杀梅林。', minion: '任务中可提交失败。', moderator: '主持流程，不参与阵营胜负。' };
+const evilRoles = new Set(['wolf', 'wolfKing', 'morgana', 'assassin', 'minion']);
 function roleKey(view: GameView) { return view.board.ownRoleKey || roleKeys[view.board.ownRole] || 'villager'; }
 function RoleBack({ large = false }: {
     large?: boolean;
