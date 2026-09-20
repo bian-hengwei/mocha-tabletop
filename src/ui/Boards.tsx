@@ -1,3 +1,4 @@
+import { useDialog } from './useDialog';
 import { t } from '../i18n';
 function tx<T>(value: T): T | string { return typeof value === 'string' ? t(value) : value; }
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
@@ -164,6 +165,7 @@ export function ActionSheet({ action, selected, view, onClose, onSubmit }: {
     onClose: () => void;
     onSubmit: (cmd: Command) => void;
 }) {
+    const dialogRef = useDialog(true, onClose);
     const [values, setValues] = useState(selected), [error, setError] = useState('');
     const fresh = view.actions.find(a => a.id === action.id);
     const valid = fresh && values.length >= fresh.min && values.length <= fresh.max && values.every(id => fresh.choices.some(c => c.id === id));
@@ -172,7 +174,7 @@ export function ActionSheet({ action, selected, view, onClose, onSubmit }: {
             onClose();
     }, [fresh, onClose]);
     const choose = (id: string) => setValues(old => old.includes(id) ? old.filter(x => x !== id) : action.max === 1 ? [id] : old.length < action.max ? [...old, id] : old);
-    return <div className="modal-shade" onClick={onClose}><section className="action-sheet" role="dialog" aria-modal="true" aria-label={tx(action.title)} onClick={e => e.stopPropagation()}><div className="sheet-heading"><div><small>{t("你的决定")}</small><h2>{tx(action.title)}</h2></div><button className="icon" aria-label={t("关闭选择")} onClick={onClose}><X /></button></div>{tx(action.help && <p>{tx(action.help)}</p>)}{tx(action.id === 'pay_custom' && view.board.payment && <div className="inline-actions"><span>{t("折扣后费用")}</span><Cost values={view.board.payment.needed}/><small>{t("黄金可代任意颜色")}</small></div>)}<div className="choices">{tx((fresh || action).choices.map(c => <button className={`choice ${values.includes(c.id) ? 'selected' : ''}`} key={c.id} aria-pressed={values.includes(c.id)} onClick={() => choose(c.id)}><span>{tx(c.title)}</span>{tx(c.subtitle && <small>{tx(c.subtitle)}</small>)}{tx(values.includes(c.id) && <Check size={15}/>)}</button>))}</div>{tx(error && <p className="error">{tx(error)}</p>)}<footer><small>{tx(action.max > 0 ? `已选 ${values.length} / ${action.max}` : '确认后执行')}</small><button className="compact primary" disabled={!valid} onClick={() => {
+    return <div className="modal-shade" onClick={onClose}><section ref={dialogRef} tabIndex={-1} className="action-sheet" role="dialog" aria-modal="true" aria-label={tx(action.title)} onClick={e => e.stopPropagation()}><div className="sheet-heading"><div><small>{t("你的决定")}</small><h2>{tx(action.title)}</h2></div><button className="icon" aria-label={t("关闭选择")} onClick={onClose}><X /></button></div>{tx(action.help && <p>{tx(action.help)}</p>)}{tx(action.id === 'pay_custom' && view.board.payment && <div className="inline-actions"><span>{t("折扣后费用")}</span><Cost values={view.board.payment.needed}/><small>{t("黄金可代任意颜色")}</small></div>)}<div className="choices">{tx((fresh || action).choices.map(c => <button className={`choice ${values.includes(c.id) ? 'selected' : ''}`} key={c.id} aria-pressed={values.includes(c.id)} onClick={() => choose(c.id)}><span>{tx(c.title)}</span>{tx(c.subtitle && <small>{tx(c.subtitle)}</small>)}{tx(values.includes(c.id) && <Check size={15}/>)}</button>))}</div>{tx(error && <p className="error">{tx(error)}</p>)}<footer><small>{tx(action.max > 0 ? `已选 ${values.length} / ${action.max}` : '确认后执行')}</small><button className="compact primary" disabled={!valid} onClick={() => {
             try {
                 onSubmit({ action: action.id, values });
                 onClose();

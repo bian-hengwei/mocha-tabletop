@@ -17,3 +17,18 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run check
+      - name: Install browser for UI smoke tests
+        run: npx playwright install --with-deps chromium
+      - name: Check onboarding, language and all nine game entries
+        env:
+          BASE_URL: http://127.0.0.1:5174
+        run: |
+          npm run dev -- --port 5174 --strictPort > "$RUNNER_TEMP/mocha-vite.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..30}; do
+            if curl -fsS "$BASE_URL" > /dev/null; then break; fi
+            sleep 1
+          done
+          node tests/ui/app-usability.integration.mjs
+          node tests/ui/language.integration.mjs

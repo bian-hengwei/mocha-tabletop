@@ -1,5 +1,5 @@
 import{chromium}from'@playwright/test';import assert from'node:assert/strict';import fs from'node:fs/promises';
-const browser=await chromium.launch({executablePath:process.env.CHROME_PATH||undefined,headless:true}),origin=process.env.UI_BASE_URL||'http://127.0.0.1:5174',out=new URL('./artifacts/',import.meta.url),report=[];await fs.mkdir(out,{recursive:true});
+const browser=await chromium.launch({executablePath:process.env.CHROME_PATH||undefined,headless:true}),origin=process.env.BASE_URL||process.env.UI_BASE_URL||'http://127.0.0.1:5174',out=new URL('./artifacts/',import.meta.url),report=[];await fs.mkdir(out,{recursive:true});
 try{for(const viewport of[{width:667,height:375},{width:844,height:390}]){
  const context=await browser.newContext({viewport,hasTouch:true,isMobile:true}),page=await context.newPage();page.setDefaultTimeout(7000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
  const show=async(mode,n=18)=>{await page.goto(`${origin}/tests/ui/social-hosted.fixture.html?mode=${mode}&n=${n}`);await page.locator('.social-table-v2').waitFor();};

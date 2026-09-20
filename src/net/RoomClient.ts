@@ -23,7 +23,7 @@ export class RoomClient {
  private terminal(error:string,preserve=false){if(!preserve){this.removeLocal();this.clearSavedSession();}this.reset();this.patch({...initial(),error});}
  private get token(){let t=localStorage.getItem('mocha-network-token');if(!t){t=randomToken();localStorage.setItem('mocha-network-token',t);}return t;}
  async create(profile:Player,kind:GameKind,mode:RoomMode,options?:GameOptions){
-  try{this.reset();const generation=this.connectGeneration;this.patch({status:'connecting',selfID:profile.id,mode});const result=await this.http('/api/create',{profile,kind,mode,options,token:this.token});if(generation!==this.connectGeneration)return;await this.join(profile,result.code,result.invite);}catch(e){this.patch({status:'idle'});this.fail(e);}
+  this.reset();const generation=this.connectGeneration;try{this.patch({status:'connecting',selfID:profile.id,mode});const result=await this.http('/api/create',{profile,kind,mode,options,token:this.token});if(generation!==this.connectGeneration)return;await this.join(profile,result.code,result.invite);}catch(e){if(generation!==this.connectGeneration)return;this.patch({status:'idle'});this.fail(e);}
  }
  async join(profile:Player,code:string,invite?:string){
   try{code=code.toUpperCase().trim();if(!/^[A-Z2-9]{6}$/.test(code))throw new Error('请输入六位房间码');this.reset();this.session={profile:validProfile(profile),code,invite,token:this.token,savedAt:Date.now(),expiresAt:Date.now()+SESSION_TTL};this.saveSession();this.stopped=false;this.patch({status:'connecting',selfID:profile.id});this.openSocket();}catch(e){if(!this.state.room)this.terminal(e instanceof Error?e.message:String(e));else this.fail(e);}
@@ -125,7 +125,7 @@ export class RoomClient {
   pc.onconnectionstatechange=()=>{if(this.peers.get(id)!==p)return;if(['failed','disconnected','closed'].includes(pc.connectionState)){p.proven=false;this.localStatus();if(this.isHost){this.broadcastLocal();this.retryPeer(id,p);}}};
   return p;
  }
- private retryPeer(id:string,peer:Peer){if(this.peerRetry.has(id)||(this.peerAttempts.get(id)||0)>=4||this.stopped)return;const attempt=(this.peerAttempts.get(id)||0)+1;this.peerAttempts.set(id,attempt);this.peerRetry.set(id,setTimeout(()=>{this.peerRetry.delete(id);if(this.peers.get(id)!==peer||peer.proven||this.ws?.readyState!==WebSocket.OPEN)return;peer.pc.close();void this.offer(id);},Math.min(1500*attempt,6000)));}
+ private retryPeer(id:string,peer:Peer){if(this.peerRetry.has(id)||this.stopped)return;if((this.peerAttempts.get(id)||0)>=4){this.fail('局域网尚未连通；可由房主切换云端模式');return;}const attempt=(this.peerAttempts.get(id)||0)+1;this.peerAttempts.set(id,attempt);this.peerRetry.set(id,setTimeout(()=>{this.peerRetry.delete(id);if(this.peers.get(id)!==peer||peer.proven||this.ws?.readyState!==WebSocket.OPEN)return;peer.pc.close();void this.offer(id);},Math.min(1500*attempt,6000)));}
  private async offer(id:string){try{const p=this.peer(id);this.bindDC(id,p,p.pc.createDataChannel('mocha-tabletop',{ordered:true}));await p.pc.setLocalDescription(await p.pc.createOffer());this.sendSignal(id,{description:p.pc.localDescription});}catch(e){this.fail(e);}}
  private sendSignal(to:string,data:any){this.control({type:'signal',to,data});}
  private async signal(id:string,data:any){const r=this.state.room;if(!r||r.mode!=='lan'||!r.players.some(p=>p.id===id))return;let p=this.peers.get(id);

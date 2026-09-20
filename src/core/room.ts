@@ -8,7 +8,7 @@ export interface RoomCandidate {code:string;kind:GameKind;mode:RoomMode;hostName
 export interface ClientState {status:'idle'|'connecting'|'lobby'|'playing'|'reconnecting'|'disconnected';mode?:RoomMode;room?:RoomInfo;selfID?:string;view?:GameView;error?:string;transport:'none'|'cloud'|'lan';paused:boolean;inviteURL?:string;actionRevision:number;waitingApproval?:boolean}
 export interface MatchState {schemaVersion?:2;options?:GameOptions;game:any;revision:number;actorRevisions:Record<string,number>;seen:Record<string,string[]>}
 export function validProfile(input:any):Player {
- if(!input || typeof input.id!=='string'|| !/^[a-zA-Z0-9_-]{8,80}$/.test(input.id))throw new Error('玩家身份无效');
+ if(!input || typeof input.id!=='string'|| !/^[a-zA-Z0-9_-]{8,80}$/.test(input.id)||Object.hasOwn(Object.prototype,input.id))throw new Error('玩家身份无效');
  if(typeof input.name!=='string'||!input.name.trim()||input.name.trim().length>16)throw new Error('昵称限 1–16 个字');
  if(!AVATARS.includes(input.avatar))throw new Error('请选择一个头像');
  return {id:input.id,name:input.name.trim(),avatar:input.avatar};

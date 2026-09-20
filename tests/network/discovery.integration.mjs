@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {randomUUID,randomBytes} from 'node:crypto';
 // Local emulator only: production Cloudflare owns/overwrites CF-Connecting-IP.
-const base='http://127.0.0.1:8787';const a='2001:db8:1234:5678::11',b='2001:db8:1234:5678::22',other='2001:db8:1234:5679::22';
+const base=process.env.TEST_API_BASE||'http://127.0.0.1:8787';const a='2001:db8:1234:5678::11',b='2001:db8:1234:5678::22',other='2001:db8:1234:5679::22';
 const request=async(path,ip,body)=>{const response=await fetch(base+path,{method:body?'POST':'GET',headers:{'CF-Connecting-IP':ip,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});return {status:response.status,data:await response.json()};};
 const profile={id:randomUUID(),name:'IPv6 test',avatar:'🦊'},token=randomBytes(24).toString('hex');
 const made=await request('/api/create',a,{profile,token,mode:'cloud',kind:'gems'});assert.equal(made.status,200,JSON.stringify(made));const {code,invite}=made.data;

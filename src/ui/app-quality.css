@@ -1,0 +1,4 @@
+.lobby-start-status{margin:12px 0 0;padding:10px 12px;border:1px solid #d4bc8630;border-radius:8px;background:#dbc38b0a;color:#d7d9c9;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.rule-options select:disabled,.rule-options input:disabled{opacity:1;color:inherit;cursor:default}
+.language-toggle{min-height:36px;font-size:12px;padding:7px 10px}
+.rule-tabs button:focus-visible,.language-toggle:focus-visible{outline:2px solid #f5d990;outline-offset:3px}

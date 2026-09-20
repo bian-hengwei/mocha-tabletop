@@ -57,11 +57,11 @@ export const uno:GameModule<UnoState>={
  ...(pending?{pendingWild4:{actor:s.players[pending.actor].id,challenger:s.players[pending.target].id}}:{}),
  ...(pending&&s.phase==='challengeResult'&&me===pending.target?{privateChallenge:{actor:s.players[pending.actor].id,challenger:id,previousColor:pending.previousColor,wasLegal:!pending.illegal,hand:pending.hand}}:{}),
  ...(s.unoWindow?{unoWindow:{playerID:s.players[s.unoWindow.actor].id,passed:s.unoWindow.passed}}:{}),
- players:s.players.map((p,i)=>({...p,handCount:s.hands[i].length,score:s.scores[i],calledUno:!!s.called?.[p.id],...(s.finished||s.phase==='roundEnd'?{hand:s.hands[i]}:{})}))}});
+ players:s.players.map((p,i)=>({...p,handCount:s.hands[i].length,score:s.scores[i],calledUno:!!s.called&&Object.hasOwn(s.called,p.id)&&s.called[p.id]===true,...(s.finished||s.phase==='roundEnd'?{hand:s.hands[i]}:{})}))}});
  },
  apply(state,id,command){validateCommand(uno.view(state,id),command);const s=structuredClone(state),me=s.current,name=s.players[me].name;
  if(command.action==='nextRound'){s.roundNumber=(s.roundNumber??1)+1;s.dealer=((s.dealer??s.players.length-1)+1)%s.players.length;dealRound(s);s.history.push(`第 ${s.roundNumber} 轮开始，累计分保留`);return s;}
- if(command.action==='callUno'){const actor=s.unoWindow!.actor;(s.called??={})[id]=true;s.history.push(`${s.players[actor].name}：剩一张！`);finishUnoWindow(s);return s;}
+ if(command.action==='callUno'){const actor=s.unoWindow!.actor;s.called={...s.called,[id]:true};s.history.push(`${s.players[actor].name}：剩一张！`);finishUnoWindow(s);return s;}
  if(command.action==='skipUno'){s.phase='unoCatch';s.history.push(`${s.players[s.unoWindow!.actor].name} 未宣告剩一张，等待响应`);return s;}
  if(command.action==='catchUno'){const actor=s.unoWindow!.actor;draw(s,actor,2);s.history.push(`${s.players.find(p=>p.id===id)!.name} 指出 ${s.players[actor].name} 漏喊，罚抽 2 张`);finishUnoWindow(s);return s;}
  if(command.action==='passUno'){s.unoWindow!.passed.push(id);if(s.unoWindow!.passed.length===s.players.length-1)finishUnoWindow(s);return s;}

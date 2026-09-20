@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 
 // UI-only integration: no game-state injection, direct engine calls, or private React access.
 // Run against an already running Vite server: node tests/ui/social.integration.mjs
-const origin=process.env.UI_BASE_URL||'http://127.0.0.1:5174';
+const origin=process.env.BASE_URL||process.env.UI_BASE_URL||'http://127.0.0.1:5174';
 const browser=await chromium.launch({executablePath:process.env.CHROME_PATH||undefined,headless:true});
 const output=new URL('./artifacts/',import.meta.url);await fs.mkdir(output,{recursive:true});
 const results=[];
@@ -26,11 +26,12 @@ for(const viewport of [{width:667,height:375},{width:844,height:390}]){
       await page.locator('.action-sheet').waitFor({state:'hidden'});
     }
   }
-  async function start(name){await page.getByRole('button',{name:`选择${name}`,exact:true}).click();if(name==='狼人杀')await page.locator('.wolf-mode-picker button').filter({hasText:'玩家操作'}).click();await page.getByRole('button',{name:'同屏试玩',exact:true}).click();await select.waitFor();}
+  async function start(name){await page.getByRole('button',{name:`选择${name}`,exact:true}).click();if(name==='月夜议会')await page.locator('.wolf-mode-picker button').filter({hasText:'玩家操作'}).click();await page.getByRole('button',{name:'同屏试玩',exact:true}).click();await select.waitFor();}
   async function stop(){await page.getByRole('button',{name:'牌桌菜单'}).click();await page.getByRole('button',{name:'结束试玩',exact:true}).click();await select.waitFor({state:'hidden'});}
   async function inspectIdentity(){
     const count=await page.getByRole('button',{name:'查看我的身份',exact:true}).count();if(count!==1){await page.screenshot({path:new URL(`${viewport.width}-identity-regression-failure.png`,output).pathname});console.log('Identity failure DOM:',await page.locator('body').innerText());}assert.equal(count,1,'Identity starts concealed after changing viewpoint');
     await page.getByRole('button',{name:'查看我的身份',exact:true}).click();
+    assert(await page.locator('.identity-curtain').evaluate(el=>el.contains(document.activeElement)),'Secret identity traps keyboard focus');
     const role=await page.locator('.identity-story h2').textContent();assert(role&&!role.includes('我的身份'));
     await page.getByRole('button',{name:'收起身份',exact:true}).click();return role;
   }
@@ -44,7 +45,7 @@ for(const viewport of [{width:667,height:375},{width:844,height:390}]){
   }
   // Avalon: three full quests with public yes/no votes, private mission submission,
   // assassination and replay identity privacy.
-  await start('阿瓦隆');
+  await start('迷雾远征');
   const avalonRoles=[];for(let i=0;i<5;i++){await viewer(i);avalonRoles.push(await inspectIdentity());}
   for(let quest=0;quest<3;quest++){
     const options=await select.locator('option').allTextContents();const leader=options.findIndex(t=>t.includes('待操作'));assert(leader>=0);await viewer(leader);
@@ -58,17 +59,17 @@ for(const viewport of [{width:667,height:375},{width:844,height:390}]){
     for(let i=0;i<size;i++){await viewer(i);await submit('秘密任务',['成功']);}
     assert.equal(await page.locator('.quest.success').count(),quest+1);
   }
-  const assassin=avalonRoles.indexOf('刺客'),merlin=avalonRoles.indexOf('梅林');await viewer(assassin);
-  const merlinName=await seats().nth(merlin).locator('b').textContent();await submit('刺杀梅林',[merlinName]);await page.locator('.end-banner').waitFor();
+  const assassin=avalonRoles.indexOf('追踪者'),merlin=avalonRoles.indexOf('引路者');await viewer(assassin);
+  const merlinName=await seats().nth(merlin).locator('b').textContent();await submit('刺杀引路者',[merlinName]);await page.locator('.end-banner').waitFor();
   assert.match(await page.locator('.end-banner').textContent(),/邪恶获胜/);
   // Force the same seat across replay so changing viewer alone cannot hide a leak.
-  await viewer(0);await page.getByRole('button',{name:'查看我的身份',exact:true}).click();await page.getByRole('button',{name:'再来一局',exact:true}).click();
+  await viewer(0);await page.getByRole('button',{name:'查看我的身份',exact:true}).click();await page.keyboard.press('Escape');await page.getByRole('button',{name:'再来一局',exact:true}).click();
   assert.equal(await page.getByRole('button',{name:'查看我的身份',exact:true}).count(),1,'Replay must conceal freshly dealt identity');
   await stop();
 
   // Werewolf: all night phases, contested sheriff election, weighted exile vote,
   // second night, and public wolf explosion after switching viewpoint.
-  await start('狼人杀');const wolfRoles=[];for(let i=0;i<9;i++){await viewer(i);wolfRoles.push(await inspectIdentity());}
+  await start('月夜议会');const wolfRoles=[];for(let i=0;i<9;i++){await viewer(i);wolfRoles.push(await inspectIdentity());}
   const wolves=wolfRoles.map((r,i)=>r==='狼人'?i:-1).filter(i=>i>=0);
   async function night(){
     for(let i=0;i<9;i++){

@@ -151,7 +151,7 @@ export class GameRoom extends DurableObject<Env>{
     if(msg.accept&&r.players.length>=roomLimits(r.kind,r.options).max)throw new Error('房间已满');
     r.pending=r.pending.filter(v=>v.id!==p.id);
     if(msg.accept){d.tokens[p.id]=d.pendingTokens[p.id];r.players.push({...p,ready:false,connected:this.connected(p.id)});for(const target of this.sockets(p.id)){const att=target.deserializeAttachment() as Attachment;target.serializeAttachment({...att,pending:false});}}
-    else for(const target of this.sockets(p.id)){send(target,{type:'rejected',error:'房主婉拒了入桌申请'});target.close(4003,'入桌未获批准');}
+    else for(const target of this.sockets(p.id)){send(target,{type:'rejected',error:'房主婉拒了入桌申请'});target.serializeAttachment({opened:0});target.close(4003,'入桌未获批准');}
     delete d.pendingTokens[p.id];
    }else if(msg.type==='removePlayer'){
     if(id!==r.hostID||r.started)throw new Error('只有房主能在准备室移除离线玩家');

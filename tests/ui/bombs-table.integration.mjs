@@ -14,19 +14,19 @@ for(const seed of process.env.LAYOUT_ONLY?[]:[9,20,43]){
   if((await page.locator('.bt-focus').textContent()).includes('最后的幸存者')){complete=true;break;}
   await chooseActive();const cls=await page.locator('.bt-table').getAttribute('class'),phase=cls.split('bt-phase-')[1];covered.add(phase);
   if(phase==='response'){
-    if(!nopeUsed){for(const id of ['a','b','c']){await switchSeat(id);const nope=page.locator('.bt-hand').getByRole('button',{name:'否决',exact:true}).first();if(await nope.count()){await nope.click();const play=page.getByRole('button',{name:'否决这张',exact:true});if(await play.count()){await play.click();nopeUsed=true;covered.add('nope');break;}}}}
-    for(const id of ['a','b','c']){if(!(await page.locator('.bt-table').getAttribute('class')).includes('bt-phase-response'))break;await switchSeat(id);const pass=page.getByRole('button',{name:/^(不否决|保持否决)$/});if(await pass.count())await pass.click();}
+    if(!nopeUsed){for(const id of ['a','b','c']){await switchSeat(id);const nope=page.locator('.bt-hand').getByRole('button',{name:'等等',exact:true}).first();if(await nope.count()){await nope.click();const play=page.getByRole('button',{name:'等等这张',exact:true});if(await play.count()){await play.click();nopeUsed=true;covered.add('nope');break;}}}}
+    for(const id of ['a','b','c']){if(!(await page.locator('.bt-table').getAttribute('class')).includes('bt-phase-response'))break;await switchSeat(id);const pass=page.getByRole('button',{name:/^(不等等|保持等等)$/});if(await pass.count())await pass.click();}
   }else if(phase==='target'){await page.locator('.bt-seat.targetable').first().click();}
-  else if(phase==='request'){await page.locator('.bt-request').getByRole('button',{name:'拆弹',exact:true}).click();}
+  else if(phase==='request'){await page.locator('.bt-request').getByRole('button',{name:'安抚',exact:true}).click();}
   else if(phase==='give'){await page.locator('.bt-hand .bt-card').first().click();await page.getByRole('button',{name:'交出这张',exact:true}).click();}
   else if(phase==='future'){await page.screenshot({path:`${folder}/future.png`});await page.getByRole('button',{name:'看好了',exact:true}).click();}
-  else if(phase==='bomb'){await page.getByRole('button',{name:'使用拆弹',exact:true}).click();}
+  else if(phase==='bomb'){if(!covered.has('safe-abandon-cancel')){await page.getByRole('button',{name:'放弃安抚',exact:true}).click();const dialog=page.getByRole('dialog',{name:'确认放弃安抚'});assert(await dialog.evaluate(el=>el.contains(document.activeElement)),'Abandon confirmation gets keyboard focus');assert(await page.getByRole('button',{name:'再想想',exact:true}).evaluate(el=>el===document.activeElement),'Safe cancel action receives initial focus');await page.keyboard.press('Escape');assert.equal(await dialog.count(),0,'Escape cancels elimination');assert((await page.locator('.bt-table').getAttribute('class')).includes('bt-phase-bomb'));covered.add('safe-abandon-cancel');}await page.getByRole('button',{name:'使用安抚',exact:true}).click();}
   else if(phase==='insert'){await page.getByRole('button',{name:'底部',exact:true}).click();await page.getByRole('button',{name:'放好了',exact:true}).click();}
   else if(phase==='turn'){
     const hand=page.locator('.bt-hand .bt-card');const titles=await hand.evaluateAll(cs=>cs.map(c=>c.getAttribute('aria-label')));
     let acted=false;
     // Prefer previously unseen playable effects, then draw to guarantee progress.
-    for(const title of ['预见未来','索取','洗牌','攻击','跳过']){if((!covered.has(title)||(title==='预见未来'&&!covered.has('future')))&&titles.includes(title)){await hand.nth(titles.indexOf(title)).click();const play=page.getByRole('button',{name:'打出这张',exact:true});if(await play.count()){await play.click();covered.add(title);acted=true;break;}}}
+    for(const title of ['偷瞄三张','借一张','洗牌','加班','跳过']){if((!covered.has(title)||(title==='偷瞄三张'&&!covered.has('future')))&&titles.includes(title)){await hand.nth(titles.indexOf(title)).click();const play=page.getByRole('button',{name:'打出这张',exact:true});if(await play.count()){await play.click();covered.add(title);acted=true;break;}}}
     if(!acted){for(const amount of [3,2]){const marker=amount===3?'triple':'pair';if(covered.has(marker))continue;const title=titles.find(t=>titles.filter(x=>x===t).length>=amount);if(title){const same=page.locator('.bt-hand').getByRole('button',{name:title,exact:true});for(let i=0;i<amount;i++)await same.nth(i).click();const combo=page.getByRole('button',{name:amount===3?'指定牌名':'随机拿一张',exact:true});if(await combo.count()){await combo.click();covered.add(marker);acted=true;break;}else await page.getByRole('button',{name:'清空选择',exact:true}).click();}}}
     if(!acted)await page.getByRole('button',{name:/^抽牌，剩余/}).click();
   }

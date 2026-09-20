@@ -25,8 +25,8 @@ export const avalon:GameModule<AvalonState>={
     const actions:GameView['actions']=[];
     if(!s.winner){
       if(s.stage==='propose'&&s.players[s.leader].id===id)actions.push(action('propose',`选择 ${sizes[s.results.length]} 名队员`,choices(s.players.map(p=>p.id)),sizes[s.results.length],sizes[s.results.length]));
-      if(s.stage==='approve'&&s.votes[id]===undefined)actions.push(action('approve','队伍表决',[{id:'yes',title:'赞成'},{id:'no',title:'反对'}],1,1));
-      if(s.stage==='mission'&&s.team.includes(id)&&s.votes[id]===undefined)actions.push(action('mission','秘密任务',[{id:'success',title:'成功'},...(evil(role)?[{id:'fail',title:'失败'}]:[])],1,1,s.players.length>=7&&s.results.length===3?'两张失败牌才会失败':''));
+      if(s.stage==='approve'&&!Object.hasOwn(s.votes,id))actions.push(action('approve','队伍表决',[{id:'yes',title:'赞成'},{id:'no',title:'反对'}],1,1));
+      if(s.stage==='mission'&&s.team.includes(id)&&!Object.hasOwn(s.votes,id))actions.push(action('mission','秘密任务',[{id:'success',title:'成功'},...(evil(role)?[{id:'fail',title:'失败'}]:[])],1,1,s.players.length>=7&&s.results.length===3?'两张失败牌才会失败':''));
       if(s.stage==='assassinate'&&role==='assassin')actions.push(action('assassinate','刺杀梅林',choices(s.players.filter(p=>!evil(s.roles[p.id])).map(p=>p.id)),1,1));
     }
     const phase=s.winner??(s.stage==='assassinate'?'刺杀梅林':`第 ${quest} 次任务 · ${{propose:'组队',approve:'表决',mission:'执行',assassinate:''}[s.stage]}`);
@@ -36,14 +36,14 @@ export const avalon:GameModule<AvalonState>={
     validateCommand(avalon.view(state,id),command); const s=structuredClone(state), value=command.values[0], name=(id:string)=>s.players.find(p=>p.id===id)!.name;
     if(s.stage==='propose'){s.team=[...command.values];s.votes={};s.stage='approve';}
     else if(s.stage==='approve'){
-      s.votes[id]=value==='yes';
+      s.votes={...s.votes,[id]:value==='yes'};
       if(Object.keys(s.votes).length===s.players.length){
         s.publicVotes={...s.votes};s.log.push('表决：'+s.players.map(p=>`${p.name} ${s.votes[p.id]?'赞成':'反对'}`).join('；'));
         if(Object.values(s.votes).filter(Boolean).length>s.players.length/2){s.rejections=0;s.stage='mission';}
         else{s.rejections++;s.leader=(s.leader+1)%s.players.length;s.stage='propose';s.team=[];if(s.rejections===5)s.winner='邪恶获胜 · 连续五次否决';}s.votes={};
       }
     }else if(s.stage==='mission'){
-      s.votes[id]=value==='success';
+      s.votes={...s.votes,[id]:value==='success'};
       if(Object.keys(s.votes).length===s.team.length){
         const fails=Object.values(s.votes).filter(v=>!v).length, success=fails<(s.players.length>=7&&s.results.length===3?2:1);
         s.results.push(success);s.failCounts.push(fails);s.log.push(`第 ${s.results.length} 次任务${success?'成功':'失败'}，${fails} 张失败牌。`);s.votes={};
