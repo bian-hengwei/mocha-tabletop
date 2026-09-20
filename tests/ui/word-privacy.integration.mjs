@@ -1,3 +1,4 @@
+import {collectWordPages,findWordPage} from './word-test-pages.mjs';
 import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -21,9 +22,10 @@ try{
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`${locale} ${name} ${width}: horizontal page overflow`);
     const overflow=await page.locator('.wg-table button,.wg-table strong,.wg-table input,.wg-table select').evaluateAll(nodes=>nodes.flatMap(el=>{const r=el.getBoundingClientRect();return r.width&&el.scrollWidth>el.clientWidth+2?[{text:el.textContent,client:el.clientWidth,scroll:el.scrollWidth}]:[];}));
     assert.deepEqual(overflow,[],`${locale} ${name} ${width}: clipped labels`);
+const overlaps=await page.locator('.wg-word,.wg-odd-player').evaluateAll(xs=>xs.flatMap((e,i)=>{const a=e.getBoundingClientRect();return xs.slice(i+1).filter(x=>{const b=x.getBoundingClientRect();return a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;}).map(x=>[e.textContent,x.textContent]);}));assert.deepEqual(overlaps,[],'cards must never overlap');
     if(name==='signals-captain'&&width===320&&height===568){
-     const firstRow=await page.locator('.wg-word').evaluateAll(cards=>cards.slice(0,4).map(card=>{const rect=card.getBoundingClientRect();return {bottom:rect.bottom,height:rect.height,font:Number.parseFloat(getComputedStyle(card.querySelector('strong')).fontSize)};}));
-     assert(firstRow.every(card=>card.bottom<=height&&card.height>=80&&card.font>=12),'The first four words must be fully visible and readable on a short portrait phone');
+     const firstRow=await page.locator('.wg-word').evaluateAll(cards=>cards.map(card=>{const rect=card.getBoundingClientRect();return {bottom:rect.bottom,height:rect.height,font:Number.parseFloat(getComputedStyle(card.querySelector('strong')).fontSize)};}));
+     assert(firstRow.every(card=>card.bottom<=height&&card.height>=44&&card.font>=12),'Every visible word must fit, retain a 44px target and remain readable on a short portrait phone');
      const submit=await page.locator('.wg-clue-submit').boundingBox();assert(submit.width>=44&&submit.height>=44,'Compact send control must retain its touch target');
     }
     const atlas=await page.locator('.wg-table svg image').evaluateAll(nodes=>[...new Set(nodes.map(el=>el.getAttribute('href')))]);
@@ -40,14 +42,14 @@ try{
   };
   await begin('codenames');
   const red=await page.locator('.wg-team.wg-active.wg-red').count()>0,captain=red?0:1,operative=red?2:3;
-  await seat(captain);await page.locator('.wg-key-toggle').click();assert.equal(await page.locator('.wg-word.wg-assassin').count(),1);
+  await seat(captain);await page.locator('.wg-key-toggle').click();assert.equal((await collectWordPages(page,'.wg-word.wg-assassin')).length,1);
   await seat(operative);assert.equal(await page.locator('.wg-word.wg-assassin').count(),0);await seat(captain);
   assert.equal(await page.locator('.wg-word.wg-assassin').count(),0,'Returning to the captain must not reveal the previous key');assert.equal(await page.locator('.wg-key-toggle').getAttribute('aria-pressed'),'false');
   await capture('signals-captain');
-  await page.locator('.wg-key-toggle').click();const targets=await page.locator('.wg-word.wg-'+(red?'red':'blue')).locator('.wg-cell-index').allTextContents();
-  const boardWords=await page.locator('.wg-word>strong').allTextContents();const clue=(locale==='en'?['Mystery','Journey','Harmony']:['联想','旅途','回忆']).find(word=>!boardWords.includes(word));
+  await page.locator('.wg-key-toggle').click();const targets=await collectWordPages(page,'.wg-word.wg-'+(red?'red':'blue')+' .wg-cell-index');
+  const boardWords=await collectWordPages(page,'.wg-word>strong');const clue=(locale==='en'?['Mystery','Journey','Harmony']:['联想','旅途','回忆']).find(word=>!boardWords.includes(word));
   await page.setViewportSize({width:320,height:568});await page.locator('.wg-clue-form input').fill(clue);await page.locator('.wg-clue-form select').selectOption('unlimited');await page.locator('.wg-clue-form button[type=submit]').click();await seat(operative);await page.setViewportSize({width:390,height:844});
-  for(const target of targets){await page.locator('.wg-word').nth(Number(target)-1).click();await confirm();}
+  for(const target of targets){await (await findWordPage(page,page.locator('.wg-word').filter({has:page.locator('.wg-cell-index',{hasText:new RegExp('^'+target+'$')})}))).click();await confirm();}
   await page.locator('.end-banner').waitFor();const signalsMatch=await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id);
   await page.locator('.end-banner .primary').click();await page.locator('.wg-key-toggle').waitFor();assert.notEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id),signalsMatch);assert.equal(await page.locator('.wg-key-toggle').getAttribute('aria-pressed'),'false');assert.equal(await page.locator('.wg-word.wg-assassin').count(),0,'Replaying Secret Signals starts with its key hidden');
   console.log(`PASS ${locale} captain key away/back privacy, complete game, same-game replay privacy, ${sizes.length} illustrated layouts`);

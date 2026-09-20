@@ -1,3 +1,4 @@
+import {SeatPagination,useSeatPage} from './SeatPagination';
 import {formatGameText} from './gameText';
 import { useDialog } from './useDialog';
 import { t } from '../i18n';
@@ -6,6 +7,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import { Check, ChevronRight, Crown, Eye, Gem, LockKeyhole, Moon, Shield, Skull, Sparkles, Swords, X } from 'lucide-react';
 import type { Action, Command, GameView } from '../core/types';
 import { GEM_COLORS } from '../core/games/gems';
+import './action-sheet-viewport.css';
 const colors = ['#ebe4ca', '#7fb9e8', '#7bc8a2', '#dd807e', '#7f8597', '#e8bd67'];
 const names = ['白钻', '蓝宝石', '祖母绿', '红宝石', '黑玛瑙', '黄金'];
 type BoardProps = {
@@ -128,6 +130,7 @@ function socialSeatPositions(count: number, aspect: number) {
 }
 export function SocialBoard({ view, selfID, open }: BoardProps) {
     const b = view.board, [reveal, setReveal] = useState(false), avalon = view.kind === 'avalon';
+    const seats=useSeatPage(b.players.length,selfID+view.kind);
     const tableRef = useRef<HTMLDivElement>(null), [aspect, setAspect] = useState(2);
     useLayoutEffect(() => {
         const node = tableRef.current;
@@ -149,13 +152,14 @@ export function SocialBoard({ view, selfID, open }: BoardProps) {
     return <div className={`social-board ${avalon ? 'avalon' : 'werewolf'} ${b.stage === 'night' ? 'night' : ''}`}>
     {tx(avalon ? <div className="quest-track">{tx(b.teamSizes.map((n: number, i: number) => <div key={i} className={`quest ${i === b.results.length ? 'current' : ''} ${b.results[i] === true ? 'success' : b.results[i] === false ? 'failed' : ''}`}><span>{tx(b.results[i] === true ? <Check size={19}/> : b.results[i] === false ? <X size={19}/> : i + 1)}</span><small>{tx(n)}{" " + t("人")}{tx(i === 3 && b.players.length >= 7 ? ' · 双败' : '')}</small></div>))}<div className="rejection-track"><span>{t("拒绝")}</span>{tx([0, 1, 2, 3, 4].map(i => <i key={i} className={i < b.rejections ? 'filled' : ''}/>))}</div></div> : <div className="night-counter"><Moon size={16}/><span>{t("第") + " "}{tx(b.night)} {tx(b.stage === 'night' ? '夜' : '天')}</span><small>{tx(b.players.filter((p: any) => p.alive).length)}{" " + t("人存活")}</small></div>)}
     <div className="round-table" ref={tableRef}><div className="table-emblem">{tx(avalon ? <Swords /> : <Moon />)}<b>{tx(view.phase)}</b><small>{tx(avalon ? `远征 ${b.quest} · ${b.teamSize} 人队伍` : b.stage === 'night' ? '请保管好自己的身份' : '面对面发言，手机上投票')}</small>{tx(b.winner && <h2>{tx(b.winner)}</h2>)}</div><div className={`seats count-${b.players.length}`}>{tx(b.players.map((p: any, i: number) => {
+            if(i<seats.start||i>=seats.end)return null;
             const position = positions[i];
             return <button className={`seat ${p.id === selfID ? 'self' : ''} ${!p.alive ? 'out' : ''} ${p.team ? 'team' : ''} ${p.leader || p.sheriff ? 'leader' : ''}`} key={p.id} style={{ left: `${position.left}%`, top: `${position.top}%` } as CSSProperties} onClick={() => {
                     const a = targetActions.find(a => a.choices.some(c => c.id === p.id || c.id === `poison:${p.id}`));
                     if (a)
                         open(a, [a.choices.find(c => c.id === p.id || c.id === `poison:${p.id}`)!.id]);
                 }} aria-label={`${t("座位")} ${i + 1} · ${p.name}${p.alive ? "" : ` · ${t("已出局")}`}`}><span className="seat-number">{tx(i + 1)}</span><span className="seat-avatar">{tx(p.alive ? p.avatar : <Skull size={22}/>)}</span>{tx((p.leader || p.sheriff) && <Crown className="seat-crown" size={15}/>)}<b>{p.name}</b><small>{tx(p.revealedIdiot ? '白痴 · 无投票权' : p.role && (view.finished || p.id !== selfID) ? p.role : p.candidate ? (['pk', 'vote'].includes(b.stage) ? 'PK' : '竞选中') : p.team ? '远征队员' : p.id === selfID ? '我' : '')}</small>{tx(Object.hasOwn(b.publicVotes || {}, p.id) && <span className="vote-mark">{tx(avalon ? (b.publicVotes[p.id] ? '✓' : '✕') : b.publicVotes[p.id] === 'skip' ? '弃票' : `→ ${b.players.findIndex((x: any) => x.id === b.publicVotes[p.id]) + 1}`)}</span>)}</button>;
-        }))}</div></div>
+        }))}</div></div><SeatPagination {...seats}/>
     <button className={`identity-card ${reveal ? 'revealed' : ''}`} onClick={() => setReveal(!reveal)} aria-label={tx(reveal ? '收起身份' : '查看我的身份')}>{tx(reveal ? <><b>{tx(b.ownRole)}</b><span>{b.ownKnowledge?.filter((k: any) => k.id !== selfID && k.id !== 'role').map((k: any) => `${k.id.startsWith('check:') ? k.title : t(k.title)}${k.detail ? ` · ${k.detailText ? formatGameText(k.detail,k.detailText) : ['wolves', 'evil', 'merlin'].includes(k.id) ? k.detail : t(k.detail)}` : ''}`).join(' / ') || t('没有额外情报')}</span><small>{t("轻点收起")}</small></> : <><LockKeyhole size={24}/><b>{t("我的身份")}</b><small>{t("轻点查看 · 注意遮挡")}</small></>)}</button>
   </div>;
 }

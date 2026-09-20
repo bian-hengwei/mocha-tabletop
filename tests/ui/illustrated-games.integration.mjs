@@ -23,11 +23,14 @@ try {
     assert.deepEqual(clipped,[],`${kind} card labels fit their cards at ${viewport.width}`);
     await page.screenshot({path:`${out}/${kind}-${language}-${viewport.width}.png`});
     if(kind==='century'){
-      for(const card of await page.locator('.ng-goal,.ng-merchant-card:has(.ng-route-price)').all()) {
+      for(const section of [0,1]) {
+       await page.locator('.ng-century-tabs button').nth(section).click();
+       for(const card of await page.locator('.ng-goal:visible,.ng-merchant-card:has(.ng-route-price):visible').all()) {
         for(const label of await card.locator('.ng-order-bonus,.ng-route-price,.ng-merchant-bonus').all()) {
           const text=(await label.innerText()).trim().replace(/\s+/g,' ');
           await expect(card).toHaveAccessibleName(new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
         }
+      }
       }
       if(viewport.width>600)assert(await page.locator('.ng-merchant-card').evaluateAll(cards=>cards.every(card=>card.getBoundingClientRect().width<270)),'A short hand retains card size instead of stretching into giant posters');
       const caravan=page.locator('.ng-panel').filter({has:page.locator('h3',{hasText:language==='zh'?'可用商人':'Available merchants'})});await caravan.scrollIntoViewIfNeeded();await page.screenshot({path:`${out}/century-hand-${language}-${viewport.width}.png`});

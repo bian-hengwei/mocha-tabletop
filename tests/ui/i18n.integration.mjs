@@ -28,7 +28,7 @@ for(const kind of ['codenames','undercover'])for(const language of ['en','zh']){
 }
 await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=uno`);
 await page.getByRole('combobox',{name:'Seat'}).selectOption({label:await page.locator('option').filter({hasText:'*'}).first().textContent()});
-const playable=page.locator('.ng-hand .ng-uno-card:not([disabled])').filter({hasNotText:'Wild'}).first();const before=await page.locator('.ng-hand .ng-uno-card').count();await playable.click();assert.equal(await page.locator('.ng-hand .ng-uno-card').count(),before,'Selecting must not play the card');assert.equal(await playable.getAttribute('aria-pressed'),'true');await page.getByRole('button',{name:'Play card',exact:true}).click();assert.equal(await page.locator('.ng-hand .ng-uno-card').count(),before-1);
+const playable=page.locator('.ng-hand .ng-uno-card:not([disabled]):not([aria-label*="Wild"])').first();const before=await page.locator('.ng-hand .ng-uno-card').count();await playable.click();assert.equal(await page.locator('.ng-hand .ng-uno-card').count(),before,'Selecting must not play the card');assert.equal(await playable.getAttribute('aria-pressed'),'true');await page.getByRole('button',{name:'Play card',exact:true}).click();assert.equal(await page.locator('.ng-hand .ng-uno-card').count(),before-1);
 await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=century`);const own=page.locator('.ng-panel').filter({has:page.locator('h3',{hasText:'Available merchants'})});
 await own.getByRole('button',{name:/^Gain /}).first().click();assert.equal(await page.locator('.action-sheet').count(),0,'Gain merchant executes directly');assert.equal(await own.locator('.ng-spice-card').count(),1);
 for(const viewport of [{width:320,height:568},{width:568,height:320}]){

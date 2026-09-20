@@ -1,0 +1,4 @@
+/** Traverse the table's explicit pages, preserving stable card indexes. */
+export async function firstWordPage(page){const previous=page.locator('.wg-pages button').first();while(await previous.count()&&await previous.isEnabled())await previous.click();}
+export async function collectWordPages(page,selector){await firstWordPage(page);const values=[];do{values.push(...await page.locator(selector).allTextContents());const next=page.locator('.wg-pages button').last();if(!await next.count()||await next.isDisabled())break;await next.click();}while(true);await firstWordPage(page);return values;}
+export async function findWordPage(page,locator){await firstWordPage(page);while(!await locator.count()){const next=page.locator('.wg-pages button').last();if(!await next.count()||await next.isDisabled())throw new Error('Word not found on any table page');await next.click();}return locator;}

@@ -1,3 +1,4 @@
+import {pagedSeat} from './seat-pages.mjs';
 import {chromium} from '@playwright/test';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -20,7 +21,7 @@ for(const viewport of [{width:667,height:375},{width:844,height:390}])for(const 
  });
  await page.screenshot({path:new URL(`${viewport.width}-${kind}-maximum${process.env.EQUAL_ARC==='1'?'-arc':''}.png`,output).pathname});
  const inaccessible=[];for(let i=0;i<(kind==='werewolf'?18:10);i++){
-  try{await page.locator('.seat').nth(i).locator('.seat-avatar').click();const selected=await page.locator('.action-sheet .choice.selected').textContent();assert.equal(selected,`玩家${i+1}`);await page.getByRole('button',{name:'关闭选择',exact:true}).click();}catch(e){inaccessible.push({seat:i+1,error:e.message});if(await page.locator('.action-sheet').isVisible())await page.getByRole('button',{name:'关闭选择',exact:true}).click();}
+  try{await (await pagedSeat(page,'.seat',i)).locator('.seat-avatar').click();const selected=await page.locator('.action-sheet .choice.selected').textContent();assert.equal(selected,`玩家${i+1}`);await page.getByRole('button',{name:'关闭选择',exact:true}).click();}catch(e){inaccessible.push({seat:i+1,error:e.message});if(await page.locator('.action-sheet').isVisible())await page.getByRole('button',{name:'关闭选择',exact:true}).click();}
  }
  report.push({viewport,kind,...inspection,inaccessible});await context.close();
  console.log(`${viewport.width} ${kind}: overlaps=${inspection.overlaps.length}; blocked avatar centers=${inspection.rects.filter(r=>!r.avatarHit).map(r=>r.seat)}; click failures=${inaccessible.length}`);

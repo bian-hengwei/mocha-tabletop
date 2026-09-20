@@ -109,3 +109,13 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 输入法回归使用浏览器 DOM 键盘事件覆盖 `isComposing` 和兼容性的 `keyCode=229` 路径，随后用真实键盘事件验证普通 Enter/Escape；这不等同于系统输入法真机验收。事件边界依据 [MDN 的 IME 键盘事件说明](https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event#keydown_events_with_ime)。
 
 网络延迟回归：`TEST_GAMES=century TEST_ACTION_DELAY_MS=600 TEST_SKIP_OFFLINE=1 BASE_URL=http://127.0.0.1:5174 node tests/ui/production.integration.mjs`。对真实 Worker 的回包延迟 600ms，验证提交中阻止后续操作，并在回包后继续升级/结束回合；也支持 WebKit。
+
+- `tests/ui/gems-viewport.integration.mjs`：晶石商会中英八尺寸无纵向滚动、全部市场层级、费用完整、牌面查看、横向宝石银行、实际拿取及库存入口；支持 WebKit。
+- `tests/ui/uno-sushi-viewport.integration.mjs`：寿司与七彩接龙中英七尺寸，公共区及手牌无纵向滚动、28 张手牌、最大人数密集盘面逐张可达、选色、报单、私人质疑核验、筷子选牌/取消；支持 WebKit。
+
+- `tests/ui/social-viewport.integration.mjs`：双语八尺寸、狼人三模式和阿瓦隆的全席分页、规则入口、身份隐藏、法官选择、表决及任务提交；支持 WebKit。
+- `tests/ui/social-app-viewport.integration.mjs`：真实 App 在 320×568 和 568×320 下的默认及最大人数、表决/任务、终局公开身份、结算关闭与重开；支持 WebKit。
+
+- `tests/ui/century-viewport.integration.mjs`：商旅双语八尺寸，市场/订单/商队/已用商人切换、费用完整、末张牌横向可达、付款、弹窗旋转，以及五人密集手牌；支持 WebKit。
+- `tests/ui/game-viewport.integration.mjs`：按注册表遍历十二款游戏，最大人数、中英八尺寸，检查页面和所有桌面容器没有纵向滚动或内容裁剪；配合各游戏的状态/操作测试及实际截图验收，不能单独代表完整游戏流程。
+- `tests/ui/bombs-viewport.integration.mjs`：喵喵危机中英八尺寸、最大五人，初始/选牌/响应/目标/索要/交牌/预知/拆弹/插入/结束十种状态，所有容器纵向溢出与裁切检查，实际操作及预知私密换座；支持 WebKit。
