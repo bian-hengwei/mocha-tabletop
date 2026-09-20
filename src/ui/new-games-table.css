@@ -131,3 +131,12 @@
  .ng-uno .ng-uno-hand{grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px 8px;padding:14px 2px 7px}
  .ng-uno .ng-uno-playbar{gap:7px;padding-top:8px}.ng-uno .ng-uno-selection{font-size:10px}.ng-uno .ng-uno-play-actions{gap:6px;width:100%}.ng-uno .ng-uno-play{min-width:85px;flex:1}.ng-uno .ng-uno-play-actions .ng-action{font-size:10px;min-height:38px;padding:8px 10px}
 }
+
+/* Only contextual state occupies the action area; mandatory caravan choices stay in reach. */
+.ng-uno-selection:empty{display:none}.ng-uno-play-actions{margin-left:auto}.ng-uno-only-action{min-width:145px;box-shadow:0 2px 10px #d1bb6d25}
+.ng-pocket.ng-pocket-active{position:sticky;top:0;z-index:4;display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;padding:10px 13px;margin:0 0 12px;background:#1b3029fa;border:1px solid #d9c58f77;border-radius:12px;box-shadow:0 5px 15px #0005;backdrop-filter:blur(12px)}
+.ng-pocket-active>span{font-size:11px;color:#e6d9b6;line-height:1.6}.ng-pocket-active>span>small{display:block;font-size:10px;color:#bdc6af}
+.ng-pocket-active>.ng-cubes{display:flex;flex:0 1 auto;margin:0;gap:7px}.ng-pocket-active>.ng-cubes>span{min-width:54px;padding:2px 4px;gap:2px 5px}.ng-pocket-active>.ng-cubes b{font-size:17px}
+.ng-pending-actions{flex:1 1 240px;min-width:0}.ng-pending-actions>p{font-size:11px;line-height:1.7;color:#d8d5ba}.ng-pending-actions .ng-controls{margin:5px 0 0;gap:7px}.ng-pending-actions .ng-action{min-height:40px;font-size:11px;padding:8px 12px}
+@media(max-width:600px){.ng-pocket.ng-pocket-active{gap:7px;padding:8px 10px}.ng-pocket-active>.ng-cubes{flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}.ng-pocket-active>.ng-cubes>span{min-width:0;padding:2px 0}.ng-pending-actions{flex-basis:100%}.ng-pending-actions .ng-controls{margin-top:3px}.ng-pending-actions .ng-action{flex:1}.ng-uno-play-actions .ng-uno-only-action{flex:1}}
+@media(max-height:450px) and (min-width:601px){.ng-pocket.ng-pocket-active{gap:5px 10px;padding:7px 10px}.ng-pending-actions .ng-controls{margin:0}.ng-pending-actions>p{font-size:10px}}

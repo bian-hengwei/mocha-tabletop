@@ -1,4 +1,5 @@
 import { AVATARS, GAMES, type GameKind, type GameView, type Player } from '../core/types';
+import { isWolfRole } from '../core/werewolfPresets';
 export function readProfile():Player|null {
   try { const p=JSON.parse(localStorage.getItem('mocha-profile')||'null');
     return p&&typeof p.id==='string'&&/^[a-zA-Z0-9_-]{8,80}$/.test(p.id)&&typeof p.name==='string'&&p.name.trim()&&AVATARS.includes(p.avatar)?{id:p.id,name:p.name.trim().slice(0,16),avatar:p.avatar}:null;
@@ -28,7 +29,7 @@ export function makeRecord(view:GameView,id:string,selfID:string,player:Player,m
   else if(Array.isArray(b.winners)&&b.winners.length)result=b.winners.includes(selfID)?(b.winners.length>1&&['gems','sushi','century','mahjong'].includes(view.kind)?'draw':'win'):'loss';
   else if(view.kind==='mahjong'&&Array.isArray(b.winners)&&!b.winners.length)result='draw';
   else if(typeof b.winner==='string'&&b.ownRole){
-    if(view.kind==='werewolf')result=(b.winner.startsWith('狼人')===(b.ownRole==='狼人'))?'win':'loss';
+    if(view.kind==='werewolf')result=(b.winner.startsWith('狼人')===(b.ownRoleKey?isWolfRole(b.ownRoleKey):['狼人','狼王'].includes(b.ownRole)))?'win':'loss';
     if(view.kind==='avalon')result=(b.winner.startsWith('邪恶')===['莫甘娜','刺客','爪牙'].includes(b.ownRole))?'win':'loss';
   }
   return {id,kind:view.kind,at:Date.now(),name:player.name,avatar:player.avatar,mode,result,summary:(b.winner||view.instruction||'本局结束').toString().slice(0,240),...(typeof own?.score==='number'?{score:own.score}:{}),playerCount:b.players?.length||0};

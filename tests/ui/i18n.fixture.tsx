@@ -16,6 +16,12 @@ const params=new URLSearchParams(location.search),kind=(params.get('kind')||'gem
 const players=Array.from({length:params.get("scenario")==="challenge"?3:GAMES[kind].min},(_,i)=>({id:`english-player-${i}`,name:['Alex','Blair','Casey','Drew','Eli','Frank','Grace','Hayden','Indigo','Jules'][i],avatar:['🦊','🐼','🐱','🐻'][i%4]}));
 function initialGame(){
  if(kind==='guandan'&&params.get('scenario')==='declare'){const state=modules.guandan.create(players,11);state.hands[0]=[5,6,7,8,9,3].map((rank,i)=>({id:`declare-${i}`,rank,suit:0}));return state;}
+ if(kind==='uno'&&params.get('scenario')==='no-match'){
+  const state=uno.create(players,11);state.current=0;state.phase='play';state.color='red';state.drawn=null;
+  state.hands[0]=[{id:'blocked-blue-eight',color:'blue',value:8},{id:'blocked-green-nine',color:'green',value:9}];
+  state.discard=[{id:'blocked-red-one',color:'red',value:1}];state.deck.push({id:'drawn-green-six',color:'green',value:6});return state;
+ }
+
  if(kind==='uno'&&params.get('scenario')==='selection'){
   const state=uno.create(players,11,{unoChallenge:params.get('challenge')!=='off'});state.current=0;state.phase='play';state.color='red';state.drawn=null;
   state.hands[0]=[{id:'test-red-seven',color:'red',value:7},{id:'test-red-nine',color:'red',value:9},{id:'test-blue-eight',color:'blue',value:8},{id:'test-wild',color:'wild',value:'wild'},{id:'test-plus-four',color:'wild',value:'wild4'}];state.discard=[{id:'test-red-one',color:'red',value:1}];return state;

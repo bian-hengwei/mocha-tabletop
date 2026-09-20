@@ -19,7 +19,7 @@ jobs:
       - run: npm run check
       - name: Install browser for UI smoke tests
         run: npx playwright install --with-deps chromium
-      - name: Check onboarding, language and all twelve game entries
+      - name: Check game entry, layouts, privacy and usability
         env:
           BASE_URL: http://127.0.0.1:5174
         run: |
@@ -40,3 +40,6 @@ jobs:
           node tests/ui/classic-assets.integration.mjs
           node tests/ui/classic-orientation.integration.mjs
           node tests/ui/classic-dense.integration.mjs
+          node tests/ui/werewolf-lineups.integration.mjs
+          node tests/ui/proactive-new-games.integration.mjs
+          node tests/ui/word-usability.integration.mjs

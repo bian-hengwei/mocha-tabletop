@@ -1,6 +1,7 @@
 import type { Command, GameKind, GameView, Player, GameOptions } from './types';
 import { AVATARS, GAMES } from './types';
 import { modules } from './registry';
+import { WEREWOLF_PRESETS, werewolfPreset, werewolfPresetLimits } from './werewolfPresets';
 export type RoomMode = 'cloud' | 'lan';
 export interface RoomPlayer extends Player { ready:boolean; connected:boolean }
 export interface RoomInfo {expiresAt?:number;matchID?:string;code:string;kind:GameKind;mode:RoomMode;hostID:string;options?:GameOptions;players:RoomPlayer[];pending:Player[];started:boolean;revision:number}
@@ -25,9 +26,9 @@ export function normalizeGameOptions(kind:GameKind,input:unknown,hostID:string):
  if(options.unoMode!==undefined&&(kind!=='uno'||!['single','match'].includes(options.unoMode as string)))throw new Error('七彩接龙模式无效');
  if(options.unoChallenge!==undefined&&(kind!=='uno'||typeof options.unoChallenge!=='boolean'))throw new Error('七彩接龙质疑设置无效');
  if(kind!=='werewolf'){if(options.werewolfMode!==undefined||options.moderatorID!==undefined||options.werewolfPreset!==undefined||options.werewolfWin!==undefined)throw new Error('此游戏不支持主持模式选项');const result={...language,...(options.mahjongMode?{mahjongMode:options.mahjongMode as GameOptions['mahjongMode']}:{}),...(options.unoMode?{unoMode:options.unoMode as 'single'|'match'}:{}),...(options.unoChallenge===false?{unoChallenge:false}:{})};return Object.keys(result).length?result:undefined;}
- if(options.werewolfPreset!==undefined&&!['auto','hunter','guard'].includes(options.werewolfPreset as string))throw new Error('月夜议会配置无效');
+ if(options.werewolfPreset!==undefined&&!WEREWOLF_PRESETS.some(p=>p.id===options.werewolfPreset))throw new Error('月夜议会配置无效');
  if(options.werewolfWin!==undefined&&!['sides','parity'].includes(options.werewolfWin as string))throw new Error('月夜议会胜负条件无效');
- const rules={...(options.werewolfPreset&&options.werewolfPreset!=='auto'?{werewolfPreset:options.werewolfPreset as 'hunter'|'guard'}:{}),...(options.werewolfWin==='parity'?{werewolfWin:'parity' as const}:{})};
+ const rules={...(options.werewolfPreset&&options.werewolfPreset!=='auto'?{werewolfPreset:options.werewolfPreset as GameOptions['werewolfPreset']}:{}),...(options.werewolfWin==='parity'?{werewolfWin:'parity' as const}:{})};
  const mode=options.werewolfMode??'standard';
  if(!['standard','judge','deal'].includes(mode as string))throw new Error('狼人杀模式无效');
  if(mode==='standard'){if(options.moderatorID!==undefined)throw new Error('标准模式不设置法官');return {werewolfMode:'standard',...language,...rules};}
@@ -35,7 +36,7 @@ export function normalizeGameOptions(kind:GameKind,input:unknown,hostID:string):
  if(options.moderatorID!==undefined&&options.moderatorID!==hostID)throw new Error('法官或发牌人必须是房主');
  return {werewolfMode:mode as 'judge'|'deal',moderatorID:hostID,...language,...rules};
 }
-export function roomLimits(kind:GameKind,options?:GameOptions):{min:number;max:number}{const extra=kind==='werewolf'&&options?.werewolfMode==='judge'?1:0,min=kind==='werewolf'&&options?.werewolfPreset&&options.werewolfPreset!=='auto'?8:GAMES[kind].min;return {min:min+extra,max:GAMES[kind].max+extra};}
+export function roomLimits(kind:GameKind,options?:GameOptions):{min:number;max:number}{if(kind!=='werewolf')return {min:GAMES[kind].min,max:GAMES[kind].max};const extra=options?.werewolfMode==='judge'?1:0,{min,max}=werewolfPresetLimits(options?.werewolfPreset);return {min:min+extra,max:max+extra};}
 export function optionsKey(kind:GameKind,options:GameOptions|undefined,hostID:string){return JSON.stringify(normalizeGameOptions(kind,options,hostID)||{});}
 export function createMatch(kind:GameKind,players:Player[],options?:GameOptions):MatchState {
  const canonical=normalizeGameOptions(kind,options,players[0]?.id||'');
@@ -63,6 +64,7 @@ export function validateMatchForRoom(value:unknown,room:RoomInfo):MatchState {
   const participantIDs=ids.filter(id=>expected.werewolfMode!=='judge'||id!==room.hostID);
   if(expected.werewolfMode!=='standard'&&(!Array.isArray(match.game.participants)||match.game.participants.length!==participantIDs.length||match.game.participants.some((p:any,i:number)=>p?.id!==participantIDs[i])))throw new Error('参与发牌的玩家与房间不一致');
   if(!match.game.roles||typeof match.game.roles!=='object'||Object.keys(match.game.roles).length!==participantIDs.length||participantIDs.some(id=>!Object.hasOwn(match.game.roles,id)))throw new Error('身份牌名单与房间不一致');
+  if(JSON.stringify(Object.values(match.game.roles).sort())!==JSON.stringify(werewolfPreset(participantIDs.length,expected.werewolfPreset).sort()))throw new Error('身份牌配置与房间不一致');
   if(expected.werewolfMode==='judge'&&Object.hasOwn(match.game.roles,room.hostID))throw new Error('法官不能参与发牌');
  }
  for(const id of ids)viewMatch(match,room.kind,id);

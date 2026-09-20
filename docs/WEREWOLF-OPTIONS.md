@@ -1,16 +1,25 @@
 # Werewolf options
 
-`GameOptions` accepts two optional werewolf-only settings:
+`GameOptions` accepts `werewolfPreset` and `werewolfWin: 'sides' | 'parity'`. Existing saves retain the default `auto` / `sides` behavior. All three modes share the same role catalog, room limits and victory rules.
 
-- `werewolfPreset: 'auto' | 'hunter' | 'guard'`
-- `werewolfWin: 'sides' | 'parity'`
+| Preset ID | Players | Lineup |
+| --- | --- | --- |
+| `auto` | 6–18 | One third Werewolves, Seer, Witch; Hunter from eight and Guard from twelve; remaining Villagers |
+| `classic9` | 9 | 3 Werewolves, 3 Villagers, Seer, Witch, Hunter |
+| `classic` | 12 | 4 Werewolves, 4 Villagers, Seer, Witch, Hunter, Guard |
+| `idiot` | 12 | 4 Werewolves, 4 Villagers, Seer, Witch, Hunter, Fool |
+| `wolfKing` | 12 | 3 Werewolves, Wolf King, 4 Villagers, Seer, Witch, Hunter, Guard |
+| `hunter` | 8–18 | One third Werewolves; Seer, Witch, Hunter; remaining Villagers |
+| `guard` | 8–18 | One third Werewolves; Seer, Witch, Guard; remaining Villagers |
 
-Defaults remain `auto` and `sides`, including existing saves that omit these keys. The room layer canonicalizes explicit default values to the previous representation, preventing reconnect/checkpoint mismatches.
+A moderator occupies one extra seat and receives no role. Fixed boards require the exact participant count. Setup previews the role quantities; changing a room's configuration resets readiness. Checkpoints must match the selected role distribution, not merely the participant list.
 
-`auto` preserves the prior 6–18-player allocation: `floor(players / 3)` wolves, one Seer, one Witch, Hunter from 8 players, Guard from 12 players, and Villagers in remaining seats. `hunter` always includes Seer/Witch/Hunter and no Guard; `guard` includes Seer/Witch/Guard and no Hunter. Both specialized presets require at least 8 actual players. A judge is an extra nonplaying seat, so their minimum room size is 9.
+Under `sides`, good wins when all wolves are eliminated; wolves win when all Villagers or all special good roles are eliminated. Under `parity`, wolves instead win once living wolves equal or outnumber living good players. Fool is a special good role; Wolf King counts as a wolf.
 
-Under `sides`, good wins when all wolves are eliminated; wolves win when all Villagers or all special good roles are eliminated. Under `parity`, good still wins by eliminating all wolves, while wolves win once living wolves equal or exceed all living good players. Dying Hunter actions resolve before either victory check.
+The Fool reveals and survives exile, then loses voting rights and cannot be exiled again. A night attack, poison or shot still eliminates them. Wolf King acts with the wolf team and receives the same Seer result as an ordinary wolf. Hunter and Wolf King can trigger one another's death shots; poison and self-explosion suppress a Wolf King shot. Public shot labels do not disclose which of the two roles fired.
 
-Standard, judge and deal modes share the allocation and preserve options. Judge-mode outcomes use the same victory evaluator as standard. Deal mode remains a physical, manually hosted game; its role cards and redeals retain the selected preset and victory rule. Both rules are included as `board.preset` and `board.winRule` for display.
+This table explicitly destroys the Sheriff badge when its Fool holder reveals, and ends the game immediately when the last Wolf King is eliminated. A pending Hunter shot retains the existing resolution priority. These are stated table conventions, not a claim that every platform uses identical tie-breaking or death-resolution rules. Deal-only mode distributes roles for an in-person moderator and does not automate subsequent play.
 
-`tests/werewolf-presets.test.ts` verifies all populations and modes, exact role counts, nonplaying judge exclusion, invalid configuration rejection, room sizes, default-save compatibility, checkpoint rule mismatch rejection, terminal conditions and Hunter resolution order.
+Role capabilities and common configurations were checked on 2026-09-20 against [NetEase's published rules](https://langrensha.com/wanfa/guize/2017/10/18/26899_719311.html) and [WPL configuration guidance](https://langrensha.com/2022/wpl/20221009/37768_1045993.html). This implementation does not include every advanced role on those platforms.
+
+Coverage: `werewolf-presets.test.ts`, `werewolf-expanded.test.ts`, network `werewolf-lineups.integration.mjs`, and UI `werewolf-lineups.integration.mjs`. These cover allocation, exact counts, moderator exclusion, invalid actions, Fool voting/death, shot chains, self-knife followed by election explosion, private views, checkpoint mismatch, bilingual setup and replay after reload.

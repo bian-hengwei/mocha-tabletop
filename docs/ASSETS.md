@@ -50,3 +50,7 @@ id,tier,colorIndex,points,white,blue,green,red,black
 完整生成提示见 design/illustration-prompts-v3.json。src/ui/IllustratedTile.tsx 在界面中读取单格，费用、分值、数量、词语均由实际游戏数据绘制。接龙牌面与香料方块由 src/ui/NewGameArt.tsx 的 SVG 绘制，数值不会依赖生成图片。旧版 SVG 封面保留作历史源素材，当前界面改用新图集。
 
 身份图集仍使用既有原插画。完整身份弹窗采用 meet 显示完整源画面，并显式限定单格裁切，避免相邻角色泄露；小头像仍允许居中裁切。
+
+## 狼人杀扩展身份
+
+`public/art/roles-wolf-expanded-v1.jpg` 是内置 ImageGen 生成的 2 列 × 1 行肖像图集：白痴、狼王。既有狼人身份图集仅用作画风参考；新身份使用独立插画，不复用普通狼人或平民头像。提示词与生成模式记录在 `design/werewolf-expanded-prompt.json`，压缩 JPEG 随网站离线缓存。

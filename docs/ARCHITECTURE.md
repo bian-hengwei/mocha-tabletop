@@ -34,7 +34,7 @@
 
 规则依据：[Splendor 官方规则](https://cdn.svc.asmodee.net/production-spacecowboys/uploads/2025/10/SCSPL01EN_SPLENDOR_RULES_LIGHT.pdf)、[Exploding Kittens 官方规则](https://www.explodingkittens.com/pages/rules-kittens)、[Avalon 出版方](https://indieboardsandcards.com/our-games/the-resistance-avalon/)。月夜议会存在不同桌规，以本项目界面和上述实现为准。
 
-完整的命名原则、规则版本与逐项检查见 [玩法与命名说明](RECOGNIZABLE-RULES.md)。
+显示名称兼容、规则版本与对应测试见 [规则版本与显示兼容](RECOGNIZABLE-RULES.md)。
 
 ## 本地数据
 

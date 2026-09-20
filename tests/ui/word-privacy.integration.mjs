@@ -5,7 +5,7 @@ const base=process.env.BASE_URL||'http://127.0.0.1:5173';
 const artifacts='test-results/word-privacy';
 await fs.mkdir(artifacts,{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||undefined});
-const sizes=[[320,740],[390,844],[568,320],[1440,900]];
+const sizes=[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900],[568,320]];
 const errors=[];
 try{
  for(const locale of ['zh','en']){
@@ -21,6 +21,11 @@ try{
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`${locale} ${name} ${width}: horizontal page overflow`);
     const overflow=await page.locator('.wg-table button,.wg-table strong,.wg-table input,.wg-table select').evaluateAll(nodes=>nodes.flatMap(el=>{const r=el.getBoundingClientRect();return r.width&&el.scrollWidth>el.clientWidth+2?[{text:el.textContent,client:el.clientWidth,scroll:el.scrollWidth}]:[];}));
     assert.deepEqual(overflow,[],`${locale} ${name} ${width}: clipped labels`);
+    if(name==='signals-captain'&&width===320&&height===568){
+     const firstRow=await page.locator('.wg-word').evaluateAll(cards=>cards.slice(0,4).map(card=>{const rect=card.getBoundingClientRect();return {bottom:rect.bottom,height:rect.height,font:Number.parseFloat(getComputedStyle(card.querySelector('strong')).fontSize)};}));
+     assert(firstRow.every(card=>card.bottom<=height&&card.height>=80&&card.font>=12),'The first four words must be fully visible and readable on a short portrait phone');
+     const submit=await page.locator('.wg-clue-submit').boundingBox();assert(submit.width>=44&&submit.height>=44,'Compact send control must retain its touch target');
+    }
     const atlas=await page.locator('.wg-table svg image').evaluateAll(nodes=>[...new Set(nodes.map(el=>el.getAttribute('href')))]);
     assert(atlas.length>0,'The table must include its illustrated atlas');
     for(const url of atlas)assert(await page.evaluate(async url=>{const image=new Image();image.src=url;await image.decode();return image.naturalWidth>0;},url),`Atlas failed to load: ${url}`);
@@ -41,11 +46,11 @@ try{
   await capture('signals-captain');
   await page.locator('.wg-key-toggle').click();const targets=await page.locator('.wg-word.wg-'+(red?'red':'blue')).locator('.wg-cell-index').allTextContents();
   const boardWords=await page.locator('.wg-word>strong').allTextContents();const clue=(locale==='en'?['Mystery','Journey','Harmony']:['联想','旅途','回忆']).find(word=>!boardWords.includes(word));
-  await page.locator('.wg-clue-form input').fill(clue);await page.locator('.wg-clue-form select').selectOption('unlimited');await page.locator('.wg-clue-form button[type=submit]').click();await seat(operative);
+  await page.setViewportSize({width:320,height:568});await page.locator('.wg-clue-form input').fill(clue);await page.locator('.wg-clue-form select').selectOption('unlimited');await page.locator('.wg-clue-form button[type=submit]').click();await seat(operative);await page.setViewportSize({width:390,height:844});
   for(const target of targets){await page.locator('.wg-word').nth(Number(target)-1).click();await confirm();}
   await page.locator('.end-banner').waitFor();const signalsMatch=await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id);
   await page.locator('.end-banner .primary').click();await page.locator('.wg-key-toggle').waitFor();assert.notEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id),signalsMatch);assert.equal(await page.locator('.wg-key-toggle').getAttribute('aria-pressed'),'false');assert.equal(await page.locator('.wg-word.wg-assassin').count(),0,'Replaying Secret Signals starts with its key hidden');
-  console.log(`PASS ${locale} captain key away/back privacy, complete game, same-game replay privacy, 4 illustrated layouts`);
+  console.log(`PASS ${locale} captain key away/back privacy, complete game, same-game replay privacy, ${sizes.length} illustrated layouts`);
   await begin('undercover');await page.locator('.wg-secret').click();assert.equal(await page.locator('.wg-secret.wg-open').count(),1);await seat(1);await seat(0);
   assert.equal(await page.locator('.wg-secret.wg-open').count(),0,'Returning to a seat must not reveal its previous secret word');assert.equal(await page.locator('.wg-secret').getAttribute('aria-pressed'),'false');
   await capture('odd-deal');
@@ -56,8 +61,8 @@ try{
   for(let index=0;index<3;index++){await seat(index);if(index===2)await page.locator('.wg-secret').click();const target=index===odd?(index+1)%3:odd;await page.locator('.wg-odd-player').nth(target).click();await confirm();}
   await page.locator('.end-banner').waitFor();assert.equal(await page.locator('.wg-secret.wg-open').count(),1,'Keep a revealed final word to exercise replay state reset');const oddMatch=await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id);
   await page.locator('.end-banner .primary').click();assert.notEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id),oddMatch);assert.equal(await page.locator('.wg-secret.wg-open').count(),0,'Replaying Odd Word Out must not expose its new secret word');assert.equal(await page.locator('.wg-secret').getAttribute('aria-pressed'),'false');
-  console.log(`PASS ${locale} secret word away/back privacy, compact voting controls, complete game, revealed-word replay privacy, 8 illustrated layouts`);
+  console.log(`PASS ${locale} secret word away/back privacy, compact voting controls, complete game, revealed-word replay privacy, ${sizes.length*2} illustrated layouts`);
   await context.close();
  }
- assert.deepEqual(errors,[]);console.log('PASS word-game privacy and replay regressions, 24 bilingual responsive screenshots, loaded atlases, voting priority, no clipped labels or browser errors');
+ assert.deepEqual(errors,[]);console.log(`PASS word-game privacy and replay regressions, ${sizes.length*6} bilingual responsive screenshots, loaded atlases, voting priority, no clipped labels or browser errors`);
 }finally{await browser.close();}

@@ -88,3 +88,7 @@ TEST_BROWSER=webkit BASE_URL=https://mocha-tabletop-web.pages.dev node tests/ui/
 如果默认端口已被其他工作副本占用，可以给新 Worker 指定其他端口和 inspector 端口，前端通过 `VITE_API_BASE` 连接它；前端来源仍须位于 `ALLOWED_ORIGINS`。网络回归的 `TEST_API_BASE` 必须与之保持一致。
 
 WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN 通过。此时应保留失败证据，并验证云端房间和 `lan-fallback.integration.mjs` 的回退路径。Chrome 的真实 LAN 测试仍须单独通过。
+
+- `tests/ui/werewolf-lineups.integration.mjs`：四种固定板型的中英选择、角色配比、三模式、独立身份插画、刷新后重开保留规则（支持 TEST_BROWSER=webkit）。
+- `tests/ui/proactive-new-games.integration.mjs`：手机付款/升级操作无需滚动、UNO无可出牌时抽牌优先、寿司确认状态。
+- `tests/ui/word-usability.integration.mjs`：异步拒绝保留线索、成功清空、隐藏词后准备、投票和发言进度。
