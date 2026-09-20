@@ -14,3 +14,5 @@ tests/ui/artifacts/
 *.pem
 *.key
 credentials*.json
+.local/
+AGENTS.local.md
