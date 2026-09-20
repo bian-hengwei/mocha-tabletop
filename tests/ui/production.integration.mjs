@@ -119,6 +119,22 @@ try{
   }else console.log('PASS WebKit manifest + 10 cached resources; offline navigation not asserted: Playwright service-worker automation only supports Chromium (https://playwright.dev/docs/service-workers)');
  }
  assert.deepEqual(errors,[]);console.log('PASS production acceptance',safari?'WebKit':'Chromium',base);
-}catch(error){for(let i=0;i<pages.length;i++)await pages[i].screenshot({path:`test-results/acceptance-failure-${safari?'webkit':'chrome'}-${i}.png`}).catch(()=>{});throw error;}
+}catch(error){
+ for(let i=0;i<pages.length;i++)await pages[i].screenshot({path:`test-results/acceptance-failure-${safari?'webkit':'chrome'}-${i}.png`}).catch(()=>{});
+ // Preserve failure evidence first, then dissolve this run's room even when an
+ // assertion or an interaction fails before the normal end-of-scenario cleanup.
+ const host=pages[0];
+ if(host)try{
+  await contexts[0].setOffline(false);
+  if(await host.locator('.connection').count()){
+   await host.getByRole('button',{name:'牌桌菜单',exact:true}).click({timeout:5000});
+   host.once('dialog',dialog=>dialog.accept());
+   await host.getByRole('button',{name:'离开牌桌',exact:true}).click({timeout:5000});
+   await host.locator('.game-cover').first().waitFor({timeout:5000});
+   console.log('Cleaned up acceptance room after failure');
+  }
+ }catch(cleanupError){console.error('Acceptance room cleanup failed:',cleanupError.message);}
+ throw error;
+}
 finally{await Promise.all(contexts.map(c=>c.close()));await browser.close();}
 process.exit(0);

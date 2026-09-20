@@ -9,7 +9,7 @@ npm ci
 npm run check
 ```
 
-这会运行 Vitest 单元测试、Worker 类型检查和前端生产构建。GitHub Actions 使用相同命令，并运行 Chromium 的首次进入、语言切换、规则与九款游戏入口回归。单元测试覆盖规则、隐藏信息、房间选项与配对；它们不依赖在线服务或浏览器。
+这会运行 Vitest 单元测试、Worker 类型检查和前端生产构建。GitHub Actions 使用相同命令，并运行 Chromium 的首次进入、语言切换、规则与十二款游戏入口回归。单元测试覆盖规则、隐藏信息、房间选项与配对；它们不依赖在线服务或浏览器。
 
 ## 浏览器与联机回归
 
@@ -34,10 +34,12 @@ npx playwright install chromium webkit
 | `node tests/network/classic-games.integration.mjs` | 六种玩法的真实 Worker WebSocket 指令、私密视图、幂等与重连 |
 | `node tests/ui/language.integration.mjs` | 十二款英文入口与双版本规则，检查未翻译文本 |
 | `node tests/ui/identity-portraits.integration.mjs` | 12 个身份 × 6 种尺寸，完整插画、相邻角色遮罩、关闭可达性、长记录和旋转；支持 WebKit |
+| `node tests/ui/identity-portraits.integration.mjs` | 14 个身份 × 10 种尺寸，完整插画、相邻角色遮罩、关闭可达性、长记录和旋转；支持 WebKit |
 | `node tests/ui/illustrated-games.integration.mjs` | 寿司/商旅/接龙双语插画、牌面数值与手机/桌面尺寸 |
 | `node tests/ui/word-privacy.integration.mjs` | 秘密信息换座再切回隐藏、完整重开与词语游戏布局 |
 | `node tests/ui/app-usability.integration.mjs` | 首次进入语言切换、原生语言名称、语言记忆、精确教程和多层弹窗键盘操作 |
 | `node tests/ui/lobby-usability.integration.mjs` | 开局等待原因、访客只读规则、修改规则后重新准备和手机布局 |
+| `node tests/ui/lobby-layout.integration.mjs` | 狼人杀长规则与待审批入桌请求的中英七尺寸旋转、按钮触控、实际批准/准备/开局；需要本地 Worker，支持 WebKit |
 | `node tests/ui/dialogs.integration.mjs` | 宝石、卡牌与秘密身份弹窗的焦点保护、Escape 和恢复 |
 | `node tests/ui/i18n.integration.mjs` | 九款牌桌正文/无障碍标签英文检查、词库独立切换、确认出牌、私密 +4 核验与手机/短横屏 |
 | `node tests/ui/uno-selection.integration.mjs` | 接龙选牌高亮/抬升/取消、确认出牌、万能选色、换座清理、质疑开关与双语三尺寸 |
