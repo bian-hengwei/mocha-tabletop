@@ -20,7 +20,7 @@
 ## 实现与文档的查证入口
 
 - 游戏模块与公开名字：`src/core/types.ts`、`src/core/registry.ts`、`src/core/games/`。
-- 已记录的版本与规则来源：[ARCHITECTURE](ARCHITECTURE.md)、[WEREWOLF-OPTIONS](WEREWOLF-OPTIONS.md)、[WORD-GAMES](WORD-GAMES.md)。仍要核对原始规则与实际实现，不能把文档自身当成官方证据。
+- 已记录的版本与规则来源：[ARCHITECTURE](ARCHITECTURE.md)、[WEREWOLF-OPTIONS](WEREWOLF-OPTIONS.md)、[WORD-GAMES](WORD-GAMES.md)、[RECOGNIZABLE-RULES](RECOGNIZABLE-RULES.md)。仍要核对原始规则与实际实现，不能把文档自身当成官方证据。
 - 现有素材与独立牌表来源：[ASSETS](ASSETS.md)。重要插画采用原创生成；数值由程序绘制。
 - 验证范围和限制：[tests/README.md](../tests/README.md)、实际测试代码与 CI。
 - 服务名称、入口和部署流程：[DEPLOYMENT](DEPLOYMENT.md)。
