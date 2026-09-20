@@ -87,8 +87,8 @@ try{
   await begin('喵喵危机');let played=false,drew=false;
   for(let turn=0;turn<20&&!(played&&drew);turn++){
     await activeSeat();
-    if(!played){const hand=page.locator('.bt-hand');for(const title of ['偷瞄三张','洗牌','加班','跳过','借一张']){const card=hand.getByRole('button',{name:title,exact:true}).first();if(await card.count()){await card.click();await page.getByRole('button',{name:'打出这张',exact:true}).click();played=true;if(title==='借一张')await page.locator('.bt-seat.targetable').first().click();break;}}}
-    if(await page.locator('.bt-phase-response').count())for(const id of ['practice-0','practice-1','practice-2']){if(!await page.locator('.bt-phase-response').count())break;await seat(id);const pass=page.getByRole('button',{name:/^(不等等|保持等等)$/});if(await pass.count())await pass.click();}
+    if(!played){const hand=page.locator('.bt-hand');for(const title of ['预知三张','洗牌','攻击','跳过','索取']){const card=hand.getByRole('button',{name:title,exact:true}).first();if(await card.count()){await card.click();await page.getByRole('button',{name:'打出这张',exact:true}).click();played=true;if(title==='索取')await page.locator('.bt-seat.targetable').first().click();break;}}}
+    if(await page.locator('.bt-phase-response').count())for(const id of ['practice-0','practice-1','practice-2']){if(!await page.locator('.bt-phase-response').count())break;await seat(id);const pass=page.getByRole('button',{name:/^(不否决，继续|保持取消，继续)$/});if(await pass.count())await pass.click();}
     await activeSeat();
     if(await page.locator('.bt-phase-future').count())await page.getByRole('button',{name:'看好了',exact:true}).click();
     if(await page.locator('.bt-phase-give').count()){await page.locator('.bt-hand .bt-card').first().click();await page.getByRole('button',{name:'交出这张',exact:true}).click();await activeSeat();}

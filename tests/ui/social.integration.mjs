@@ -59,8 +59,8 @@ for(const viewport of [{width:667,height:375},{width:844,height:390}]){
     for(let i=0;i<size;i++){await viewer(i);await submit('秘密任务',['成功']);}
     assert.equal(await page.locator('.quest.success').count(),quest+1);
   }
-  const assassin=avalonRoles.indexOf('追踪者'),merlin=avalonRoles.indexOf('引路者');await viewer(assassin);
-  const merlinName=await seats().nth(merlin).locator('b').textContent();await submit('刺杀引路者',[merlinName]);await page.locator('.end-banner').waitFor();
+  const assassin=avalonRoles.indexOf('刺客'),merlin=avalonRoles.indexOf('先知');await viewer(assassin);
+  const merlinName=await seats().nth(merlin).locator('b').textContent();await submit('刺杀先知',[merlinName]);await page.locator('.end-banner').waitFor();
   assert.match(await page.locator('.end-banner').textContent(),/邪恶获胜/);
   // Force the same seat across replay so changing viewer alone cannot hide a leak.
   await viewer(0);await page.getByRole('button',{name:'查看我的身份',exact:true}).click();await page.keyboard.press('Escape');await page.getByRole('button',{name:'再来一局',exact:true}).click();

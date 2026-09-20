@@ -1,4 +1,5 @@
 import {useSyncExternalStore} from 'react';
+import {recognitionText} from './i18n/recognitionText';
 import {appText,appPatterns} from './i18n/appText';
 import {uiText,uiPatterns} from './i18n/uiText';
 import {gameText,gamePatterns} from './i18n/gameText';
@@ -10,12 +11,16 @@ const subscribe=(fn:()=>void)=>{subscribers.add(fn);return()=>{subscribers.delet
 export function getLocale(){return locale;}
 export function setLocale(value:Locale){locale=value;try{localStorage.setItem('mocha-locale',value);}catch{}document.documentElement.lang=value==='zh'?'zh-CN':'en';subscribers.forEach(fn=>fn());}
 export function useLocale(){return useSyncExternalStore(subscribe,getLocale);}
-const aliases:Record<string,string>={'阿瓦隆':'迷雾远征','狼人杀':'月夜议会','炸弹猫':'喵喵危机','宝石商人':'晶石商会','Sushi Go':'寿司小宴','SushiGo':'寿司小宴','香料之路':'香料商旅','UNO':'七彩接龙','Codenames':'密语行动','谁是卧底':'异词同伴','梅林':'引路者','派西维尔':'哨兵','莫甘娜':'伪装者','刺客':'追踪者','爪牙':'暗影同伴','忠臣':'远征队员'};
+const aliases:Record<string,string>={'危险目标':'刺客','闹闹牌':'爆炸牌','安抚':'拆弹','加班':'攻击','借一张':'索取','偷瞄三张':'预知三张','等等':'否决','阿瓦隆':'迷雾远征','狼人杀':'月夜议会','炸弹猫':'喵喵危机','宝石商人':'晶石商会','Sushi Go':'寿司小宴','SushiGo':'寿司小宴','香料之路':'香料商旅','UNO':'七彩接龙','Codenames':'密语行动','谁是卧底':'异词同伴','梅林':'先知','派西维尔':'守望者','莫甘娜':'伪先知','爪牙':'暗影同伴','忠臣':'远征队员'};
 function neutral(text:string){for(const [from,to]of Object.entries(aliases))text=text.replaceAll(from,to);return text;}
-const dictionary={...gameText,...uiText,...wordGameText,...appText};
+const sourceText={...gameText,...uiText,...wordGameText,...appText,...recognitionText};
+const dictionary:Record<string,string>=Object.fromEntries(Object.entries(sourceText).flatMap(([key,value])=>[[key,value],[neutral(key),value]]));
 const dictionaryKeys=Object.keys(dictionary).filter(k=>/[\u3400-\u9fff]/u.test(k)).sort((a,b)=>b.length-a.length);
 const cache=new Map<string,string>();
-const patterns:[RegExp,string,number[]?][]=[...appPatterns,...uiPatterns,...wordGamePatterns,...gamePatterns];
+const patterns:[RegExp,string,number[]?][]=[...appPatterns,...uiPatterns,...wordGamePatterns,...gamePatterns].flatMap(([pattern,replacement,captures])=>{
+ const current=neutral(pattern.source);
+ return current===pattern.source?[[pattern,replacement,captures]]:[[new RegExp(current,pattern.flags),replacement,captures],[pattern,replacement,captures]];
+});
 function english(text:string,depth=0):string {
  if(depth>5)return text;if(cache.has(text))return cache.get(text)!;
  if(Object.hasOwn(dictionary,text))return dictionary[text];
