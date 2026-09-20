@@ -9,7 +9,7 @@ npm ci
 npm run check
 ```
 
-这会运行 Vitest 单元测试、Worker 类型检查和前端生产构建。GitHub Actions 使用相同命令，并运行 Chromium 的首次进入、语言切换、规则与九款游戏入口回归。单元测试覆盖规则、隐藏信息、房间选项与配对；它们不依赖在线服务或浏览器。
+这会运行 Vitest 单元测试、Worker 类型检查和前端生产构建。GitHub Actions 使用相同命令，并运行 Chromium 的首次进入、语言切换、规则与十二款游戏入口回归。单元测试覆盖规则、隐藏信息、房间选项与配对；它们不依赖在线服务或浏览器。
 
 ## 浏览器与联机回归
 
@@ -24,6 +24,16 @@ npx playwright install chromium webkit
 
 | 命令 | 验证范围 |
 | --- | --- |
+| `node tests/ui/classic-assets.integration.mjs` | 90 张本地牌面/底板/背面与三张封面解码，大小王颜色映射；支持 WebKit |
+| `node tests/ui/classic-orientation.integration.mjs` | 六种新玩法，中英文九种尺寸、手牌滚动到末张、44px 触控与旋转保留选择；支持 WebKit |
+| `node tests/ui/classic-dense.integration.mjs` | 密集牌河与副露、血流锁牌、记录弹窗焦点与旋转；支持 WebKit |
+| `node tests/ui/classic-cloud.integration.mjs` | 四个独立浏览器上下文，全部麻将模式、访客只读规则、刷新重连和两款扑克云端出牌；可对实际部署运行 |
+| `node tests/ui/poker-declaration.integration.mjs` | 掼蛋同花顺默认解释与手动宣告普通顺子；支持 WebKit |
+| `node tests/ui/classic-games.integration.mjs` | 六种新玩法，中英文四尺寸、点选/取消/换座、刷新恢复、扑克完整一轮与跨轮进贡；支持 WebKit |
+| `node tests/ui/mahjong-actions.integration.mjs` | 麻将确定性场景：自摸、血流继续、暗杠、抢杠、胡优先、碰与流局；支持 WebKit |
+| `node tests/network/classic-games.integration.mjs` | 六种玩法的真实 Worker WebSocket 指令、私密视图、幂等与重连 |
+| `node tests/ui/language.integration.mjs` | 十二款英文入口与双版本规则，检查未翻译文本 |
+| `node tests/ui/identity-portraits.integration.mjs` | 12 个身份 × 6 种尺寸，完整插画、相邻角色遮罩、关闭可达性、长记录和旋转；支持 WebKit |
 | `node tests/ui/identity-portraits.integration.mjs` | 14 个身份 × 10 种尺寸，完整插画、相邻角色遮罩、关闭可达性、长记录和旋转；支持 WebKit |
 | `node tests/ui/illustrated-games.integration.mjs` | 寿司/商旅/接龙双语插画、牌面数值与手机/桌面尺寸 |
 | `node tests/ui/word-privacy.integration.mjs` | 秘密信息换座再切回隐藏、完整重开与词语游戏布局 |
@@ -31,12 +41,11 @@ npx playwright install chromium webkit
 | `node tests/ui/lobby-usability.integration.mjs` | 开局等待原因、访客只读规则、修改规则后重新准备和手机布局 |
 | `node tests/ui/lobby-layout.integration.mjs` | 狼人杀长规则与待审批入桌请求的中英七尺寸旋转、按钮触控、实际批准/准备/开局；需要本地 Worker，支持 WebKit |
 | `node tests/ui/dialogs.integration.mjs` | 宝石、卡牌与秘密身份弹窗的焦点保护、Escape 和恢复 |
-| `node tests/ui/language.integration.mjs` | 九款英文入口与双版本规则，检查未翻译文本 |
 | `node tests/ui/i18n.integration.mjs` | 九款牌桌正文/无障碍标签英文检查、词库独立切换、确认出牌、私密 +4 核验与手机/短横屏 |
 | `node tests/ui/uno-selection.integration.mjs` | 接龙选牌高亮/抬升/取消、确认出牌、万能选色、换座清理、质疑开关与双语三尺寸 |
 | `node tests/ui/new-games.integration.mjs` | 寿司、香料、七彩接龙实际回合操作 |
 | `node tests/ui/word-games.integration.mjs` | 两款词语游戏中英文终局与切换语言保留词面 |
-| `node tests/ui/offline.integration.mjs` | 生产预览 5176 的缓存、断网重载及九款试玩 |
+| `node tests/ui/offline.integration.mjs` | 生产预览 5176 的缓存、断网重载及十二款试玩 |
 | `node tests/ui/install.integration.mjs` | 直接安装提示、取消/完成状态、iOS/桌面帮助与竖屏 |
 | `node tests/ui/personal.integration.mjs` | 48 头像、身份保存、试玩恢复、战绩去重/删除、重置身份、存储禁用 |
 | `node tests/ui/responsive.integration.mjs` | 320px 手机至桌面、短横屏、数字溢出、全部座位与操作可达性 |
@@ -69,6 +78,12 @@ TEST_BROWSER=webkit BASE_URL=https://mocha-tabletop-web.pages.dev node tests/ui/
 ```
 
 它覆盖九款游戏的真实多人房间、断线恢复、三种狼人模式和缓存资源。可用 `TEST_GAMES=gems,bombs,avalon,undercover` 选择补充浏览器的联机场景；默认运行全部。连续验收应遵守每 IP 每 10 分钟最多创建 15 个房间的限制，本地大批量测试可以使用独立的 Wrangler `--persist-to` 临时目录。离线导航由 Chromium 回归验证；WebKit 自动化不等同于真实 iPhone 的主屏幕安装和离线行为，这部分仍需真机检查。
+
+## 独立副本验收
+
+避免占用已有服务，可运行 `npm run worker:dev -- --port 8794 --var ALLOWED_ORIGINS:http://127.0.0.1:5184 --persist-to .wrangler/classic-test` 与 `MOCHA_DEV_API=http://127.0.0.1:8794 npm run dev -- --port 5184 --strictPort`。测试分别设置 `BASE_URL` / `UI_BASE_URL` / `TEST_FRONTEND=http://127.0.0.1:5184`、`TEST_API_BASE=http://127.0.0.1:8794`。新脚本也支持默认开发端口。
+
+所有云端测试都会真实创建测试房间。服务保留每个来源十分钟内最多 15 次建房的限制；批量本地回归需分批执行，或停止仅供测试的 Worker 后换用新的 `--persist-to` 测试目录。不要关闭生产限流。
 
 语言选择器刻意使用目标语言的原生名称（中文 / English），不计为未翻译文案。首次昵称填写弹窗也提供语言切换。浏览器回归使用独立上下文，避免影响日常牌局。
 

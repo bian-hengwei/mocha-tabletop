@@ -1,3 +1,5 @@
+import {doudizhu,guandan} from './games/poker';
+import {mahjong} from './games/mahjong';
 import type { GameKind, GameModule } from './types';
 import { gems } from './games/gems';
 import { bombs } from './games/bombs';
@@ -8,4 +10,4 @@ import { century } from './games/century';
 import { uno } from './games/uno';
 import { codenames } from './games/codenames';
 import { undercover } from './games/undercover';
-export const modules:Record<GameKind,GameModule>={gems,bombs,werewolf,avalon,sushi,century,uno,codenames,undercover};
+export const modules:Record<GameKind,GameModule>={doudizhu,guandan,mahjong,gems,bombs,werewolf,avalon,sushi,century,uno,codenames,undercover};

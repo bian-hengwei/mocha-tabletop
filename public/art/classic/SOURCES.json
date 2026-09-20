@@ -1,0 +1,415 @@
+{
+  "license": "CC0-1.0",
+  "poker": {
+    "author": "Adrian Kennard",
+    "source": "https://www.me.uk/cards/",
+    "generator": "https://www.me.uk/cards/makeadeck.cgi?view=View+full+deck&size=poker&super=1&ace=Large&ace1=&ace2=&qr=&back=Plain&backcolour=%23204d42&frontcolour=%23fffdf8&redcolour=%23ba2737&blackcolour=%23152b32&ignis=on",
+    "options": "Medium indices; standard pips and detailed courts; large aces; dragon jokers; ivory front, jade back; no source lettering or QR code"
+  },
+  "mahjong": {
+    "author": "FluffyStuff",
+    "source": "https://github.com/FluffyStuff/riichi-mahjong-tiles",
+    "revision": "26e127ba2117f45cdce5ea0225748cc0cfad3169",
+    "license": "https://github.com/FluffyStuff/riichi-mahjong-tiles/blob/26e127ba2117f45cdce5ea0225748cc0cfad3169/LICENSE.md",
+    "mapping": [
+      "Man1",
+      "Man2",
+      "Man3",
+      "Man4",
+      "Man5",
+      "Man6",
+      "Man7",
+      "Man8",
+      "Man9",
+      "Pin1",
+      "Pin2",
+      "Pin3",
+      "Pin4",
+      "Pin5",
+      "Pin6",
+      "Pin7",
+      "Pin8",
+      "Pin9",
+      "Sou1",
+      "Sou2",
+      "Sou3",
+      "Sou4",
+      "Sou5",
+      "Sou6",
+      "Sou7",
+      "Sou8",
+      "Sou9",
+      "Ton",
+      "Nan",
+      "Shaa",
+      "Pei",
+      "Haku",
+      "Hatsu",
+      "Chun",
+      "Front"
+    ]
+  },
+  "processing": "Removed authoring metadata and editor-only namespaces; kept original artwork paths. Filenames map to game values. Added conventional JOKER corner indices and strengthened the black joker outline for small-screen legibility. Tile backs use a jade overlay.",
+  "assets": [
+    {
+      "name": "poker/AS.svg",
+      "sha256": "342d58dbe63797d0f38d42725c2b1ff9e624dbe8115f426a9baab0984f1cc9ea"
+    },
+    {
+      "name": "poker/2S.svg",
+      "sha256": "fcd1245b462b2c94e88610db0f0baf402dc8b74e4623eb91dafbc5199119361d"
+    },
+    {
+      "name": "poker/3S.svg",
+      "sha256": "e5f24f4301195f0eaf3bfdbc08860cd79905761fa2909b642276718d64b304b4"
+    },
+    {
+      "name": "poker/4S.svg",
+      "sha256": "49abcb8ffa00ea79abd0988d9aa15a4b255b6359c610e17e52520f69b88083b8"
+    },
+    {
+      "name": "poker/5S.svg",
+      "sha256": "2b3cd0b8836d425f7e7169680bcd6e8a1711e827245a6a8c4c4efa0761a72dca"
+    },
+    {
+      "name": "poker/6S.svg",
+      "sha256": "8da89cb1059331f0e6d046a991b7b1c3fdb10fedc49f660916803dba02b082be"
+    },
+    {
+      "name": "poker/7S.svg",
+      "sha256": "e4ca74ee2397a4a03f7da36d286129ab58c6bae9dcbe41080bc9eb8b285c2f83"
+    },
+    {
+      "name": "poker/8S.svg",
+      "sha256": "9f2fcb7b505b608a7075f812f390adc101428039ffca2209c0c430f48c2cf061"
+    },
+    {
+      "name": "poker/9S.svg",
+      "sha256": "5131e5fb0c7afb82da7e0f07576ac11f3dbf70132fba3fd9e5cb463f1fc7b4d5"
+    },
+    {
+      "name": "poker/TS.svg",
+      "sha256": "83f5333082547486fb8dc0cc221fc1c26dd5bbbd1d44caf73fdfa1f9db470f30"
+    },
+    {
+      "name": "poker/JS.svg",
+      "sha256": "c004948855943fd5867ef0c31402ee161e413139eb842d37b53fb568f3d42e77"
+    },
+    {
+      "name": "poker/QS.svg",
+      "sha256": "72ba5265d7271b976a8eb0c6178944c2d799dac0943cf826e1bc51481adf7bac"
+    },
+    {
+      "name": "poker/KS.svg",
+      "sha256": "733e14f846d9a96a5a925aad07b40ebf32b4d490c759ad7f6800eb21984018f5"
+    },
+    {
+      "name": "poker/AH.svg",
+      "sha256": "6728c7cc601540b8ac1505caad9e3d8c176626464b9de6f8bd26f63153b3caf4"
+    },
+    {
+      "name": "poker/2H.svg",
+      "sha256": "0b82dcea75feb839e5b281c37466a356e05199469fae987e60cbc1893f2e71ab"
+    },
+    {
+      "name": "poker/3H.svg",
+      "sha256": "66d47c509e06dda2111f5167f5ca708e6950da0a8981b2fe2776877f068bfb69"
+    },
+    {
+      "name": "poker/4H.svg",
+      "sha256": "863a81702274d9a5728a5cf329f91b82002bcf62031acf3266fe10482a06c877"
+    },
+    {
+      "name": "poker/5H.svg",
+      "sha256": "1f2a445288402e0179d1115d3faa5b4389f1570625731078520337ba5e59ca80"
+    },
+    {
+      "name": "poker/6H.svg",
+      "sha256": "2bb7fe1c3ac27d407372e3978ce9c6860dc27d9988c0a9c66458032be386b05c"
+    },
+    {
+      "name": "poker/7H.svg",
+      "sha256": "f463677bd05153844275da440b50cd5d179b69cf85987e5e3c4593bb3192d8e2"
+    },
+    {
+      "name": "poker/8H.svg",
+      "sha256": "a5bb3a7d5f621ee5738e395a02720094f77dd205ddfdf213f1925d169af0f249"
+    },
+    {
+      "name": "poker/9H.svg",
+      "sha256": "9655dbe713872c8767debd4e0551074bc1b75724dc5e30c811eff3a1d14b741b"
+    },
+    {
+      "name": "poker/TH.svg",
+      "sha256": "aa436648fd06f7d404d64b0b2a2c086db158445ce8b618d74977e2a220da809f"
+    },
+    {
+      "name": "poker/JH.svg",
+      "sha256": "d2d8e9df345af4181d740b467c93e525e451dfca53b70fa3f67880f123bbedf0"
+    },
+    {
+      "name": "poker/QH.svg",
+      "sha256": "27710fca40f0ef8d1b1367b405f947e20345930864727635921b698c17e47614"
+    },
+    {
+      "name": "poker/KH.svg",
+      "sha256": "5c3beedc457634134dd13e17369038b4c3794d9e40b0e1b30bb090e38ba29d10"
+    },
+    {
+      "name": "poker/AC.svg",
+      "sha256": "4f61579f7b73490c4a1f4ffc04366613544bea12f91acf4ad41e6d00bd2884f1"
+    },
+    {
+      "name": "poker/2C.svg",
+      "sha256": "407ac6c9f1c4240e7a09d66686ec01205af7e4531bab4fd0844a2620fc2db272"
+    },
+    {
+      "name": "poker/3C.svg",
+      "sha256": "3cc91712317a9faa55586e14ff9334a57663cb26e0bc3867b769bab0cffdf2d8"
+    },
+    {
+      "name": "poker/4C.svg",
+      "sha256": "ebad67aa6e21eb47916a5345a9fad0960da10f5b1f83d575fa7cff0feacafc08"
+    },
+    {
+      "name": "poker/5C.svg",
+      "sha256": "e84d1bb3b677d9bb3649ff4d3fe6faf46f8f1e61c2eaaa97c8ce53ac52bc48bd"
+    },
+    {
+      "name": "poker/6C.svg",
+      "sha256": "c1b0a8fb60b940ab739f5e8fef7de4456177e47b96a1c2776a66cc3b5063c3b5"
+    },
+    {
+      "name": "poker/7C.svg",
+      "sha256": "66d44d812061637e7687acc2851d82d6391dc47fe5062854c64353070d0fbfb3"
+    },
+    {
+      "name": "poker/8C.svg",
+      "sha256": "8614f2a2c6cc88d2f0d86bc4be5f664d0b02654736bc0108e9a7d61f7dc7bc9e"
+    },
+    {
+      "name": "poker/9C.svg",
+      "sha256": "af73c01bd6c7c44669257d794f54ffcd40d494277a1e39dc48de00dbf5af0cab"
+    },
+    {
+      "name": "poker/TC.svg",
+      "sha256": "000280be17ae9f756af186eb3de35a15b15d96cd435cff4e104f7e50883d0fab"
+    },
+    {
+      "name": "poker/JC.svg",
+      "sha256": "8ce9f608e6adedb8b6e038f60f257949e43de3d0712917ac281177f3bacdd0ae"
+    },
+    {
+      "name": "poker/QC.svg",
+      "sha256": "aba9d7a301fc4673d350cd94ec7a3123447333baeb2c84e4adf384f40a9e5e02"
+    },
+    {
+      "name": "poker/KC.svg",
+      "sha256": "172a09c5af59f10a604906f5f54591aa350e772699e4950866a11f58828d77e9"
+    },
+    {
+      "name": "poker/AD.svg",
+      "sha256": "df2fbdb0a25ef5ff179bcbd33062f9cbe31643a141a8b4b7660543312d6176f9"
+    },
+    {
+      "name": "poker/2D.svg",
+      "sha256": "25843fd1461bfad215e3ecfbae9d9b26abb648110bc6a49af3138647242ff029"
+    },
+    {
+      "name": "poker/3D.svg",
+      "sha256": "3243c2f91f7734cf055dce2344cae0b67452c28f0d30866f9653eefb84720a3d"
+    },
+    {
+      "name": "poker/4D.svg",
+      "sha256": "bd552ffe9bae842330ba85056779cfc914ce0c58f8e2037e9d69719f901c42f8"
+    },
+    {
+      "name": "poker/5D.svg",
+      "sha256": "5047deb525a0a226c30d5e2de48bdc91d15be7940bbf93997b913eb2dd46c6cb"
+    },
+    {
+      "name": "poker/6D.svg",
+      "sha256": "58de9f93af06b8c629ff7403cfcc8bd2360609c03bf83113d66812fb5c255a15"
+    },
+    {
+      "name": "poker/7D.svg",
+      "sha256": "529921c538de38226ab7032c756bb53b2da9551aded8d3ba84011f74e5084e4f"
+    },
+    {
+      "name": "poker/8D.svg",
+      "sha256": "203112802a48871bd2cc059ee1f0ad6debab166f3aa12bb415b10af936fdb00f"
+    },
+    {
+      "name": "poker/9D.svg",
+      "sha256": "ee2d4ce778b085b20d57d54cd29a3cf7366a451e947ed7a259d63bce282a355e"
+    },
+    {
+      "name": "poker/TD.svg",
+      "sha256": "96ec29fd295072cc68d66176e99b5cb487302baff85656a8b1f013e5ef2e7935"
+    },
+    {
+      "name": "poker/JD.svg",
+      "sha256": "5475ed0e4003881c3009efdf9a66e86a9ea9df7ec503b0d6e8fa80dd68cec6bd"
+    },
+    {
+      "name": "poker/QD.svg",
+      "sha256": "ee4da34ccda9ab02f16774c7f6838f0099094ed712b410c1505a127454c11014"
+    },
+    {
+      "name": "poker/KD.svg",
+      "sha256": "836493a8f3184e42ef7317583cb3199f3dddf0982d8e69d58cba526c54764251"
+    },
+    {
+      "name": "poker/1J.svg",
+      "sha256": "8616d54328f3d6304517c06acb76de89dc820d210bee6634a84f92e4f7970105"
+    },
+    {
+      "name": "poker/2J.svg",
+      "sha256": "ab51318dd849cb6cee7f0f43e0d084100f500280e8a48084cf910ac7704f7746"
+    },
+    {
+      "name": "poker/1B.svg",
+      "sha256": "39f3d76fc2c8daf19f35d72e8db9ece11f4f47cab129c0533155262caecd455a"
+    },
+    {
+      "name": "mahjong/0.svg",
+      "sha256": "278ae6e4b769f6da616e2b5313fb7fa70dc34565271378a6ae6f4c5a49fc5f85"
+    },
+    {
+      "name": "mahjong/1.svg",
+      "sha256": "78c0b5523130ff042d9f41b46b822c7863c0e6cc29d98d90334c3b9594462377"
+    },
+    {
+      "name": "mahjong/2.svg",
+      "sha256": "65353779d3c8231ae410925a809714dc49c87ccff651a78fa55d21f7237f7ea7"
+    },
+    {
+      "name": "mahjong/3.svg",
+      "sha256": "a4e03234cc0990133135a83b1cb38b1856a5c42d49e8ca1ecea67280c1b6ca0c"
+    },
+    {
+      "name": "mahjong/4.svg",
+      "sha256": "e9f607a4810496e8c6cbafefb05edba717d1f7a0f818f81592563ad33ebcd76b"
+    },
+    {
+      "name": "mahjong/5.svg",
+      "sha256": "e52bcc5165b126933ecd21f9ec00b852b7ba5475bf354d4a9e7c329f67170c42"
+    },
+    {
+      "name": "mahjong/6.svg",
+      "sha256": "ae9e8f0197d90212f518095d92f72bd3e895ed98847bae1d491f4822a7ed89af"
+    },
+    {
+      "name": "mahjong/7.svg",
+      "sha256": "bc52ed76727b91e927873c3b29ee34ac59932d918a1e77d2fa9afd5c1a5b43ab"
+    },
+    {
+      "name": "mahjong/8.svg",
+      "sha256": "03b91cdc1a1f6b9db5ae9219adee2560c10170cb20a532ce24a7e6fcdf6baa88"
+    },
+    {
+      "name": "mahjong/9.svg",
+      "sha256": "6daab930fbfa3867f02e5073523d15064b78c175f1d238daade6eac16d9ad161"
+    },
+    {
+      "name": "mahjong/10.svg",
+      "sha256": "65f3fe20f9ef33363e60da752f95b0bc0e310cf64507de55d8a611ce8347a03e"
+    },
+    {
+      "name": "mahjong/11.svg",
+      "sha256": "611a09f7dfdc14df7f77d3eee27eea896a6f78068bc680e5f612cf6a28dad67c"
+    },
+    {
+      "name": "mahjong/12.svg",
+      "sha256": "71bc57271ee43a9bd2e979df8895e04ad14e129123483c88974e82a2907df3bb"
+    },
+    {
+      "name": "mahjong/13.svg",
+      "sha256": "eb662eb108d09611c50fa1f706a8c677e7ce5db584f71e616e3d7ffc5509d592"
+    },
+    {
+      "name": "mahjong/14.svg",
+      "sha256": "b6138ac2e1671dde6e95e5e8d138f797f84866ae200f8c288b123b9285da4dd5"
+    },
+    {
+      "name": "mahjong/15.svg",
+      "sha256": "cd767e7637197309a045eade3ac1ee2a9d410b9fed7a65d00dee6fe89f7c414f"
+    },
+    {
+      "name": "mahjong/16.svg",
+      "sha256": "10144d7dc78f06d3c56ac84c7d0be8916d085adb41820139f20dbe18db5e53cc"
+    },
+    {
+      "name": "mahjong/17.svg",
+      "sha256": "28797d6083467757517a20f5cfbab6815984487b2ccd7cbe0ff902a01ab27768"
+    },
+    {
+      "name": "mahjong/18.svg",
+      "sha256": "6368446b9f738d4b7a8923ad698c53fbce4fc4ec84913ebbec30a448014782ac"
+    },
+    {
+      "name": "mahjong/19.svg",
+      "sha256": "76de7e48919b9c368590ecca9ba185bf43ce105ffe13643d8e9bb7b9e6521826"
+    },
+    {
+      "name": "mahjong/20.svg",
+      "sha256": "2bd570d0f59cac25493ee4822ee864503eb0846b26da23e2d78e5cc701db0c25"
+    },
+    {
+      "name": "mahjong/21.svg",
+      "sha256": "859245308b454e92936b35c03c83c338aca6440c2c1f9f15d5bfb5ec351ec38e"
+    },
+    {
+      "name": "mahjong/22.svg",
+      "sha256": "64cdcf2c48a9d52f433e6dabf6e90b0d42a0198751f0f59b3fb26a0690fe2ff7"
+    },
+    {
+      "name": "mahjong/23.svg",
+      "sha256": "c367ff0425347aa46a699257465aa95dbe3ebdba44003b60c556ad2dd783619d"
+    },
+    {
+      "name": "mahjong/24.svg",
+      "sha256": "47ca73f4f765e2d600e68b9732cdb91a66157c319dc441b972fee8fc929d4c40"
+    },
+    {
+      "name": "mahjong/25.svg",
+      "sha256": "e58cd04035efd09778ec6d09a600bf63898bdafec13ce413637bdcb8dd296f9c"
+    },
+    {
+      "name": "mahjong/26.svg",
+      "sha256": "71b6523679ec53dec2170878a30d819e4e099492a930d8f9cf6be366295f8ba6"
+    },
+    {
+      "name": "mahjong/27.svg",
+      "sha256": "a351bbf35bfdb4c15d1293488c33fd1898a40236faccbe93f8f3e36fece87c99"
+    },
+    {
+      "name": "mahjong/28.svg",
+      "sha256": "e705baa5278027b7d2ac0a78502c76b4aa0f99aa610a248cf33bed30104c0669"
+    },
+    {
+      "name": "mahjong/29.svg",
+      "sha256": "f5175388e66dfc14d390b5e7c0eef1bf0bb31597f0230367984769a4924b5c6c"
+    },
+    {
+      "name": "mahjong/30.svg",
+      "sha256": "eacaed05af2d3b1d1c24d479529bc792425e46c43b3581165c4eaa625b25b741"
+    },
+    {
+      "name": "mahjong/31.svg",
+      "sha256": "73ff7bb8924f9791426b41fe7a37d00e270eb8de0d8f46026dc1d030c18e4357"
+    },
+    {
+      "name": "mahjong/32.svg",
+      "sha256": "9f1ed3e18b86ea52478894f9f1b030c34f1389d84c64f0ce765d7bf628252428"
+    },
+    {
+      "name": "mahjong/33.svg",
+      "sha256": "8dccaa053e9fe427033d8b121e9f285dd8414b34538937a7bf2f76d4aba45077"
+    },
+    {
+      "name": "mahjong/front.svg",
+      "sha256": "6be649410c6e70fe2af52f61ac7508ab72b95519a6ed963749e3c30f4c54493a"
+    }
+  ]
+}
