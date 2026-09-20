@@ -1,0 +1,10 @@
+import {describe,it,expect} from 'vitest';
+import {discoveryNetwork} from '../../worker/discovery';
+describe('server discovery network normalization',()=>{
+ it('preserves exact canonical IPv4 and existing IPv4 hash inputs',()=>{expect(discoveryNetwork('203.0.113.12')).toBe('203.0.113.12');expect(discoveryNetwork('203.0.113.13')).not.toBe(discoveryNetwork('203.0.113.12'));});
+ it('groups privacy IPv6 interface addresses from one /64 but separates adjacent /64s',()=>{const first=discoveryNetwork('2001:db8:1234:5678:123:abcd:1:2');expect(first).toBe('2001:0db8:1234:5678::/64');expect(discoveryNetwork('2001:db8:1234:5678:ffff:eeee:dddd:cccc')).toBe(first);expect(discoveryNetwork('2001:db8:1234:5679:123:abcd:1:2')).not.toBe(first);});
+ it('canonicalizes uppercase, zero compression, and explicit leading zeroes',()=>{const variants=['2001:DB8::1','2001:0db8:0000:0000:0000:0000:0000:0001','2001:db8:0:0::abcd','2001:db8::'];for(const variant of variants)expect(discoveryNetwork(variant)).toBe('2001:0db8:0000:0000::/64');expect(discoveryNetwork('::1')).toBe('0000:0000:0000:0000::/64');});
+ it('maps dotted and hexadecimal IPv4-mapped addresses to IPv4 buckets',()=>{for(const variant of ['::ffff:192.0.2.9','::FFFF:C000:0209','0:0:0:0:0:ffff:c000:209'])expect(discoveryNetwork(variant)).toBe('192.0.2.9');expect(discoveryNetwork('::ffff:192.0.2.10')).not.toBe(discoveryNetwork('::ffff:192.0.2.9'));});
+ it('parses other RFC IPv6 dotted tails as IPv6',()=>{expect(discoveryNetwork('64:ff9b::192.0.2.9')).toBe('0064:ff9b:0000:0000::/64');});
+ it.each([null,'','local-development',' 192.0.2.1','192.0.2.1 ','192.0.2','192.0.2.256','192.00.2.1','192.0.2.1:443','192.0.2.1, 192.0.2.2','[2001:db8::1]','fe80::1%en0','2001:db8::/64','1:2:3:4:5:6:7','1:2:3:4:5:6:7:8:9','1:2:3:4:5:6:7::8','2001::db8::1','2001:db8:::1','12345::1','gggg::1','::ffff:192.00.2.1','::ffff:192.0.2.999'])('rejects invalid, ambiguous or non-address input %s',value=>{expect(()=>discoveryNetwork(value)).toThrow('网络地址无效');});
+});

@@ -1,0 +1,10 @@
+<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/><title>Bombs table interaction harness</title></head><body><div id="root"></div><script type="module">
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import {bombs} from '/src/core/games/bombs.ts';
+import {BombsTable} from '/src/ui/BombsTable.tsx';
+import '/src/ui/style.css';
+const players=[{id:'a',name:'阿岚',avatar:'🦊'},{id:'b',name:'小雨',avatar:'🐼'},{id:'c',name:'橘子',avatar:'🐱'}];
+function Harness(){const[state,setState]=React.useState(()=>bombs.create(players,Number(new URLSearchParams(location.search).get('seed'))||9));const[viewer,setViewer]=React.useState('a');return React.createElement('main',{className:'app game-bombs'},React.createElement('header',{style:{height:36,flexShrink:0,display:'flex',justifyContent:'space-between',alignItems:'center'}},React.createElement('b',{},'炸弹猫 · 原创牌桌'),React.createElement('select',{'aria-label':'切换座位',value:viewer,onChange:e=>setViewer(e.target.value)},...players.map(p=>React.createElement('option',{key:p.id,value:p.id},p.name+(bombs.view(state,p.id).actions.length?' · 待操作':''))))),React.createElement('div',{style:{flex:1,minHeight:0}},React.createElement(BombsTable,{view:bombs.view(state,viewer),selfID:viewer,command:cmd=>setState(s=>bombs.apply(s,viewer,cmd))})));}
+createRoot(document.getElementById('root')).render(React.createElement(Harness));
+</script></body></html>

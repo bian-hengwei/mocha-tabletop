@@ -1,0 +1,38 @@
+import {chromium,webkit} from '@playwright/test';
+import assert from 'node:assert/strict';
+const url=process.env.TEST_FRONTEND||'http://127.0.0.1:5174';
+const browserName=process.env.TEST_BROWSER||'chromium';
+const browser=browserName==='webkit'?await webkit.launch({headless:true}):await chromium.launch({executablePath:process.env.CHROME_PATH||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});
+let contexts=[];
+try{
+ async function player(index){const context=await browser.newContext({viewport:{width:844,height:390}});contexts.push(context);const page=await context.newPage();await page.route('**/__mode_probe',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><title>Mode integration</title>'}));await page.goto(url+(browserName==='chromium'?'/manifest.webmanifest':'/__mode_probe'));await page.evaluate(async index=>{const {RoomClient}=await import('/src/net/client.ts');window.client=new RoomClient();window.errors=[];window.observeErrors=()=>client.subscribe(s=>{if(s.error)errors.push(s.error);});observeErrors();window.player={id:crypto.randomUUID(),name:'玩家'+index,avatar:'🦊'};window.cloudTypes=[];const original=WebSocket.prototype.send;WebSocket.prototype.send=function(data){cloudTypes.push(JSON.parse(data).type);return original.call(this,data);};},index);return page;}
+ for(const transport of (process.env.TEST_TRANSPORT?[process.env.TEST_TRANSPORT]:['cloud','lan']))for(const mode of (process.env.TEST_WEREWOLF_MODE?[process.env.TEST_WEREWOLF_MODE]:['judge','deal'])){
+  const count=mode==='judge'?7:6;const pages=[];for(let i=0;i<count;i++)pages.push(await player(i));const [host,guest]=pages;
+  await host.evaluate(({transport,mode})=>client.create(player,'werewolf',transport,{werewolfMode:mode}),{transport,mode});await host.waitForFunction(()=>client.state.room);
+  const {code,invite,hostID}=await host.evaluate(()=>({code:client.state.room.code,invite:new URLSearchParams(new URL(client.state.inviteURL).hash.slice(1)).get('invite'),hostID:player.id}));
+  assert.deepEqual(await host.evaluate(()=>client.state.room.options),{werewolfMode:mode,moderatorID:hostID});
+  for(const p of pages.slice(1)){await p.evaluate(({code,invite})=>client.join(player,code,invite),{code,invite});await p.waitForFunction(()=>client.state.room);await p.evaluate(()=>client.ready(true));}
+  await host.waitForFunction(count=>client.state.room.players.length===count&&client.state.room.players.every(p=>p.ready),count);
+  await guest.evaluate(()=>{errors=[];client.selectGame('werewolf',{werewolfMode:'standard'});});await guest.waitForFunction(()=>errors.length>0);assert.equal(await host.evaluate(()=>client.state.room.options.werewolfMode),mode);
+  await host.evaluate(()=>{errors=[];client.selectGame('werewolf',{werewolfMode:'judge',moderatorID:'fake-host-id'});});await host.waitForFunction(()=>errors.some(error=>error.includes('房主')));assert.equal(await host.evaluate(()=>client.state.room.options.moderatorID),hostID);await host.evaluate(()=>client.clearError());
+  if(transport==='lan')await host.waitForFunction(()=>client.state.transport==='lan');await host.evaluate(()=>client.start());for(const p of pages)await p.waitForFunction(()=>!!client.state.view);
+  const hv=await host.evaluate(()=>client.state.view);assert.equal(hv.board.mode,mode);assert.equal(hv.board.isModerator,mode==='judge');assert.equal(hv.board.players.length,mode==='judge'?count-1:count);
+  for(const p of pages.slice(1)){const own=await p.evaluate(()=>({view:client.state.view,id:player.id}));assert.equal(own.view.actions.length,0);assert.equal(own.view.board.moderatorOnly,undefined);assert(own.view.board.players.every(person=>person.id===own.id||person.role===undefined));}
+  if(mode==='judge'){assert.equal(hv.board.ownRoleKey,'moderator');assert(!hv.board.players.some(p=>p.id===hostID));assert(hv.board.players.every(p=>typeof p.role==='string'));}
+  else {assert.equal(hv.board.moderatorOnly,undefined);assert(hv.board.players.every(p=>p.id===hostID||p.role===undefined));}
+  const revision=await host.evaluate(()=>client.state.actionRevision),cloudActions=await host.evaluate(()=>cloudTypes.filter(t=>t==='action').length);
+  await host.evaluate(()=>{const a=client.state.view.actions[0];client.action({action:a.id,values:a.choices.some(c=>c.id==='skip')?['skip']:a.choices.slice(0,a.min).map(c=>c.id)});});await host.waitForFunction(revision=>client.state.actionRevision>revision,revision);
+  if(mode==='deal')await guest.waitForFunction(()=>client.state.view.board.dealNumber===2);
+  if(transport==='lan'){
+   assert.equal(await host.evaluate(()=>cloudTypes.filter(t=>t==='action').length),cloudActions);assert.deepEqual(await host.evaluate(()=>client.localMatch.options),{werewolfMode:mode,moderatorID:hostID});
+   const restoredRevision=await host.evaluate(()=>client.state.actionRevision);await host.evaluate(async()=>{client.destroy();const {RoomClient}=await import('/src/net/client.ts');window.client=new RoomClient();observeErrors();await client.connect();});await host.waitForFunction(()=>client.state.view&&client.state.transport==='lan'&&!client.state.paused);assert.equal(await host.evaluate(()=>client.state.actionRevision),restoredRevision);assert.equal(await host.evaluate(()=>client.state.view.board.mode),mode);
+   await guest.evaluate(()=>{errors=[];client.switchToCloud();});await guest.waitForFunction(()=>errors.some(error=>error.includes('房主')));
+   await host.evaluate(()=>{errors=[];const forged=structuredClone(client.localMatch);forged.game.options.moderatorID=client.state.room.players[1].id;client.control({type:'switchToCloud',match:forged});});await host.waitForFunction(()=>errors.some(error=>error.includes('房主')));assert.equal(await host.evaluate(()=>client.state.room.mode),'lan');await host.evaluate(()=>client.clearError());
+   await host.evaluate(()=>client.switchToCloud());for(const p of pages)await p.waitForFunction(()=>client.state.room.mode==='cloud'&&client.state.view);assert.equal(await host.evaluate(()=>client.state.view.board.mode),mode);
+  }
+  await guest.evaluate(()=>client.connect());await guest.waitForFunction(()=>client.state.view&&client.state.room.options.moderatorID===client.state.room.hostID&&!client.state.paused);
+  await host.evaluate(()=>client.endGame());await host.waitForFunction(()=>!client.state.room.started);await host.evaluate(()=>client.selectGame('werewolf',{werewolfMode:'standard'}));await host.waitForFunction(()=>client.state.room.options.werewolfMode==='standard');assert.equal(await host.evaluate(()=>client.state.room.options.moderatorID),undefined);await host.evaluate(()=>client.leave());
+  console.log(`PASS ${browserName} ${transport}/${mode}: canonical host options, guest/forged moderator rejection, correct roster/private views, authorized action, ${transport==='lan'?'checkpoint restoration + forged handoff rejection + explicit cloud handoff, ':''}reconnect and host option change`);
+  for(const c of contexts)await c.close();contexts=[];
+ }
+}catch(error){for(const context of contexts){for(const page of context.pages()){console.log(await page.evaluate(()=>({status:client.state.status,error:client.state.error,mode:client.state.room?.options,viewMode:client.state.view?.board.mode,transport:client.state.transport,paused:client.state.paused,peers:[...client.peers.values()].map(p=>({connection:p.pc.connectionState,ice:p.pc.iceConnectionState,signaling:p.pc.signalingState,channel:p.dc?.readyState,proven:p.proven,pending:p.pending.length,local:p.pc.localDescription?.type,remote:p.pc.remoteDescription?.type}))})).catch(()=>({unavailable:true})));}}throw error;}finally{await browser.close();}
