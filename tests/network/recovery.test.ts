@@ -38,3 +38,23 @@ describe('socket resilience',()=>{
  it('keeps a quiet healthy room connected through ping/pong',async()=>{const c=client();await c.join(profile,'ABC234');Socket.all[0].open();Socket.all[0].receive({type:'snapshot',room:room()});for(let i=0;i<8;i++){await vi.advanceTimersByTimeAsync(15000);Socket.all[0].receive({type:'pong'});}expect(Socket.all).toHaveLength(1);expect(Socket.all[0].sent.filter(m=>m.type==='ping')).toHaveLength(8);expect(c.state.status).toBe('lobby');});
  it('retains the saved room through an initial network outage and bounds retries',async()=>{const c=client();await c.join(profile,'ABC234');Socket.all[0].close();expect(c.state.status).toBe('reconnecting');expect(c.getSavedSession()?.code).toBe('ABC234');await vi.advanceTimersByTimeAsync(200000);expect(c.state.status).toBe('disconnected');expect(Socket.all).toHaveLength(7);expect(c.getSavedSession()?.code).toBe('ABC234');});
 });
+
+describe('pending game commands',()=>{
+ async function playing(){const c=client(),r=room('cloud',true),match=createMatch('gems',r.players);await c.join(profile,r.code);const socket=Socket.all.at(-1)!;socket.open();const snapshot={type:'snapshot',room:r,...viewMatch(match,'gems',profile.id),paused:false};socket.receive(snapshot);const a=c.state.view!.actions[0],command={action:a.id,values:a.choices.slice(0,a.min).map(choice=>choice.id)};return{c,socket,snapshot,command,r,match};}
+ it('sends once until a changed actionable revision, ignoring heartbeat and presence-only snapshots',async()=>{
+  const {c,socket,snapshot,command,r,match}=await playing();c.action(command);c.action(command);
+  expect(c.state.actionPending).toBe(true);expect(socket.sent.filter(m=>m.type==='action')).toHaveLength(1);
+  socket.receive({type:'pong'});socket.receive({...snapshot,room:{...r,revision:r.revision+1}});expect(c.state.actionPending).toBe(true);
+  const sent=socket.sent.find(m=>m.type==='action'),next=applyMatch(match,'gems',r.players,profile.id,command,sent.requestID,sent.actionRevision);
+  socket.receive({...snapshot,...viewMatch(next,'gems',profile.id)});expect(c.state.actionPending).toBe(false);expect(c.state.actionRevision).toBe(sent.actionRevision+1);
+ });
+ it('unlocks after a server rejection and permits correcting the command',async()=>{
+  const {c,socket,command}=await playing();c.action({action:'invalid',values:[]});socket.receive({type:'error',error:'操作无效'});expect(c.state.actionPending).toBe(false);c.clearError();c.action(command);expect(socket.sent.filter(m=>m.type==='action')).toHaveLength(2);expect(c.state.actionPending).toBe(true);
+ });
+ it('unlocks on connection loss and never replays an uncertain action on recovery',async()=>{
+  vi.stubGlobal('fetch',vi.fn(async()=>new Response('{}')));const {c,socket,snapshot,command}=await playing();c.action(command);socket.close();expect(c.state.actionPending).toBe(false);expect(c.state.paused).toBe(true);await vi.advanceTimersByTimeAsync(1000);const next=Socket.all.at(-1)!;next.open();next.receive(snapshot);expect(c.state.paused).toBe(false);expect(next.sent.some(m=>m.type==='action')).toBe(false);c.action(command);expect(c.state.actionPending).toBe(true);
+ });
+ it('does not remain locked after a synchronous send failure, room pause, or explicit exit',async()=>{
+  const {c,socket,snapshot,command}=await playing();socket.readyState=3;c.action(command);expect(c.state.actionPending).toBe(false);socket.readyState=1;socket.receive(snapshot);c.action(command);socket.receive({...snapshot,paused:true});expect(c.state.actionPending).toBe(false);socket.receive(snapshot);c.action(command);c.leave();expect(c.state.actionPending).toBeFalsy();expect(c.state.status).toBe('idle');
+ });
+});

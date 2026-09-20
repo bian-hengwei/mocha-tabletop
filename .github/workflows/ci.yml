@@ -60,3 +60,4 @@ jobs:
           curl -fsS "$BASE_URL/api/health"
           node tests/network/message-text.integration.mjs
           node tests/ui/lobby-layout.integration.mjs
+          TEST_GAMES=century TEST_ACTION_DELAY_MS=600 TEST_SKIP_OFFLINE=1 node tests/ui/production.integration.mjs
