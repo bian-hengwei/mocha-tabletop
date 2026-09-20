@@ -1,8 +1,8 @@
-import { chromium } from '@playwright/test';
+import { chromium, webkit, expect } from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-const base=process.env.BASE_URL||'http://127.0.0.1:5174',out='test-results/proactive-usability';await fs.mkdir(out,{recursive:true});
-const browser=await chromium.launch({executablePath:process.env.CHROME_PATH||undefined});
+const base=process.env.BASE_URL||'http://127.0.0.1:5174',out=`test-results/proactive-usability-${process.env.TEST_BROWSER||'chromium'}`;await fs.mkdir(out,{recursive:true});
+const browser=await(process.env.TEST_BROWSER==='webkit'?webkit.launch():chromium.launch({executablePath:process.env.CHROME_PATH||undefined}));
 const errors=[];
 // Repository UI acceptance matrix, plus the narrower short-landscape regression.
 const viewports=[
@@ -20,6 +20,17 @@ try {
   await begin('century');
   const panel=title=>page.locator('.ng-panel').filter({has:page.locator('h3',{hasText:title})});
   const market=panel(caption('商人市场','Merchant market'));
+  if(viewport.height<=360){
+   const overview=page.locator('.ng-century-overview');
+   assert((await overview.boundingBox()).height>=200,'Short landscape preserves enough market height to read a complete card');
+   for(const card of await market.locator('.ng-spice-card').all()){
+    await card.evaluate(e=>e.scrollIntoView({block:'center',inline:'center',behavior:'instant'}));
+    await expect.poll(()=>card.evaluate(e=>{const r=e.getBoundingClientRect();return e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})).toBe(true);
+   }
+   await market.locator('.ng-spice-card').first().click();
+   await page.locator('.action-sheet').waitFor();await page.keyboard.press('Escape');
+   await page.screenshot({path:`${out}/century-short-market-${language}.png`});
+  }
   await market.locator('.ng-spice-card').nth(1).click();await page.locator('.action-sheet footer button').click();
   const payment=page.getByRole('button',{name:language==='zh'?/^支付给第/:/^Pay merchant/});
   await onScreen(payment,'Mandatory recruitment payment');await page.screenshot({path:`${out}/century-payment-after-${language}-${viewport.width}.png`});
