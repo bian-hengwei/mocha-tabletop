@@ -110,12 +110,12 @@ try{
   await host.evaluate(()=>navigator.serviceWorker.ready);await host.waitForFunction(async()=>{const names=await caches.keys(),name=names.find(n=>n.startsWith('mocha-'));if(!name)return false;return(await(await caches.open(name)).keys()).length>=10;});
   if(!safari){
    await contexts[0].setOffline(true);await host.reload();await host.getByRole('button',{name:'选择晶石商会',exact:true}).waitFor();
-   for(const title of ['晶石商会','喵喵危机','月夜议会','迷雾远征','寿司小宴','香料商旅','七彩接龙','密语行动','异词同伴']){
+   for(const title of ['晶石商会','喵喵危机','月夜议会','迷雾远征','寿司小宴','香料商旅','七彩接龙','密语行动','异词同伴','斗地主','掼蛋','麻将']){
     await host.getByRole('button',{name:'选择'+title,exact:true}).click();await host.getByRole('button',{name:'同屏试玩',exact:true}).click();await host.locator('.game-surface').waitFor();
     await host.getByRole('button',{name:'牌桌菜单',exact:true}).click();host.once('dialog',d=>d.accept());await host.getByRole('button',{name:'结束试玩',exact:true}).click();
    }
    assert.equal(await host.locator('.game-cover img').evaluateAll(imgs=>imgs.every(i=>i.complete&&i.naturalWidth>0)),true);
-   console.log('PASS service worker installation, offline reload, all nine offline practices, cached cover images');
+   console.log('PASS service worker installation, offline reload, all twelve offline practices, cached cover images');
   }else console.log('PASS WebKit manifest + 10 cached resources; offline navigation not asserted: Playwright service-worker automation only supports Chromium (https://playwright.dev/docs/service-workers)');
  }
  assert.deepEqual(errors,[]);console.log('PASS production acceptance',safari?'WebKit':'Chromium',base);

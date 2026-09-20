@@ -1,7 +1,8 @@
+import {classicGuides} from './classicGuides';
 import type {GameKind} from '../core/types';
 import type {Guide} from '../ui/RuleGuide';
 const guide=(edition:string,quick:string[],sections:[string,...string[]][]):Guide=>({edition,quick,sections:sections.map(([title,...text])=>({title,text}))});
-export const guides:Record<GameKind,{zh:Guide;en:Guide}>={
+export const guides:Record<GameKind,{zh:Guide;en:Guide}>={...classicGuides,
 gems:{zh:guide('晶石商会 · 2–4 人 · 基础 90 张发展牌与 10 张贵族，15 分触发末轮。',[
 '先看市场中便宜的一级牌，决定要收集哪些颜色。','轮到你时，取三种不同颜色的晶石各一枚；或连点同一种颜色取两枚，但该颜色拿取前须至少有四枚。点“拿取”确认；有库存的颜色不足三种时，取所有可用颜色各一枚。','点市场卡片查看费用；买下后获得牌面颜色的永久折扣，之后买牌时少付一枚该色晶石。','想先留住一张牌就预留，通常还会得到一枚万能黄金。','有人达到 15 分后完成这一轮；分数最高者获胜。'],[
 ['准备与目标','每人从零开始。五种普通晶石在 2/3/4 人时各有 4/5/7 枚，黄金固定 5 枚。三个等级各公开 4 张发展牌，贵族数量为玩家数加一。发展牌与贵族的分数计入总分。'],
