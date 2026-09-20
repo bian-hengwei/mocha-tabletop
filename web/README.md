@@ -30,7 +30,7 @@ npm run deploy:web
 
 Pages 项目：`mocha-tabletop-web`。Worker：`mocha-tabletop`。自定义域名：`mocha-tabletop.bianhengwei.com`，阿里云 CNAME → `mocha-tabletop-web.pages.dev`。该子域名指向 Pages。
 
-旧入口以兼容方式保留。Cloudflare 在资源创建时生成的历史标识与审计记录不重写；主站、Worker、安装名称和代码均使用 Mocha。
+仅维护上述正式 Pages 项目与 Worker。旧 Pages 项目和旧子域名入口已停用，不提供重定向或兼容站点。
 
 注意：Wrangler 新版本的 `pages project create` 默认重定向为 Workers。本项目已有正式 Pages 项目，更新时运行 `deploy:web`，不要重复创建。
 

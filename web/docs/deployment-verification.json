@@ -3,7 +3,7 @@
   "site": "https://mocha-tabletop.bianhengwei.com",
   "worker": "mocha-tabletop",
   "workerURL": "https://mocha-tabletop.mocha-tabletop-web.workers.dev",
-  "workerVersion": "8e4cb645-68b1-433e-b4ea-6290bf0c8c55",
+  "workerVersion": "08bb075d-c367-4e08-a8a8-9deeaf15acef",
   "pagesProject": "mocha-tabletop-web",
   "pagesDeployment": "282c529b-ef11-48d2-b8da-0d5a1aeef4c1",
   "checks": [
@@ -121,5 +121,15 @@
       "sha256": "e923c7ba082884dc779aeaa6ce24a404ee240d55047c9ef2b26002429f5b2ef5",
       "match": true
     }
-  ]
+  ],
+  "legacyRetirement": {
+    "checkedAt": "2026-09-20T06:46:09.525Z",
+    "oldPagesRemoved": true,
+    "newPagesPresent": true,
+    "workerIdUnchanged": true,
+    "newOriginPreflight": 204,
+    "oldOriginPreflight": 403,
+    "siteStatus": 200,
+    "roomServiceStatus": 200
+  }
 }
