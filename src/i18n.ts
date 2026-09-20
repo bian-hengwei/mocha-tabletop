@@ -22,6 +22,30 @@ const patterns:[RegExp,string,number[]?][]=[...classicPatterns,...appPatterns,..
  const current=neutral(pattern.source);
  return current===pattern.source?[[pattern,replacement,captures]]:[[new RegExp(current,pattern.flags),replacement,captures],[pattern,replacement,captures]];
 });
+// Captures are data unless the template explicitly marks them as system text.
+// Source ranges protect a name even when it equals a role or card name.
+const chinesePatterns=patterns.map(([pattern,,translatedCaptures=[]])=>({
+ pattern:new RegExp(pattern.source,pattern.flags.includes('d')?pattern.flags:pattern.flags+'d'),translatedCaptures,
+}));
+function chinese(text:string,depth=0):string {
+ if(depth>5)return text;
+ if(Object.hasOwn(dictionary,text))return neutral(text);
+ for(const {pattern,translatedCaptures}of chinesePatterns){
+  pattern.lastIndex=0;const match=pattern.exec(text);if(!match)continue;
+  const ranges=match.indices!.slice(1).map((range,i)=>({range,index:i+1})).filter(item=>item.range!==undefined)
+   .sort((a,b)=>a.range![0]-b.range![0]||b.range![1]-a.range![1]);
+  let output='',end=0;
+  for(const {range,index}of ranges){
+   const [start,stop]=range!;if(start<end)continue;
+   output+=neutral(text.slice(end,start));
+   const capture=text.slice(start,stop);
+   output+=translatedCaptures.includes(index)?capture.split('；').map(part=>chinese(part,depth+1)).join('；'):capture;
+   end=stop;
+  }
+  return output+neutral(text.slice(end));
+ }
+ return neutral(text);
+}
 function english(text:string,depth=0):string {
  if(depth>5)return text;if(cache.has(text))return cache.get(text)!;
  if(Object.hasOwn(dictionary,text))return dictionary[text];
@@ -34,5 +58,5 @@ function english(text:string,depth=0):string {
  let output=text;for(const key of dictionaryKeys)output=output.replaceAll(key,dictionary[key]);
  if(cache.size>10000)cache.clear();cache.set(text,output);return output;
 }
-export function t(value:string|number|null|undefined):string {if(value==null)return '';const text=String(value);return locale==='zh'?neutral(text):english(text);}
+export function t(value:string|number|null|undefined):string {if(value==null)return '';const text=String(value);return locale==='zh'?chinese(text):english(text);}
 if(typeof document!=='undefined')document.documentElement.lang=locale==='zh'?'zh-CN':'en';

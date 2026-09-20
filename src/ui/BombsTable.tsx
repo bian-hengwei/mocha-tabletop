@@ -68,7 +68,7 @@ export function BombsTable({ view, selfID, command }: Props) {
     const validCombo = combo?.choices.some(c => c.id === first?.kind) ? combo : undefined;
     const sorted = [...hand].sort((a, c) => kinds.indexOf(a.kind) - kinds.indexOf(c.kind));
     const target = get('target'), request = get('request'), give = get('give'), response = b.response, draw = get('draw'), mine = b.current === selfID;
-    const displayName = (id: string) => b.players.find((p: any) => p.id === id)?.name || '玩家';
+    const displayName = (id: string) => b.players.find((p: any) => p.id === id)?.name || t('玩家');
     const run = (action: string, values: string[] = []) => { command({ action, values }); setSelected([]); };
     const pick = (card: BombCard) => setSelected(old => old.includes(card.id) ? old.filter(id => id !== card.id) : give || get('nope') ? [card.id] : old.length >= 3 ? [card.id] : [...old, card.id]);
     const actionTitle = single?.id === 'give' ? '交给对方' : single?.id === 'nope' ? (response?.cancelled ? '恢复效果' : '否决这张') : single ? '打出这张' : validCombo ? (cards.length === 2 ? '随机拿一张' : '指定牌名') : '';
@@ -97,7 +97,7 @@ export function BombsTable({ view, selfID, command }: Props) {
     else if (first)
         focus = <div className="bt-focus"><span className="bt-eyebrow">{tx(cards.length > 1 ? `已选 ${cards.length} 张` : '选中的手牌')}</span><h2>{tx(cards.length > 1 && cards.every(c => c.kind === first.kind) ? `${titles[first.kind]} ×${cards.length}` : titles[first.kind])}</h2><p>{tx(cards.length > 1 && !cards.every(c => c.kind === first.kind) ? '组合需要同名牌' : details[first.kind])}</p><div className="bt-action-row">{tx(actionTitle && <button className="bt-primary" onClick={play}>{tx(actionTitle)}<ArrowRight size={15}/></button>)}<button className="bt-quiet" onClick={() => setSelected([])}>{t("收起")}</button></div></div>;
     else
-        focus = <div className="bt-focus"><span className="bt-eyebrow">{tx(mine ? '你的回合' : '轮到')}</span><h2>{tx(mine ? '要出哪张？' : displayName(b.current))}</h2><p>{tx(mine ? '先出任意张功能牌，再抽 1 张结束回合。' : b.phase === 'give' ? `${displayName(b.give.target)} 正在挑选手牌` : b.phase === 'insert' ? '正在秘密放回爆炸牌' : '看看手里的牌，等下一次机会。')}</p>{tx(b.turnsRemaining > 1 && <span className="bt-debt"><Zap size={14}/>{" " + t("还需结束") + " "}{tx(b.turnsRemaining)}{" " + t("个回合")}</span>)}</div>;
+        focus = <div className="bt-focus"><span className="bt-eyebrow">{tx(mine ? '你的回合' : '轮到')}</span><h2>{mine ? t('要出哪张？') : displayName(b.current)}</h2><p>{tx(mine ? '先出任意张功能牌，再抽 1 张结束回合。' : b.phase === 'give' ? `${displayName(b.give.target)} 正在挑选手牌` : b.phase === 'insert' ? '正在秘密放回爆炸牌' : '看看手里的牌，等下一次机会。')}</p>{tx(b.turnsRemaining > 1 && <span className="bt-debt"><Zap size={14}/>{" " + t("还需结束") + " "}{tx(b.turnsRemaining)}{" " + t("个回合")}</span>)}</div>;
     return <div className={`bt-table bt-phase-${b.phase}`}>
     <div className="bt-seats">{tx(b.players.map((p: any) => <button key={p.id} type="button" className={`bt-seat ${p.id === b.current ? 'current' : ''} ${p.id === selfID ? 'self' : ''} ${!p.alive ? 'eliminated' : ''} ${target?.choices.some(c => c.id === p.id) ? 'targetable' : ''}`} aria-label={`${p.name}${p.id === selfID ? ` · ${t("我")}` : ""} · ${p.alive ? t(`${p.count} 张手牌`) : t("已出局")}${target?.choices.some(c => c.id === p.id) ? ` · ${t("可选为目标")}` : ""}`} onClick={() => {
                 if (target?.choices.some(c => c.id === p.id))

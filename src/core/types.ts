@@ -3,11 +3,13 @@ export interface Player { id: string; name: string; avatar: string }
 export interface GameOptions { mahjongMode?: 'guangdong' | 'sichuan' | 'bloodflow' | 'laizi'; werewolfMode?: 'standard' | 'judge' | 'deal'; moderatorID?: string; werewolfPreset?: 'auto' | 'hunter' | 'guard' | 'classic9' | 'classic' | 'idiot' | 'wolfKing'; werewolfWin?: 'sides' | 'parity'; language?: 'zh' | 'en'; unoMode?: 'single' | 'match'; unoChallenge?: boolean }
 export interface Choice { id: string; title: string; subtitle?: string }
 export interface Action { id: string; title: string; choices: Choice[]; min: number; max: number; help?: string }
-export interface Item { id: string; title: string; detail?: string; symbol?: string }
+/** Strings in values are literal data; only templates are localized. */
+export interface GameText {template:string;values?:Record<string,string|GameText|(string|GameText)[]>}
+export interface Item { id: string; title: string; detail?: string; detailText?:GameText; symbol?: string }
 export interface Section { id: string; title: string; items: Item[]; private?: boolean }
 export interface GameView {
   kind: GameKind; phase: string; instruction: string; finished: boolean;
-  actions: Action[]; sections: Section[]; log: string[];
+  actions: Action[]; sections: Section[]; log: string[]; logText?:Record<number,GameText>;
   /** Game-specific REDACTED render data. Never put other hands/roles/deck here. */
   board: Record<string, any>;
 }

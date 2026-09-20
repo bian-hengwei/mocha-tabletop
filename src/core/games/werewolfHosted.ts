@@ -1,4 +1,5 @@
-import {action,assertPlayers,seeded,shuffle,validateCommand,type Action,type GameModule,type GameOptions,type GameView,type Player} from '../types';
+import {recordGameText} from '../gameText';
+import {action,assertPlayers,seeded,shuffle,validateCommand,type Action,type GameModule,type GameOptions,type GameView,type Player,type GameText} from '../types';
 import {werewolfVictory} from './werewolf';
 import {werewolfPreset,WOLF_ROLE_LABELS as roleNames,isWolfRole,hasDeathShot,type WolfRole} from '../werewolfPresets';
 export type HostedStage='dealt'|'guard'|'wolves'|'witch'|'seer'|'sheriff'|'dawn'|'day'|'hunter'|'badge'|'finished';
@@ -7,8 +8,9 @@ export interface HostedWerewolfState{
   roles:Record<string,WolfRole>;alive:string[];stage:HostedStage;night:number;sheriff:string|null;
   guarded:string|null;previousGuard:string|null;knife:string|null;poisoned:string|null;saved:boolean;antidote:boolean;poison:boolean;
   checks:Array<{night:number;target:string;result:string}>;hunterID:string|null;badgeOwner:string|null;
-  idiotRevealed?:string|null;electionPending:boolean;electionExplosions:number;next:'day'|'night';winner:string|null;log:string[];privateLog:string[];
+  idiotRevealed?:string|null;electionPending:boolean;electionExplosions:number;next:'day'|'night';winner:string|null;log:string[];logText?:Record<number,GameText>;privateLog:string[];privateLogText?:Record<number,GameText>;
 }
+function privateText(s:HostedWerewolfState,text:string,message:GameText){(s.privateLogText??={})[s.privateLog.length]=message;s.privateLog.push(text);}
 const prompts:Record<HostedStage,string>={dealt:'身份已发放',guard:'守卫请睁眼',wolves:'狼人请睁眼',witch:'女巫请睁眼',seer:'预言家请睁眼',sheriff:'天亮 · 竞选警长',dawn:'公布昨夜死讯',day:'白天 · 发言与投票',hunter:'猎人决定是否开枪',badge:'警徽移交',finished:'本局结束'};
 const pName=(s:HostedWerewolfState,id:string)=>s.participants.find(p=>p.id===id)?.name??id;
 const alive=(s:HostedWerewolfState)=>s.participants.filter(p=>s.alive.includes(p.id));
@@ -65,21 +67,21 @@ export const werewolfHosted:GameModule<HostedWerewolfState>={
   const judge=s.options.werewolfMode==='judge'&&s.options.moderatorID===id,role=s.roles[id],name=judge?'法官':roleNames[role];
   const ownKnowledge=[{id:'role',title:name,detail:judge?'你负责主持，不参与阵营胜负':isWolfRole(role)?'狼人阵营':'好人阵营'}];
   const board:Record<string,any>={preset:s.options.werewolfPreset||'auto',winRule:s.options.werewolfWin||'sides',mode:s.options.werewolfMode,moderatorID:s.options.moderatorID,isModerator:judge,stage:judge?s.stage:'dealt',dealNumber:s.dealNumber,ownRole:name,ownRoleKey:judge?'moderator':role,ownKnowledge,night:judge?s.night:undefined,players:s.participants.map(p=>({...p,alive:s.alive.includes(p.id),revealedIdiot:s.idiotRevealed===p.id,sheriff:s.sheriff===p.id,...(judge||p.id===id||p.id===s.idiotRevealed?{role:roleNames[s.roles[p.id]],roleKey:s.roles[p.id]}:{})})),sheriff:s.sheriff,winner:s.winner};
-  if(judge)board.moderatorOnly={night:s.night,prompt:stagePrompt(s),knife:s.knife,guarded:s.guarded,previousGuard:s.previousGuard,potions:{antidote:s.antidote,poison:s.poison},checks:structuredClone(s.checks),pendingDeaths:pendingDeaths(s),hunterID:s.hunterID,badgeOwner:s.badgeOwner,log:[...s.privateLog]};
-  return {kind:'werewolf',phase:judge?`第 ${s.night} ${['guard','wolves','witch','seer'].includes(s.stage)?'夜':'天'} · ${stagePrompt(s)}`:s.options.werewolfMode==='deal'?'身份牌已发放':s.winner??'听法官主持',instruction:judge?'仅法官操作':s.options.werewolfMode==='deal'?'看好自己的身份牌':'收好身份牌，听法官主持',finished:!!s.winner,actions:actions(s,id),sections:[{id:'identity',title:'你的身份',private:true,items:ownKnowledge}],log:[...s.log],board};
+  if(judge)board.moderatorOnly={night:s.night,prompt:stagePrompt(s),knife:s.knife,guarded:s.guarded,previousGuard:s.previousGuard,potions:{antidote:s.antidote,poison:s.poison},checks:structuredClone(s.checks),pendingDeaths:pendingDeaths(s),hunterID:s.hunterID,badgeOwner:s.badgeOwner,log:[...s.privateLog],logText:structuredClone(s.privateLogText||{})};
+  return {kind:'werewolf',phase:judge?`第 ${s.night} ${['guard','wolves','witch','seer'].includes(s.stage)?'夜':'天'} · ${stagePrompt(s)}`:s.options.werewolfMode==='deal'?'身份牌已发放':s.winner??'听法官主持',instruction:judge?'仅法官操作':s.options.werewolfMode==='deal'?'看好自己的身份牌':'收好身份牌，听法官主持',finished:!!s.winner,actions:actions(s,id),sections:[{id:'identity',title:'你的身份',private:true,items:ownKnowledge}],log:[...s.log],logText:structuredClone(s.logText||{}),board};
  },
  apply(state,id,command){
   validateCommand(werewolfHosted.view(state,id),command);
   if(command.action==='redeal'){const nextSeed=(Math.imul(state.seed,1664525)+1013904223+state.dealNumber)>>>0,s=werewolfHosted.create(state.players,nextSeed,state.options);s.dealNumber=state.dealNumber+1;return s;}
   const s=structuredClone(state),value=command.values[0];
   switch(command.action){
-   case 'judge-guard':s.guarded=value==='skip'?null:value;s.previousGuard=s.guarded;s.privateLog.push(`第 ${s.night} 夜守护：${s.guarded?pName(s,s.guarded):'空守'}`);afterNightStage(s);break;
-   case 'judge-wolves':s.knife=value==='skip'?null:value;s.privateLog.push(`第 ${s.night} 夜刀口：${s.knife?pName(s,s.knife):'空刀'}`);afterNightStage(s);break;
+   case 'judge-guard':s.guarded=value==='skip'?null:value;s.previousGuard=s.guarded;privateText(s,`第 ${s.night} 夜守护：${s.guarded?pName(s,s.guarded):'空守'}`,{template:s.guarded?`第 ${s.night} 夜守护：{target}`:`第 ${s.night} 夜守护：空守`,values:{target:s.guarded?pName(s,s.guarded):''}});afterNightStage(s);break;
+   case 'judge-wolves':s.knife=value==='skip'?null:value;privateText(s,`第 ${s.night} 夜刀口：${s.knife?pName(s,s.knife):'空刀'}`,{template:s.knife?`第 ${s.night} 夜刀口：{target}`:`第 ${s.night} 夜刀口：空刀`,values:{target:s.knife?pName(s,s.knife):''}});afterNightStage(s);break;
    case 'judge-potion':if(value==='save'){s.antidote=false;s.saved=true;}else if(value.startsWith('poison:')){s.poison=false;s.poisoned=value.slice(7);}s.privateLog.push(`第 ${s.night} 夜用药：${value==='skip'?'无':value==='save'?'解药':`毒杀 ${pName(s,s.poisoned!)}`}`);afterNightStage(s);break;
    case 'judge-inspect':if(value!=='skip'){const result=isWolfRole(s.roles[value])?'狼人':'好人';s.checks.push({night:s.night,target:value,result});s.privateLog.push(`第 ${s.night} 夜查验：${pName(s,value)} · ${result}`);}afterNightStage(s);break;
    case 'judge-sheriff':s.electionPending=false;s.sheriff=value==='skip'?null:value;s.log.push(s.sheriff?`${pName(s,s.sheriff)} 当选警长。`:'本局无警长。');s.stage='dawn';break;
    case 'judge-election-explode':kill(s,value);s.electionExplosions++;s.electionPending=s.electionExplosions<2;s.log.push(`${pName(s,value)} 警上自爆，${s.electionPending?'竞选延至次日':'警徽流失'}。`);s.next='night';s.stage='dawn';break;
-   case 'judge-dawn':{const deaths=pendingDeaths(s);for(const target of deaths)kill(s,target);s.log.push(deaths.length?`第 ${s.night} 天出局：${deaths.map(id=>pName(s,id)).join('、')}。`:`第 ${s.night} 天：平安夜。`);s.hunterID=deaths.find(p=>hasDeathShot(s.roles[p])&&p!==s.poisoned)??null;afterDeath(s);break;}
+   case 'judge-dawn':{const deaths=pendingDeaths(s);for(const target of deaths)kill(s,target);recordGameText(s,deaths.length?`第 ${s.night} 天出局：${deaths.map(id=>pName(s,id)).join('、')}。`:`第 ${s.night} 天：平安夜。`,{template:deaths.length?`第 ${s.night} 天出局：{names}。`:`第 ${s.night} 天：平安夜。`,values:{names:deaths.map(id=>pName(s,id)).join('、')}});s.hunterID=deaths.find(p=>hasDeathShot(s.roles[p])&&p!==s.poisoned)??null;afterDeath(s);break;}
    case 'judge-exile':case 'judge-explode':if(value!=='skip'){
     if(command.action==='judge-exile'&&s.roles[value]==='idiot'){s.idiotRevealed=value;s.log.push(`${pName(s,value)} 翻开白痴身份，免于放逐，失去投票权。`);if(s.sheriff===value){s.sheriff=null;s.log.push('白痴翻牌，警徽流失。');}}
     else{kill(s,value);s.log.push(`${pName(s,value)} ${command.action==='judge-explode'?'公开狼人身份并自爆':'被放逐'}。`);s.hunterID=command.action==='judge-exile'&&hasDeathShot(s.roles[value])?value:null;}
