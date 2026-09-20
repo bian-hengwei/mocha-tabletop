@@ -19,15 +19,15 @@ export interface GameModule<S = any> {
   apply(state: S, playerID: string, command: Command): S;
 }
 export const GAMES: Record<GameKind, { name: string; min: number; max: number; color: string; tagline: string }> = {
-  gems: {name:'晶石商会',min:2,max:4,color:'#73d7ba',tagline:'建立你的宝石王朝'},
-  bombs: {name:'喵喵危机',min:2,max:5,color:'#ee9671',tagline:'好运，请留到最后一张'},
-  werewolf: {name:'月夜议会',min:6,max:18,color:'#c7b4f2',tagline:'天黑了，谁还值得相信'},
-  avalon: {name:'迷雾远征',min:5,max:10,color:'#ecc780',tagline:'王座之下，各怀秘密'},
-  sushi: {name:'寿司小宴',min:2,max:5,color:'#f4ae9b',tagline:'选一口美味，传一手惊喜'},
-  century: {name:'香料商旅',min:2,max:5,color:'#dfb675',tagline:'交换香料，经营你的商队'},
-  uno: {name:'七彩接龙',min:2,max:10,color:'#8cb9e0',tagline:'最后一张，就是胜利的前奏'},
-  codenames: {name:'密语行动',min:4,max:12,color:'#c7ab86',tagline:'一个线索，找到你的同伴'},
-  undercover: {name:'异词同伴',min:3,max:12,color:'#b9acd9',tagline:'相似的词，不同的秘密'}
+  gems: {name:'晶石商会',min:2,max:4,color:'#73d7ba',tagline:'收宝石、买折扣，争取 15 分'},
+  bombs: {name:'喵喵危机',min:2,max:5,color:'#ee9671',tagline:'抽到爆炸？拆弹保命，活到最后'},
+  werewolf: {name:'月夜议会',min:6,max:18,color:'#c7b4f2',tagline:'狼人、神职与平民，夜晚行动白天投票'},
+  avalon: {name:'迷雾远征',min:5,max:10,color:'#ecc780',tagline:'好坏阵营组队做任务，三胜后刺杀先知'},
+  sushi: {name:'寿司小宴',min:2,max:5,color:'#f4ae9b',tagline:'选一张传一手，凑料理组合比三轮分数'},
+  century: {name:'香料商旅',min:2,max:5,color:'#dfb675',tagline:'收集、升级、交易香料，完成订单'},
+  uno: {name:'七彩接龙',min:2,max:10,color:'#8cb9e0',tagline:'同色同数接牌，剩一张记得喊'},
+  codenames: {name:'密语行动',min:4,max:12,color:'#c7ab86',tagline:'队长给一个词，队员找出己方特工'},
+  undercover: {name:'异词同伴',min:3,max:12,color:'#b9acd9',tagline:'描述相近词，投票找出卧底'}
 };
 export const AVATARS = ['🦊','🐼','🐱','🐻','🐰','🐨','🐯','🐸','🦁','🐧','🦉','🐙','🦋','🐳','🌵','🍄','🐶','🐺','🐹','🐷','🐮','🐵','🦝','🦦','🦥','🦔','🐿️','🦜','🦚','🦩','🐢','🦎','🦖','🐉','🐬','🦈','🪼','🐝','🐞','🌻','🌷','🍀','🍓','🍒','🍑','🥑','🍩','🧋'];
 export function action(id:string,title:string,choices:Choice[]=[],min=0,max=0,help=''):Action {return {id,title,choices,min,max,help};}
