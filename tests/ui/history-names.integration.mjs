@@ -6,7 +6,8 @@ const browser=await(process.env.TEST_BROWSER==='webkit'?webkit:chromium).launch(
 const profile={id:'name-audit-host',name:'UNO爱好者',avatar:'🦊'};
 const names=['UNO爱好者','梅林','红队'];
 try{
- const context=await browser.newContext({viewport:{width:390,height:844}});
+ // Service-worker-owned requests bypass route fixtures in production builds.
+ const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
  await context.addInitScript(profile=>{
   localStorage.setItem('mocha-profile',JSON.stringify(profile));
   localStorage.setItem('mocha-history-v1',JSON.stringify({seen:['legacy-one','legacy-tie'],records:[
@@ -38,7 +39,7 @@ try{
  assert.deepEqual(errors,[]);
  await context.close();
 
- const lobby=await browser.newContext({viewport:{width:390,height:844}});
+ const lobby=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
  await lobby.addInitScript(profile=>{localStorage.setItem('mocha-profile',JSON.stringify(profile));sessionStorage.setItem('mocha-room-session',JSON.stringify({profile,token:'a'.repeat(48),code:'ABC234',savedAt:Date.now(),expiresAt:Date.now()+3600000}));},profile);
  await lobby.routeWebSocket('**/api/rooms/**',socket=>socket.onMessage(raw=>{if(JSON.parse(String(raw)).type==='hello')socket.send(JSON.stringify({type:'snapshot',room:{code:'ABC234',kind:'gems',mode:'cloud',hostID:profile.id,players:[{...profile,ready:true,connected:true},...names.slice(1).map((name,i)=>({id:`name-audit-guest-${i}`,name,avatar:'🐻',ready:false,connected:false}))],pending:[],started:false,revision:1,expiresAt:Date.now()+3600000}}));}));
  const roomPage=await lobby.newPage(),roomErrors=[];roomPage.on('pageerror',e=>roomErrors.push(e.message));await roomPage.goto(base);
