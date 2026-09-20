@@ -6,3 +6,39 @@
 @media(max-width:600px){
  .social-table-v2{height:auto;min-height:100%;display:flex;flex-direction:column;gap:12px;padding-bottom:12px}.social-table-v2 .social-board{height:auto;min-height:0}.identity-deck{position:relative;bottom:auto;left:auto;transform:none;width:100%;min-height:50px;border:1px solid #bca87c66;border-radius:9px;display:flex;justify-content:center;align-items:center;gap:12px;padding:8px;background:#20272e}.identity-deck .role-back{height:40px;width:32px;flex-shrink:0}.identity-deck .role-back>*{display:none}.identity-deck .role-back:after{content:'✦';font-size:20px}.identity-deck>span{font-size:13px;padding:0}.identity-deck:hover{transform:none}.council-decision,.social-table-v2.council .council-decision{position:relative;left:auto;top:auto;transform:none;order:-1;padding:12px 0;border-bottom:1px solid #baa16c44}.council-decision>small{font-size:12px;white-space:normal}.council-token{height:72px;width:95px}.council-token>b{font-size:12px}.social-table-v2.is-decision .table-emblem{display:none}.identity-reveal{grid-template-columns:1fr;height:auto;max-height:calc(100dvh - 24px);width:100%;overflow:auto}.identity-curtain{padding:12px}.identity-portrait{height:180px;min-height:180px}.identity-portrait>.role-art{object-position:center 25%}.identity-portrait:after,.evil .identity-portrait:after{background:linear-gradient(0deg,#172321,transparent 60%)}.identity-story{padding:20px;overflow:visible;gap:2px}.identity-story h2{font-size:32px;margin:8px 0;letter-spacing:4px}.identity-lore{font-size:13px}.identity-allegiance{font-size:11px}.identity-knowledge{max-height:none;overflow:visible;margin:12px 0}.identity-knowledge p{font-size:13px}.identity-knowledge small{font-size:10px}.identity-hide{position:sticky;top:8px;right:auto;align-self:end;justify-self:end;grid-column:1;margin-bottom:-38px;margin-right:8px;min-height:36px;background:#14221ff0}.identity-seal{font-size:12px;min-height:42px;margin-top:12px}.identity-secret{margin:18px 0}.personal-deal{height:auto;min-height:470px;flex-direction:column;gap:24px;padding:22px 12px 42px;overflow:visible}.personal-story{width:100%;text-align:center}.personal-story h2{font-size:28px}.personal-seat{justify-content:center;margin-top:15px}.personal-seat b{font-size:14px}.personal-seat small{font-size:11px}.personal-card-button{height:255px;max-height:none;flex-shrink:0}.personal-confidential{font-size:10px}.judge-table{height:auto;gap:8px}.judge-heading{height:auto;min-height:34px;flex-wrap:wrap}.judge-heading b{font-size:13px}.judge-heading small,.judge-heading>span{font-size:10px}.judge-workspace{grid-template-columns:minmax(0,1fr);gap:12px}.judge-console{grid-row:1;overflow:visible;padding:15px}.judge-console h2{font-size:21px}.judge-guidance{font-size:12px}.judge-phase-label{font-size:10px}.judge-next{font-size:13px;min-height:44px}.judge-roster{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:140px;gap:7px}.judge-player b{font-size:11px}.judge-player small{font-size:12px}.judge-player>div{padding:7px 3px}.judge-player-number{font-size:10px;width:20px;height:20px;line-height:18px}.judge-last-check,.judge-potions,.judge-potions small{font-size:12px}
 }
+
+/* A full identity is a portrait card, not a cropped banner. The conceal
+   control sits outside the scrolling content and never covers the artwork. */
+.identity-curtain{padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));overflow:hidden}
+.identity-reveal{display:flex;flex-direction:column;width:min(720px,100%);height:auto;max-height:calc(100dvh - max(12px,env(safe-area-inset-top)) - max(12px,env(safe-area-inset-bottom)));overflow:hidden}
+.identity-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;min-height:48px;padding:6px 12px;border-bottom:1px solid #c6b18330;background:#10191780}
+.identity-heading>span{display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:1px;color:#c4b99a}
+.identity-hide{position:static;min-height:36px;margin:0;flex-shrink:0;justify-self:auto;align-self:auto;padding:8px 12px;background:#c4b78a12;font-size:11px}
+.identity-content{display:grid;grid-template-columns:minmax(0,42%) minmax(0,58%);height:min(65dvh,432px);min-height:0;overflow:auto;overscroll-behavior:contain}
+.identity-portrait{display:grid;place-items:center;height:100%;min-height:0;padding:12px;background:radial-gradient(ellipse at 50% 35%,#52625d55,transparent 75%)}
+.evil .identity-portrait{background:radial-gradient(ellipse at 50% 35%,#79507655,transparent 75%)}
+.identity-portrait:after,.evil .identity-portrait:after{display:none}
+.identity-portrait-frame{position:relative;height:100%;max-width:100%;aspect-ratio:2/3;overflow:hidden;border:1px solid #cfb57e66;border-radius:7px;background:#121c20;box-shadow:0 8px 24px #0007}
+.identity-portrait-frame>.role-art{display:block;width:100%;height:100%}
+.portrait-engraving{inset:6px;border-color:#e3c68a45;border-radius:3px}
+.portrait-edition{bottom:10px;font-size:6px;letter-spacing:2px;text-shadow:0 1px 4px #000}
+.identity-story{padding:22px 24px 20px 14px;justify-content:flex-start;overflow:auto;overscroll-behavior:contain}
+.identity-story h2{font-size:34px;line-height:1.25;letter-spacing:4px;overflow-wrap:anywhere}
+.identity-lore{font-size:12px;line-height:1.8}
+.identity-story .identity-knowledge{max-height:none;overflow:visible;flex-shrink:0;margin:16px 0}
+.identity-knowledge p{font-size:13px}.identity-knowledge small{font-size:10px}
+.identity-seal{min-height:42px;font-size:12px;margin-top:auto;flex-shrink:0}
+@media(max-width:600px) and (min-height:451px){
+ .identity-content{display:block;height:auto;flex:1}
+ .identity-portrait{height:clamp(240px,42dvh,354px);min-height:240px;padding:12px}
+ .identity-story{overflow:visible;padding:16px 22px 22px;gap:2px}
+ .identity-story h2{font-size:32px;margin:8px 0}.identity-lore{font-size:13px}
+ .identity-story .identity-knowledge{margin:12px 0}.identity-seal{margin-top:12px}
+}
+@media(max-height:450px){
+ .identity-heading{min-height:44px;padding:4px 10px}.identity-content{height:calc(100dvh - 70px)}
+ .identity-portrait{padding:10px}.identity-story{padding:14px 18px 14px 8px}
+ .identity-story h2{font-size:28px;margin:8px 0}.identity-lore{font-size:11px;line-height:1.7}
+ .identity-story .identity-knowledge{margin:10px 0;padding-top:10px}.identity-knowledge p{font-size:12px}
+ .identity-allegiance{font-size:9px}.identity-secret{margin:16px 0}
+}

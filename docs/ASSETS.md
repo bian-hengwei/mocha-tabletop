@@ -30,3 +30,17 @@ id,tier,colorIndex,points,white,blue,green,red,black
 `centuryCatalog.ts` 使用 43 张市场商人（34 交易、8 收获、1 升级）与 36 张订单的基础数值，不使用近似定价公式。数值由 [spice-trader 数据表](https://github.com/yohanlaunay/spice-trader/blob/master/src/games/spices/data.js) 整理，逐张与 [独立卡牌编码](https://github.com/phate09/century-spice-road-env/blob/main/century_env/cards.py) 比较；测试 fixture 保留后者的独立编码次序。另对照 [Java 订单数据](https://github.com/ShaPhi7/CenturySpiceRoad/blob/main/src/main/resources/point-card-deck.csv)。只使用数值，不使用这些项目的图片或游戏逻辑。流程依据 [发行方基础规则](https://cdn.svc.asmodee.net/production-nextmove/uploads/sites/4/2024/06/EN-Century-Spice-Road-Rules_2024_compressed.pdf)。
 
 新增游戏封面 SVG 为项目自行绘制，词语游戏使用自行整理的中英文词库；页面名称、角色展示和猫牌称谓采用原创命名，内部游戏 ID 保持兼容旧存档。
+
+## 2026-09-20 插画更新
+
+新增三张原创建图集，通过内置 image_gen 生成，以本项目的晶石封面作为画风参考。只保留压缩 JPEG 于 public，总计约 1.94 MiB；生成的高分辨率 PNG 原图不进入部署。
+
+| 文件 | 网格与用途 |
+| --- | --- |
+| public/art/game-covers-v3.jpg | 3 列 × 2 行；寿司、商旅、接龙、密语、异词、Mocha 场景。前五格用于首页与游戏场景 |
+| public/art/sushi-cards-v3.jpg | 4 列 × 3 行；天妇罗、刺身、饺子、1/2/3 卷、玉子、三文鱼、鱿鱼、芥末、布丁、筷子 |
+| public/art/century-cards-v3.jpg | 3 列 × 2 行；香料摊、商人、工匠、港口、订单、商队 |
+
+完整生成提示见 design/illustration-prompts-v3.json。src/ui/IllustratedTile.tsx 在界面中读取单格，费用、分值、数量、词语均由实际游戏数据绘制。接龙牌面与香料方块由 src/ui/NewGameArt.tsx 的 SVG 绘制，数值不会依赖生成图片。旧版 SVG 封面保留作历史源素材，当前界面改用新图集。
+
+身份图集仍使用既有原插画。完整身份弹窗采用 meet 显示完整源画面，并显式限定单格裁切，避免相邻角色泄露；小头像仍允许居中裁切。
