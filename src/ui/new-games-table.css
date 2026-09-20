@@ -260,3 +260,19 @@
  .ng-century-hand-dock .ng-cubes small{display:none}
  .ng-century-hand-dock .ng-pocket-active .ng-pending-actions{flex:1;min-width:160px}
 }
+/* Short landscape needs a full-height market beside the private caravan. */
+@media(max-height:360px) and (orientation:landscape){
+ .game-century.in-game .topbar{height:42px;min-height:42px;padding:3px 0;flex-wrap:nowrap}
+ .ng-table.ng-century{display:grid;grid-template-columns:minmax(0,1fr) 210px;align-items:stretch}
+ .ng-century-overview{min-width:0;height:100%}
+ .ng-century-hand-dock{min-height:0;overflow:auto;scrollbar-width:thin}
+ .ng-century .ng-century-hand-panel{padding:5px;grid-template-columns:minmax(0,1fr);gap:4px}
+ .ng-century .ng-century-hand-panel>h3{grid-column:1;grid-row:1;font-size:11px;padding:0;margin:0;border:0;gap:4px}
+ .ng-century-hand-panel>.ng-market{grid-column:1;grid-row:2}
+ .ng-century-hand-panel>.ng-controls{grid-column:1;grid-row:3}
+ .ng-century-hand-panel>.ng-controls>.ng-action{width:100%;padding:5px;font-size:11px}
+ .ng-century .ng-century-hand-dock>.ng-pocket{flex-wrap:wrap;padding:5px;gap:4px}
+ .ng-century-hand-dock .ng-pocket>span{width:100%;display:flex;justify-content:space-between}
+ .ng-century-hand-dock .ng-pocket>.ng-cubes{flex-basis:100%}
+ .ng-century-hand-dock .ng-pocket-active .ng-pending-actions{min-width:0;flex-basis:100%}
+}
