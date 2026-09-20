@@ -87,7 +87,7 @@ npm run check            # 单元测试、Worker 类型检查、前端类型检�
 npm run preview          # 查看生产构建；默认连接 .env.production 中的后端
 ```
 
-浏览器和联机回归的环境、命令见 [测试说明](tests/README.md)。GitHub Actions 在推送和 PR 时执行 `npm ci` 与 `npm run check`。
+浏览器和联机回归的环境、命令见 [测试说明](tests/README.md)。GitHub Actions 在推送和 PR 时执行 `npm ci` 与 `npm run check`，并验证 Chromium 的语言切换、规则和九款游戏入口。
 
 ## 代码结构
 

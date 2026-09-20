@@ -38,7 +38,7 @@ function actionsFor(s:WerewolfState,id:string):Action[]{
   if(s.stage==='badge')return id===s.badgeOwner?[select(s,'badge','移交警徽',living(s),true)]:[];
   if(!s.alive.includes(id))return [];
   const actions:Action[]=[];
-  if(s.submissions[id]===undefined){
+  if(!Object.hasOwn(s.submissions,id)){
     switch(s.stage){
       case 'signup':actions.push(action('signup','警长竞选',[{id:'yes',title:'上警'},{id:'no',title:'不上警'}],1,1));break;
       case 'electionSpeech':case 'discussion':case 'pk':actions.push(action('ready','发言结束'));break;
@@ -88,7 +88,7 @@ function explode(s:WerewolfState,id:string){
 }
 function resolveVote(s:WerewolfState){
   const election=s.stage==='electionVote';s.publicVotes={...s.submissions};s.log.push((election?'警长选票：':'放逐选票：')+voters(s).map(id=>`${name(s,id)} → ${s.submissions[id]==='skip'?'弃票':name(s,s.submissions[id])}`).join('；'));
-  const counts:Record<string,number>={};for(const [id,target] of Object.entries(s.submissions))if(target!=='skip')counts[target]=(counts[target]??0)+(!election&&id===s.sheriff?3:2);
+  const counts:Record<string,number>=Object.create(null);for(const [id,target] of Object.entries(s.submissions))if(target!=='skip')counts[target]=(counts[target]??0)+(!election&&id===s.sheriff?3:2);
   const highest=Math.max(0,...Object.values(counts)),tied=living(s).filter(id=>counts[id]===highest&&highest>0);s.submissions={};
   if(election){
     if(tied.length===1){s.sheriff=tied[0];finishElection(s);}
@@ -110,7 +110,7 @@ export const standardWerewolf:GameModule<WerewolfState>={
     const role=s.roles[id],knowledge=[{id:'role',title:labels[role],detail:role==='wolf'?'狼人阵营':'好人阵营'}];
     if(role==='wolf'){
       knowledge.push({id:'wolves',title:'狼队友',detail:s.players.filter(p=>s.roles[p.id]==='wolf'&&p.id!==id).map(p=>p.name).join('、')});
-      if(s.stage==='nightFirst')knowledge.push({id:'wolfPlans',title:'狼队刀口',detail:s.players.filter(p=>s.roles[p.id]==='wolf'&&s.submissions[p.id]!==undefined).map(p=>`${p.name}：${s.submissions[p.id]==='skip'?'空刀':name(s,s.submissions[p.id])}`).join('；')});
+      if(s.stage==='nightFirst')knowledge.push({id:'wolfPlans',title:'狼队刀口',detail:s.players.filter(p=>s.roles[p.id]==='wolf'&&Object.hasOwn(s.submissions,p.id)).map(p=>`${p.name}：${s.submissions[p.id]==='skip'?'空刀':name(s,s.submissions[p.id])}`).join('；')});
     }
     if(role==='seer')for(const [target,result] of Object.entries(s.investigations))knowledge.push({id:'check:'+target,title:name(s,target),detail:result});
     if(role==='witch')knowledge.push({id:'potions',title:'药剂',detail:`解药 ${s.antidote?'有':'无'} · 毒药 ${s.poison?'有':'无'}`});
@@ -128,16 +128,16 @@ export const standardWerewolf:GameModule<WerewolfState>={
       case 'hunter':if(value!=='skip'){remove(s,value);s.log.push(`猎人带走了 ${name(s,value)}。`);}s.revealed.push(id);s.hunterID=null;afterDeath(s);break;
       case 'badge':s.sheriff=value==='skip'?null:value;s.badgeOwner=null;s.log.push(s.sheriff?`警徽移交给 ${name(s,s.sheriff)}。`:'警徽已撕毁。');resume(s);break;
       case 'signup':
-        s.submissions[id]=value;if(Object.keys(s.submissions).length===s.alive.length){s.candidates=living(s).filter(p=>s.submissions[p]==='yes');s.submissions={};if(s.candidates.length<=1){s.sheriff=s.candidates[0]??null;finishElection(s);}else s.stage='electionSpeech';}break;
+        s.submissions={...s.submissions,[id]:value};if(Object.keys(s.submissions).length===s.alive.length){s.candidates=living(s).filter(p=>s.submissions[p]==='yes');s.submissions={};if(s.candidates.length<=1){s.sheriff=s.candidates[0]??null;finishElection(s);}else s.stage='electionSpeech';}break;
       case 'electionSpeech':case 'discussion':case 'pk':
-        s.submissions[id]=value;if(Object.keys(s.submissions).length===s.alive.length){s.submissions={};if(s.stage==='electionSpeech'){if(s.candidates.length<=1){s.sheriff=s.candidates[0]??null;finishElection(s);}else{s.stage='electionVote';if(voters(s).length===0){s.log.push('全员上警，本局无警长。');finishElection(s);}}}else{s.stage='vote';if(voters(s).length===0)resolveVote(s);}}break;
-      case 'electionVote':case 'vote':s.submissions[id]=value;if(Object.keys(s.submissions).length===voters(s).length)resolveVote(s);break;
+        s.submissions={...s.submissions,[id]:value};if(Object.keys(s.submissions).length===s.alive.length){s.submissions={};if(s.stage==='electionSpeech'){if(s.candidates.length<=1){s.sheriff=s.candidates[0]??null;finishElection(s);}else{s.stage='electionVote';if(voters(s).length===0){s.log.push('全员上警，本局无警长。');finishElection(s);}}}else{s.stage='vote';if(voters(s).length===0)resolveVote(s);}}break;
+      case 'electionVote':case 'vote':s.submissions={...s.submissions,[id]:value};if(Object.keys(s.submissions).length===voters(s).length)resolveVote(s);break;
       case 'nightFirst':
-        s.submissions[id]=value;if(command.action==='guard')s.guarded=value==='skip'?null:value;
-        if(command.action==='inspect'&&value!=='skip')s.investigations[value]=s.roles[value]==='wolf'?'狼人':'好人';
+        s.submissions={...s.submissions,[id]:value};if(command.action==='guard')s.guarded=value==='skip'?null:value;
+        if(command.action==='inspect'&&value!=='skip')s.investigations={...s.investigations,[value]:s.roles[value]==='wolf'?'狼人':'好人'};
         if(Object.keys(s.submissions).length===s.alive.length){const targets=new Set(living(s).filter(p=>s.roles[p]==='wolf').map(p=>s.submissions[p]));s.victim=targets.size===1&&![...targets].includes('skip')?[...targets][0]:null;s.previousGuard=s.guarded;s.submissions={};s.stage='nightSecond';}break;
       case 'nightSecond':
-        s.submissions[id]=value;if(command.action==='potion'){if(value==='save'){s.antidote=false;s.rescued=true;}else if(value.startsWith('poison:')){s.poison=false;s.poisoned=value.slice(7);}}
+        s.submissions={...s.submissions,[id]:value};if(command.action==='potion'){if(value==='save'){s.antidote=false;s.rescued=true;}else if(value.startsWith('poison:')){s.poison=false;s.poisoned=value.slice(7);}}
         if(Object.keys(s.submissions).length===s.alive.length){s.submissions={};if(s.electionPending){if(s.electionExplosions>0){s.candidates=s.candidates.filter(p=>s.alive.includes(p));if(s.candidates.length<=1){s.sheriff=s.candidates[0]??null;finishElection(s);}else s.stage='electionSpeech';}else{s.stage='signup';s.candidates=[];s.electionRunoff=false;}}else resolveNight(s);}break;
     }
     return s;

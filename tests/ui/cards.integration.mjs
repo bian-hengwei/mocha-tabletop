@@ -22,7 +22,7 @@ async function take(colors){for(const color of colors)await page.locator('.g-ban
 async function reserve(){await page.getByRole('button',{name:'预留 1 级盲牌',exact:true}).click();await confirmSheet();await noToast();}
 async function payDiscard(){const discard=page.locator('.action-dock').getByRole('button',{name:/^归还/});if(await discard.count()){await discard.click();const sheet=page.locator('.action-sheet'),footer=await sheet.locator('footer small').textContent();const amount=Number(footer.split('/').at(-1).trim());for(let i=0;i<amount;i++)await sheet.locator('.choice').nth(i).click();await confirmSheet();return true;}return false;}
 try{
-  await begin('宝石商人');
+  await begin('晶石商会');
   await seat('practice-0');await take(['白钻','蓝宝石','祖母绿']);
   await seat('practice-1');await reserve();
   await seat('practice-0');await take(['祖母绿','红宝石','黑玛瑙']);
@@ -35,7 +35,7 @@ try{
   assert(await payDiscard(),'11 held tokens must prompt a mandatory return');
   await page.getByRole('button',{name:'查看 阿岚 的公开库存',exact:true}).click();
   const inventory=page.getByRole('dialog',{name:'阿岚 的公开库存'});
-  await inventory.getByLabel('黄金 3枚',{exact:true}).waitFor();assert.equal(await inventory.locator('.purchased-columns>div').count(),5,'Only five development colors exist');assert.equal(await inventory.locator('.g-hidden-card').count(),3,'Opponent blind reservations stay hidden');
+  await inventory.getByLabel('黄金 3 枚筹码',{exact:true}).waitFor();assert.equal(await inventory.locator('.purchased-columns>div').count(),5,'Only five development colors exist');assert.equal(await inventory.locator('.g-hidden-card').count(),3,'Opponent blind reservations stay hidden');
   assert((await inventory.textContent()).includes('预留牌 3'));
   await page.getByRole('button',{name:'关闭公开库存',exact:true}).click();
   await page.screenshot({path:`${artifacts}/gems-discard-inventory.png`});
@@ -73,9 +73,9 @@ try{
   console.log('PASS gems: token selection, reserve, gold, mandatory discard, public inventory, payment preview, '+(process.env.CUSTOM_PAYMENT?'actual custom payment':'automatic purchase'));
 
   // A second real-app deal exercises the repeat-tap pair shortcut without a mode toggle.
-  await begin('宝石商人');await take(['白钻','白钻']);
+  await begin('晶石商会');await take(['白钻','白钻']);
   await page.getByRole('button',{name:'查看我的全部库存',exact:true}).click();
-  await page.getByRole('dialog').getByLabel('白钻 2枚',{exact:true}).waitFor();
+  await page.getByRole('dialog').getByLabel('白钻 2 枚筹码',{exact:true}).waitFor();
   await page.getByRole('button',{name:'关闭公开库存',exact:true}).click();
   console.log('PASS gems: repeated same-color taps take exactly two tokens');
   await seat('practice-1');await page.locator('.g-market .development-card').first().click();await page.locator('.g-card-inspector').getByRole('button',{name:'预留',exact:true}).click();
@@ -84,11 +84,11 @@ try{
   await seat('practice-1');await page.getByRole('button',{name:'查看我的全部库存',exact:true}).click();assert.equal(await page.locator('.inventory-reserved .development-card').count(),2);assert.equal(await page.locator('.inventory-reserved .g-hidden-card').count(),0);await page.getByRole('button',{name:'关闭公开库存',exact:true}).click();
   console.log('PASS gems: face-up reserve remembered publicly, blind reserve hidden from opponents but visible to its owner');
 
-  await begin('炸弹猫');let played=false,drew=false;
+  await begin('喵喵危机');let played=false,drew=false;
   for(let turn=0;turn<20&&!(played&&drew);turn++){
     await activeSeat();
-    if(!played){const hand=page.locator('.bt-hand');for(const title of ['预见未来','洗牌','攻击','跳过','索取']){const card=hand.getByRole('button',{name:title,exact:true}).first();if(await card.count()){await card.click();await page.getByRole('button',{name:'打出这张',exact:true}).click();played=true;if(title==='索取')await page.locator('.bt-seat.targetable').first().click();break;}}}
-    if(await page.locator('.bt-phase-response').count())for(const id of ['practice-0','practice-1','practice-2']){if(!await page.locator('.bt-phase-response').count())break;await seat(id);const pass=page.getByRole('button',{name:/^(不否决|保持否决)$/});if(await pass.count())await pass.click();}
+    if(!played){const hand=page.locator('.bt-hand');for(const title of ['偷瞄三张','洗牌','加班','跳过','借一张']){const card=hand.getByRole('button',{name:title,exact:true}).first();if(await card.count()){await card.click();await page.getByRole('button',{name:'打出这张',exact:true}).click();played=true;if(title==='借一张')await page.locator('.bt-seat.targetable').first().click();break;}}}
+    if(await page.locator('.bt-phase-response').count())for(const id of ['practice-0','practice-1','practice-2']){if(!await page.locator('.bt-phase-response').count())break;await seat(id);const pass=page.getByRole('button',{name:/^(不等等|保持等等)$/});if(await pass.count())await pass.click();}
     await activeSeat();
     if(await page.locator('.bt-phase-future').count())await page.getByRole('button',{name:'看好了',exact:true}).click();
     if(await page.locator('.bt-phase-give').count()){await page.locator('.bt-hand .bt-card').first().click();await page.getByRole('button',{name:'交出这张',exact:true}).click();await activeSeat();}

@@ -1,7 +1,7 @@
 import {chromium} from '@playwright/test';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
-const origin=process.env.UI_BASE_URL||'http://127.0.0.1:5174';
+const origin=process.env.BASE_URL||process.env.UI_BASE_URL||'http://127.0.0.1:5174';
 const browser=await chromium.launch({executablePath:process.env.CHROME_PATH||undefined,headless:true});
 const report=[];const output=new URL('./artifacts/',import.meta.url);await fs.mkdir(output,{recursive:true});
 try{

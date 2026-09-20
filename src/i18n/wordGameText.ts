@@ -1,4 +1,6 @@
 export const wordGameText:Record<string,string>={
+ '等待红队队长选择补偿揭晓，或放弃补偿':'Waiting for the Red team captain to reveal a compensation word or skip compensation',
+ '等待蓝队队长选择补偿揭晓，或放弃补偿':'Waiting for the Blue team captain to reveal a compensation word or skip compensation',
  '按座位交替分红蓝队，每队首位玩家担任队长。':'Teams alternate by seat. The first member of each team is captain.',
  '队长承认无效线索，对方获得补偿':'Captain conceded an invalid clue. The other team receives compensation.',
  '补偿揭晓：':'Compensation reveal: ','私下查看并记住自己的词':'Privately read and remember your word','已投票，等待其他人':'Vote saved. Waiting for others.','讨论结束后，投出最可疑的一人':'After discussion, vote for the most suspicious player','复投仍平票，本轮无人淘汰':'Runoff tied again. Nobody is eliminated.','平票：':'Tie: ','不限次数':'Unlimited guesses','不相关 · 不限猜测次数':'Unrelated · unlimited guesses','不限猜测次数':'Unlimited guesses',

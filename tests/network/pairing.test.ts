@@ -12,6 +12,6 @@ describe('LAN initial pairing recovery',()=>{
   const client=new RoomClient() as any;client.session={profile:{id:'host0000'}};client.stopped=false;client.ws={readyState:1,send(data:string){messages.push(JSON.parse(data));},close(){}};
   client.state.room={hostID:'host0000',code:'ABC234',kind:'gems',mode:'lan',players:[{id:'host0000'},{id:'guest000'}],pending:[],started:false,revision:1};
   await client.offer('guest000');expect(connections).toHaveLength(1);await vi.advanceTimersByTimeAsync(9500);expect(connections).toHaveLength(2);
-  await vi.advanceTimersByTimeAsync(120000);expect(connections).toHaveLength(5);expect(messages.every(message=>message.type==='signal')).toBe(true);expect(messages).toHaveLength(5);expect(client.state.room.mode).toBe('lan');client.destroy();expect(vi.getTimerCount()).toBe(0);
+  await vi.advanceTimersByTimeAsync(120000);expect(connections).toHaveLength(5);expect(messages.every(message=>message.type==='signal')).toBe(true);expect(messages).toHaveLength(5);expect(client.state.room.mode).toBe('lan');expect(client.state.error).toContain('切换云端');client.destroy();expect(vi.getTimerCount()).toBe(0);
  });
 });

@@ -1,3 +1,4 @@
+import { useDialog } from './useDialog';
 import { WolfRuleStrip } from './WolfRuleStrip';
 import { t } from '../i18n';
 function tx<T>(value: T): T | string { return typeof value === 'string' ? t(value) : value; }
@@ -24,6 +25,7 @@ function IdentityReveal({ view, onClose }: {
     view: GameView;
     onClose: () => void;
 }) {
+    const dialogRef = useDialog<HTMLDivElement>(true, onClose);
     const b = view.board, key = roleKey(view), evil = evilRoles.has(key), knowledge = (b.ownKnowledge || []).filter((k: any) => k.id !== 'role');
     useEffect(() => {
         const conceal = () => onClose();
@@ -35,7 +37,7 @@ function IdentityReveal({ view, onClose }: {
         document.addEventListener('visibilitychange', visibility);
         return () => { window.removeEventListener('blur', conceal); document.removeEventListener('visibilitychange', visibility); };
     }, [onClose]);
-    return <div className="identity-curtain" role="dialog" aria-modal="true" aria-label={t("我的秘密身份")} onClick={onClose}><section className={`identity-reveal ${evil ? 'evil' : 'good'}`} onClick={e => e.stopPropagation()}><button className="identity-hide" aria-label={t("收起身份")} onClick={onClose}><EyeOff size={18}/><span>{t("收起")}</span></button><div className="identity-portrait"><RoleArt role={key}/><div className="portrait-engraving"/><span className="portrait-edition">{t("Mocha 桌游")}</span></div><div className="identity-story"><div className="identity-allegiance">{tx(evil ? <Flame size={13}/> : <Shield size={13}/>)}<span>{tx(key === 'moderator' ? '法官' : view.kind === 'avalon' ? (evil ? '邪恶阵营' : '正义阵营') : (evil ? '狼人阵营' : '好人阵营'))}</span></div><h2>{tx(b.ownRole)}</h2><p className="identity-lore">{tx(roleRules[key])}</p>{tx(knowledge.length > 0 ? <div className="identity-knowledge">{tx(knowledge.map((k: any) => <div key={k.id}><small>{tx(k.title)}</small><p>{tx(k.detail || '尚无记录')}</p></div>))}</div> : <div className="identity-secret"><LockKeyhole size={15}/><span>{t("没有额外情报")}</span></div>)}<button className="identity-seal" onClick={onClose}><EyeOff size={14}/>{t("翻回牌背")}</button></div></section></div>;
+    return <div ref={dialogRef} tabIndex={-1} className="identity-curtain" role="dialog" aria-modal="true" aria-label={t("我的秘密身份")} onClick={onClose}><section className={`identity-reveal ${evil ? 'evil' : 'good'}`} onClick={e => e.stopPropagation()}><button className="identity-hide" aria-label={t("收起身份")} onClick={onClose}><EyeOff size={18}/><span>{t("收起")}</span></button><div className="identity-portrait"><RoleArt role={key}/><div className="portrait-engraving"/><span className="portrait-edition">{t("Mocha 桌游")}</span></div><div className="identity-story"><div className="identity-allegiance">{tx(evil ? <Flame size={13}/> : <Shield size={13}/>)}<span>{tx(key === 'moderator' ? '法官' : view.kind === 'avalon' ? (evil ? '邪恶阵营' : '正义阵营') : (evil ? '狼人阵营' : '好人阵营'))}</span></div><h2>{tx(b.ownRole)}</h2><p className="identity-lore">{tx(roleRules[key])}</p>{tx(knowledge.length > 0 ? <div className="identity-knowledge">{tx(knowledge.map((k: any) => <div key={k.id}><small>{tx(k.title)}</small><p>{tx(k.detail || '尚无记录')}</p></div>))}</div> : <div className="identity-secret"><LockKeyhole size={15}/><span>{t("没有额外情报")}</span></div>)}<button className="identity-seal" onClick={onClose}><EyeOff size={14}/>{t("翻回牌背")}</button></div></section></div>;
 }
 function PersonalCard({ view, selfID, onReveal }: {
     view: GameView;
