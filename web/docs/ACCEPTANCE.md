@@ -15,7 +15,9 @@
 - 安装入口：横屏首页和竖屏提示均有按钮。iPhone 展示 Safari 分享菜单的真实添加步骤；支持安装事件的浏览器可触发安装。
 - LAN：Chromium/WebKit 的真实 WebRTC 对局、断线恢复、房主快照与切换云端测试。配对完成后断开信令仍可传输游戏操作。
 
-正式版本部署与文件校验见 `deployment-verification.json`。
+正式站点： https://mocha-tabletop.bianhengwei.com 。Mocha 发布后的 Chromium 验收包含六种多人房间、刷新恢复、完整离线加载和四款同屏试玩；WebKit 验证六种多人房间、安装面板与新图标。
+
+最终发布逐项对比 HTML、JavaScript、CSS、service worker、清单、图标与美术，共 19 个文件。部署版本与 SHA-256 校验见 `deployment-verification.json`。
 
 ## 范围说明
 

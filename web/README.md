@@ -26,9 +26,11 @@ npm run deploy:worker
 npm run deploy:web
 ```
 
-正式构建的公开 API 地址保存在 `.env.production`；本地默认代理到 8787。站点静态文件托管于 Cloudflare Pages，房间服务在 Cloudflare Workers 的 SQLite Durable Objects，启用 WebSocket 休眠。没有账号数据库、付费套餐或持续轮询任务。
+.env.production 只包含公开 URL，不含任何凭据。正式构建的公开 API 地址保存在 `.env.production`；本地默认代理到 8787。站点静态文件托管于 Cloudflare Pages，房间服务在 Cloudflare Workers 的 SQLite Durable Objects，启用 WebSocket 休眠。没有账号数据库、付费套餐或持续轮询任务。
 
 Pages 项目：`mocha-tabletop-web`。Worker：`mocha-tabletop`。自定义域名：`mocha-tabletop.bianhengwei.com`，阿里云 CNAME → `mocha-tabletop-web.pages.dev`。该子域名指向 Pages。
+
+旧入口以兼容方式保留。Cloudflare 在资源创建时生成的历史标识与审计记录不重写；主站、Worker、安装名称和代码均使用 Mocha。
 
 注意：Wrangler 新版本的 `pages project create` 默认重定向为 Workers。本项目已有正式 Pages 项目，更新时运行 `deploy:web`，不要重复创建。
 
