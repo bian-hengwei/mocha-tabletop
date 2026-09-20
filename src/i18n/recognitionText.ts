@@ -1,14 +1,5 @@
 /** Plain mechanics remain recognizable beneath Mocha's original game names. */
 export const recognitionText:Record<string,string>={
- '收宝石、买折扣，争取 15 分':'Collect gems, buy discounts, race to 15 points',
- '抽到爆炸？拆弹保命，活到最后':'Draw a bomb? Defuse it and be the last survivor',
- '狼人、神职与平民，夜晚行动白天投票':'Werewolves and villagers: night powers, daytime votes',
- '好坏阵营组队做任务，三胜后刺杀先知':'Secret teams, quests, and a final attempt on the Seer',
- '选一张传一手，凑料理组合比三轮分数':'Pick and pass dishes, score combinations over 3 rounds',
- '收集、升级、交易香料，完成订单':'Collect, upgrade and trade spices to fulfill orders',
- '同色同数接牌，剩一张记得喊':'Match color or number; call out your last card',
- '队长给一个词，队员找出己方特工':'One-word clues help your team find its agents',
- '描述相近词，投票找出卧底':'Describe similar secret words and vote out the impostor',
  '先知':'Seer','守望者':'Watcher','伪先知':'False Seer','刺客':'Assassin',
  '爆炸牌':'Bomb','拆弹':'Defuse','攻击':'Attack','索取':'Favor','预知三张':'Peek 3','否决':'Nope',
  '使用拆弹牌，否则立即出局。':'Use a Defuse card or be eliminated.',
