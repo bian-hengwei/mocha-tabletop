@@ -1,7 +1,0 @@
-{
-  "id": "/", "name": "Mocha 桌游", "short_name": "Mocha 桌游", "lang": "zh-CN",
-  "start_url": "/", "scope": "/", "display": "standalone", "orientation": "landscape",
-  "background_color": "#101817", "theme_color": "#101817",
-  "description": "宝石商人、炸弹猫、狼人杀与阿瓦隆。",
-  "icons": [{"src":"/mocha-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"/mocha-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"}]
-}

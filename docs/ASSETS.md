@@ -1,13 +1,26 @@
-# 视觉资源
+# 素材与测试数据
 
-界面使用深松绿、暖金、玉绿和暖灰文字，原生 SwiftUI 布局。系统 SF Symbols 用于功能图标；系统 Emoji 用于可选头像。AppIcon 使用 Mocha 小狗插画，来源与提示词见 `design/README.md`。
+## 当前素材
 
-## 首页插画
+| 文件 | 用途与来源 |
+| --- | --- |
+| `public/art/gems.jpg`、`bombs.jpg`、`werewolf.jpg`、`avalon.jpg` | 四种游戏的首页封面，为本项目生成的插画 |
+| `public/art/cards-*-v2.jpg` | 三个等级的宝石卡画面，每张图含 6 个场景，界面按图集裁切使用 |
+| `public/art/roles-*-v2.jpg` | 狼人杀、阿瓦隆身份插画图集 |
+| `public/art/table-v2.jpg` | 游戏桌面背景 |
+| `design/mocha-icon-1024.png` | 以 Mocha 小狗为参考生成的图标原图，用于重新导出尺寸 |
+| `public/mocha-icon-*.png` | 180、192、512 像素的主屏幕及 PWA 图标 |
 
-文件：`Sources/MochaUI/Resources/evening-table.png`
+上述插画为本项目生成，并非从桌游官方卡面截取。私人参考照片不入库。宝石和部分牌面装饰使用代码绘制；通用界面图标使用 `lucide-react`，字体使用系统字体。
 
-来源：2026-09-19，内置 imagegen 生成，已复制进项目并通过 Swift Package resource bundle 加载。无外部 CDN、无运行时下载。该插画仅用于装饰，实际规则、按钮、卡牌文本均为原生 UI。
+在 macOS 上执行 `sh scripts/make-icons.sh` 可以从原图重新导出图标。修改图集时保持当前网格和排列，或同步修改 `src/ui/Art.tsx`、牌桌组件与样式中的裁切规则。
 
-最终提示词：
+## 宝石卡测试数据
 
-> Use case: stylized-concept. Asset type: original landscape hero banner illustration for a refined iPhone tabletop party game app. Create one finished bitmap illustration, landscape 3:2. Minimal premium tactile still life of tabletop game objects on deep pine green felt: a small stack of blank warm ivory playing cards, one jade-green faceted gemstone, one honey gold die with properly recessed dark pips, a small terracotta-orange cat-shaped wooden pawn, and a slim brass crown token. Composition: all objects grouped in the RIGHT HALF and lower-right, left 50% is calm empty dark pine green negative space suitable for overlaying app title. Objects fully within image with breathing room. Camera three-quarter overhead, soft warm evening lamplight, gentle realistic shadows, quietly playful elegant editorial 3D / crafted wood-and-paper feel. Restrained palette deep forest green #0C1312, jade, ivory, muted antique gold, tiny terracotta accent. Background seamless edge-to-edge felt, subtle texture, not busy. No lettering, no logos, no watermark, no screens or UI, no existing game characters, no people, no frame. Crisp beautifully shaped large objects readable on a small phone.
+`tests/fixtures/gem-catalog.csv` 是独立校验规则模块的 90 张卡牌数值表，不包含卡面图片。每行依次是：
+
+```text
+id,tier,colorIndex,points,white,blue,green,red,black
+```
+
+颜色索引按白、蓝、绿、红、黑排列。来源为 [anicolao/splendor](https://github.com/anicolao/splendor) 的 `data/verified_card_properties.csv`，并以 [bouk/splendimax 的数值表](https://github.com/bouk/splendimax/blob/master/Splendor%20Cards.csv) 交叉核对。修改规则表时不应从待测实现自动生成这份期望数据，否则会失去独立校验作用。

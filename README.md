@@ -1,15 +1,108 @@
-# Mocha 桌游
+<p align="center">
+  <img src="public/mocha-icon-192.png" width="112" height="112" alt="小狗 Mocha 在玩桌游" />
+</p>
+<h1 align="center">Mocha 桌游</h1>
+<p align="center">给朋友聚会用的手机桌游，打开浏览器就能玩。</p>
+<p align="center">
+  <a href="https://mocha-tabletop-web.pages.dev/">打开游戏</a> ·
+  <a href="docs/DEPLOYMENT.md">部署说明</a> ·
+  <a href="tests/README.md">测试说明</a>
+</p>
+<p align="center">
+  <a href="https://github.com/bian-hengwei/mocha-tabletop/actions/workflows/ci.yml"><img src="https://github.com/bian-hengwei/mocha-tabletop/actions/workflows/ci.yml/badge.svg" alt="持续集成" /></a>
+</p>
 
-<img src="design/mocha-icon-1024.png" alt="Mocha 小狗玩桌游" width="160" />
+## 玩什么
 
-[![Checks](https://github.com/bian-hengwei/mocha-tabletop/actions/workflows/ci.yml/badge.svg)](https://github.com/bian-hengwei/mocha-tabletop/actions/workflows/ci.yml)
+| 游戏 | 人数 | 玩法 |
+| --- | --- | --- |
+| 宝石商人 | 2–4 | 收集宝石、购买发展卡、争取贵族 |
+| 炸弹猫 | 2–5 | 抽牌、出牌和拆弹，生存到最后 |
+| 狼人杀 | 6–18 | 标准模式、法官主持、仅发身份三种模式 |
+| 阿瓦隆 | 5–10 | 组队、投票、秘密执行任务和刺杀 |
 
-当前交付版本是横屏 iPhone 网页 App：**https://mocha-tabletop.bianhengwei.com**。用 Safari 打开，首页有“添加到 iPhone 主屏幕”入口。无需 Apple 付费开发者账号。
+狼人杀的**法官主持**模式另需一名不参与游戏的法官：法官操作流程，玩家只查看自己的身份。**仅发身份**模式随机分配身份，后续由大家线下主持。
 
-包含宝石商人（2–4 人）、炸弹猫（2–5 人）、狼人杀（6–18 玩家，法官模式另加 1 位法官）、阿瓦隆（5–10 人）。昵称与头像本机保存，无登录。支持 Cloudflare 配对后的 Wi-Fi 直连、Cloudflare 云端房间，以及离线同屏试玩。
+本项目采用自己的界面与插画，具体规则和版本取舍见 [实现说明](docs/ARCHITECTURE.md)。
 
-源码、开发方式、部署与扩展游戏说明见 [web/README.md](web/README.md)。规则、联机和浏览器验收记录位于 web/docs 和 web/NETWORK.md。
+## 怎么玩
 
-原 SwiftUI 实现保留作为规则移植参考，不是当前安装入口。旧构建说明移至 [原生版本归档](docs/NATIVE-ARCHIVE.md)。
+1. 用手机打开 **[mocha-tabletop-web.pages.dev](https://mocha-tabletop-web.pages.dev/)**，横屏使用，填写昵称并选择头像。
+2. 选择游戏并创建房间，把邀请链接分享给朋友；也可以通过房间码申请加入。
+3. 玩家准备后，由房主开始游戏。不需要注册账号。
 
-开发需 Node.js 22+：`cd web && npm ci && npm run check`。维护约定见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+另一个入口：[mocha-tabletop.bianhengwei.com](https://mocha-tabletop.bianhengwei.com/)。
+
+在 iPhone 上，用 Safari 打开后选择「分享 → 添加到主屏幕」，就能获得独立窗口和 Mocha 小狗图标。页面的「添加到主屏幕」按钮会显示操作指引，安装仍需在系统菜单里确认。
+
+| 模式 | 网络要求 | 适合场景 |
+| --- | --- | --- |
+| 云端房间 | 游戏过程中保持联网 | 大家用各自的手机，异地也能加入 |
+| 局域网房间 | 创建和配对时需要联网；设备之间还需能直接连通 | 同一网络聚会，游戏数据通过 WebRTC 直连房主 |
+| 同屏试玩 | 首次加载并完成缓存后可离线 | 一台设备切换座位，熟悉规则和操作 |
+
+同屏试玩不是隐藏身份的多人房间。局域网模式没有 TURN 中继，访客 Wi-Fi 的设备隔离等限制可能使直连失败，此时可以使用云端房间。
+
+## 本地开发
+
+需要 **Node.js 22+** 和 npm。在仓库根目录运行：
+
+```sh
+git clone https://github.com/bian-hengwei/mocha-tabletop.git
+cd mocha-tabletop
+npm ci
+npm run build
+```
+
+分别在两个终端启动后端和前端：
+
+```sh
+# 终端一：本地 Cloudflare Worker，默认端口 8787
+npm run worker:dev
+```
+
+```sh
+# 终端二：前端开发服务器
+npm run dev -- --port 5174 --strictPort
+```
+
+打开 <http://127.0.0.1:5174>。开发服务器将 `/api` 和 WebSocket 请求代理到本地 Worker。首次启动前的构建用于准备 Worker 的静态资源目录；之后修改前端即可热更新。
+
+```sh
+npm test                 # 游戏规则、隐私过滤和房间逻辑测试
+npm run check            # 单元测试、Worker 类型检查、前端类型检查及生产构建
+npm run preview          # 查看生产构建；默认连接 .env.production 中的后端
+```
+
+浏览器和联机回归的环境、命令见 [测试说明](tests/README.md)。GitHub Actions 在推送和 PR 时执行 `npm ci` 与 `npm run check`。
+
+## 代码结构
+
+```text
+src/core/       游戏规则、玩家视图与房间模型
+src/net/        WebSocket / WebRTC 客户端
+src/ui/         React 界面、游戏桌面与样式
+worker/         Cloudflare 房间服务、配对与发现
+public/         游戏插画、PWA 图标、manifest 和缓存入口
+scripts/        构建缓存清单、生成图标尺寸
+design/        图标原图
+tests/         单元测试、浏览器回归和测试数据
+```
+
+构建产物、依赖、截图和本地凭据不入库。美术文件的用途和来源见 [素材说明](docs/ASSETS.md)。
+
+## 部署与维护
+
+当前前端部署到 **Cloudflare Pages**，联机服务运行在 **Cloudflare Workers + Durable Objects**。不需要维护虚拟机。静态托管本身只能承载前端，完整联机功能还需要 Worker。
+
+维护现有站点时，先完成 Cloudflare CLI 登录，再检查和部署：
+
+```sh
+npx wrangler login
+npm run check
+npm run deploy
+```
+
+`npm run deploy` 依次部署 Worker 与 Pages；GitHub CI 只做检查，不会自动发布。首次在自己的账户部署时，需要修改账户、项目名、API 地址和允许的来源，具体步骤见 [部署说明](docs/DEPLOYMENT.md)。
+
+修改玩法时，同时更新相应规则测试和每个玩家可见的视图；修改联机协议时，运行相关房间与网络回归。请勿把密钥、私人照片或测试截图提交到仓库。
