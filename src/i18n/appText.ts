@@ -1,4 +1,5 @@
 export const appText:Record<string,string>={
+'想入座':'would like to join',
 '白痴 · 无投票权':'Fool · Cannot vote',
 "随人数自动配置":"Adapt to player count",
 "9 人预女猎":"9 players · Seer, Witch, Hunter",
