@@ -300,6 +300,7 @@ export const uiText: Record<string,string> = {
 export const uiPatterns: [RegExp,string,number[]?][] = [
  [/^(\d+) 单 · 金 (\d+) \/ 银 (\d+)$/, '$1 orders · Gold $2 / Silver $3'],
  [/^已选 (\d+) \/ (\d+)$/, 'Selected $1 / $2'],
+ [/^可选 (\d+)–(\d+) 项 · 已选 (\d+)$/, 'Choose $1–$2 · Selected $3'],
  [/^已选 (\d+) 张$/, '$1 cards selected'],
  [/^拿取 (\d+)$/, 'Take $1'],
  [/^放在第 (\d+) 张$/, 'Place at position $1'],

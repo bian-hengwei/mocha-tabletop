@@ -6,7 +6,7 @@ Implements the standard two-team Codenames rules under an original display name 
 
 Clues consist of one word plus a number. Operatives must make at least one guess and can make the clue count plus one guesses; zero and unlimited clues remove the guess cap. Incorrect guesses end the turn; an assassin loses immediately. Completing either team's agents wins for that team, including on its opponent's turn. Captains can concede an invalid clue after the table agrees; this ends their turn and lets the opposing captain optionally reveal one own agent before giving a new clue.
 
-The engine enforces command authority, format, direct unrevealed-word matches/inflections and guess limits. Meaning, compound-word boundaries and impermissible nonverbal hints still need the players' judgement, as at a physical table. The 150-entry bilingual everyday word list is original; words are fixed to the match language selected at creation.
+The engine enforces command authority, format, direct unrevealed-word matches/inflections and guess limits. Meaning, compound-word boundaries and impermissible nonverbal hints still need the players' judgement, as at a physical table. The 454-entry bilingual everyday word list is original; words are fixed to the match language selected at creation.
 
 Sources checked 2026-09-20:
 - Publisher overview: https://www.czechgames.com/games/codenames
@@ -15,7 +15,7 @@ Sources checked 2026-09-20:
 
 ## Odd Word Out / 异词同伴
 
-Implements the common similar-word social deduction format, with an original 80-pair bilingual word bank and no blank-word role. Everyone sees only their own word, not their role. Players acknowledge their words, describe them aloud in turn, then vote secretly. Votes reveal together. Highest vote is eliminated and reveals their team. Tied candidates defend and face a restricted runoff; a second tie eliminates nobody and starts another description round.
+Implements the common similar-word social deduction format, with an original 287-pair bilingual word bank and no blank-word role. Everyone sees only their own word, not their role. Players acknowledge their words, describe them aloud in turn, then vote secretly. Votes reveal together. Highest vote is eliminated and reveals their team. Tied candidates defend and face a restricted runoff; a second tie eliminates nobody and starts another description round.
 
 The common-word team wins once all odd-word players are eliminated. The odd-word team wins at living parity or majority. Teams retain eliminated members for the final result. Setup uses 1 odd-word player for 3–6 participants, 2 for 7–10, and 3 for 11–12.
 

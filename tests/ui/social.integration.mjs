@@ -22,7 +22,7 @@ for(const viewport of [{width:667,height:375},{width:844,height:390}]){
     await dock(label).click();
     if(await page.locator('.action-sheet').isVisible()){
       for(const option of options)await page.locator('.action-sheet .choices').getByRole('button',{name:option,exact:true}).click();
-      await page.locator('.action-sheet').getByRole('button',{name:'确认',exact:true}).click();
+      await page.locator('.action-sheet').getByRole('button',{name:await page.locator('.action-sheet .choice').count()?'确认':label,exact:true}).click();
       await page.locator('.action-sheet').waitFor({state:'hidden'});
     }
   }
