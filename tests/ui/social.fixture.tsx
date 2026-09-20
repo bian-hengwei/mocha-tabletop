@@ -1,3 +1,4 @@
+import {SocialTable} from '../../src/ui/SocialTable';
 // Test-only Vite entry; excluded from index.html and production build.
 import {useState} from 'react';
 import {createRoot} from 'react-dom/client';
@@ -14,6 +15,6 @@ function Fixture(){
   const view=(isAvalon?avalon:werewolf).view(s as any,'p0');
   const [selection,setSelection]=useState<{a:Action;values:string[]}|null>(null);
   const open=(a:Action,values:string[]=[])=>setSelection({a,values});
-  return <main className={`app in-game game-${view.kind}`}><header className="topbar"><div className="brand"><div><b>{isAvalon?'阿瓦隆':'狼人杀'}</b><small>{view.phase}</small></div></div></header><div className="game-surface"><SocialBoard view={view} selfID="p0" open={open} command={()=>{}}/></div><ActionDock view={view} open={open} command={()=>{}}/>{selection&&<ActionSheet action={selection.a} selected={selection.values} view={view} onClose={()=>setSelection(null)} onSubmit={()=>setSelection(null)}/>}</main>;
+  return <main className={`app in-game game-${view.kind}`}><header className="topbar"><div className="brand"><div><b>{isAvalon?'阿瓦隆':'狼人杀'}</b><small>{view.phase}</small></div></div></header><div className="game-surface"><SocialTable view={view} selfID="p0" open={open} command={()=>{}}/></div><ActionDock view={view} open={open} command={()=>{}}/>{selection&&<ActionSheet action={selection.a} selected={selection.values} view={view} onClose={()=>setSelection(null)} onSubmit={()=>setSelection(null)}/>}</main>;
 }
 createRoot(document.getElementById('root')!).render(<Fixture/>);

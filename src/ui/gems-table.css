@@ -18,3 +18,107 @@
 }
 
 .development-card:disabled{opacity:1;cursor:default}
+
+/* Markets use level tabs on compact tables, keeping bank and inventory in reach. */
+.g-tier-tabs{display:none}
+.game-gems .game-surface{overflow:hidden}
+.g-table{height:100%;min-height:0}
+.g-own-tray{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;justify-content:flex-start;min-height:54px}
+.g-own-stock,.g-reserved,.g-payment{flex-shrink:0}
+@media(max-width:850px),(max-height:650px){
+ .g-table{height:100%;min-height:0;gap:5px;padding-bottom:2px}
+ .g-merchants{display:flex;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;padding:2px 0;gap:5px}
+ .g-merchant{flex:1 0 110px;width:auto;min-width:110px;padding:5px;min-height:44px}
+ .g-merchant .stock-numbers{display:none}
+ .merchant-head{height:30px;flex-wrap:wrap;gap:3px}
+ .merchant-head>b{min-width:35px;font-size:10px}
+ .merchant-head>small{font-size:8px}
+ .g-tier-tabs{display:flex;gap:4px;grid-column:1/-1}
+ .g-tier-tabs button{flex:1;min-height:44px;border:1px solid #d3bf8244;border-radius:7px;display:flex;gap:8px;align-items:center;justify-content:center}
+ .g-tier-tabs button[aria-pressed=true]{background:#d5bd81;color:#1b3027}
+ .g-market{display:grid;grid-template-rows:44px minmax(0,1fr);gap:5px}
+ .g-market-row{display:none;grid-template-columns:44px repeat(4,minmax(0,1fr));gap:5px}
+ .g-market-row.g-tier-active{display:grid}
+ .g-bank-hint{display:none}
+ .g-bank-gem{width:44px;height:44px;aspect-ratio:1}
+ .g-take{height:44px;min-height:44px;gap:4px}
+ .g-take .compact,.g-take .icon{height:44px;min-height:44px}
+ .g-take .compact{padding:4px 8px;font-size:11px}
+ .g-take .icon{width:44px}
+ .g-own-tray{height:52px;min-height:52px;padding:2px;gap:10px}
+ .g-own-stock{width:auto;min-height:44px}
+ .g-own-stock .stock-numbers{width:auto;gap:3px}
+ .g-own-stock .stock-numbers>div{grid-template-columns:16px 14px;grid-template-rows:23px 14px}
+ .g-own-stock .stock-numbers b{font-size:11px}
+ .g-own-stock .gem-art{width:18px;height:18px}
+ .g-own-stock .stock-numbers span{font-size:8px}
+ .g-reserved,.g-payment{min-height:44px;padding:0}
+ .g-reserved .development-card{height:44px;width:50px}
+ .g-reserved>span{font-size:10px}
+}
+@media(max-width:600px) and (orientation:portrait){
+ .g-playfield{grid-template-columns:minmax(0,1fr);grid-template-rows:56px minmax(110px,1fr) 98px;gap:5px}
+ .g-nobles{height:56px;flex-direction:row;gap:4px;overflow-x:auto;overflow-y:hidden}
+ .g-noble{height:54px;min-height:54px;min-width:54px;max-height:54px;padding-bottom:26px}
+ .g-noble .g-cost{bottom:2px;gap:0}
+ .g-noble .gem-art{width:12px;height:12px}
+ .g-noble .g-cost b{font-size:9px}
+ .g-market-row{grid-template-columns:44px repeat(4,minmax(0,1fr));gap:4px}
+ .development-top{inset:3px}
+ .development-top>b{font-size:22px}
+ .development-top>.gem-art{width:22px;height:22px}
+ .g-bank{flex-direction:column;gap:5px;padding:3px 2px}
+ .g-bank-gems{grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;width:100%}
+ .g-bank-gem{width:42px;height:42px;max-width:none}
+ .g-take{width:100%}
+ .g-take .compact{flex:1}
+ .g-take .icon{width:44px}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .g-playfield{grid-template-columns:60px minmax(0,1fr) 110px;gap:8px}
+ .g-nobles{display:flex;flex-direction:row;overflow-x:auto;overflow-y:hidden;justify-content:flex-start;align-items:center}
+ .g-noble{flex:0 0 58px;min-width:58px;height:70px;min-height:70px}
+ .g-bank{gap:4px}
+ .g-bank-gems{grid-template-columns:repeat(3,44px);gap:4px;transform:scale(.86);transform-origin:center}
+ .g-bank-gem{width:44px;height:44px}
+ .g-market-row{grid-template-columns:44px repeat(4,minmax(0,1fr))}
+ .g-own-tray{height:49px;min-height:49px}
+ .g-merchants{padding:0}
+ .g-merchant{min-height:44px;padding:3px}
+ .g-market{grid-template-rows:44px minmax(0,1fr)}
+}
+
+@media(max-width:600px) and (orientation:portrait){
+ .g-playfield{grid-template-rows:56px minmax(110px,1fr) 54px}
+ .g-bank{flex-direction:row;gap:8px;padding:4px 2px;min-width:0}
+ .g-bank-gems{display:flex;min-width:0;overflow-x:auto;overflow-y:hidden;gap:8px;padding:4px;scrollbar-width:thin}
+ .g-bank-gem{flex:0 0 44px;width:44px;height:44px}
+ .g-take{width:auto;flex-shrink:0}
+ .g-take .compact{min-width:60px}
+ .g-take .icon{width:32px}
+}
+
+@media(max-width:850px),(max-height:650px){.merchant-head>small{display:none}.merchant-head{flex-wrap:nowrap}.g-merchant{flex-basis:110px}.merchant-head>b{flex:1}}
+@media(max-height:500px) and (orientation:landscape){
+ .g-bank{min-width:0}
+ .g-bank-gems{display:flex;overflow-x:auto;overflow-y:hidden;max-width:100%;width:110px;gap:8px;padding:5px;transform:none;scrollbar-width:thin}
+ .g-bank-gem{flex:0 0 44px}
+ .g-take{flex-shrink:0}
+}
+@media(min-width:601px) and (min-height:651px){
+ .g-tier-tabs{display:none}
+ .g-market{grid-template-rows:repeat(3,minmax(0,1fr))}
+ .g-market-row{display:grid}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .g-card-inspector{width:min(420px,calc(100vw - 24px));display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;padding:22px 14px 14px;overflow:visible}
+ .g-card-inspector>.development-card{height:min(220px,calc(100dvh - 64px));grid-row:1/3}
+ .g-card-buttons{flex-direction:column;justify-content:center;padding:0}
+ .g-card-buttons .compact{min-height:44px}
+ .g-card-note{grid-column:2;margin:0;align-self:center}
+}
+@media(max-width:600px) and (min-height:700px) and (orientation:portrait){
+ .g-tier-tabs{display:none}
+ .g-market{grid-template-rows:repeat(3,minmax(0,1fr));gap:6px}
+ .g-market-row{display:grid}
+}

@@ -1,4 +1,10 @@
 export const uiText: Record<string,string> = {
+ '市场': 'Market', '规则': 'Rules', '翻页': 'Pages', '座位分页': 'Seat pages', '上一页': 'Previous page', '下一页': 'Next page',
+
+ "目标":"Goal",
+ "休整":"Rest",
+ "桌面区域":"Table sections",
+ "商队":"Caravans",
  "正在提交…":"Sending…",
  "单牌可双击 · 同名可组合":"Double-tap singles · Match for combos",
  "单张可双击 · 左右滑动":"Double-tap one card · Swipe hand",

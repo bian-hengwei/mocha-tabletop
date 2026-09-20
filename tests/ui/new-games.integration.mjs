@@ -32,7 +32,7 @@ try{
  while(!await page.locator('.ng-round-result').count()&&turns++<800){await active();let handled=false;for(const name of ['选择起始颜色','喊：剩一张！','接受 +4，抽牌并跳过','看完了，继续','抽一张','保留抽到的牌，结束回合']){const button=page.getByRole('button',{name,exact:true});if(await button.count()&&(name!=='抽一张'||!await page.locator('.ng-hand .ng-uno-card:not([disabled])').count())){await button.click();if(name==='选择起始颜色')await firstChoice();handled=true;break;}}
   if(!handled){const card=page.locator('.ng-hand .ng-uno-card:not([disabled])').first(),title=await card.getAttribute('aria-label');await card.click();if(title.includes('变色'))await page.locator('.ng-uno-colors button').first().click();await page.getByRole('button',{name:'出牌',exact:true}).click();}await noError();
  }
- assert(await page.locator('.ng-round-result').count(),'500-point mode must reach round results');assert.equal(await page.locator('.end-banner').count(),0,'a low-scoring first round must not end the 500-point match');const scores=await page.locator('.ng-player>strong').allTextContents();await active();await page.getByRole('button',{name:'开始下一轮',exact:true}).click();await page.locator('.ng-uno-overview>.ng-rules>summary').click();await page.locator('.ng-edition').filter({hasText:'第 2 轮'}).waitFor();assert.deepEqual(await page.locator('.ng-player>strong').allTextContents(),scores,'scores must carry into the next round');assert.equal(await page.locator('.ng-round-result').count(),0);await capture('uno-match-next-round');console.log('PASS real App Color Dash: cumulative scores retained into round two');
+ assert(await page.locator('.ng-round-result').count(),'500-point mode must reach round results');assert.equal(await page.locator('.end-banner').count(),0,'a low-scoring first round must not end the 500-point match');const scores=await page.locator('.ng-player>strong').allTextContents();await active();await page.getByRole('button',{name:'开始下一轮',exact:true}).click();await page.locator('.ng-edition').filter({hasText:'第 2 轮'}).waitFor();assert.deepEqual(await page.locator('.ng-player>strong').allTextContents(),scores,'scores must carry into the next round');assert.equal(await page.locator('.ng-round-result').count(),0);await capture('uno-match-next-round');console.log('PASS real App Color Dash: cumulative scores retained into round two');
  }
  await begin('香料商旅');
  const panel=(title)=>page.locator('.ng-panel').filter({has:page.locator('h3').filter({hasText:title})}).first();
@@ -43,7 +43,7 @@ try{
  await panel('你的商队').getByRole('button',{name:/升级 2 次/}).click();await confirm();await page.getByRole('button',{name:'再升级 2 次',exact:true}).click();await page.locator('.action-sheet .choice').filter({hasText:'姜黄'}).click();await confirm();await page.getByRole('button',{name:'再升级 1 次',exact:true}).click();await page.locator('.action-sheet .choice').filter({hasText:'藏红花'}).click();await confirm();await noError();await endTurn();await active();
  let returned=false,claimed=false,traded=false;const coverage=new Set(['acquire','payment','upgrade']);
  // Pick actions exclusively from visible cards and resource labels. No engine or stored game access.
- const counts=async()=>panel('你的商队').locator('.ng-cubes b').evaluateAll(xs=>xs.map(x=>Number(x.textContent)));
+ const counts=async()=>page.locator('.ng-pocket .ng-cubes b').evaluateAll(xs=>xs.map(x=>Number(x.textContent)));
  const parse=(text)=>{const names=['姜黄','藏红花','豆蔻','肉桂'];return names.map(name=>Number(text.match(new RegExp(name+'\\s*(\\d+)'))?.[1]||0));};
  for(let step=0;step<320&&!(returned&&claimed&&traded);step++){
    await active();
@@ -53,18 +53,18 @@ try{
    // With no upgradable cubes the phase exposes only its finish action.
    if(await endUpgrade.count()&&!await upgrade.count()){await endUpgrade.click();coverage.add('empty-upgrade');continue;}
    if(await upgrade.count()){
-     const cubes=await counts(),goals=await panel('公开订单').locator('.ng-goal>.ng-order-cost').allTextContents();const target=goals.map(parse).sort((a,b)=>a.reduce((n,v,i)=>n+Math.max(0,v-cubes[i])*(i+1),0)-b.reduce((n,v,i)=>n+Math.max(0,v-cubes[i])*(i+1),0))[0];
+     const cubes=await counts(),goals=await panel('公开订单').locator('.ng-goal>.ng-order-cost>span').evaluateAll(xs=>xs.map(x=>x.getAttribute('aria-label')));const target=goals.map(parse).sort((a,b)=>a.reduce((n,v,i)=>n+Math.max(0,v-cubes[i])*(i+1),0)-b.reduce((n,v,i)=>n+Math.max(0,v-cubes[i])*(i+1),0))[0];
      const index=cubes.findIndex((v,i)=>i<3&&v>target[i]&&target.some((t,j)=>j>i&&t>cubes[j]));
      if(index<0)await page.getByRole('button',{name:'结束升级',exact:true}).click();else{await upgrade.click();await page.locator('.action-sheet .choice').filter({hasText:['姜黄','藏红花','豆蔻'][index]}).click();await confirm();}continue;
    }
    const doneTrade=page.getByRole('button',{name:'结束交易',exact:true});if(await doneTrade.count()){traded=true;coverage.add('trade');await doneTrade.click();continue;}
    const pay=page.getByRole('button',{name:/^支付给第/});if(await pay.count()){await pay.click();await firstChoice();continue;}
-   const goals=panel('公开订单').locator('.ng-goal:not([disabled])');if(await goals.count()){await goals.first().click();await confirm();claimed=true;coverage.add('claim');continue;}
-   const hand=panel('你的商队').locator('.ng-spice-card:not([disabled])'),texts=await hand.locator('b').allTextContents(),cubes=await counts();
+   const goals=panel('公开订单').locator('.ng-goal:not([disabled])');if(await goals.count()){await page.locator('.ng-century-tabs').getByRole('button',{name:'公开订单',exact:true}).click();await goals.first().click();await confirm();claimed=true;coverage.add('claim');continue;}
+   const hand=panel('你的商队').locator('.ng-spice-card:not([disabled])'),texts=await hand.evaluateAll(xs=>xs.map(x=>x.getAttribute('aria-label'))),cubes=await counts();
    const tradeIndex=texts.findIndex(t=>t.includes('→'));if(!traded&&tradeIndex>=0){await hand.nth(tradeIndex).click();await confirm();continue;}
    // Recruit an affordable exchange if none is available yet.
-   const market=panel('商人市场').locator('.ng-spice-card:not([disabled])'),marketText=await market.locator('b').allTextContents();let mi=marketText.findIndex(t=>{if(!t.includes('→'))return false;const cost=parse(t.split('→')[0]);return cost.every((v,i)=>v<=cubes[i]);});
-   if(!traded&&mi>=0){await market.nth(mi).click();await confirm();continue;}
+   const market=panel('商人市场').locator('.ng-spice-card:not([disabled])'),marketText=await market.locator('b>span').evaluateAll(xs=>xs.map(x=>x.getAttribute('aria-label')));let mi=marketText.findIndex(t=>{if(!t.includes('→'))return false;const cost=parse(t.split('→')[0]);return cost.every((v,i)=>v<=cubes[i]);});
+   if(!traded&&mi>=0){await page.locator('.ng-century-tabs').getByRole('button',{name:'商人市场',exact:true}).click();await market.nth(mi).click();await confirm();continue;}
    const gainIndex=texts.findIndex(t=>t.startsWith('获得')),upgradeIndex=texts.findIndex(t=>t.startsWith('升级'));
    if(gainIndex>=0&&(!returned||cubes.reduce((n,v)=>n+v,0)<7)){await hand.nth(gainIndex).click();await confirm();continue;}
    if(upgradeIndex>=0){await hand.nth(upgradeIndex).click();await confirm();continue;}

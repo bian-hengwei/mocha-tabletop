@@ -10,16 +10,26 @@ import {BombsTable} from '../../src/ui/BombsTable';
 import {SocialTable} from '../../src/ui/SocialTable';
 import {uno} from '../../src/core/games/uno';
 import {bombs} from '../../src/core/games/bombs';
+import {century} from '../../src/core/games/century';
 import {WordGamesTable} from '../../src/ui/WordGamesTable';
 import {NewGamesTable} from '../../src/ui/NewGamesTable';
 import {ActionSheet,ActionDock} from '../../src/ui/Boards';
 const params=new URLSearchParams(location.search),kind=(params.get('kind')||'gems') as GameKind;
 const players=Array.from({length:params.get("players")==="max"?GAMES[kind].max:kind==='uno'&&params.get("players")==="10"?10:params.get("scenario")==="challenge"?3:GAMES[kind].min},(_,i)=>({id:`english-player-${i}`,name:['Alex','Blair','Casey','Drew','Eli','Frank','Grace','Hayden','Indigo','Jules'][i]||`Player ${i+1}`,avatar:['🦊','🐼','🐱','🐻'][i%4]}));
 function initialGame(){
+ if(kind==='century'&&params.get('scenario')==='table-dense'){
+  const state=century.create(players,11);
+  state.market.forEach(slot=>{slot.bonus=[1,1,1,1];});
+  state.caravans[0].hand.push(...state.deck.splice(0,20));
+  state.caravans[0].played.push(...state.deck.splice(0,10));
+  return state;
+ }
+ if(kind==='sushi'&&params.get('scenario')==='full-plates'){const state=modules.sushi.create(players,11);state.table=players.map((_,i)=>Array.from({length:9},(_,j)=>({id:`plate-${i}-${j}`,kind:(['tempura','sashimi','dumpling','maki1','maki2','maki3','egg','salmon','squid'] as const)[j]})));return state;}
  if(kind==='sushi'&&params.get('scenario')==='chopsticks'){const state=modules.sushi.create(players,11);state.table[0]=[{id:'table-chopsticks',kind:'chopsticks'}];state.hands[0]=[{id:'wasabi-first',kind:'wasabi'},{id:'squid-second',kind:'squid'},...state.hands[0].slice(2)];return state;}
  if(kind==='bombs'&&params.get('scenario')==='combo'){const state=bombs.create(players,11);state.hands[players[0].id]=[{id:'skip-a',kind:'skip',title:'跳过'},{id:'skip-b',kind:'skip',title:'跳过'},{id:'attack-a',kind:'attack',title:'攻击'},...state.hands[players[0].id].filter(c=>c.kind==='nope')];return state;}
 
  if(kind==='guandan'&&params.get('scenario')==='declare'){const state=modules.guandan.create(players,11);state.hands[0]=[5,6,7,8,9,3].map((rank,i)=>({id:`declare-${i}`,rank,suit:0}));return state;}
+ if(kind==='uno'&&params.get('scenario')==='call'){let state=uno.create(players,11);state.current=0;state.phase='play';state.color='red';state.drawn=null;state.hands[0]=[{id:'call-red',color:'red',value:2},{id:'last-blue',color:'blue',value:7}];state.discard=[{id:'top-red',color:'red',value:1}];return uno.apply(state,players[0].id,{action:'play',values:['call-red']});}
  if(kind==='uno'&&params.get('scenario')==='no-match'){
   const state=uno.create(players,11);state.current=0;state.phase='play';state.color='red';state.drawn=null;
   state.hands[0]=[{id:'blocked-blue-eight',color:'blue',value:8},{id:'blocked-green-nine',color:'green',value:9}];

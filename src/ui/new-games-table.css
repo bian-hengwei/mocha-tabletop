@@ -235,7 +235,7 @@
 /* Keep merchant play and required payments anchored while browsing markets. */
 .game-century .game-surface{display:flex;overflow:hidden;min-height:0}
 .ng-table.ng-century{display:flex;flex-direction:column;height:100%;min-height:0;gap:8px;padding:10px}
-.ng-century-overview{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.ng-century-overview{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
 .ng-century-overview>.ng-players{display:flex;overflow-x:auto;margin-bottom:8px;padding-bottom:5px}.ng-century-overview .ng-player{flex:0 0 165px}
 .ng-century-overview>.ng-edition{margin:0 0 8px}
 .ng-century-hand-dock{flex:none;min-width:0}
@@ -265,7 +265,7 @@
  .game-century.in-game .topbar{height:42px;min-height:42px;padding:3px 0;flex-wrap:nowrap}
  .ng-table.ng-century{display:grid;grid-template-columns:minmax(0,1fr) 210px;align-items:stretch}
  .ng-century-overview{min-width:0;height:100%}
- .ng-century-hand-dock{min-height:0;overflow:auto;scrollbar-width:thin}
+ .ng-century-hand-dock{min-height:0;overflow:hidden}
  .ng-century .ng-century-hand-panel{padding:5px;grid-template-columns:minmax(0,1fr);gap:4px}
  .ng-century .ng-century-hand-panel>h3{grid-column:1;grid-row:1;font-size:11px;padding:0;margin:0;border:0;gap:4px}
  .ng-century-hand-panel>.ng-market{grid-column:1;grid-row:2}
@@ -275,4 +275,74 @@
  .ng-century-hand-dock .ng-pocket>span{width:100%;display:flex;justify-content:space-between}
  .ng-century-hand-dock .ng-pocket>.ng-cubes{flex-basis:100%}
  .ng-century-hand-dock .ng-pocket-active .ng-pending-actions{min-width:0;flex-basis:100%}
+}
+/* One public area at a time; hand and mandatory actions stay on the table. */
+.ng-century [hidden]{display:none!important}
+.ng-century-tabs{display:flex;flex:none;gap:4px;margin-bottom:6px}
+.ng-century-tabs button{flex:1;min-width:0;min-height:44px;border:1px solid #cabb8c44;border-radius:8px;color:#dacdad;background:#142b23;padding:4px;font-size:11px}
+.ng-century-tabs button[aria-pressed=true]{background:#d9c996;color:#293d2d;border-color:#f5de9e}
+.ng-century-overview>.ng-heading,.ng-century-overview>.ng-players{flex:none}
+.ng-century .ng-century-page{min-height:0;flex:1;margin:0;display:flex;flex-direction:column;padding:7px}
+.ng-century .ng-century-page>h3{flex:none;font-size:12px;padding:0 0 5px;margin:0 0 5px;min-height:20px}
+.ng-century .ng-century-page>.ng-market{flex:1;min-height:0;align-items:stretch;overflow-y:hidden}
+.ng-century .ng-century-page .ng-spice-card{max-height:280px;min-height:0;flex-basis:145px}
+.ng-century .ng-century-page .ng-spice-illustration{flex:1;min-height:12px;max-height:170px;aspect-ratio:auto}
+.ng-century .ng-century-page .ng-spice-card>b{flex:none;min-height:0;font-size:11px;padding:5px;line-height:1.4}
+.ng-century .ng-century-page .ng-order-cost{flex:none;min-height:0;padding:5px;line-height:1.4}
+.ng-century .ng-century-page.ng-plates{flex-direction:row;overflow-x:auto;overflow-y:hidden;align-items:stretch}
+.ng-century-page.ng-plates>.ng-panel{flex:0 0 200px;margin:0;overflow:hidden}
+.ng-century-page.ng-plates .ng-cubes{margin:5px 0;gap:5px;display:grid;grid-template-columns:1fr 1fr}
+.ng-century .ng-century-page .ng-route-price{position:static;flex:none;margin:3px;min-height:24px;padding:3px;white-space:normal}
+@media(max-height:650px) and (orientation:portrait){
+ .ng-century-overview>.ng-players{margin-bottom:3px;padding-bottom:2px}
+ .ng-century-overview .ng-player{min-height:40px;padding:3px 6px}
+ .ng-century .ng-century-hand-panel .ng-spice-illustration{height:35px}
+ .ng-century .ng-century-hand-panel .ng-spice-card>b{min-height:30px;padding:3px;line-height:1.3}
+ .ng-century .ng-century-page .ng-spice-card{flex-basis:160px}
+ .ng-century .ng-pocket .ng-cubes small{display:none}
+ .ng-century .ng-century-page .ng-goal>strong{width:36px;height:36px;min-width:36px;top:5px;left:5px;font-size:22px}
+ .ng-century .ng-century-page .ng-goal>strong small{margin-bottom:4px}
+ .ng-century .ng-century-page .ng-order-bonus{top:7px;right:5px;max-width:calc(100% - 50px)}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .ng-table.ng-century{display:grid;grid-template-columns:minmax(0,1fr) 210px}
+ .ng-century .ng-century-hand-dock{display:flex;flex-direction:column;overflow:hidden;min-height:0}
+ .ng-century .ng-century-hand-panel{flex:1;min-height:0;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;padding:4px;gap:3px}
+ .ng-century .ng-century-hand-panel>h3{grid-column:1;grid-row:1;font-size:11px;padding:0;margin:0;border:0}
+ .ng-century .ng-century-hand-panel>.ng-market{grid-column:1;grid-row:2;min-height:0;overflow-y:hidden}
+ .ng-century .ng-century-hand-panel>.ng-controls{grid-column:1;grid-row:3;margin:0}
+ .ng-century .ng-century-hand-panel .ng-spice-card{display:flex;flex-direction:column;flex-basis:124px;width:124px;min-height:0;gap:2px}
+ .ng-century .ng-century-hand-panel .ng-spice-illustration{width:100%;height:auto;flex:1;min-height:24px;max-height:95px}
+ .ng-century .ng-century-hand-panel .ng-spice-card>b{min-height:30px;padding:3px;line-height:1.3}
+ .ng-century .ng-century-hand-dock>.ng-pocket{flex:none;flex-wrap:wrap;padding:4px;gap:2px;margin:0 0 3px}
+ .ng-century .ng-pocket>span{display:flex;justify-content:space-between;width:100%}
+ .ng-century .ng-pocket>.ng-cubes{flex-basis:100%}
+ .ng-century .ng-pocket-active .ng-pending-actions{min-width:0;flex-basis:100%}
+ .ng-century-overview .ng-player{min-height:34px;padding:2px 5px}
+ .ng-century-overview>.ng-players{margin-bottom:2px;padding-bottom:2px}
+ .ng-century .ng-century-page>h3{font-size:10px;padding:0;margin-bottom:2px}
+ .ng-century-tabs{margin-bottom:3px}
+ .ng-century .ng-century-page .ng-spice-card{flex-basis:160px}
+ .ng-century .ng-century-page.ng-plates .ng-cubes{display:flex;flex-wrap:nowrap}
+ .ng-century .ng-century-page.ng-plates .ng-cubes>span{min-width:30px;padding:3px}
+ .ng-century .ng-century-page.ng-plates .ng-cubes small{display:none}
+}
+@media(max-height:650px) and (orientation:portrait){
+ .ng-century .ng-century-hand-panel{grid-template-columns:minmax(0,1fr) auto;padding:5px;gap:3px}
+ .ng-century .ng-century-hand-panel>h3{font-size:11px;padding:0;border:0}
+ .ng-century .ng-century-hand-panel .ng-market{padding:3px 2px 6px}
+ .ng-century .ng-century-hand-panel .ng-spice-card{display:grid;grid-template-columns:34px 1fr;align-items:center;flex-basis:138px;width:138px;height:62px;padding:4px;gap:3px}
+ .ng-century .ng-century-hand-panel .ng-spice-illustration{width:34px;height:42px}
+ .ng-century .ng-century-hand-panel .ng-spice-card>b{font-size:10px;min-height:0}
+ .ng-century .ng-century-hand-panel>.ng-controls{margin:0}
+ .ng-century .ng-century-hand-panel>.ng-controls .ng-action{padding:5px 10px}
+ .ng-century .ng-century-page.ng-plates .ng-cubes{display:grid;grid-template-columns:repeat(4,1fr)}
+ .ng-century .ng-century-page.ng-plates .ng-cubes>span{min-width:30px;padding:3px}
+ .ng-century .ng-century-page.ng-plates .ng-cubes small{display:none}
+}
+@media(max-height:650px) and (orientation:portrait){
+ .ng-table.ng-century{padding:4px 6px;gap:4px}
+ .ng-century-overview .ng-player{min-height:34px;flex-basis:150px}
+ .ng-century-overview .ng-avatar{font-size:20px}
+ .ng-century .ng-pocket{padding:4px 7px}
 }

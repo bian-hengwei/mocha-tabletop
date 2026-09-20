@@ -56,6 +56,15 @@ jobs:
           node tests/ui/table-layout.integration.mjs
           node tests/ui/werewolf-lineups.integration.mjs
           node tests/ui/proactive-new-games.integration.mjs
+          node tests/ui/century-viewport.integration.mjs
+          node tests/ui/gems-viewport.integration.mjs
+          node tests/ui/bombs-viewport.integration.mjs
+          node tests/ui/uno-sushi-viewport.integration.mjs
+          node tests/ui/word-viewport.integration.mjs
+          node tests/ui/word-round.integration.mjs
+          node tests/ui/social-viewport.integration.mjs
+          node tests/ui/social-app-viewport.integration.mjs
+          node tests/ui/game-viewport.integration.mjs
           node tests/ui/word-usability.integration.mjs
           curl -fsS "$BASE_URL/api/health"
           node tests/network/message-text.integration.mjs

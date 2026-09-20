@@ -1,0 +1,78 @@
+/* Actions and hand share the viewport. Dense choices travel horizontally. */
+.game-bombs .game-surface{min-height:0;overflow:hidden}
+.bt-table{height:100%;min-height:0;grid-template-rows:50px minmax(0,1fr) 165px;gap:4px;padding:4px 0}
+.bt-seats{min-height:0;gap:5px;overflow-y:hidden}
+.bt-seat{min-height:44px}
+.bt-arena{overflow:visible;align-content:stretch;grid-template-columns:100px minmax(0,1fr);padding:5px 8px;gap:10px}
+.bt-piles{flex-direction:column;gap:15px}
+.bt-deck,.bt-discard,.bt-card.bt-small{width:70px;height:92px}
+.bt-deck .bt-cat-art{width:52px;height:58px}
+.bt-discard{transform:none}
+.bt-focus{max-width:none;width:100%;padding:0;min-height:0}
+.bt-focus h2{font-size:20px;line-height:1.25;margin:0}
+.bt-focus p{font-size:11px;line-height:1.45;margin:6px 0;max-width:none}
+.bt-focus p:empty{display:none}
+.bt-eyebrow{font-size:10px;line-height:1.3;margin-bottom:5px;letter-spacing:.5px}
+.bt-primary,.bt-secondary,.bt-quiet{min-height:44px;font-size:11px;padding:5px 10px}
+.bt-action-row{gap:5px;margin-top:7px}
+.bt-response-status{gap:3px}
+.bt-response-status>b{flex-basis:100%;margin:3px 0;font-size:10px}
+.bt-hand-zone{padding:0 6px;min-height:0}
+.bt-hand-label{height:32px;font-size:11px;flex:none;justify-content:space-between;padding:0 8px}
+.bt-hand-label button{min-height:32px;font-size:10px}
+.bt-hand{height:auto;padding:13px 6px 7px;gap:8px;align-items:flex-start}
+.bt-hand-slot{transform:none!important}
+.bt-card{width:80px;height:110px;padding:6px 4px}
+.bt-card-heading{white-space:normal;line-height:1.3}
+.bt-card-heading b{font-size:10px;letter-spacing:0}
+.bt-card-heading>svg{flex:none}
+.bt-focused-phase .bt-piles{display:none}
+.bt-focused-phase .bt-arena{grid-template-columns:minmax(0,1fr)}
+.bt-focused-phase .bt-focus{max-width:680px;justify-self:center}
+.bt-request{display:grid;grid-template-columns:none;grid-template-rows:repeat(2,44px);grid-auto-flow:column;grid-auto-columns:112px;max-height:none;width:100%;overflow-x:auto;overflow-y:hidden;padding:3px;gap:6px}
+.bt-request>button{min-height:44px;font-size:11px}
+.bt-future-cards{overflow-x:auto;overflow-y:hidden;padding:10px 7px;gap:15px}
+.bt-future-cards .bt-small{width:85px;height:112px;flex:none}
+.bt-future-cards .bt-card-heading b{font-size:10px}
+.bt-future>.bt-primary{min-height:44px;font-size:11px}
+.bt-insert-range button{width:44px;height:44px}
+.bt-insert-range input{height:44px}
+.bt-insert .bt-primary{min-height:44px}
+.bt-confirm-shade section{overflow:visible;max-height:none;padding:15px}
+@media(min-width:601px) and (min-height:501px){
+ .bt-arena{grid-template-columns:minmax(160px,40%) minmax(0,1fr);padding:15px 8%}
+ .bt-piles{flex-direction:row;gap:30px}
+ .bt-deck,.bt-discard,.bt-card.bt-small{width:95px;height:125px}
+ .bt-focused-phase .bt-arena{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-height:650px) and (orientation:portrait){
+ .bt-table{grid-template-rows:46px minmax(0,1fr) 159px;gap:2px;padding:2px 0}
+ .bt-arena{grid-template-columns:72px minmax(0,1fr);gap:7px;padding:4px 6px}
+ .bt-deck,.bt-discard,.bt-card.bt-small{width:60px;height:82px}
+ .bt-focus h2{font-size:17px}.bt-focus p{font-size:10px}
+ .bt-hand .bt-card{height:105px}
+ .bt-focused-phase .bt-arena{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .bt-table{grid-template-columns:minmax(0,1fr) clamp(190px,32vw,340px);grid-template-rows:44px minmax(0,1fr);gap:4px;padding:2px 0}
+ .bt-seats{grid-column:1/3;grid-row:1}
+ .bt-arena{grid-column:1;grid-row:2;grid-template-columns:65px minmax(0,1fr);gap:8px;padding:3px 6px}
+ .bt-hand-zone{grid-column:2;grid-row:2;border:1px solid #e7ce9733;border-radius:9px;padding:3px}
+ .bt-hand{align-items:center;padding:14px 6px 7px}
+ .bt-hand .bt-card{height:120px;width:87px}
+ .bt-hand-label{height:34px;padding:0 3px;gap:3px}
+ .bt-deck,.bt-discard,.bt-card.bt-small{width:54px;height:72px}
+ .bt-deck .bt-cat-art{width:38px;height:43px}
+ .bt-deck b{font-size:9px;letter-spacing:0}
+ .bt-piles{gap:14px}
+ .bt-focus h2{font-size:17px}.bt-focus p{font-size:10px;line-height:1.4;margin:4px 0}
+ .bt-eyebrow{font-size:9px;margin-bottom:4px}
+ .bt-focus>.bt-quiet{margin:0}
+ .bt-focused-phase .bt-arena{grid-template-columns:minmax(0,1fr)}
+ .bt-future-cards .bt-small{width:62px;height:82px}
+ .bt-future-cards{gap:15px;padding:7px}
+ .bt-future>.bt-primary{margin-top:3px}
+ .bt-insert h2{font-size:17px}
+ .bt-response-status{margin-top:4px}
+}
+.bt-future-cards .bt-order{left:auto;right:-5px;top:-7px}
