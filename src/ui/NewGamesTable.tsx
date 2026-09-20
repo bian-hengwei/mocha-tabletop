@@ -1,11 +1,12 @@
 import { t } from '../i18n';
 function tx<T>(value: T): T | string { return typeof value === 'string' ? t(value) : value; }
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties, type MouseEvent, type PointerEvent } from 'react';
 import type { Action, Command, GameView } from '../core/types';
 import { SUSHI_INFO, sushiPlateScore, type SushiCard } from '../core/games/sushi';
 import { SPICES, SPICE_SYMBOLS, spiceCardTitle, spiceText, type SpiceCard, type SpiceOrder } from '../core/games/century';
 import { UNO_LABEL, unoTitle, type UnoCard } from '../core/games/uno';
 import './new-games-table.css';
+import {useCardDoubleTap} from './useCardDoubleTap';
 import { IllustratedTile } from './IllustratedTile';
 import { ColorCardArt, SpiceCube } from './NewGameArt';
 type Props = {
@@ -40,11 +41,11 @@ function SushiFace({ card, selected, onClick, order, small = false }: {
 }
 function SushiTable(props: Props) { const { view, command, selfID } = props, b = view.board, [selected, setSelected] = useState<string[]>([]), pick = view.actions.find(a => a.id === 'pick'); useEffect(() => setSelected([]), [b.round, b.step, selfID]); const shown = b.selected || selected; const toggle = (id: string) => setSelected(old => old.includes(id) ? old.filter(v => v !== id) : old.length < (pick?.max || 1) ? [...old, id] : [id]); const valid = pick && selected.length >= pick.min && selected.length <= pick.max; return <div className="ng-table ng-sushi"><Header view={view} selfID={selfID}/><Scoreboard view={view} selfID={selfID}/><section className="ng-panel ng-sushi-hand-panel"><h3>{t("你的手牌") + " "}<small>{tx(b.hand.length)}{" " + t("张 · 仅你可见")}</small></h3><div className="ng-hand">{tx((b.hand as SushiCard[]).map(c => <SushiFace key={c.id} card={c} selected={shown.includes(c.id)} order={shown.includes(c.id) ? shown.indexOf(c.id) + 1 : undefined} onClick={pick ? () => toggle(c.id) : undefined}/>))}</div>{view.actions.length>0&&<div className="ng-controls ng-sushi-confirm">{tx(pick && <button className="ng-action" type="button" disabled={!valid} onClick={() => { command({ action: 'pick', values: selected }); setSelected([]); }}>{selected.length?`${t("确认")} ${selected.length} ${t("张")}`:t("确认选牌")}{tx(pick.max === 2 ? ' · 可用筷子选两张' : '')}</button>)}<Controls {...props} omit={['pick']}/></div>}{tx(pick?.max === 2 && <p className="ng-hint">{t("选择顺序就是出牌顺序：先芥末、后握寿司才会三倍计分。筷子会传给下家。")}</p>)}</section>{b.players.some((p: any)=>p.table.length>0)&&<section className="ng-plates">{tx(b.players.map((p: any) => <article className="ng-panel" key={p.id}><h3>{tx(p.avatar)} {p.name}<small>{t("盘面") + " "}{tx(sushiPlateScore(p.table))}{" " + t("分 · 卷数另算")}</small></h3><div className="ng-plate">{tx(p.table.length ? p.table.map((c: SushiCard) => <SushiFace key={c.id} card={c} small/>) : <p className="ng-hint">{t("等待大家同时揭晓第一道")}</p>)}</div></article>))}</section>}<details className="ng-rules"><summary>{t("计分与玩法")}</summary><p>{t("共三轮，每手同时选牌，余牌向左传递。最后一张自动揭晓。寿司卷按图标数排名：第一 6 分、第二 3 分；并列平分取整，并列第一不发第二名分。布丁留到三轮后：最多 +6、最少 −6，并列平分；两人局不扣布丁分。总分相同以布丁多者胜。")}</p><p>{t("天妇罗每两张 5 分；刺身每三张 10 分；饺子 1 / 3 / 6 / 10 / 15 分。握寿司玉子 1、三文鱼 2、鱿鱼 3 分，先放下的芥末令之后第一张握寿司分数乘三。数字版按基础 108 张牌组。")}</p></details></div>; }
 const unoColors: Record<string, string> = { red: '#b73d48', yellow: '#936b19', green: '#2d826b', blue: '#376da6', wild: '#665482' };
-function UnoFace({ card, onClick, drawn=false, selected=false }: {
- card:UnoCard; onClick?:()=>void; drawn?:boolean; selected?:boolean;
+function UnoFace({ card, onClick, onPointerDown, drawn=false, selected=false }: {
+ card:UnoCard; onClick?:(event:MouseEvent<HTMLButtonElement>)=>void; onPointerDown?:(event:PointerEvent<HTMLButtonElement>)=>void; drawn?:boolean; selected?:boolean;
 }) {
  const rank=typeof card.value==='number'?card.value:({skip:'⊘',reverse:'⇄',draw2:'+2',wild:'✦',wild4:'+4'}[card.value]);
- return <button type="button" disabled={!onClick} aria-pressed={onClick?selected:undefined} className={`ng-uno-card ${drawn?'ng-drawn':''} ${selected?'ng-uno-selected':''} ${card.color==='wild'?'ng-wild-card':''}`} style={{'--uno-color':unoColors[card.color]} as CSSProperties} onClick={onClick} aria-label={t(unoTitle(card))}>
+ return <button type="button" disabled={!onClick} aria-pressed={onClick?selected:undefined} className={`ng-uno-card ${drawn?'ng-drawn':''} ${selected?'ng-uno-selected':''} ${card.color==='wild'?'ng-wild-card':''}`} style={{'--uno-color':unoColors[card.color]} as CSSProperties} onClick={onClick} onPointerDown={onPointerDown} aria-label={t(unoTitle(card))}>
   <ColorCardArt color={unoColors[card.color]} wild={card.color==='wild'}/>
   <small>{t(card.color==='wild'?'万能牌':UNO_LABEL[card.color])}</small><span className="ng-uno-corner" aria-hidden="true">{rank}</span>
   <strong>{rank}</strong><b>{t(typeof card.value==='number'?card.value+' 点':UNO_LABEL[card.value])}</b>
@@ -56,22 +57,31 @@ function UnoTable(props: Props) {
  const [selectedID,setSelectedID]=useState<string|null>(null),[selectedColor,setSelectedColor]=useState<string|null>(null);
  const handIDs=(b.hand as UnoCard[]).map(c=>c.id).join('|');
  useEffect(()=>{setSelectedID(null);setSelectedColor(null);},[selfID,b.roundNumber,b.round,b.phase,b.current,b.drawn,b.top?.id,handIDs]);
+ const taps=useCardDoubleTap([selfID,b.roundNumber,b.phase,b.current,b.drawn,b.top?.id,handIDs].join(':'));
  const actionFor=(c:UnoCard)=>c.color==='wild'?view.actions.find(a=>a.id===`wild:${c.id}`):play?.choices.some(choice=>choice.id===c.id)?play:undefined;
  const playableCount=(b.hand as UnoCard[]).filter(card=>!!actionFor(card)).length;
  const selectedCard=(b.hand as UnoCard[]).find(c=>c.id===selectedID),selectedAction=selectedCard? actionFor(selectedCard):undefined;
  const valid=!!selectedAction&&(selectedCard?.color!=='wild'||!!selectedAction.choices.find(c=>c.id===selectedColor));
  const choose=(id:string)=>{setSelectedID(old=>old===id?null:id);setSelectedColor(null);};
  const submit=()=>{if(!valid||!selectedCard||!selectedAction)return;command({action:selectedAction.id,values:[selectedCard.color==='wild'?selectedColor!:selectedCard.id]});setSelectedID(null);setSelectedColor(null);};
+ const selectCard=(card:UnoCard,event:MouseEvent<HTMLButtonElement>)=>{
+  const action=actionFor(card);if(!action)return;
+  if(taps.isDoubleTap(card.id,event)){
+   if(card.color==='wild'){setSelectedID(card.id);setSelectedColor(null);}
+   else{command({action:action.id,values:[card.id]});setSelectedID(null);setSelectedColor(null);}
+  }else choose(card.id);
+ };
  const playerName=(id:string)=>b.players.find((p:any)=>p.id===id)?.name||id;
- return <div className="ng-table ng-uno"><Header view={view} selfID={selfID}/><Scoreboard view={view} selfID={selfID}/>
-  <p className="ng-edition"><span>{t(`第 ${b.roundNumber} 轮`)}</span><span>{b.mode==='single'?t('单局竞速'):t('累计 500 分获胜')}</span><span>{t(b.challengeEnabled===false?'+4 质疑已关闭':'+4 质疑已开启')}</span></p>
+ return <div className="ng-table ng-uno"><div className="ng-uno-overview"><Header view={view} selfID={selfID}/><Scoreboard view={view} selfID={selfID}/>
   {challenge&&<section className="ng-panel ng-challenge" aria-label={t('质疑核验 · 仅你可见')}><h3>{t('质疑核验 · 仅你可见')}</h3><p className="ng-hint">{playerName(challenge.actor)} · {t('出 +4 时的手牌')} · {t('原颜色')} {t(UNO_LABEL[challenge.previousColor])}</p><strong className="ng-challenge-result">{t(challenge.wasLegal?'出牌合法，质疑失败':'持有原颜色，质疑成功')}</strong><p className="ng-hint">{t(challenge.wasLegal?'你已抽 6 张，确认后跳过。':'对方已抽 4 张，你继续正常回合。')}</p><div className="ng-hand">{(challenge.hand as UnoCard[]).map(c=><UnoFace key={c.id} card={c}/>)}</div><div className="ng-controls"><button className="ng-action" onClick={()=>command({action:'confirmChallenge',values:[]})}>{t('看完了，继续')}</button></div></section>}
   {(b.phase==='roundEnd'||view.finished)&&b.roundWinner&&<section className="ng-panel ng-round-result"><h3>{t('本轮结算')}</h3><strong>{playerName(b.roundWinner)} · +{b.roundPoints} {t('分')}</strong></section>}
   <section className="ng-uno-center ng-panel"><div><h3>{t('当前弃牌')}</h3><UnoFace card={b.top}/></div><div className="ng-uno-status"><span className="ng-color-badge" style={{background:unoColors[b.color]}}>{t(UNO_LABEL[b.color])}</span><strong>{t(b.direction===1?'顺时针 →':'← 逆时针')}</strong><small>{t('抽牌堆')} {b.deckCount} {t('张')}</small><Controls {...props} omit={['play','confirmChallenge','draw','pass']}/></div></section>
-  <section className="ng-panel ng-uno-hand-panel"><h3>{t('你的手牌')}<small>{b.hand.length} {t('张')}</small></h3><div className="ng-hand ng-uno-hand">{(b.hand as UnoCard[]).map(c=><UnoFace card={c} key={c.id} drawn={b.drawn===c.id} selected={selectedID===c.id&&!!selectedAction} onClick={actionFor(c)?()=>choose(c.id):undefined}/>)}</div>
+  <details className="ng-rules"><summary>{t('本桌规则：报单、质疑与累计计分')}</summary><p className="ng-edition"><span>{t(`第 ${b.roundNumber} 轮`)}</span><span>{b.mode==='single'?t('单局竞速'):t('累计 500 分获胜')}</span><span>{t(b.challengeEnabled===false?'+4 质疑已关闭':'+4 质疑已开启')}</span></p><p>{t('每轮先出完手牌者获得其他玩家余牌的分数：数字牌按数字，功能牌 20 分，万能牌 50 分。默认累计到 500 分获胜，也可选择单局竞速。')}</p><p>{t('匹配当前颜色、数字或功能。主动抽牌后，只能打出刚抽到的牌，或保留并结束回合。+2 和 +4 不叠加。两人局的反转与跳过都让自己再出一手；牌堆用完后重洗弃牌。')}</p><p>{t('打出倒数第二张后，明确选择报单或不报。漏报时其他玩家可抓漏报，令你抽 2 张；也可全部选择放过。不用计时器，也不比网络速度。')}</p><p>{t(b.challengeEnabled===false?'质疑已关闭：只有没有当前颜色牌时才能出 +4，下家直接抽 4 张并跳过。':'+4 可以被质疑。出牌者当时若持有原颜色牌，质疑成功，出牌者抽 4 张；否则质疑者抽 6 张并跳过。只有质疑者能核验出牌时的手牌。接受 +4 则抽 4 张并跳过。')}</p></details>
+  </div>
+  <section className="ng-panel ng-uno-hand-panel"><h3>{t('你的手牌')}<small>{b.hand.length} {t('张')}</small><small className="ng-uno-gesture">{t('双击出牌 · 左右滑动')}</small></h3><div className="ng-hand ng-uno-hand" tabIndex={0} aria-label={t('手牌可左右滑动')}>{(b.hand as UnoCard[]).map(c=><UnoFace card={c} key={c.id} drawn={b.drawn===c.id} selected={selectedID===c.id&&!!selectedAction} onPointerDown={taps.onPointerDown} onClick={actionFor(c)?e=>selectCard(c,e):undefined}/>)}</div>
   {b.phase==='play'&&b.current===selfID&&<div className="ng-uno-playbar"><div className="ng-uno-selection" aria-live="polite">{selectedCard&&selectedAction?<><strong>{t(unoTitle(selectedCard))}</strong>{selectedCard.color==='wild'&&<div className="ng-uno-colors" role="group" aria-label={t('选择出牌颜色')}>{selectedAction.choices.map(c=><button key={c.id} type="button" aria-pressed={selectedColor===c.id} className={selectedColor===c.id?'selected':''} style={{'--uno-color':unoColors[c.id]} as CSSProperties} onClick={()=>setSelectedColor(c.id)}>{t(c.title)}</button>)}</div>}</>:null}</div><div className="ng-uno-play-actions">{playableCount>0&&<button type="button" className="ng-action ng-uno-play" disabled={!valid} onClick={submit}>{t('出牌')}</button>}{view.actions.filter(a=>['draw','pass'].includes(a.id)).map(a=><button type="button" className={`ng-action ${playableCount?'ng-uno-secondary':'ng-uno-only-action'}`} key={a.id} onClick={()=>{setSelectedID(null);setSelectedColor(null);command({action:a.id,values:[]});}}>{t(a.title)}</button>)}</div></div>}
   </section>
-  <details className="ng-rules"><summary>{t('本桌规则：报单、质疑与累计计分')}</summary><p>{t('每轮先出完手牌者获得其他玩家余牌的分数：数字牌按数字，功能牌 20 分，万能牌 50 分。默认累计到 500 分获胜，也可选择单局竞速。')}</p><p>{t('匹配当前颜色、数字或功能。主动抽牌后，只能打出刚抽到的牌，或保留并结束回合。+2 和 +4 不叠加。两人局的反转与跳过都让自己再出一手；牌堆用完后重洗弃牌。')}</p><p>{t('打出倒数第二张后，明确选择报单或不报。漏报时其他玩家可抓漏报，令你抽 2 张；也可全部选择放过。不用计时器，也不比网络速度。')}</p><p>{t(b.challengeEnabled===false?'质疑已关闭：只有没有当前颜色牌时才能出 +4，下家直接抽 4 张并跳过。':'+4 可以被质疑。出牌者当时若持有原颜色牌，质疑成功，出牌者抽 4 张；否则质疑者抽 6 张并跳过。只有质疑者能核验出牌时的手牌。接受 +4 则抽 4 张并跳过。')}</p></details>
+
  </div>;
 }
 function Cubes({ values }: {

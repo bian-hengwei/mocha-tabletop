@@ -115,22 +115,6 @@
  .ng-century .ng-market{grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:10px}.ng-spice-card>b,.ng-goal>.ng-order-cost{font-size:11px}
  .ng-uno-center{padding:9px 14px;gap:27px}.ng-uno-center>div:first-child{width:104px}.ng-uno-hand{grid-template-columns:repeat(auto-fill,minmax(99px,1fr));gap:11px}.ng-uno-card>strong{font-size:43px}.ng-uno-card>.ng-uno-corner{font-size:17px}.ng-uno-card>b{font-size:9px;bottom:12px}.ng-uno-card>small{font-size:8px}
 }
-@media(max-height:450px){
- /* Keep the discard and an actionable hand visible together on a horizontal phone. */
- .ng-uno{display:grid;grid-template-columns:minmax(150px,.34fr) minmax(0,1fr);gap:7px 10px;align-items:start}
- .ng-uno>.ng-heading,.ng-uno>.ng-players,.ng-uno>.ng-edition,.ng-uno>.ng-rules,.ng-uno>.ng-challenge,.ng-uno>.ng-round-result{grid-column:1/-1;margin-top:0;margin-bottom:0}
- .ng-uno>.ng-heading>span{display:none}.ng-uno>.ng-heading{justify-content:flex-start}
- .ng-uno>.ng-uno-center{grid-column:1;display:flex;flex-direction:column;gap:9px;padding:10px 7px;margin:0;min-width:0}
- .ng-uno>.ng-uno-center>div:first-child{width:84px}.ng-uno>.ng-uno-center h3{font-size:10px;letter-spacing:0}
- .ng-uno>.ng-uno-center .ng-uno-card>strong{font-size:37px}.ng-uno>.ng-uno-center .ng-uno-card>b{font-size:8px;bottom:11px}
- .ng-uno>.ng-uno-center .ng-uno-card>small{font-size:7px;top:9px;right:8px}.ng-uno>.ng-uno-center .ng-uno-card>.ng-uno-corner{font-size:13px;left:9px;top:19px}
- .ng-uno>.ng-uno-center .ng-uno-status{max-width:100%;width:100%;gap:7px;align-items:center;text-align:center}
- .ng-uno>.ng-uno-center .ng-uno-status>strong{font-size:11px}.ng-uno>.ng-uno-center .ng-uno-status>small{font-size:9px}.ng-uno>.ng-uno-center .ng-color-badge{padding:4px 13px;font-size:10px}
- .ng-uno>.ng-uno-center .ng-controls{margin:0;justify-content:center}.ng-uno>.ng-uno-center .ng-action{font-size:10px;padding:7px 8px;min-height:36px}
- .ng-uno>.ng-uno-hand-panel{grid-column:2;padding:9px 8px;margin:0;min-width:0}
- .ng-uno .ng-uno-hand{grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px 8px;padding:14px 2px 7px}
- .ng-uno .ng-uno-playbar{gap:7px;padding-top:8px}.ng-uno .ng-uno-selection{font-size:10px}.ng-uno .ng-uno-play-actions{gap:6px;width:100%}.ng-uno .ng-uno-play{min-width:85px;flex:1}.ng-uno .ng-uno-play-actions .ng-action{font-size:10px;min-height:38px;padding:8px 10px}
-}
 
 /* Only contextual state occupies the action area; mandatory caravan choices stay in reach. */
 .ng-uno-selection:empty{display:none}.ng-uno-play-actions{margin-left:auto}.ng-uno-only-action{min-width:145px;box-shadow:0 2px 10px #d1bb6d25}
@@ -140,3 +124,70 @@
 .ng-pending-actions{flex:1 1 240px;min-width:0}.ng-pending-actions>p{font-size:11px;line-height:1.7;color:#d8d5ba}.ng-pending-actions .ng-controls{margin:5px 0 0;gap:7px}.ng-pending-actions .ng-action{min-height:40px;font-size:11px;padding:8px 12px}
 @media(max-width:600px){.ng-pocket.ng-pocket-active{gap:7px;padding:8px 10px}.ng-pocket-active>.ng-cubes{flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}.ng-pocket-active>.ng-cubes>span{min-width:0;padding:2px 0}.ng-pending-actions{flex-basis:100%}.ng-pending-actions .ng-controls{margin-top:3px}.ng-pending-actions .ng-action{flex:1}.ng-uno-play-actions .ng-uno-only-action{flex:1}}
 @media(max-height:450px) and (min-width:601px){.ng-pocket.ng-pocket-active{gap:5px 10px;padding:7px 10px}.ng-pending-actions .ng-controls{margin:0}.ng-pending-actions>p{font-size:10px}}
+
+/* A single bottom rack keeps every hand size independent of vertical page scrolling. */
+.game-uno .game-surface{overflow:hidden;display:flex;min-height:0}
+.ng-table.ng-uno{height:100%;max-height:100%;min-height:0;display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:10px}
+.ng-uno-overview{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.ng-uno-overview>.ng-players{display:flex;overflow-x:auto;gap:8px;padding-bottom:6px;margin-bottom:7px}
+.ng-uno-overview .ng-player{flex:0 0 166px}
+.ng-uno-overview>.ng-edition{margin:5px 0 8px}
+.ng-uno-overview>.ng-uno-center{margin:0;padding:12px;gap:28px}
+.ng-uno-overview>.ng-uno-center>div:first-child{width:95px}
+.ng-uno-overview .ng-uno-center .ng-uno-card>strong{font-size:40px}
+.ng-uno-overview>.ng-rules{padding:4px 0}
+.ng-uno>.ng-uno-hand-panel{flex:none;width:100%;margin:0;padding:9px 10px;background:#132e29f5}
+.ng-uno-hand-panel>h3{margin:0;gap:7px}
+.ng-uno-gesture{margin-left:auto;text-align:right;max-width:65%;font-size:10px!important}
+.ng-uno .ng-uno-hand{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:9px;padding:18px 4px 10px;scrollbar-width:thin;scrollbar-color:#bca67966 transparent;overscroll-behavior-x:contain;touch-action:pan-x pinch-zoom}
+.ng-uno .ng-uno-hand>.ng-uno-card{flex:0 0 88px;width:88px;height:132px;aspect-ratio:auto;touch-action:manipulation}
+.ng-uno .ng-uno-hand>.ng-uno-card>strong{font-size:40px}
+.ng-uno .ng-uno-hand>.ng-uno-card>small{font-size:8px;top:9px;right:8px;left:22px}
+.ng-uno .ng-uno-hand>.ng-uno-card>.ng-uno-corner{font-size:15px;left:8px;top:21px}
+.ng-uno .ng-uno-hand>.ng-uno-card>b{font-size:9px;bottom:10px;left:5px;right:5px}
+.ng-uno .ng-uno-playbar{position:static;min-height:48px;margin:2px 0 0;padding:5px 0 0;gap:6px;flex-wrap:nowrap}
+.ng-uno .ng-uno-play-actions{width:auto;flex:none;margin-left:auto;gap:6px;flex-wrap:nowrap}
+.ng-uno .ng-uno-play-actions .ng-action{min-height:44px;min-width:74px;padding:8px 12px;font-size:11px}
+.ng-uno .ng-uno-colors{gap:4px;margin-top:3px;flex-wrap:nowrap}
+.ng-uno .ng-uno-colors button{min-width:44px;min-height:44px;padding:5px;font-size:10px}
+.ng-uno .ng-uno-selection strong{font-size:10px}
+@media(min-width:1100px) and (min-height:600px){.ng-uno .ng-uno-hand>.ng-uno-card{flex-basis:108px;width:108px;height:162px}.ng-uno-overview>.ng-uno-center>div:first-child{width:130px}.ng-uno .ng-uno-hand>.ng-uno-card>strong{font-size:49px}}
+@media(max-width:600px){.ng-uno .ng-uno-playbar{flex-wrap:wrap}.ng-uno .ng-uno-selection{flex:1 1 100%}.ng-uno .ng-uno-selection:empty{display:none}.ng-uno .ng-uno-play-actions{width:100%}.ng-uno .ng-uno-play-actions>.ng-action{flex:1}.ng-uno-gesture{font-size:9px!important}.ng-uno-overview .ng-uno-status{gap:9px}}
+@media(max-height:500px) and (orientation:landscape){
+ .ng-table.ng-uno{padding:4px 6px;gap:4px}
+ .ng-uno-overview{display:grid;grid-template-columns:minmax(160px,.8fr) minmax(260px,1.2fr);gap:3px 10px;align-content:start}
+ .ng-uno-overview>.ng-heading{grid-column:1/-1;margin:0}.ng-uno-overview>.ng-heading strong{font-size:11px}
+ .ng-uno-overview>.ng-players{grid-column:1;margin:0;padding:0 0 3px;align-self:start}
+ .ng-uno-overview .ng-player{flex-basis:150px;min-height:43px;padding:4px 6px}
+ .ng-uno-overview>.ng-edition{grid-column:1;font-size:9px;margin:0;gap:4px}
+ .ng-uno-overview>.ng-rules{grid-column:1;padding:0;font-size:9px}.ng-uno-overview>.ng-rules summary{min-height:24px}
+ .ng-uno-overview>.ng-uno-center{grid-column:2;grid-row:1/4;padding:4px 8px;gap:13px;align-self:start}
+ .ng-uno-overview>.ng-heading~.ng-uno-center{grid-row:2/5}
+ .ng-uno-overview>.ng-challenge,.ng-uno-overview>.ng-round-result{grid-column:1/-1}
+ .ng-uno-overview:has(.ng-challenge)>.ng-uno-center,.ng-uno-overview:has(.ng-round-result)>.ng-uno-center{grid-row:auto}
+ .ng-uno-overview>.ng-uno-center>div:first-child{width:55px}
+ .ng-uno-overview .ng-uno-center h3{display:none}
+ .ng-uno-overview .ng-uno-center .ng-uno-card>strong{font-size:27px}.ng-uno-overview .ng-uno-center .ng-uno-card>small{font-size:6px;top:4px;left:10px;right:3px}.ng-uno-overview .ng-uno-center .ng-uno-card>.ng-uno-corner{font-size:10px;top:13px;left:5px}.ng-uno-overview .ng-uno-center .ng-uno-card>b{font-size:7px;bottom:5px;left:3px;right:3px}
+ .ng-uno-overview .ng-uno-status{gap:4px;max-width:none}.ng-uno-overview .ng-uno-status>strong{font-size:11px}.ng-uno-overview .ng-uno-status>small{font-size:9px}.ng-uno-overview .ng-color-badge{font-size:10px;padding:3px 10px}.ng-uno-overview .ng-controls{margin:0;gap:5px}.ng-uno-overview .ng-action{min-height:44px;padding:5px 8px;font-size:10px}
+ .ng-uno>.ng-uno-hand-panel{padding:4px 7px}.ng-uno-hand-panel>h3{font-size:11px;line-height:1.25}.ng-uno-gesture{font-size:9px!important}
+ .ng-uno .ng-uno-hand{padding:13px 3px 5px;gap:8px}.ng-uno .ng-uno-hand>.ng-uno-card{flex-basis:65px;width:65px;height:96px}
+ .ng-uno .ng-uno-hand>.ng-uno-card>strong{font-size:30px}.ng-uno .ng-uno-hand>.ng-uno-card>small{font-size:6px;top:5px;left:16px;right:4px}.ng-uno .ng-uno-hand>.ng-uno-card>.ng-uno-corner{font-size:11px;top:15px;left:5px}.ng-uno .ng-uno-hand>.ng-uno-card>b{font-size:7px;bottom:6px}
+ .ng-uno .ng-uno-playbar{flex-wrap:nowrap;min-height:47px;padding-top:3px}.ng-uno .ng-uno-play-actions{width:auto}.ng-uno .ng-uno-selection{flex:1;display:flex;align-items:center;gap:6px}.ng-uno .ng-uno-colors{margin:0}.ng-uno .ng-uno-play-actions>.ng-action{flex:none}
+}
+.ng-uno-hand-panel .ng-uno-gesture{max-width:100%;font-size:9px!important}
+.ng-uno-overview .ng-edition{margin:5px 0;font-size:10px}
+@media(max-height:650px) and (orientation:portrait){
+ .ng-table.ng-uno{gap:5px;padding:5px}.ng-uno>.ng-uno-hand-panel{padding:6px 7px}
+ .ng-uno .ng-uno-hand>.ng-uno-card{flex-basis:74px;width:74px;height:111px}.ng-uno .ng-uno-hand{padding-top:15px;padding-bottom:7px}
+ .ng-uno-overview>.ng-uno-center{padding:7px;gap:16px}.ng-uno-overview>.ng-uno-center>div:first-child{width:60px}.ng-uno-overview .ng-uno-center h3{display:none}
+ .ng-uno-overview .ng-uno-center .ng-uno-card>strong{font-size:28px}.ng-uno-overview .ng-uno-center .ng-uno-card>small{font-size:6px;top:5px;right:4px;left:15px}.ng-uno-overview .ng-uno-center .ng-uno-card>.ng-uno-corner{font-size:11px;left:5px;top:15px}.ng-uno-overview .ng-uno-center .ng-uno-card>b{font-size:7px;bottom:6px}
+ .ng-uno-overview .ng-player{min-height:45px;padding:5px 6px}.ng-uno-overview>.ng-players{margin-bottom:4px;padding-bottom:3px}
+ .ng-uno-overview .ng-uno-status{gap:5px}.ng-uno-overview .ng-uno-status>strong{font-size:12px}.ng-uno-overview .ng-color-badge{padding:5px 12px}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .game-uno.in-game .topbar{height:42px;min-height:42px;padding:3px 0;flex-wrap:nowrap}
+ .ng-uno-overview{grid-template-rows:max-content max-content max-content;align-items:start}
+ .ng-uno-overview>.ng-uno-center>div:first-child{width:48px}.ng-uno-overview .ng-uno-center .ng-uno-card>strong{font-size:24px}
+ .ng-uno-overview>.ng-rules{grid-column:1;grid-row:2}.ng-uno-overview>.ng-heading~.ng-rules{grid-row:3}
+ .ng-uno-overview>.ng-uno-center{grid-row:1/3}.ng-uno-overview>.ng-heading~.ng-uno-center{grid-row:2/4}
+}

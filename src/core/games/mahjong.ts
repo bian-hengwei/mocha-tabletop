@@ -58,7 +58,11 @@ function win(s:MahjongState,i:number,from:number,tile:Tile,selfDraw:boolean){let
  s.wins.push({player:i,from,tile,points:value,selfDraw});if(!s.won.includes(i))s.won.push(i);s.history.push(`${s.players[i].name} · ${selfDraw?'自摸':'胡牌'} · +${value}`);
 }
 function kongScore(s:MahjongState,i:number,from:number,concealed:boolean){if(from!==i)pay(s,from,i,2,true);else for(let p=0;p<4;p++)if(p!==i&&active(s,p))pay(s,p,i,concealed?2:1,true);}
-function resolve(s:MahjongState){const pending=s.pending!,others=[0,1,2,3].filter(i=>i!==pending.from&&active(s,i));if(others.some(i=>!pending.responses[i]))return;
+function resolve(s:MahjongState){const pending=s.pending!,others=[0,1,2,3].filter(i=>i!==pending.from&&active(s,i));
+ // Skip only forced passes, using the same authoritative choices exposed to players.
+ // Also completes older saved response windows after their next valid response.
+ for(const i of others)if(!pending.responses[i]){const legal=actions(s,s.players[i].id);if(legal.length===1&&legal[0].id==='pass')pending.responses[i]={action:'pass'};}
+ if(others.some(i=>!pending.responses[i]))return;
  const winners=others.filter(i=>pending.responses[i].action==='hu');
  if(winners.length){for(const i of winners)win(s,i,pending.from,pending.tile,false);
   if(pending.rob!==undefined){s.hands[pending.from]=s.hands[pending.from].filter(t=>t.id!==pending.tile.id);s.discards[pending.from].push(pending.tile);}
@@ -89,7 +93,7 @@ export const mahjong:GameModule<MahjongState>={
  if(s.phase==='respond'){s.pending!.responses[me]={action:cmd.action as Response['action']};resolve(s);return s;}
  if(cmd.action==='hu'){const tile=s.hands[me].find(t=>t.id===s.drawn)||s.hands[me].at(-1)!;win(s,me,me,tile,true);s.selfWon=true;if(!isSichuan(s)||s.mode==='sichuan'&&s.won.length>=3)finish(s);else if(s.mode==='sichuan')draw(s,next(s,me));return s;}
  if(cmd.action.startsWith('concealed:')){const v=Number(cmd.values[0]),tiles=s.hands[me].filter(t=>t.value===v);s.hands[me]=s.hands[me].filter(t=>t.value!==v);s.melds[me].push({type:'concealed',tiles,from:me});kongScore(s,me,me,true);draw(s,me,true);return s;}
- if(cmd.action.startsWith('added:')){const v=Number(cmd.values[0]),tile=s.hands[me].find(t=>t.value===v)!,rob=s.melds[me].findIndex(m=>m.type==='pong'&&m.tiles[0].value===v);s.pending={tile,from:me,rob,responses:{}};s.phase='respond';return s;}
- const tile=s.hands[me].find(t=>t.id===cmd.values[0])!;s.hands[me]=s.hands[me].filter(t=>t.id!==tile.id);s.discards[me].push(tile);s.pending={tile,from:me,responses:{}};s.phase='respond';s.drawn=null;s.selfWon=false;s.history.push(`${s.players[me].name} · ${tileTitle(tile)}`);s.history=s.history.slice(-60);return s;
+ if(cmd.action.startsWith('added:')){const v=Number(cmd.values[0]),tile=s.hands[me].find(t=>t.value===v)!,rob=s.melds[me].findIndex(m=>m.type==='pong'&&m.tiles[0].value===v);s.pending={tile,from:me,rob,responses:{}};s.phase='respond';resolve(s);return s;}
+ const tile=s.hands[me].find(t=>t.id===cmd.values[0])!;s.hands[me]=s.hands[me].filter(t=>t.id!==tile.id);s.discards[me].push(tile);s.pending={tile,from:me,responses:{}};s.phase='respond';s.drawn=null;s.selfWon=false;s.history.push(`${s.players[me].name} · ${tileTitle(tile)}`);s.history=s.history.slice(-60);resolve(s);return s;
  }
 };

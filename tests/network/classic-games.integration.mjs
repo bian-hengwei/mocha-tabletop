@@ -13,6 +13,7 @@ for(const [kind,mode]of [['doudizhu'],['guandan'],['mahjong','guangdong'],['mahj
   // Private views contain no deck, full-state wrapper, other hand or private response map.
   for(const c of clients){const snap=c.latest();assert(!('game'in snap));assert(!('wall'in snap.view.board));assert(!('responses'in(snap.view.board.pending||{})));assert(snap.view.board.players.every(p=>p.hand===undefined));}
   for(let step=0;step<70;step++){
+   if(kind==='mahjong')for(const c of clients){const offered=c.latest().view.actions;assert(!offered.some(a=>a.id==='pass')||offered.length>1,'forced passes never require a client command');}
    if(clients.some(c=>c.latest().view.finished)||host.latest().view.board.phase==='roundEnd')break;
    const actor=clients.find(c=>c.latest().view.actions.length);assert(actor);const snap=actor.latest(),view=snap.view,b=view.board;
    let action=view.actions.find(a=>a.id==='hu')||view.actions.find(a=>a.id==='pass')||view.actions[0],values=action.choices.slice(0,action.min).map(c=>c.id);

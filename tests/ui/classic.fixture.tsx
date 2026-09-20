@@ -10,6 +10,7 @@ const params=new URLSearchParams(location.search),scenario=params.get('scenario'
 const tiles=(values:number[],prefix='t'):Tile[]=>values.map((value,i)=>({id:`${prefix}${i}`,value}));
 const waiting=[0,1,2,3,4,5,9,10,11,12,13,14,6];
 function initial(){const mode=(params.get('mode')||'guangdong') as MahjongMode,s=mahjong.create(players,11,{mahjongMode:mode});s.phase='discard';if(mode==='sichuan'||mode==='bloodflow')s.missing={0:2,1:2,2:2,3:2};
+ if(scenario==='quick'){s.hands=[tiles([...waiting,26],'a'),...['b','c','d'].map(p=>tiles(waiting,p))];}
  if(scenario==='hu')s.hands[0]=tiles([...waiting,6]);
  if(scenario==='kong')s.hands[0]=tiles([6,6,6,6,0,1,2,3,4,5,9,10,11,12]);
  if(scenario==='rob'){s.hands[0]=tiles([6,0,1,2,3,4,5,9,10,11,12]);s.melds[0]=[{type:'pong',tiles:tiles([6,6,6],'m'),from:2}];s.hands[1]=tiles(waiting,'b');}
