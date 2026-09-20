@@ -37,6 +37,13 @@ const reveal=async page=>{
 try{
  for(let i=0;i<7;i++){
   const context=await browser.newContext({viewport:{width:844,height:390},hasTouch:true,isMobile:true,deviceScaleFactor:2});contexts.push(context);
+  const delay=Number(process.env.TEST_ACTION_DELAY_MS||0);
+  if(delay)await context.routeWebSocket('**/api/rooms/**',socket=>{
+   const server=socket.connectToServer();let closed=false;const timers=new Set();
+   socket.onClose(()=>{closed=true;for(const timer of timers)clearTimeout(timer);server.close();});
+   server.onClose(()=>{closed=true;for(const timer of timers)clearTimeout(timer);socket.close();});
+   server.onMessage(message=>{const timer=setTimeout(()=>{timers.delete(timer);if(!closed)socket.send(message);},delay);timers.add(timer);});
+  });
   const page=await context.newPage();pages.push(page);page.on('pageerror',e=>errors.push(e.message));
   // Keep this identity across reloads, just as the real profile does.
   const profile={id:`acceptance-${i}-${crypto.randomUUID()}`,name:`验收${i+1}`,avatar:['🦊','🐼','🐱','🐻','🐰','🐨','🐯'][i]};
@@ -93,6 +100,14 @@ try{
    await pages[1].reload();await expect(pages[1].locator('.personal-seat small')).toHaveText('第 2 次发牌');
    await expect(pages[1].getByRole('button',{name:'重新发身份',exact:true})).toHaveCount(0);
   }else if(['sushi','century','uno','codenames','undercover'].includes(key)){
+   if(key==='century'){
+    const actor=(await Promise.all(pages.slice(0,count).map(async p=>await p.locator('.ng-century-hand-panel .ng-spice-card:enabled').count()?p:null))).find(Boolean);assert(actor);
+    await actor.getByRole('button',{name:'升级 2 次',exact:true}).click();
+    if(process.env.TEST_ACTION_DELAY_MS){await expect(actor.locator('.game-surface')).toHaveAttribute('inert','');await expect(actor.locator('.action-pending')).toContainText('正在提交');}
+    await actor.getByRole('button',{name:'再升级 2 次',exact:true}).click();await actor.locator('.action-sheet .choice').first().click();await actor.locator('.action-sheet footer button').click();
+    // Clicking the next step immediately must wait for the preceding server reply.
+    await actor.getByRole('button',{name:'结束升级',exact:true}).click();await expect(actor.locator('.ng-pocket-active')).toHaveCount(0);await expect(actor.locator('.toast')).toHaveCount(0);
+   }
    if(key==='uno'){
     let played=false;
     for(let attempt=0;attempt<12&&!played;attempt++){

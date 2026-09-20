@@ -1,4 +1,5 @@
 export const uiText: Record<string,string> = {
+ "正在提交…":"Sending…",
  "单牌可双击 · 同名可组合":"Double-tap singles · Match for combos",
  "单张可双击 · 左右滑动":"Double-tap one card · Swipe hand",
  "已选":"Selected", "费用":"Cost", "枚筹码":"tokens", "张发展牌":"development cards", "座位":"Seat", "可选为目标":"available target",

@@ -107,3 +107,5 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `tests/ui/word-usability.integration.mjs`：异步拒绝保留线索、成功清空、隐藏词后准备、投票和发言进度。
 
 输入法回归使用浏览器 DOM 键盘事件覆盖 `isComposing` 和兼容性的 `keyCode=229` 路径，随后用真实键盘事件验证普通 Enter/Escape；这不等同于系统输入法真机验收。事件边界依据 [MDN 的 IME 键盘事件说明](https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event#keydown_events_with_ime)。
+
+网络延迟回归：`TEST_GAMES=century TEST_ACTION_DELAY_MS=600 TEST_SKIP_OFFLINE=1 BASE_URL=http://127.0.0.1:5174 node tests/ui/production.integration.mjs`。对真实 Worker 的回包延迟 600ms，验证提交中阻止后续操作，并在回包后继续升级/结束回合；也支持 WebKit。

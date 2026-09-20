@@ -25,7 +25,14 @@ export class RoomClient {
  private peers=new Map<string,Peer>();private localMatch?:MatchState;private heartbeat?:ReturnType<typeof setInterval>;private connectGeneration=0;private starting=false;private peerRetry=new Map<string,ReturnType<typeof setTimeout>>();private peerAttempts=new Map<string,number>();
  constructor(){window.addEventListener('online',this.onOnline);document.addEventListener('visibilitychange',this.onVisible);}
  subscribe(listener:(state:ClientState)=>void){this.listeners.add(listener);listener(this.state);return()=>{this.listeners.delete(listener);};}
- private patch(patch:Partial<ClientState>){this.state={...this.state,...patch};for(const listener of this.listeners)listener(this.state);}
+ private patch(patch:Partial<ClientState>){
+  // Only a changed actionable revision (not presence/heartbeat snapshots) settles a send.
+  if(this.state.actionPending&&(
+   patch.actionRevision!==undefined&&patch.actionRevision!==this.state.actionRevision||
+   patch.paused||patch.error||patch.status&&['idle','lobby','reconnecting','disconnected'].includes(patch.status)||
+   patch.room&&(!patch.room.started||patch.room.matchID!==this.state.room?.matchID||patch.room.mode!==this.state.room?.mode)
+  ))patch={...patch,actionPending:false};
+  this.state={...this.state,...patch};for(const listener of this.listeners)listener(this.state);}
  clearError(){this.patch({error:undefined});}
  private fail(error:unknown){this.patch({error:error instanceof Error?error.message:String(error)});}
  private terminal(error:string,preserve=false){if(!preserve){this.removeLocal();this.clearSavedSession();}this.reset();this.patch({...initial(),error});}
@@ -69,9 +76,11 @@ export class RoomClient {
  replay(){this.control({type:'replay'});}
  endGame(){this.control({type:'endGame'});}
  action(command:Command){
+  if(this.state.actionPending)return;
   try{if(this.state.paused)throw new Error('连接恢复后继续');const r=this.state.room;if(!r||!r.started)throw new Error('牌局未开始');
+   this.patch({actionPending:true});
    const msg={type:'action',command,requestID:crypto.randomUUID(),actionRevision:this.state.actionRevision};
-   if(r.mode==='cloud')this.control(msg);else if(this.session?.profile.id===r.hostID)this.applyLocal(r.hostID,msg);else {const p=this.peers.get(r.hostID);if(!p?.proven||p.dc?.readyState!=='open')throw new Error('与房主的连接已中断');this.sendDC(p,msg);}
+   if(r.mode==='cloud')this.control(msg);else if(this.session?.profile.id===r.hostID)this.applyLocal(r.hostID,msg);else {const p=this.peers.get(r.hostID);if(!p?.proven||p.dc?.readyState!=='open'||p.dc.bufferedAmount>=1000000)throw new Error('与房主的连接已中断');this.sendDC(p,msg);}
   }catch(e){this.fail(e);}
  }
  switchToCloud(){const r=this.state.room;if(!r||r.hostID!==this.session?.profile.id){this.fail('请由房主切换');return;}if(r.started&&!this.localMatch){this.fail('房主牌局状态丢失，请结束本局重新开桌');return;}this.control({type:'switchToCloud',match:this.localMatch});}

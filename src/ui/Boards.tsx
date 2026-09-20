@@ -193,11 +193,12 @@ export function ActionSheet({ action, selected, view, onClose, onSubmit }: {
             }
         }}>{current.max === 0 ? tx(current.title) : t("确认")}<Check size={16}/></button></footer></section></div>;
 }
-export function ActionDock({ view, open, command }: {
+export function ActionDock({ view, open, command, busy=false }: {
+    busy?: boolean;
     view: GameView;
     open: (a: Action, values?: string[]) => void;
     command: (c: Command) => void;
 }) {
     const directHidden = view.kind === 'gems' ? ['take_distinct', 'take_pair', 'buy', 'reserve'] : view.kind === 'bombs' ? ['draw', 'play', 'pair', 'triple', 'nope', 'give'] : [];
-    return <div className={`action-dock ${view.actions.length ? 'your-turn' : ''}`}><div className="instruction"><span className="turn-dot"/>{tx(view.instruction)}</div><div className="dock-actions">{tx(view.actions.filter(a => !directHidden.includes(a.id) && !(view.board.isModerator && a.id === view.actions[0]?.id)).map(a => <button key={a.id} className={`compact ${['explode', 'assassinate'].includes(a.id) ? 'danger' : 'primary'}`} onClick={() => a.choices.length || ['explode', 'defuse', 'withdraw'].includes(a.id) ? open(a) : command({ action: a.id, values: [] })}>{tx(a.title)}<ChevronRight size={13}/></button>))}</div></div>;
+    return <div inert={busy} aria-busy={busy} className={`action-dock ${view.actions.length ? 'your-turn' : ''}`}><div className="instruction"><span className="turn-dot"/>{tx(view.instruction)}</div><div className="dock-actions">{tx(view.actions.filter(a => !directHidden.includes(a.id) && !(view.board.isModerator && a.id === view.actions[0]?.id)).map(a => <button key={a.id} className={`compact ${['explode', 'assassinate'].includes(a.id) ? 'danger' : 'primary'}`} onClick={() => a.choices.length || ['explode', 'defuse', 'withdraw'].includes(a.id) ? open(a) : command({ action: a.id, values: [] })}>{tx(a.title)}<ChevronRight size={13}/></button>))}</div></div>;
 }
