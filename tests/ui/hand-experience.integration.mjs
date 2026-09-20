@@ -34,7 +34,7 @@ try{
   await page.keyboard.press('Escape');await page.setViewportSize({width,height});
   await page.getByRole('button',{name:locale==='zh'?'结束升级':'Finish upgrading',exact:true}).click();await expect(page.locator('.ng-pocket-active')).toHaveCount(0);
   await page.screenshot({path:`${out}/century-${locale}-${width}.png`});
-  await go('bombs');const hand=page.locator('.bt-hand .bt-card');const attack=hand.filter({hasText:locale==='zh'?'攻击':'Attack'}).first(),skip=hand.filter({hasText:locale==='zh'?'跳过':'Skip'}).first();
+  await go('bombs');if(width<=600&&height>=451)await fit(page.locator('.bt-hand-zone'));const hand=page.locator('.bt-hand .bt-card');const attack=hand.filter({hasText:locale==='zh'?'攻击':'Attack'}).first(),skip=hand.filter({hasText:locale==='zh'?'跳过':'Skip'}).first();
   await attack.click();await skip.click();await expect(page.locator('.bt-hand .bt-selected')).toHaveCount(1);await expect(skip).toHaveAttribute('aria-pressed','true');
   await page.waitForTimeout(350);await skip.click();await expect(page.locator('.bt-hand .bt-selected')).toHaveCount(0);
   const count=await hand.count();await attack.dblclick();await expect(hand).toHaveCount(count-1);await expect(page.locator('.bt-response')).toBeVisible();
