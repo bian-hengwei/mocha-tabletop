@@ -121,7 +121,7 @@ export class GameRoom extends DurableObject<Env>{
   await this.ctx.storage.put('room',d);
   await this.scheduleAlarm();
  }
- private async scheduleAlarm(){const d=this.data;if(d)await this.ctx.storage.setAlarm(Math.min(d.expires,d.botDue??Infinity,this.ctx.getWebSockets().length?Date.now()+30000:Infinity));}
+ private async scheduleAlarm(){const d=this.data;if(d)await this.ctx.storage.setAlarm(Math.min(d.expires,d.botDue??Infinity,this.ctx.getWebSockets().some(ws=>!(ws.deserializeAttachment() as Attachment).authenticated)?Date.now()+30000:Infinity));}
  // Renew admitted-player activity in batches, rather than writing on every heartbeat.
  private async renewActivity(now:number){
   const d=this.data;if(!d||d.ended||d.expires<=now||d.expires>=now+ROOM_TTL-ACTIVITY_RENEW_INTERVAL)return false;
@@ -181,7 +181,7 @@ export class GameRoom extends DurableObject<Env>{
    }
    if(!a.authenticated||!a.id)throw new Error('请先连接房间');
    const id=a.id;
-   if(msg.type==='ping'){if(!a.pending&&d.tokens[id]&&r.players.some(p=>p.id===id)&&await this.renewActivity(now)){this.broadcast();await this.index();}send(ws,{type:'pong'});return;}
+   if(msg.type==='ping'){if(!a.pending&&d.tokens[id]&&r.players.some(p=>p.id===id)&&await this.renewActivity(now)){this.broadcast();await this.index();}if(msg.sync===true)this.snapshot(ws);send(ws,{type:'pong'});return;}
    if(a.pending){if(msg.type==='leave'){r.pending=r.pending.filter(p=>p.id!==id);delete d.pendingTokens[id];await this.save();ws.close(1000,'已离开');this.broadcast();return;}throw new Error('正在等待房主同意');}
    if(msg.type==='signal'){
     if(r.mode!=='lan')throw new Error('当前不是局域网模式');
@@ -263,7 +263,9 @@ export class GameRoom extends DurableObject<Env>{
  async webSocketError(ws:WebSocket){await this.webSocketClose(ws);try{ws.close(1011,'连接中断');}catch{}}
  async alarm(){
   const now=Date.now();let changed=false;
-  for(const ws of this.ctx.getWebSockets()){const a=ws.deserializeAttachment() as Attachment;if(!a.authenticated&&a.opened<now-25000||a.authenticated&&(a.lastSeen||a.opened)<now-65000){ws.serializeAttachment({opened:0});ws.close(4000,'连接超时，请重新连接');if(a.pending&&a.id&&this.data){this.data.info.pending=this.data.info.pending.filter(p=>p.id!==a.id);delete this.data.pendingTokens[a.id];}changed=true;}}
+  // Browser suspension stops application heartbeats, not necessarily WebSockets.
+  // Keep authenticated seats until transport close/error or the room lease ends.
+  for(const ws of this.ctx.getWebSockets()){const a=ws.deserializeAttachment() as Attachment;if(!a.authenticated&&a.opened<now-25000){ws.serializeAttachment({opened:0});ws.close(4000,'连接超时，请重新连接');if(a.pending&&a.id&&this.data){this.data.info.pending=this.data.info.pending.filter(p=>p.id!==a.id);delete this.data.pendingTokens[a.id];}changed=true;}}
   if(changed&&this.data){this.data.info.revision++;await this.save();this.broadcast();}
   const d=this.data;
   if(d&&!d.ended&&d.expires>now&&d.botDue!==undefined&&d.botDue<=now&&d.botRevision===d.match?.revision&&d.info.mode==='cloud'&&d.info.players.every(p=>this.connected(p.id))){

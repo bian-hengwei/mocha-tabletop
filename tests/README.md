@@ -106,7 +106,8 @@ npx playwright install chromium webkit
 | `node tests/network/cloud.integration.mjs` | 云端加入、权限与房间指令 |
 | `node tests/network/discovery.integration.mjs` | 房间发现 |
 | `node tests/network/lan-fallback.integration.mjs` | 直连失败后的明确提示与手动云端回退，支持 Chromium/WebKit |
-| `node tests/network/lan.integration.mjs` | WebRTC 直连与断线行为 |
+| `node tests/network/lan.integration.mjs` | WebRTC 直连、Chromium 页面挂起 30 秒、断线重配、双方实际关页恢复、信令中断与云端切换 |
+| `node tests/network/lifecycle.integration.mjs` | 真实 Worker 与 App：页面挂起 95 秒、前台同步、断网重连、浏览器后退、双方关页重开及继续原回合；中英文手机/桌面，支持 Chromium/WebKit |
 | `node tests/network/client-terminal.integration.mjs` | 客户端退出及终止状态 |
 | `node tests/network/werewolf-options.integration.mjs` | 月夜议会模式切换和联机流程 |
 | `node tests/network/werewolf-capacity.integration.mjs` | 月夜议会人数与法官席位 |
@@ -190,3 +191,5 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 - `npx vitest run tests/practice.test.ts tests/storage.test.ts`：八款人机游戏的全部合法人数与三档难度、合法推进、完整寿司三轮、单人视图/操作边界、旧试玩存档、保存/重开与战绩。
 - `BASE_URL=http://127.0.0.1:5218 node tests/ui/local-play.integration.mjs`：真实 App 单机人数/难度选择、八款人机与四款交流游戏、双语八尺寸与旋转、刷新/语言/重开/战绩/退出；支持 `TEST_BROWSER=webkit`。对生产预览可加 `TEST_OFFLINE=1` 验证缓存后断网开局与恢复（Chromium）。终局界面使用显式 fixture，完整规则终局由单测覆盖。
+
+连接生命周期回归使用 `TEST_FRONTEND` 指向运行中的 Vite，并需要对应本地 Worker。`lifecycle.integration.mjs` 在 Chromium 中通过 CDP 暂停真实页面执行，在 WebKit 中通过 Playwright clock 暂停页面定时器；这验证浏览器挂起路径，不等同于手机系统切后台/锁屏的真机验收。关闭双方标签页后以无 sessionStorage 的新标签页自动恢复，比较原玩家、matchID、操作版本和私人视图，再通过界面继续出牌。截图写入 `test-results/lifecycle-*`。

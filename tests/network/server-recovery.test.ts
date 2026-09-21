@@ -17,7 +17,22 @@ describe('authoritative reconnect and presence',()=>{
  it('allows a disconnected host to rejoin a running match with the same identity and preserves the round',async()=>{await message(sockets[0],{type:'start'});const match=structuredClone(server.data.match),matchID=server.data.info.matchID;await server.webSocketClose(sockets[0]);expect(sockets[1].snapshot.paused).toBe(true);const restored=new ServerSocket();sockets.push(restored);await message(restored,{type:'hello',profile:host,token:'a'.repeat(48)});expect(restored.snapshot.paused).toBe(false);expect(restored.snapshot.room.matchID).toBe(matchID);expect(server.data.match).toEqual(match);expect(restored.snapshot.room.players).toHaveLength(2);expect(restored.snapshot.room.expiresAt).toBe(server.data.expires);});
  it('replaces a duplicate socket without creating duplicate seats or letting its later close mark the new one offline',async()=>{const original=sockets[1],replacement=new ServerSocket();sockets.push(replacement);await message(replacement,{type:'hello',profile:guest,token:'b'.repeat(48)});expect(original.closed).toBe(4001);expect(original.attachment.authenticated).toBeUndefined();await server.webSocketClose(original);expect(sockets[0].snapshot.room.players.find((p:any)=>p.id===guest.id).connected).toBe(true);expect(server.data.info.players).toHaveLength(2);});
  it('rejects identity takeover with the wrong token',async()=>{const attacker=new ServerSocket();sockets.push(attacker);await message(attacker,{type:'hello',profile:host,token:'c'.repeat(48)});expect(attacker.messages.at(-1).error).toContain('身份不匹配');expect(attacker.attachment.authenticated).toBeUndefined();expect(sockets[0].closed).toBeUndefined();});
- it('sweeps silent authenticated sockets, pauses the game, and keeps their seats recoverable',async()=>{await message(sockets[0],{type:'start'});await vi.advanceTimersByTimeAsync(70000);await message(sockets[0],{type:'ping'});await server.alarm();expect(sockets[1].closed).toBe(4000);expect(sockets[0].snapshot.paused).toBe(true);expect(server.data.tokens[guest.id]).toBe('b'.repeat(48));expect(alarm).toBeLessThan(server.data.expires);});
+ it('retains authenticated background sockets without heartbeats, and pauses only on transport loss',async()=>{
+  await message(sockets[0],{type:'start'});const match=structuredClone(server.data.match),matchID=server.data.info.matchID;
+  await vi.advanceTimersByTimeAsync(10*60000);await message(sockets[0],{type:'ping'});await server.alarm();
+  expect(sockets[1].closed).toBeUndefined();expect(sockets[0].snapshot.paused).toBe(false);expect(server.data.match).toEqual(match);expect(alarm).toBe(server.data.expires);
+  await server.webSocketClose(sockets[1]);expect(sockets[0].snapshot.paused).toBe(true);expect(server.data.tokens[guest.id]).toBe('b'.repeat(48));
+  const restored=new ServerSocket();sockets.push(restored);await message(restored,{type:'hello',profile:guest,token:'b'.repeat(48)});expect(restored.snapshot.room.matchID).toBe(matchID);expect(restored.snapshot.paused).toBe(false);expect(server.data.match).toEqual(match);
+ });
+ it('still closes unauthenticated sockets after their handshake deadline',async()=>{
+  const anonymous=new ServerSocket();sockets.push(anonymous);await server.scheduleAlarm();expect(alarm).toBe(Date.now()+30000);
+  await vi.advanceTimersByTimeAsync(30000);await server.alarm();expect(anonymous.closed).toBe(4000);expect(sockets[0].closed).toBeUndefined();expect(sockets[1].closed).toBeUndefined();
+ });
+ it('resynchronizes the requesting player after wake without exposing other hands or host credentials',async()=>{
+  await message(sockets[0],{type:'start'});const expected=structuredClone(sockets[1].snapshot);sockets[1].messages=[];
+  await message(sockets[1],{type:'ping',sync:true});expect(sockets[1].snapshot).toEqual(expected);expect(sockets[1].snapshot.invite).toBeUndefined();expect(sockets[1].snapshot.view.board).not.toHaveProperty('deck');expect(sockets[1].messages.at(-1)).toEqual({type:'pong'});
+  const pending=member('pending0',true);sockets.push(pending);await message(pending,{type:'ping',sync:true});expect(pending.messages).toEqual([{type:'pending'},{type:'pong'}]);
+ });
  it('accepts heartbeat from an applicant waiting for approval',async()=>{const pending=member('pending0',true);sockets.push(pending);await message(pending,{type:'ping'});expect(pending.messages.at(-1)).toEqual({type:'pong'});});
  it('clears abandoned approval requests so the queue cannot fill with offline applicants',async()=>{const pending=member('pending0',true);sockets.push(pending);server.data.info.pending=[{id:'pending0',name:'申请人',avatar:'🦊'}];server.data.pendingTokens.pending0='c'.repeat(48);await server.webSocketClose(pending);expect(server.data.info.pending).toHaveLength(0);expect(server.data.pendingTokens.pending0).toBeUndefined();});
  it('allows only the lobby host to remove an offline seat',async()=>{await message(sockets[0],{type:'removePlayer',playerID:guest.id});expect(sockets[0].messages.at(-1).error).toContain('只能移除离线');await server.webSocketClose(sockets[1]);await message(sockets[0],{type:'removePlayer',playerID:guest.id});expect(server.data.info.players.map((p:any)=>p.id)).toEqual([host.id]);expect(server.data.tokens[guest.id]).toBeUndefined();});
@@ -61,7 +76,7 @@ describe('active room expiry',()=>{
   for(let count=0;count<14;count++){await vi.advanceTimersByTimeAsync(20000);await message(sockets[0],{type:'ping'});}
   expect(put).not.toHaveBeenCalled();expect(server.data.expires).toBe(expires);
   await vi.advanceTimersByTimeAsync(21000);await message(sockets[0],{type:'ping'});
-  expect(put).toHaveBeenCalledTimes(1);expect(server.data.expires).toBe(Date.now()+6*3600000);expect(alarm).toBe(Date.now()+30000);
+  expect(put).toHaveBeenCalledTimes(1);expect(server.data.expires).toBe(Date.now()+6*3600000);expect(alarm).toBe(server.data.expires);
   await message(sockets[1],{type:'ping'});expect(put).toHaveBeenCalledTimes(1);
  });
  it('does not renew for anonymous probes, applicants, invalid messages or failed authentication',async()=>{

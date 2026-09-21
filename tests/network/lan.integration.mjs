@@ -6,8 +6,8 @@ if(!['chromium','webkit'].includes(browserName))throw new Error('TEST_BROWSER mu
 const browser=browserName==='webkit'?await webkit.launch({headless:true}):await chromium.launch({executablePath:process.env.CHROME_PATH||undefined,headless:true});
 const contexts=[];
 try{
- async function player(name){const context=await browser.newContext({viewport:{width:844,height:390},isMobile:true,hasTouch:true});contexts.push(context);const page=await context.newPage();page.on('pageerror',e=>console.log(name+' pageerror',e.message));await page.route('**/__network_probe',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><title>LAN integration</title>'}));await page.goto(url+(browserName==='chromium'?'/manifest-mocha.webmanifest':'/__network_probe'));await page.evaluate(async name=>{const {RoomClient}=await import('/src/net/client.ts');window.client=new RoomClient();window.player={id:crypto.randomUUID(),name,avatar:'🦊'};window.states=[];client.subscribe(s=>window.states.push(structuredClone(s)));window.cloudMessages=[];const original=WebSocket.prototype.send;WebSocket.prototype.send=function(data){window.cloudMessages.push(JSON.parse(data));return original.call(this,data);};},name);return page;}
- const host=await player('房主'),guest=await player('朋友');
+ async function player(name,existing){const context=existing||await browser.newContext({viewport:{width:844,height:390},isMobile:true,hasTouch:true});if(!existing)contexts.push(context);const page=await context.newPage();page.on('pageerror',e=>console.log(name+' pageerror',e.message));await page.route('**/__network_probe',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><title>LAN integration</title>'}));await page.goto(url+(browserName==='chromium'?'/manifest-mocha.webmanifest':'/__network_probe'));await page.evaluate(async name=>{const {RoomClient}=await import('/src/net/client.ts');window.client=new RoomClient();window.player={id:crypto.randomUUID(),name,avatar:'🦊'};window.states=[];client.subscribe(s=>window.states.push(structuredClone(s)));window.cloudMessages=[];const original=WebSocket.prototype.send;WebSocket.prototype.send=function(data){window.cloudMessages.push(JSON.parse(data));return original.call(this,data);};},name);return page;}
+ let host=await player('房主'),guest=await player('朋友');
  await host.evaluate(()=>client.create(player,'gems','lan'));await host.waitForFunction(()=>client.state.room?.code);
  const {code,invite}=await host.evaluate(()=>({code:client.state.room.code,invite:new URLSearchParams(new URL(client.state.inviteURL).hash.slice(1)).get('invite')}));
  await guest.evaluate(({code,invite})=>client.join(player,code,invite),{code,invite});
@@ -19,6 +19,14 @@ try{
  await active.evaluate(()=>{const a=client.state.view.actions[0];client.action({action:a.id,values:a.choices.slice(0,a.min).map(c=>c.id)});});
  await active.waitForFunction(revision=>client.state.actionRevision>revision,before.revision);
  assert.equal(await active.evaluate(()=>cloudMessages.filter(m=>m.type==='action').length),before.actions);
+ // Suspend the real guest page beyond the former 18-second peer timeout.
+ if(browserName==='chromium'){
+  const cdp=await guest.context().newCDPSession(guest);await cdp.send('Page.setWebLifecycleState',{state:'frozen'});
+  await new Promise(resolve=>setTimeout(resolve,30000));
+  assert.equal(await host.evaluate(()=>client.state.paused),false);assert.equal(await host.evaluate(()=>client.state.transport),'lan');
+  await cdp.send('Page.setWebLifecycleState',{state:'active'});await guest.bringToFront();await guest.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));
+  await guest.waitForFunction(()=>!client.state.paused&&client.state.transport==='lan');
+ }
  // Force a channel failure: host must pause and then renegotiate without silently changing mode.
  await guest.evaluate(()=>client.peers.get(client.state.room.hostID).dc.close());
  await host.waitForFunction(()=>client.state.paused);
@@ -29,6 +37,17 @@ try{
  await host.evaluate(async()=>{client.destroy();const {RoomClient}=await import('/src/net/client.ts');window.client=new RoomClient();await client.connect();});
  await host.waitForFunction(()=>client.state.view&&!client.state.paused&&client.state.transport==='lan',undefined,{timeout:20000});
  assert.equal(await host.evaluate(()=>client.state.actionRevision),hostRevision);
+ // Close and reopen real tabs: recover only from persistent storage, including
+ // the host's private authoritative checkpoint and the guest's original identity.
+ const savedHost=await host.evaluate(()=>({matchID:client.state.room.matchID,view:client.state.view,selfID:client.state.selfID}));
+ const savedGuest=await guest.evaluate(()=>({matchID:client.state.room.matchID,view:client.state.view,selfID:client.state.selfID}));
+ const gc=guest.context();await guest.close();guest=await player('朋友重开',gc);await guest.evaluate(()=>client.connect());
+ await guest.waitForFunction(()=>client.state.view&&!client.state.paused&&client.state.transport==='lan',undefined,{timeout:20000});
+ assert.deepEqual(await guest.evaluate(()=>({matchID:client.state.room.matchID,view:client.state.view,selfID:client.state.selfID})),savedGuest);
+ const hc=host.context();await host.close();host=await player('房主重开',hc);await host.evaluate(()=>client.connect());
+ await host.waitForFunction(()=>client.state.view&&!client.state.paused&&client.state.transport==='lan',undefined,{timeout:20000});
+ await guest.waitForFunction(()=>!client.state.paused&&client.state.transport==='lan',undefined,{timeout:20000});
+ assert.deepEqual(await host.evaluate(()=>({matchID:client.state.room.matchID,view:client.state.view,selfID:client.state.selfID})),savedHost);
  // Simulate losing internet/signaling while the local data channel stays alive.
  await host.evaluate(()=>{client.stopped=true;client.ws.close();});await guest.evaluate(()=>{client.stopped=true;client.ws.close();});
  await new Promise(r=>setTimeout(r,500));
@@ -38,6 +57,6 @@ try{
  await host.evaluate(()=>client.connect());await guest.evaluate(()=>client.connect());await host.waitForFunction(()=>client.ws.readyState===WebSocket.OPEN);await guest.waitForFunction(()=>client.ws.readyState===WebSocket.OPEN);
  await host.evaluate(()=>client.switchToCloud());await host.waitForFunction(()=>client.state.mode==='cloud'&&client.state.view);await guest.waitForFunction(()=>client.state.mode==='cloud'&&client.state.view);
  assert.equal(await host.evaluate(()=>client.state.transport),'cloud');assert.equal(await host.evaluate(()=>cloudMessages.filter(m=>m.type==='switchToCloud').length),1);
- console.log('PASS '+browserName+' LAN integration: two browser contexts, authenticated DataChannel proof, start, private snapshots, no cloud action traffic, peer failure pause/recovery, host-controller reconstruction, internet/signaling loss continues, explicit in-progress cloud handoff');
+ console.log('PASS '+browserName+' LAN integration: two browser contexts, authenticated DataChannel proof, start, private snapshots, no cloud action traffic, peer failure pause/recovery, host-controller reconstruction, actual guest/host tab close and recovery, internet/signaling loss continues, explicit in-progress cloud handoff');
  await host.evaluate(()=>{client.endGame();});await host.waitForFunction(()=>!client.state.room.started);await host.evaluate(()=>client.leave());
-}catch(error){for(const context of contexts){for(const page of context.pages()){console.log(browserName+' diagnostics',await page.evaluate(()=>({status:window.client?.state.status,error:window.client?.state.error,transport:window.client?.state.transport,paused:window.client?.state.paused,peers:window.client?[...window.client.peers.values()].map(p=>({connection:p.pc.connectionState,ice:p.pc.iceConnectionState,signaling:p.pc.signalingState,channel:p.dc?.readyState,proven:p.proven})):[]})).catch(()=>({page:'unavailable'})));}}throw error;}finally{await browser.close();}
+}catch(error){for(const context of contexts){for(const page of context.pages()){console.log(browserName+' diagnostics',await page.evaluate(()=>({status:window.client?.state.status,error:window.client?.state.error,transport:window.client?.state.transport,paused:window.client?.state.paused,peers:window.client?[...window.client.peers.values()].map(p=>({connection:p.pc.connectionState,ice:p.pc.iceConnectionState,signaling:p.pc.signalingState,channel:p.dc?.readyState,proven:p.proven})):[]})).catch(()=>({page:'unavailable'})));}}throw error;}finally{for(const context of contexts)for(const page of context.pages())await page.evaluate(()=>{if(window.client?.state.room?.hostID===window.client?.state.selfID)client.leave();}).catch(()=>{});await browser.close();}

@@ -17,16 +17,16 @@ function availableStorage(localFirst=false):Storage[]{
  }
  return stores;
 }
-interface Peer {pc:RTCPeerConnection;dc?:RTCDataChannel;proven:boolean;nonce:string;lastHeard:number;pending:RTCIceCandidateInit[];pairingTimer?:ReturnType<typeof setTimeout>}
+interface Peer {pc:RTCPeerConnection;dc?:RTCDataChannel;proven:boolean;nonce:string;pending:RTCIceCandidateInit[];pairingTimer?:ReturnType<typeof setTimeout>}
 /** One client per tab. Cloud sockets hibernate; LAN game traffic never enters the signaling socket. */
 export class RoomClient {
  state:ClientState=initial();private listeners=new Set<(state:ClientState)=>void>();
  private botTimer?:ReturnType<typeof setTimeout>;private localBotError?:string;
  private ws?:WebSocket;private session?:Session;private stopped=true;private reconnects=0;private reconnectTimer?:ReturnType<typeof setTimeout>;private handshakeTimer?:ReturnType<typeof setTimeout>;
- private socketHeartbeat?:ReturnType<typeof setInterval>;private lastSocketMessage=0;
+ private socketHeartbeat?:ReturnType<typeof setInterval>;private lastSocketMessage=0;private lastSocketTick=0;private socketProbe?:ReturnType<typeof setTimeout>;
  private networkToken?:string;
  private peers=new Map<string,Peer>();private localMatch?:MatchState;private heartbeat?:ReturnType<typeof setInterval>;private connectGeneration=0;private starting=false;private peerRetry=new Map<string,ReturnType<typeof setTimeout>>();private peerAttempts=new Map<string,number>();
- constructor(){window.addEventListener('online',this.onOnline);document.addEventListener('visibilitychange',this.onVisible);}
+ constructor(){window.addEventListener('online',this.onOnline);document.addEventListener('visibilitychange',this.onVisible);window.addEventListener('pageshow',this.onResume);}
  subscribe(listener:(state:ClientState)=>void){this.listeners.add(listener);listener(this.state);return()=>{this.listeners.delete(listener);};}
  private patch(patch:Partial<ClientState>){
   // Only a changed actionable revision (not presence/heartbeat snapshots) settles a send.
@@ -67,7 +67,9 @@ export class RoomClient {
  async connect(){if(this.session){this.stopped=false;this.reconnects=0;this.patch({status:'reconnecting',waitingApproval:false});this.openSocket();return;}const s=this.readSession();if(s){this.reset();this.session=s;this.stopped=false;this.patch({status:'connecting',selfID:s.profile.id});this.openSocket();}}
  private readSession():Session|undefined {
   for(const storage of availableStorage()){try{const raw=storage.getItem(SESSION_KEY);if(!raw)continue;const s=JSON.parse(raw) as Session;validProfile(s.profile);if(!/^[A-Z2-9]{6}$/.test(s.code)||typeof s.token!=='string'||!/^[a-f0-9]{48,128}$/.test(s.token))throw new Error('invalid session');
-   s.savedAt=typeof s.savedAt==='number'?s.savedAt:Date.now();s.expiresAt=typeof s.expiresAt==='number'?s.expiresAt:s.savedAt+SESSION_TTL;if(s.expiresAt<=Date.now())throw new Error('expired session');return s;
+   s.savedAt=typeof s.savedAt==='number'?s.savedAt:Date.now();s.expiresAt=typeof s.expiresAt==='number'?s.expiresAt:s.savedAt+SESSION_TTL;
+   // An admitted player's cached lease can lag renewals by the other players.
+   if(s.expiresAt+(s.pendingApproval===false?SESSION_TTL:0)<=Date.now())throw new Error('expired session');return s;
   }catch{try{storage.removeItem(SESSION_KEY);}catch{}}}return undefined;
  }
  private saveSession(){if(!this.session)return;const raw=JSON.stringify(this.session);let saved=false;for(const storage of availableStorage())try{storage.setItem(SESSION_KEY,raw);saved=true;}catch{}if(!saved)this.fail('浏览器无法保存房间；关闭网页后可能无法恢复');}
@@ -97,24 +99,66 @@ export class RoomClient {
  }
  switchToCloud(){const r=this.state.room;if(!r||r.hostID!==this.session?.profile.id){this.fail('请由房主切换');return;}if(r.started&&!this.localMatch){this.fail('房主牌局状态丢失，请结束本局重新开桌');return;}this.control({type:'switchToCloud',match:this.localMatch});}
  leave(){if(this.state.room?.started&&this.state.room.hostID!==this.session?.profile.id&&this.state.room.players.some(p=>p.id===this.session?.profile.id)){this.fail('请让房主结束本局，再离开牌桌');return;}this.control({type:'leave'});this.removeLocal();this.clearSavedSession();this.reset();this.patch(initial());}
- destroy(){this.reset();window.removeEventListener('online',this.onOnline);document.removeEventListener('visibilitychange',this.onVisible);this.listeners.clear();}
- private onOnline=()=>{if(!this.stopped&&this.ws?.readyState!==WebSocket.OPEN)this.connect();};
- private onVisible=()=>{if(document.visibilityState==='visible'&&!this.stopped){if(this.ws?.readyState!==WebSocket.OPEN)this.connect();if(this.state.room?.mode==='lan'){for(const p of this.peers.values()){if(Date.now()-p.lastHeard>18000)p.proven=false;}this.ensurePeers();this.localStatus();}}};
+ destroy(){this.reset();window.removeEventListener('online',this.onOnline);document.removeEventListener('visibilitychange',this.onVisible);window.removeEventListener('pageshow',this.onResume);this.listeners.clear();}
+ private onOnline=()=>this.onResume();
+ private onVisible=()=>{if(document.visibilityState==='visible')this.onResume();};
+ private onResume=()=>{
+  if(this.stopped)return;
+  if(this.ws?.readyState===WebSocket.OPEN)this.probeSocket();
+  else if(!this.ws)void this.connect();
+  if(this.state.room?.mode==='lan'){
+   this.peerAttempts.clear();this.ensurePeers();
+   for(const [id,p] of this.peers){
+    if(p.dc?.readyState==='open')this.sendDC(p,{type:'probe',nonce:p.nonce});
+    if(this.isHost&&!p.proven)this.retryPeer(id,p);
+   }
+   if(!this.isHost&&!this.peers.get(this.state.room.hostID)?.proven)this.requestPeer();
+   this.localStatus();
+  }
+ };
+ // Probe an apparently open transport after suspension/network changes. Never wait
+ // for the browser's potentially unbounded WebSocket closing handshake to retry.
+ private probeSocket(){
+  const ws=this.ws,generation=this.connectGeneration;
+  if(!ws||ws.readyState!==WebSocket.OPEN||this.socketProbe)return;
+  this.lastSocketTick=Date.now();
+  this.socketProbe=setTimeout(()=>{this.socketProbe=undefined;if(document.visibilityState!=='hidden')this.socketClosed(ws,generation);},5000);
+  try{ws.send(JSON.stringify({type:'ping',sync:true}));}catch{this.socketClosed(ws,generation);}
+ }
+ private socketClosed(ws:WebSocket,generation:number,code=1000){
+  if(generation!==this.connectGeneration||this.ws!==ws||this.stopped)return;
+  this.ws=undefined;clearTimeout(this.handshakeTimer);clearInterval(this.socketHeartbeat);clearTimeout(this.socketProbe);this.socketProbe=undefined;
+  try{ws.close();}catch{}
+  if(code===4001||code===4003){this.terminal(code===4001?'此玩家已在另一窗口连接，可在这里重新加入':'入桌申请未通过',code===4001);return;}
+  void this.checkRoomAvailability(generation);
+  const lanAlive=this.state.mode==='lan'&&this.state.transport==='lan'&&!this.state.paused;
+  if(!lanAlive)this.patch({status:this.reconnects<6?'reconnecting':'disconnected',waitingApproval:false,paused:!!this.state.room?.started});
+  const delay=Math.min(1000*2**Math.min(this.reconnects++,5),30000);
+  this.reconnectTimer=setTimeout(()=>this.openSocket(),delay);
+ }
  private async http(path:string,body?:unknown){const response=await fetch(API+path,{signal:AbortSignal.timeout(15000),method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:undefined,body:body?JSON.stringify(body):undefined});const data=await response.json();if(!response.ok)throw new Error(data.error||'连接暂不可用');return data;}
  private async checkRoomAvailability(generation:number){if(!this.session)return;try{const response=await fetch(API+'/api/rooms/'+this.session.code,{signal:AbortSignal.timeout(5000)});if(generation===this.connectGeneration&&!this.stopped&&response.status===404)this.terminal('房间已结束或不存在，请重新建房或检查房间码');}catch{/* Network errors remain recoverable; only an explicit 404 ends the session. */}}
  private control(msg:any){try{if(this.ws?.readyState!==WebSocket.OPEN)throw new Error('云端连接中断，请重连');this.ws.send(JSON.stringify({...msg,requestID:msg.requestID||crypto.randomUUID()}));}catch(e){this.fail(e);}}
  private openSocket(){
-  if(!this.session||this.stopped)return;clearTimeout(this.reconnectTimer);clearInterval(this.socketHeartbeat);const generation=++this.connectGeneration;this.ws?.close();
-  const url=new URL(API+'/api/rooms/'+this.session.code,location.origin);url.protocol=url.protocol==='https:'?'wss:':'ws:';const ws=this.ws=new WebSocket(url);clearTimeout(this.handshakeTimer);this.handshakeTimer=setTimeout(()=>{if(generation!==this.connectGeneration)return;ws.close();},10000);
-  ws.onopen=()=>{if(generation!==this.connectGeneration)return;this.peerAttempts.clear();this.lastSocketMessage=Date.now();ws.send(JSON.stringify({type:'hello',...this.session}));this.socketHeartbeat=setInterval(()=>{if(generation!==this.connectGeneration)return;if(Date.now()-this.lastSocketMessage>45000){ws.close();return;}if(ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify({type:'ping'}));},15000);};
-  ws.onmessage=e=>{if(generation!==this.connectGeneration)return;this.lastSocketMessage=Date.now();clearTimeout(this.handshakeTimer);try{this.message(JSON.parse(e.data));}catch(error){this.fail(error);}};
-  ws.onerror=()=>{if(generation===this.connectGeneration)this.patch({error:'连接失败，正在尝试恢复'});};
-  ws.onclose=e=>{if(generation!==this.connectGeneration||this.stopped)return;clearTimeout(this.handshakeTimer);clearInterval(this.socketHeartbeat);if(e.code===4001||e.code===4003){this.terminal(e.code===4001?'此玩家已在另一窗口连接，可在这里重新加入':'入桌申请未通过',e.code===4001);return;}
-   void this.checkRoomAvailability(generation);
-   const lanAlive=this.state.mode==='lan'&&this.state.transport==='lan'&&!this.state.paused;
-   if(!lanAlive)this.patch({status:'reconnecting',waitingApproval:false,paused:!!this.state.room?.started});
-   if(this.reconnects<6)this.reconnectTimer=setTimeout(()=>this.openSocket(),Math.min(1000*2**this.reconnects++,15000));else if(!lanAlive)this.patch({status:'disconnected',error:'连接未恢复，请点重连'});
+  if(!this.session||this.stopped)return;clearTimeout(this.reconnectTimer);clearInterval(this.socketHeartbeat);clearTimeout(this.socketProbe);this.socketProbe=undefined;const generation=++this.connectGeneration;this.ws?.close();
+  const url=new URL(API+'/api/rooms/'+this.session.code,location.origin);url.protocol=url.protocol==='https:'?'wss:':'ws:';const ws=this.ws=new WebSocket(url);clearTimeout(this.handshakeTimer);this.handshakeTimer=setTimeout(()=>this.socketClosed(ws,generation),10000);
+  ws.onopen=()=>{
+   if(generation!==this.connectGeneration||this.ws!==ws)return;
+   this.peerAttempts.clear();this.lastSocketTick=this.lastSocketMessage=Date.now();ws.send(JSON.stringify({type:'hello',...this.session}));
+   this.socketHeartbeat=setInterval(()=>{
+    if(generation!==this.connectGeneration||this.ws!==ws)return;
+    const now=Date.now(),delayed=now-this.lastSocketTick>30000;this.lastSocketTick=now;
+    // Background timer throttling is not evidence of a broken transport.
+    if(document.visibilityState!=='hidden'){
+     if(delayed){this.probeSocket();return;}
+     if(!this.socketProbe&&now-this.lastSocketMessage>45000){this.socketClosed(ws,generation);return;}
+    }
+    if(ws.readyState===WebSocket.OPEN)try{ws.send(JSON.stringify({type:'ping'}));}catch{this.socketClosed(ws,generation);}
+   },15000);
   };
+  ws.onmessage=e=>{if(generation!==this.connectGeneration||this.ws!==ws)return;this.lastSocketMessage=Date.now();clearTimeout(this.handshakeTimer);clearTimeout(this.socketProbe);this.socketProbe=undefined;try{this.message(JSON.parse(e.data));}catch(error){this.fail(error);}};
+  ws.onerror=()=>{if(generation===this.connectGeneration&&this.ws===ws)this.patch({error:'连接失败，正在尝试恢复'});};
+  ws.onclose=e=>this.socketClosed(ws,generation,e.code);
  }
  private message(msg:any){
   if(msg.type==='error'){this.starting=false;if(!this.state.room)this.terminal(msg.error);else this.fail(msg.error);return;}
@@ -135,7 +179,7 @@ export class RoomClient {
   }
   this.starting=false;this.ensurePeers();this.localStatus();if(host)this.broadcastLocal();
  }
- private reset(){this.stopped=true;this.reconnects=0;this.starting=false;++this.connectGeneration;clearTimeout(this.reconnectTimer);clearTimeout(this.handshakeTimer);clearInterval(this.socketHeartbeat);this.ws?.close();this.ws=undefined;this.session=undefined;this.dropPeers();this.localMatch=undefined;this.state=initial();}
+ private reset(){this.stopped=true;this.reconnects=0;this.starting=false;++this.connectGeneration;clearTimeout(this.reconnectTimer);clearTimeout(this.handshakeTimer);clearInterval(this.socketHeartbeat);clearTimeout(this.socketProbe);this.socketProbe=undefined;this.ws?.close();this.ws=undefined;this.session=undefined;this.dropPeers();this.localMatch=undefined;this.state=initial();}
  private dropPeers(){clearTimeout(this.botTimer);this.botTimer=undefined;this.localBotError=undefined;for(const timer of this.peerRetry.values())clearTimeout(timer);this.peerRetry.clear();this.peerAttempts.clear();clearInterval(this.heartbeat);this.heartbeat=undefined;for(const peer of this.peers.values()){clearTimeout(peer.pairingTimer);peer.dc?.close();peer.pc.close();}this.peers.clear();}
  private removeLocal(){if(this.state.room)for(const storage of availableStorage())try{storage.removeItem('mocha-host-'+this.state.room.code);}catch{}}
  private persistLocal(){const r=this.state.room;if(r&&this.localMatch){const raw=JSON.stringify({kind:r.kind,options:r.options,matchID:r.matchID,expiresAt:r.expiresAt,players:r.players.map(p=>p.id).join(','),match:this.localMatch});let saved=false;for(const storage of availableStorage())try{storage.setItem('mocha-host-'+r.code,raw);saved=true;}catch{}if(!saved)this.fail('本地牌局存档失败，请保持房主页打开或切换云端');}}
@@ -145,14 +189,18 @@ export class RoomClient {
   const host=this.session.profile.id===r.hostID;const wanted=host?[...r.players.filter(p=>!p.bot),...(r.spectators||[])].filter(p=>p.id!==r.hostID).map(p=>p.id):[r.hostID];
   for(const [id,peer]of this.peers)if(!wanted.includes(id)){clearTimeout(peer.pairingTimer);peer.pc.close();peer.dc?.close();this.peers.delete(id);}
   if(host)for(const id of wanted){const peer=this.peers.get(id);if(!peer||peer.pc.connectionState==='failed'||peer.pc.connectionState==='closed'||peer.pc.connectionState==='disconnected'){peer?.pc.close();void this.offer(id);}}
+  if(!host&&!this.peers.has(r.hostID))this.requestPeer();
+  // RTC connection/channel events detect transport loss. A peer's JavaScript may
+  // be suspended for minutes while its reliable DataChannel remains connected.
   if(!this.heartbeat)this.heartbeat=setInterval(()=>{
-   let changed=false;for(const [id,p] of this.peers){if(p.proven&&Date.now()-p.lastHeard>18000){p.proven=false;changed=true;if(host)this.retryPeer(id,p);}if(p.dc?.readyState==='open')this.sendDC(p,{type:'ping'});}
-   if(changed){this.localStatus();if(host)this.broadcastLocal();}
+   for(const p of this.peers.values())if(p.dc?.readyState==='open')this.sendDC(p,{type:'ping'});
   },5000);
  }
+ private requestPeer(){const r=this.state.room;if(r&&this.ws?.readyState===WebSocket.OPEN)this.sendSignal(r.hostID,{type:'reconnect'});}
+
  private peer(id:string):Peer{
-  clearTimeout(this.peers.get(id)?.pairingTimer);
-  const pc=new RTCPeerConnection({iceServers:[],iceTransportPolicy:'all'});const p:Peer={pc,proven:false,nonce:crypto.randomUUID(),lastHeard:Date.now(),pending:[]};this.peers.set(id,p);
+  const previous=this.peers.get(id);clearTimeout(previous?.pairingTimer);clearTimeout(this.peerRetry.get(id));this.peerRetry.delete(id);
+  const pc=new RTCPeerConnection({iceServers:[],iceTransportPolicy:'all'});const p:Peer={pc,proven:false,nonce:crypto.randomUUID(),pending:[]};this.peers.set(id,p);previous?.dc?.close();previous?.pc.close();
   // Safari can leave initial gathering in 'new' indefinitely, without a failure event.
   // A bounded handshake watchdog also covers lost offer/answer signaling.
   if(this.isHost)p.pairingTimer=setTimeout(()=>{if(this.peers.get(id)===p&&!p.proven)this.retryPeer(id,p);},8000);
@@ -169,6 +217,7 @@ export class RoomClient {
  private sendSignal(to:string,data:any){this.control({type:'signal',to,data});}
  private async signal(id:string,data:any){const generation=this.connectGeneration;const r=this.state.room;if(!r||r.mode!=='lan'||![...r.players,...(r.spectators||[])].some(p=>p.id===id))return;let p=this.peers.get(id);
   try{
+   if(data.type==='reconnect'){if(this.isHost&&(!p||p.proven||['failed','closed','disconnected'].includes(p.pc.connectionState))){this.peerAttempts.delete(id);await this.offer(id);}return;}
    if(data.description?.type==='offer'){if(this.isHost)return;const pendingCandidates=p?.pending||[];p?.pc.close();p=this.peer(id);p.pending=pendingCandidates;await p.pc.setRemoteDescription(data.description);if(!this.currentPeer(id,p,generation))return;for(const candidate of p.pending){await p.pc.addIceCandidate(candidate);if(!this.currentPeer(id,p,generation))return;}p.pending=[];const answer=await p.pc.createAnswer();if(!this.currentPeer(id,p,generation))return;await p.pc.setLocalDescription(answer);if(!this.currentPeer(id,p,generation))return;this.sendSignal(id,{description:p.pc.localDescription});}
    else if(data.description?.type==='answer'&&p){await p.pc.setRemoteDescription(data.description);if(!this.currentPeer(id,p,generation))return;for(const candidate of p.pending){await p.pc.addIceCandidate(candidate);if(!this.currentPeer(id,p,generation))return;}p.pending=[];}
    else if(data.candidate){if(!p)p=this.peer(id);if(p.pc.remoteDescription){await p.pc.addIceCandidate(data.candidate);if(!this.currentPeer(id,p,generation))return;}else p.pending.push(data.candidate);}
@@ -176,9 +225,9 @@ export class RoomClient {
  }
  private get isHost(){return this.state.room?.hostID===this.session?.profile.id;}
  private bindDC(id:string,p:Peer,dc:RTCDataChannel){p.dc=dc;
-  dc.onopen=()=>{if(this.peers.get(id)!==p)return;p.lastHeard=Date.now();this.sendDC(p,{type:'probe',nonce:p.nonce});};
+  dc.onopen=()=>{if(this.peers.get(id)!==p)return;this.sendDC(p,{type:'probe',nonce:p.nonce});};
   dc.onclose=()=>{if(this.peers.get(id)!==p)return;p.proven=false;this.localStatus();if(this.isHost){this.broadcastLocal();this.retryPeer(id,p);}};
-  dc.onmessage=e=>{if(this.peers.get(id)!==p)return;try{if(typeof e.data!=='string'||e.data.length>150000)throw new Error('局域网消息过大');const msg=JSON.parse(e.data);p.lastHeard=Date.now();
+  dc.onmessage=e=>{if(this.peers.get(id)!==p)return;try{if(typeof e.data!=='string'||e.data.length>150000)throw new Error('局域网消息过大');const msg=JSON.parse(e.data);
     if(msg.type==='probe'){this.sendDC(p,{type:'proof',nonce:msg.nonce});return;}
     if(msg.type==='proof'&&msg.nonce===p.nonce){p.proven=true;clearTimeout(p.pairingTimer);this.peerAttempts.delete(id);const retry=this.peerRetry.get(id);if(retry)clearTimeout(retry);this.peerRetry.delete(id);this.localStatus();if(this.isHost)this.broadcastLocal();return;}
     if(msg.type==='ping'){this.sendDC(p,{type:'pong'});return;}
