@@ -1,7 +1,7 @@
 import {beforeEach,afterEach,describe,it,expect,vi} from 'vitest';
 vi.mock('cloudflare:workers',()=>({DurableObject:class {}}));
 // Keep the Workers runtime out of the DOM-only application typecheck.
-const {GameRoom}=await import('../../worker/'+'index');
+const {GameRoom,RoomDirectory,default:worker}=await import('../../worker/'+'index');
 const host={id:'host0000',name:'房主',avatar:'🦊',ready:true,connected:true};
 const guest={id:'guest000',name:'朋友',avatar:'🐻',ready:true,connected:true};
 class ServerSocket {messages:any[]=[];closed?:number;constructor(public attachment:any={opened:Date.now()}){}deserializeAttachment(){return this.attachment;}serializeAttachment(a:any){this.attachment=a;}send(raw:string){this.messages.push(JSON.parse(raw));}close(code:number){this.closed=code;}get snapshot(){return this.messages.filter(m=>m.type==='snapshot').at(-1);}}
@@ -78,5 +78,61 @@ describe('active room expiry',()=>{
  it('does not extend the expiry after the host dissolves the room',async()=>{
   const expires=server.data.expires;await message(sockets[0],{type:'leave'});expect(server.data.ended).toBe(true);expect(server.data.expires).toBe(expires);
   await message(sockets[1],{type:'ping'});expect(server.data.expires).toBe(expires);expect(sockets[1].messages.at(-1).type).toBe('error');
+ });
+});
+describe('directory expiry reconciliation',()=>{
+ const setup=()=>{
+  const entry={code:'ABC234',kind:'gems',mode:'cloud',hostName:host.name,count:2,max:4,hash:'original-network',expires:Date.now()-1};
+  const entries=new Map<string,unknown>([['room:ABC234',entry]]);
+  const fetch=vi.fn((request:Request)=>server.fetch(request) as Promise<Response>);
+  const setAlarm=vi.fn();
+  const directory=Object.assign(Object.create(RoomDirectory.prototype) as InstanceType<typeof RoomDirectory>,{
+   ctx:{storage:{
+    async get<T>(key:string){return entries.get(key) as T|undefined;},
+    async put(key:string,value:unknown){entries.set(key,structuredClone(value));},
+    async delete(key:string){return entries.delete(key);},
+    async list<T>({prefix}:{prefix:string}){return new Map([...entries].filter(([key])=>key.startsWith(prefix))) as Map<string,T>;},
+    setAlarm,
+   }},env:{ROOMS:{getByName:()=>({fetch})}},
+  });
+  return {directory,entries,entry,fetch,setAlarm};
+ };
+ it('repairs a missed renewal before deleting its discovery entry and keeps the original network',async()=>{
+  const {directory,entries,entry,setAlarm}=setup();
+  await message(sockets[0],{type:'ping'});const expires=server.data.expires;
+  await directory.alarm();
+  expect(entries.get('room:ABC234')).toEqual({...entry,expires});
+  expect(server.data.expires).toBe(expires);expect(setAlarm).toHaveBeenCalledWith(Date.now()+3600000);
+ });
+ it('keeps an active match hidden from discovery when repairing its stale index',async()=>{
+  const {directory,entries,entry}=setup();await message(sockets[0],{type:'start'});
+  await directory.alarm();expect(entries.get('room:ABC234')).toEqual({...entry,count:0,expires:server.data.expires});
+ });
+ it.each(['expired','ended','deleted'])('removes an authoritative %s room',async state=>{
+  const {directory,entries}=setup();
+  if(state==='expired')server.data.expires=Date.now();else if(state==='ended')server.data.ended=true;else server.data=undefined;
+  await directory.alarm();expect(entries.has('room:ABC234')).toBe(false);
+ });
+ it.each(['throw','503'])('retains a stale index during %s failure and repairs it on the next sweep',async failure=>{
+  const {directory,entries,entry,fetch,setAlarm}=setup();
+  if(failure==='throw')fetch.mockRejectedValueOnce(new Error('unavailable'));else fetch.mockResolvedValueOnce(new Response(null,{status:503}));
+  await directory.alarm();expect(entries.get('room:ABC234')).toEqual(entry);expect(setAlarm).toHaveBeenCalled();
+  await directory.alarm();expect(entries.get('room:ABC234')).toEqual({...entry,expires:server.data.expires});
+ });
+ it('does not overwrite a newer index update that arrives during the room lookup',async()=>{
+  const {directory,entries,entry,fetch}=setup();const renewed={...entry,expires:Date.now()+3600000,count:0};
+  fetch.mockImplementationOnce(async()=>{entries.set('room:ABC234',renewed);return new Response(null,{status:404});});
+  await directory.alarm();expect(entries.get('room:ABC234')).toEqual(renewed);
+ });
+ it('still clears expired rate limits without probing healthy entries',async()=>{
+  const {directory,entries,entry,fetch}=setup();entries.set('room:ABC234',{...entry,expires:Date.now()+3600000});
+  entries.set('limit:old',{since:Date.now()-600001});entries.set('limit:current',{since:Date.now()});
+  await directory.alarm();expect(fetch).not.toHaveBeenCalled();expect(entries.has('limit:old')).toBe(false);expect(entries.has('limit:current')).toBe(true);
+ });
+ it('never exposes internal directory metadata through the public room route',async()=>{
+  const env={...server.env,ROOMS:{getByName:()=>({fetch:(req:Request)=>server.fetch(req)})},ASSETS:{fetch:()=>new Response(null,{status:404})}};
+  const publicStatus=await worker.fetch(new Request('http://127.0.0.1/api/rooms/ABC234'),env);
+  expect(await publicStatus.json()).toEqual({ok:true});
+  const direct=await worker.fetch(new Request('http://127.0.0.1/api/directory-entry'),env);expect(direct.status).toBe(404);
  });
 });
