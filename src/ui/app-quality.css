@@ -17,3 +17,9 @@
 
 .action-pending{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:65;pointer-events:none;padding:7px 14px;border-radius:20px;background:#e9dbb5;color:#253b31;font-size:12px;box-shadow:0 2px 12px #0004}
 .game-surface[aria-busy="true"],.action-dock[aria-busy="true"]{cursor:progress}
+
+/* Keep touch dismissal reachable while long modal content scrolls. */
+.app-modal{display:flex;flex-direction:column;overflow:hidden}
+.app-modal>header{flex:none}
+.app-modal>header .icon{width:44px;height:44px}
+.app-modal>.modal-body{min-height:0;overflow-y:auto;overscroll-behavior:contain}

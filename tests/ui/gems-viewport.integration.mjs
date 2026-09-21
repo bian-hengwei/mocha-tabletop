@@ -5,10 +5,19 @@ const base=process.env.BASE_URL||'http://127.0.0.1:5174',safari=process.env.TEST
 const browser=await(safari?webkit.launch():chromium.launch({executablePath:process.env.CHROME_PATH||undefined}));
 const out=`test-results/gems-viewport-${safari?'webkit':'chromium'}`;await fs.mkdir(out,{recursive:true});
 async function fits(page){
+ const shortLandscape=page.viewportSize().height<=360&&page.viewportSize().width>page.viewportSize().height;
+ await page.locator('.game-surface').evaluate(el=>el.scrollTop=0);
  assert(await page.locator('.g-own-tray').evaluate(e=>e.scrollHeight<=e.clientHeight+2),'inventory tray content is not clipped vertically');
- const bad=await page.locator('.game-surface,.g-table *').evaluateAll(xs=>xs.filter(x=>x.clientHeight&&x.scrollHeight>x.clientHeight+2&&['auto','scroll'].includes(getComputedStyle(x).overflowY)).map(x=>x.className));assert.deepEqual(bad,[],'no vertical gameplay scrolling');
+ const bad=await page.locator('.game-surface,.g-table *').evaluateAll(xs=>xs.filter(x=>x.clientHeight&&x.scrollHeight>x.clientHeight+2&&['auto','scroll'].includes(getComputedStyle(x).overflowY)).map(x=>x.className));assert.deepEqual(bad.filter(name=>!(shortLandscape&&name==='game-surface')),[],'only the outer table may scroll in short landscape');
  const field=await page.locator('.g-playfield').boundingBox(),tray=await page.locator('.g-own-tray').boundingBox();assert(field.y+field.height<=tray.y+1,'market and inventory never overlap');
- for(const selector of ['.g-market-row:visible','.g-bank','.g-own-tray']){const box=await page.locator(selector).first().boundingBox();assert(box.y>=0&&box.y+box.height<=page.viewportSize().height,'table section stays on screen '+selector);}
+ for(const selector of ['.g-market-row:visible','.g-bank','.g-own-tray']){
+  const section=page.locator(selector).first();
+  // Short landscape intentionally scrolls the outer table so the bank and
+  // inventory keep their readable sizes; each remains reachable without overlap.
+  if(shortLandscape)await section.scrollIntoViewIfNeeded();
+  const box=await section.boundingBox();assert(box.y>=0&&box.y+box.height<=page.viewportSize().height,'table section stays reachable '+selector);
+ }
+ await page.locator('.game-surface').evaluate(el=>el.scrollTop=0);
  const costs=await page.locator('.g-market-row:visible .development-card>.g-cost').evaluateAll(xs=>xs.flatMap(x=>{const b=x.parentElement.getBoundingClientRect();return [...x.children].filter(c=>{const r=c.getBoundingClientRect();return r.left<b.left-1||r.right>b.right+1||r.top<b.top-1||r.bottom>b.bottom+1;}).map(c=>c.textContent)}));assert.deepEqual(costs,[],'all card costs fit');
 }
 try{for(const locale of ['zh','en'])for(const [width,height]of [[320,568],[390,844],[430,932],[568,320],[844,390],[932,430],[768,1024],[1440,900]]){

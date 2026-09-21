@@ -40,7 +40,7 @@ try{
  // Acquire the second visible merchant: payment is made through the real choice sheet.
  await panel('商人市场').locator('.ng-spice-card').nth(1).click();await confirm();await page.getByRole('button',{name:/^支付给第 1/}).click();await firstChoice();await noError();await endTurn();await active();
  // Upgrade the same cube twice, then refresh the engine cards by resting.
- await panel('你的商队').getByRole('button',{name:/升级 2 次/}).click();await confirm();await page.getByRole('button',{name:'再升级 2 次',exact:true}).click();await page.locator('.action-sheet .choice').filter({hasText:'姜黄'}).click();await confirm();await page.getByRole('button',{name:'再升级 1 次',exact:true}).click();await page.locator('.action-sheet .choice').filter({hasText:'藏红花'}).click();await confirm();await noError();await endTurn();await active();
+ await panel('你的商队').getByRole('button',{name:/升级 2 次/}).click();await confirm();await page.getByRole('button',{name:'再升级 2 次',exact:true}).click();await page.locator('.action-sheet .choice').filter({hasText:/^1 姜黄 →/}).click();await confirm();await page.getByRole('button',{name:'再升级 1 次',exact:true}).click();await page.locator('.action-sheet .choice').filter({hasText:/^1 藏红花 →/}).click();await confirm();await noError();await endTurn();await active();
  let returned=false,claimed=false,traded=false;const coverage=new Set(['acquire','payment','upgrade']);
  // Pick actions exclusively from visible cards and resource labels. No engine or stored game access.
  const counts=async()=>page.locator('.ng-pocket .ng-cubes b').evaluateAll(xs=>xs.map(x=>Number(x.textContent)));
@@ -55,7 +55,7 @@ try{
    if(await upgrade.count()){
      const cubes=await counts(),goals=await panel('公开订单').locator('.ng-goal>.ng-order-cost>span').evaluateAll(xs=>xs.map(x=>x.getAttribute('aria-label')));const target=goals.map(parse).sort((a,b)=>a.reduce((n,v,i)=>n+Math.max(0,v-cubes[i])*(i+1),0)-b.reduce((n,v,i)=>n+Math.max(0,v-cubes[i])*(i+1),0))[0];
      const index=cubes.findIndex((v,i)=>i<3&&v>target[i]&&target.some((t,j)=>j>i&&t>cubes[j]));
-     if(index<0)await page.getByRole('button',{name:'结束升级',exact:true}).click();else{await upgrade.click();await page.locator('.action-sheet .choice').filter({hasText:['姜黄','藏红花','豆蔻'][index]}).click();await confirm();}continue;
+     if(index<0)await page.getByRole('button',{name:'结束升级',exact:true}).click();else{await upgrade.click();await page.locator('.action-sheet .choice').filter({hasText:new RegExp('^1 '+['姜黄','藏红花','豆蔻'][index]+' →')}).click();await confirm();}continue;
    }
    const doneTrade=page.getByRole('button',{name:'结束交易',exact:true});if(await doneTrade.count()){traded=true;coverage.add('trade');await doneTrade.click();continue;}
    const pay=page.getByRole('button',{name:/^支付给第/});if(await pay.count()){await pay.click();await firstChoice();continue;}

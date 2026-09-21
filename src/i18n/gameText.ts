@@ -69,6 +69,7 @@ export const gameText:Record<string,string>={
  '交出一张':'Give one card','偷瞄牌堆':'Sneak peek','顶部三张 · 仅你可见':'Top three cards · Only you can see them','牌堆顶':'Top of the deck',
  '抽到闹闹牌':'Bomb drawn','放弃安抚':'Skip Defuse','秘密放回':'Return secretly','选择闹闹牌位置':'Choose where to return Bomb','放回闹闹牌':'Return Bomb',
  '最上面':'Top','最底下':'Bottom','游戏结束':'Game over','牌堆为空':'The deck is empty','阶段无效':'Invalid game phase','恢复':'Restore','没有安抚牌':'No Defuse card','未知操作':'Unknown action',
+ '1 姜黄 → 1 藏红花':'1 Turmeric → 1 Saffron','1 藏红花 → 1 豆蔻':'1 Saffron → 1 Cardamom','1 豆蔻 → 1 肉桂':'1 Cardamom → 1 Cinnamon',
  '姜黄':'Turmeric','藏红花':'Saffron','豆蔻':'Cardamom','肉桂':'Cinnamon','无':'None','结束升级':'Finish upgrading','再交易一次':'Trade again','结束交易':'Finish trading',
  '任选 1 枚香料放到途经的商人上':'Leave one spice of your choice on each merchant you pass','使用商人':'Use a merchant','招募商人':'Recruit a merchant','完成订单':'Fulfill an order',
  '休整，收回所有商人':'Rest and recover all merchants','数字精选牌组 · 依基础规则交换、升级、招募、休整与交单':'Digital selection · Trade, upgrade, recruit, rest, and fulfill orders',

@@ -34,3 +34,22 @@
 .classic-controls .history-button.compact{flex:0 0 auto;gap:5px;min-width:48px;padding:7px 10px}
 .classic-history.panel .icon{width:44px;height:44px;flex-shrink:0}.classic-history.panel>header{flex-shrink:0}
 .classic-card-art{object-fit:contain;user-select:none;-webkit-user-drag:none}.tile-face{aspect-ratio:3/4}
+
+/* Score screens use the available viewport; revealed hands scroll horizontally. */
+.classic-table.is-finished,.classic-table.is-finished:has(.classic-history){height:100%;min-height:0;overflow:hidden}
+.classic-table.is-finished .classic-results{display:flex;flex-direction:column;gap:8px;flex:1;min-height:0;padding:10px}
+.classic-results>header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0}
+.classic-results>header h3,.classic-results>header p{margin:0}
+.classic-result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;min-height:0;flex:1;align-content:start}
+.classic-result-grid .classic-result-player{min-width:0;padding:6px 0}
+.classic-result-grid .classic-result-player>p{display:flex;justify-content:space-between;gap:8px;margin:0;font-size:12px}
+.classic-result-player>p>span{min-width:0;overflow-wrap:anywhere}
+.classic-result-player>p>strong{flex-shrink:0;float:none}
+.classic-result-player>small{display:block;color:#b7c6b8;line-height:1.4}
+.classic-result-player .classic-reveal{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:3px;padding:3px 0;max-width:100%}
+.classic-result-player .classic-reveal .classic-face{flex:none;width:30px;height:42px;min-width:30px}
+.classic-result-controls{display:flex;gap:8px;flex-shrink:0}
+.classic-result-controls:empty{display:none}
+.classic-result-controls button{min-height:44px}
+@media(min-width:650px){.classic-result-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
+@media(max-height:450px){.classic-table.is-finished .classic-results{padding:8px;gap:5px}.classic-result-grid .classic-result-player{padding:3px 0}.classic-result-player .classic-reveal .classic-face{width:26px;min-width:26px;height:36px}}

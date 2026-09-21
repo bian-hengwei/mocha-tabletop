@@ -21,6 +21,7 @@
 
 /* Markets use level tabs on compact tables, keeping bank and inventory in reach. */
 .g-tier-tabs{display:none}
+.g-bank-gems{padding:5px}
 .game-gems .game-surface{overflow:hidden}
 .g-table{height:100%;min-height:0}
 .g-own-tray{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;justify-content:flex-start;min-height:54px}
@@ -39,7 +40,7 @@
  .g-market{display:grid;grid-template-rows:44px minmax(0,1fr);gap:5px}
  .g-market-row{display:none;grid-template-columns:44px repeat(4,minmax(0,1fr));gap:5px}
  .g-market-row.g-tier-active{display:grid}
- .g-bank-hint{display:none}
+ .g-bank-hint{display:block}
  .g-bank-gem{width:44px;height:44px;aspect-ratio:1}
  .g-take{height:44px;min-height:44px;gap:4px}
  .g-take .compact,.g-take .icon{height:44px;min-height:44px}
@@ -89,27 +90,36 @@
 }
 
 @media(max-width:600px) and (orientation:portrait){
- .g-playfield{grid-template-rows:56px minmax(110px,1fr) 54px}
- .g-bank{flex-direction:row;gap:8px;padding:4px 2px;min-width:0}
- .g-bank-gems{display:flex;min-width:0;overflow-x:auto;overflow-y:hidden;gap:8px;padding:4px;scrollbar-width:thin}
- .g-bank-gem{flex:0 0 44px;width:44px;height:44px}
- .g-take{width:auto;flex-shrink:0}
+ .g-playfield{grid-template-rows:56px minmax(110px,1fr) 146px}
+ .g-bank{flex-direction:column;gap:6px;padding:5px 2px;min-width:0}
+ .g-bank-gems{display:grid;grid-template-columns:repeat(6,44px);justify-content:space-between;min-width:0;width:100%;gap:4px;padding:3px 5px}
+ .g-bank-gem{width:44px;height:44px}
+ .g-take{width:100%;flex-shrink:0}
  .g-take .compact{min-width:60px}
- .g-take .icon{width:32px}
+ .g-take .icon{width:44px}
 }
 
 @media(max-width:850px),(max-height:650px){.merchant-head>small{display:none}.merchant-head{flex-wrap:nowrap}.g-merchant{flex-basis:110px}.merchant-head>b{flex:1}}
 @media(max-height:500px) and (orientation:landscape){
- .g-bank{min-width:0}
- .g-bank-gems{display:flex;overflow-x:auto;overflow-y:hidden;max-width:100%;width:110px;gap:8px;padding:5px;transform:none;scrollbar-width:thin}
- .g-bank-gem{flex:0 0 44px}
+ .g-playfield{grid-template-columns:60px minmax(0,1fr) 158px}
+ .g-bank{min-width:0;padding:0}
+ .g-bank-gems{display:grid;grid-template-columns:repeat(3,44px);max-width:100%;width:158px;gap:6px 8px;padding:3px;transform:none}
+ .g-bank-gem{width:44px;height:44px}
  .g-take{flex-shrink:0}
+}
+@media(max-height:360px) and (orientation:landscape){
+ .game-gems .game-surface{overflow-y:auto}
+ .g-table{min-height:293px}
+ .g-playfield{grid-template-columns:60px minmax(0,1fr) 158px}
+ .g-bank-gems{grid-template-columns:repeat(3,44px);width:158px}
 }
 @media(min-width:601px) and (min-height:651px){
  .g-tier-tabs{display:none}
  .g-market{grid-template-rows:repeat(3,minmax(0,1fr))}
  .g-market-row{display:grid}
 }
+.g-bank-hint{font-size:11px;line-height:1.4;max-width:100%;flex-shrink:0;color:#e0e5cf}
+.g-bank-hint>span{display:block}
 @media(max-height:500px) and (orientation:landscape){
  .g-card-inspector{width:min(420px,calc(100vw - 24px));display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;padding:22px 14px 14px;overflow:visible}
  .g-card-inspector>.development-card{height:min(220px,calc(100dvh - 64px));grid-row:1/3}
