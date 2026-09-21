@@ -187,7 +187,7 @@
 @media(max-height:500px) and (orientation:landscape){
  .game-uno.in-game .topbar{height:46px;min-height:46px;padding:0;flex-wrap:nowrap}
  .ng-uno-overview{grid-template-rows:max-content max-content max-content;align-items:start}
- .ng-uno-overview>.ng-uno-center>div:first-child{width:48px}.ng-uno-overview .ng-uno-center .ng-uno-card>strong{font-size:24px}
+ .ng-uno-overview>.ng-uno-center>div:first-child{width:44px}.ng-uno-overview .ng-uno-center .ng-uno-card>strong{font-size:24px}
  .ng-uno-overview>.ng-rules{grid-column:1;grid-row:2}.ng-uno-overview>.ng-heading~.ng-rules{grid-row:3}
  .ng-uno-overview>.ng-uno-center{grid-row:1/3}.ng-uno-overview>.ng-heading~.ng-uno-center{grid-row:2/4}
 }

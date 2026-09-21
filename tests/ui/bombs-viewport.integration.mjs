@@ -22,10 +22,10 @@ try{for(const locale of ['zh','en'])for(const [width,height] of [[320,568],[390,
   await page.locator('.bt-hand-label button').click();await expect(page.locator('.bt-nope-action')).toHaveCount(0);
   await fit('actor-waits');
  }
- if(scenario==='response'){await expect(page.locator('.bt-response .bt-eyebrow')).toHaveText(locale==='zh'?'Blair 已出牌':'Blair played');await page.getByRole('button',{name:locale==='zh'?'打出否决':'Play Nope',exact:true}).click();await expect(page.locator('.bt-response-status b')).toHaveText(locale==='zh'?'这次出牌已被否决':'This card effect is blocked');await expect(page.locator('.bt-response .bt-secondary')).toHaveCount(0);await expect(page.locator('.bt-response .bt-nope-action')).toHaveCount(0);await fit('nope');
+ if(scenario==='response'){await expect(page.locator('.bt-response .bt-eyebrow')).toHaveText(locale==='zh'?'Blair 已出牌':'Blair played');await page.getByRole('button',{name:locale==='zh'?'打出否决':'Play Nope',exact:true}).click();await expect(page.locator('.bt-response-status b')).toHaveText(locale==='zh'?'当前效果：已否决':'Effect: blocked');await expect(page.locator('.bt-response .bt-secondary')).toHaveCount(0);await expect(page.locator('.bt-response .bt-nope-action')).toHaveCount(0);await fit('nope');
   await page.getByRole('combobox',{name:'Seat'}).selectOption('p1');
   await page.getByRole('button',{name:locale==='zh'?'反制否决':'Counter Nope',exact:true}).click();
-  await expect(page.locator('.bt-response-status b')).toHaveText(locale==='zh'?'这次出牌将生效':'This card effect will resolve');
+  await expect(page.locator('.bt-response-status b')).toHaveText(locale==='zh'?'当前效果：生效':'Effect: active');
   await expect(page.locator('.bt-response .bt-secondary,.bt-response .bt-nope-action')).toHaveCount(0);
   await fit('counter-nope');
   if(width===320||width===844||width===568)await page.screenshot({path:`${out}/${locale}-${width}-counter-nope.png`,animations:'disabled'});

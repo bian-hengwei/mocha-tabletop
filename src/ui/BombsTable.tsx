@@ -104,9 +104,9 @@ export function BombsTable({ view, selfID, command }: Props) {
             <h2>{tx(response.cards.length > 1 ? `${response.cards.length} 张同名组合` : titles[response.cards[0].kind as BombKind])}{response.target && <small>{" → "}{displayName(response.target)}</small>}</h2>
             {response.requested && <p>{t("索要 ·") + " "}{tx(titles[response.requested as BombKind])}</p>}
             <div className="bt-response-status">
-                <small>{t('响应')}</small>
+                <small>{t('已响应')} {response.passed.length}/{b.players.filter((p: {alive:boolean})=>p.alive).length}</small>
                 {b.players.filter((p: any) => p.alive).map((p: any) => <span key={p.id} className={response.passed.includes(p.id) ? 'confirmed' : ''} aria-label={tx(`${p.name}${response.passed.includes(p.id) ? '已确认' : '待响应'}`)}>{p.avatar}{response.passed.includes(p.id) && <Check size={10}/>}</span>)}
-                <b>{t(response.cancelled ? '这次出牌已被否决' : '这次出牌将生效')}</b>
+                <b>{t(response.cancelled ? '当前效果：已否决' : '当前效果：生效')}</b>
             </div>
             <div className="bt-action-row">
                 {showNope && <button className="bt-primary bt-nope-action" aria-label={t(response.cancelled ? '反制否决' : '打出否决')} onClick={() => run('nope', [nopeCardID])}>
@@ -133,7 +133,7 @@ export function BombsTable({ view, selfID, command }: Props) {
                 if (target?.choices.some(c => c.id === p.id))
                     run('target', [p.id]);
             }}><span className="bt-avatar">{tx(p.alive ? p.avatar : <Skull size={21}/>)}</span><span><b>{p.name}{tx(p.id === selfID && <small>{t("我")}</small>)}</b><em>{tx(p.alive ? <><span className="bt-tiny-back"/>{tx(p.count)}</> : '已出局')}</em></span>{tx(p.id === b.current && p.alive && <span className="bt-seat-turn"/>)}</button>))}</div>
-    <div className="bt-arena"><div className="bt-piles"><button className={`bt-deck ${draw ? 'available' : ''}`} aria-label={tx(`抽牌，剩余 ${b.deckCount} 张`)} disabled={!draw} onClick={() => run('draw')}><span className="bt-deck-corners">{t("✦")}</span><CatArt kind="bomb"/><b>{tx(draw ? '抽一张' : '抽牌堆')}</b><small>{tx(b.deckCount)}</small></button><div className="bt-discard" aria-label={t("弃牌堆")}>{tx(b.discard[0] ? <BombsIllustratedCard card={b.discard[0]} small/> : <span className="bt-empty"><PawPrint size={25}/><small>{t("弃牌")}</small></span>)}</div></div>{tx(focus)}</div>
+    <div className="bt-arena"><div className="bt-piles"><button className={`bt-deck ${draw ? 'available' : ''}`} aria-label={tx(`抽牌，剩余 ${b.deckCount} 张`)} disabled={!draw} onClick={() => run('draw')}><span className="bt-deck-corners">{t("✦")}</span><CatArt kind="bomb"/><b>{tx(draw ? '抽一张' : '抽牌堆')}</b><small>{tx(b.deckCount)}</small></button><div className="bt-discard" aria-label={t("弃牌堆")}>{tx(b.discard[0] ? <><BombsIllustratedCard card={b.discard[0]} small/><small className="bt-pile-caption">{t('弃牌堆')}</small></> : <span className="bt-empty"><PawPrint size={25}/><small>{t("弃牌")}</small></span>)}</div></div>{tx(focus)}</div>
     <div className="bt-hand-zone"><div className="bt-hand-label"><span>{t("我的手牌") + " "}<b>{tx(hand.length)}</b></span>{tx(handInteractive && selected.length > 0 ? <button onClick={() => setSelected([])}><X size={12}/>{t("清空选择")}</button> : null)}</div>
         <div className={`bt-hand ${hand.length > 8 ? 'bt-long-hand' : ''}`} aria-label={t("我的手牌，可左右滑动")}>
             {tx(sorted.map((c, i) => <div className="bt-hand-slot" key={c.id} style={{ '--fan': `${Math.max(-5, Math.min(5, (i - (hand.length - 1) / 2) * 1.2))}deg`, '--lift': `${Math.abs(i - (hand.length - 1) / 2) * .35}px` } as CSSProperties}>

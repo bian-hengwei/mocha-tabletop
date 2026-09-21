@@ -11,6 +11,7 @@ export const recognitionText:Record<string,string>={
  ' · 已被否决':' · Blocked',
  '这次出牌将生效':'This card effect will resolve',
  '这次出牌已被否决':'This card effect is blocked',
+ '当前效果：生效':'Effect: active','当前效果：已否决':'Effect: blocked','已响应':'Responded',
  '打出否决':'Play Nope','反制否决':'Counter Nope',
  '消耗 1 张否决牌':'Uses 1 Nope card',
  '等待其他玩家响应':'Waiting for other players',
