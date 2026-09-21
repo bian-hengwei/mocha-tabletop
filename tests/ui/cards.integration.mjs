@@ -1,4 +1,4 @@
-import { chromium, webkit } from '@playwright/test';
+import { chromium, webkit, expect } from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 
@@ -67,6 +67,43 @@ try{
     }
   }
   assert(purchased,'No affordable card after inspecting every market tier and own reservations');
+  await page.getByLabel('待购买的发展牌和自动支付筹码').waitFor();
+  // Payment details must be visible before confirming, even after rotation or a language switch.
+  for(const locale of ['en','zh']){
+    await page.getByRole('button',{name:locale==='en'?'Switch to English':'切换为中文',exact:true}).click();
+    for(const [width,height] of [[320,568],[390,844],[430,932],[568,320],[844,390],[932,430],[768,1024],[1440,900]]){
+      await page.setViewportSize({width,height});
+      assert.equal(await page.locator('.g-payment').count(),1);
+      await expect.poll(()=>page.locator('.g-payment').evaluate(e=>{
+        const r=e.getBoundingClientRect(),tray=e.parentElement.getBoundingClientRect();
+        return r.left>=tray.left-1&&r.right<=tray.right+1&&r.top>=tray.top-1&&r.bottom<=tray.bottom+1&&r.top>=0&&r.bottom<=innerHeight+1;
+      })).toBe(true);
+      const tray=await page.locator('.g-own-tray').boundingBox();
+      const bankControls=await page.locator('.g-bank button').evaluateAll(xs=>xs.map(e=>e.getBoundingClientRect().toJSON()).filter(r=>r.height&&r.width));
+      assert(bankControls.every(r=>r.bottom<=tray.y+1),'Visible bank controls and payment summary do not overlap');
+      await expect(page.locator('.g-take')).toHaveCount(0);
+      for(const button of await page.locator('.action-dock button').all()){
+        const bounds=await button.evaluate(e=>{const r=e.getBoundingClientRect();return {text:e.textContent,width:r.width,height:r.height,top:r.top,bottom:r.bottom,viewport:innerHeight,scroll:e.scrollWidth,client:e.clientWidth};});
+        assert(bounds.width>=44&&bounds.height>=44&&bounds.top>=0&&bounds.bottom<=bounds.viewport+1&&bounds.scroll<=bounds.client+1,'Payment action remains readable and touchable: '+JSON.stringify(bounds));
+      }
+      const card=page.locator('.g-payment .development-card');
+      const box=await card.boundingBox();assert(box.width>=44&&box.height>=44,'Payment card has a reachable touch target');
+      await card.click();await page.getByRole('dialog').waitFor();await page.keyboard.press('Escape');
+      await page.locator('.g-payment-inventory').click();await page.getByRole('dialog').waitFor();await page.keyboard.press('Escape');
+      await page.screenshot({path:`${artifacts}/gems-payment-${locale}-${width}.png`});
+    }
+  }
+  await page.setViewportSize({width:844,height:390});
+
+  const pendingCardName=await page.locator('.g-payment .development-card').getAttribute('aria-label');
+  await page.locator('.action-dock').getByRole('button',{name:'取消',exact:true}).click();
+  await expect(page.locator('.g-payment')).toHaveCount(0);
+  await expect.poll(()=>page.locator('.g-own-tray').evaluate(e=>e.scrollLeft)).toBe(0);
+  await page.getByRole('button',{name:'查看我的全部库存',exact:true}).click();
+  assert((await page.getByRole('dialog').textContent()).includes('已购牌 0'),'Cancelling payment does not buy a card');
+  await page.getByRole('button',{name:'关闭公开库存',exact:true}).click();
+  await page.getByRole('button',{name:pendingCardName,exact:true}).first().click();
+  await page.getByRole('dialog').getByRole('button',{name:'查看支付',exact:true}).click();
   await page.getByLabel('待购买的发展牌和自动支付筹码').waitFor();
   const paymentPlan=await page.locator('.g-payment>.g-cost>span').evaluateAll(xs=>xs.map(x=>x.getAttribute('aria-label')));
   await page.locator('.action-dock').getByRole('button',{name:'选择筹码',exact:true}).click();

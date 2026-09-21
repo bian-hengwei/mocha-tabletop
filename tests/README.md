@@ -64,7 +64,7 @@ npx playwright install chromium webkit
 | `node tests/ui/install.integration.mjs` | 直接安装提示、取消/完成状态、iOS/桌面帮助与竖屏 |
 | `node tests/ui/personal.integration.mjs` | 48 头像、身份保存、试玩恢复、战绩去重/删除、重置身份、存储禁用 |
 | `node tests/ui/responsive.integration.mjs` | 320px 手机至桌面、短横屏、数字溢出、全部座位与操作可达性 |
-| `node tests/ui/cards.integration.mjs` | 晶石商会、喵喵危机的实际界面操作，遍历所有市场层级；支持 WebKit |
+| `node tests/ui/cards.integration.mjs` | 晶石商会、喵喵危机的实际界面操作，遍历所有市场层级；支付摘要在中英八尺寸与旋转后可见，取消恢复库存且不购买；支持 WebKit |
 | `node tests/ui/gems-layout.integration.mjs` | 宝石牌桌布局 |
 | `node tests/ui/bombs-table.integration.mjs` | 喵喵危机牌桌布局 |
 | `node tests/ui/social.integration.mjs` | 月夜议会单次闭眼、女巫阶段等待与迷雾远征直接投票、座位操作；支持 WebKit |
