@@ -37,3 +37,23 @@
 .classic-card-art{object-fit:contain;user-select:none;-webkit-user-drag:none}.tile-face{aspect-ratio:3/4}
 
 .hand-scroll-cue{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0}
+
+/* Compact portrait keeps rivals above the play area and the viewer below it. */
+@media(max-width:740px) and (max-height:650px) and (orientation:portrait){
+ .game-table-guandan .classic-seat:not(.seat-self){top:10px;width:calc((100% - 38px)/3);max-width:none;padding:4px;gap:3px}
+ .game-table-guandan .classic-seat:not(.seat-self) .classic-avatar{width:22px;height:22px;font-size:16px}
+ .game-table-guandan .classic-seat:not(.seat-self) b{font-size:9px}
+ .game-table-guandan .classic-seat:not(.seat-self) small strong{font-size:9px}
+ .game-table-guandan .classic-seat.seat-self{max-width:150px}
+ .game-table-guandan .classic-seat.seat-self>div{grid-template-columns:auto auto;column-gap:5px}
+ .game-table-guandan .classic-seat.seat-self b{grid-column:1/-1}
+ .game-table-guandan.poker-table:has(.seat-across) .classic-felt{inset:82px 12px 48px;flex-direction:row;gap:6px}
+ .game-table-guandan .poker-play-area{min-height:0;max-width:60%;width:60%}
+ .game-table-guandan .table-prompt{margin:0;font-size:11px}
+ .game-table-guandan .classic-team-levels{margin:0;gap:3px;width:38%;font-size:9px}
+ .game-table-guandan .classic-team-levels>b{font-size:16px}
+ .game-table-guandan .classic-team-levels small{font-size:9px;line-height:1.3}
+ .game-table-guandan .played-caption{font-size:10px;margin:0 0 3px}
+ .game-table-guandan .played-caption span{font-size:8px;padding:1px 4px}
+ .game-table-guandan .played .classic-face.mini{width:24px}
+}
