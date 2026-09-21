@@ -1,5 +1,5 @@
 export type GameKind = 'gems' | 'bombs' | 'werewolf' | 'avalon' | 'sushi' | 'century' | 'uno' | 'codenames' | 'undercover' | 'doudizhu' | 'guandan' | 'mahjong';
-export interface Player { id: string; name: string; avatar: string }
+export interface Player { id: string; name: string; avatar: string; bot?: {difficulty: import('./bots/types').BotDifficulty} }
 export interface GameOptions { mahjongMode?: 'guangdong' | 'sichuan' | 'bloodflow' | 'laizi'; werewolfMode?: 'standard' | 'judge' | 'deal'; moderatorID?: string; werewolfPreset?: 'auto' | 'hunter' | 'guard' | 'classic9' | 'classic' | 'idiot' | 'wolfKing'; werewolfWin?: 'sides' | 'parity'; language?: 'zh' | 'en'; unoMode?: 'single' | 'match'; unoChallenge?: boolean }
 export interface Choice { id: string; title: string; subtitle?: string; /** False for literal player names and dealt words. */ translateTitle?:boolean }
 export interface Action { id: string; title: string; choices: Choice[]; min: number; max: number; help?: string }

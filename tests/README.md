@@ -119,3 +119,14 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `tests/ui/century-viewport.integration.mjs`：商旅双语八尺寸，市场/订单/商队/已用商人切换、费用完整、末张牌横向可达、付款、弹窗旋转，以及五人密集手牌；支持 WebKit。
 - `tests/ui/game-viewport.integration.mjs`：按注册表遍历十二款游戏，最大人数、中英八尺寸，检查页面和所有桌面容器没有纵向滚动或内容裁剪；配合各游戏的状态/操作测试及实际截图验收，不能单独代表完整游戏流程。
 - `tests/ui/bombs-viewport.integration.mjs`：喵喵危机中英八尺寸、最大五人，初始/选牌/响应/目标/索要/交牌/预知/拆弹/插入/结束十种状态，所有容器纵向溢出与裁切检查，实际操作及预知私密换座；支持 WebKit。
+
+## 房间人机
+
+- `npm test -- tests/bots-classic.test.ts tests/bots-cards.test.ts tests/room-bots.test.ts tests/network/server-recovery.test.ts`：策略合法性、完整终局、难度、混合席位、鉴权、定时执行、恢复和重开。
+- `BASE_URL=http://127.0.0.1:5207 node tests/ui/bots.integration.mjs`：八款支持游戏，中英七尺寸，人机配置、准备失效、最大人数、刷新恢复、对局与菜单旋转、空座加号选择及键盘焦点、双向切换语言与刷新保持、单人填满其余人机席位并开局及清理。可加 `TEST_BROWSER=webkit`。需要独立本地 Worker 与前端；截图位于忽略目录，须另行视觉审查。
+
+人机策略的自动模拟不替代真实 UI 实玩。完整实玩应记录真人账号与机器人席位数、各席位难度、版本及终局目标，分别核验每位真人实际看到的结果。
+
+- `TEST_FRONTEND=http://127.0.0.1:5207 node tests/network/bots.integration.mjs`：云端/局域网混合与单真人寿司完整三轮、权限视图、掉线恢复、房主重建、局域网转云端及清理。WebKit 可用 `TEST_BROWSER=webkit TEST_ROOM_MODES=cloud` 单独验证云端；这不计为局域网验证。
+
+- `BASE_URL=http://127.0.0.1:5207 node tests/ui/bots-boundary.integration.mjs`：真实 App 的人机轮间继续、重试和访客权限，中英七尺寸；另验三款经典游戏终局、剩余牌横向区域、收起结算与胡牌记录。使用固定传输 fixture，可用 `TEST_BROWSER=webkit`；不代替真实联机终局实玩。

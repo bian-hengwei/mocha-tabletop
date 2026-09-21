@@ -1,0 +1,15 @@
+export const botText:Record<string,string>={
+ '人机':'Bot','人机难度':'Bot difficulty','新的人机难度':'New bot difficulty','添加人机':'Add bot','移除人机':'Remove bot',
+ '添加玩家':'Add player','邀请朋友':'Invite a friend','简单人机':'Easy bot','普通人机':'Normal bot','困难人机':'Hard bot',
+ '简单':'Easy','普通':'Normal','困难':'Hard','人机对局':'With bots',
+ '人机暂时无法行动，请重试':'A bot could not move. Please retry.',
+ '重试人机':'Retry bot','只有房主能重试人机':'Only the host can retry a bot',
+ '人机难度无效':'Invalid bot difficulty','人机席位不存在':'Bot seat not found',
+ '牌局人机设置与房间不一致':'The saved bot settings do not match this room',
+ '只有房主能开始下一轮':'Only the host can start the next round','当前没有待开始的下一轮':'There is no next round to start',
+ '只有房主能在准备室设置人机':'Only the host can configure bots in the lobby',
+ '此游戏需要真人交流，不支持人机':'This game needs human discussion and does not support bots',
+ '请先移除人机，再切换到此游戏':'Remove the bots before switching to this game',
+ '等待所有玩家准备；修改规则或人机后需要重新准备':'Waiting for everyone to get ready; rule or bot changes reset readiness',
+ '建房后可添加人机':'Add bots after creating a room.',
+};

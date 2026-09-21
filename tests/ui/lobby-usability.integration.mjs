@@ -15,7 +15,7 @@ try {
  await guest.locator('.lobby').waitFor();assert(await guest.getByRole('combobox',{name:'比赛长度'}).isDisabled());assert(await guest.getByRole('switch',{name:'+4 质疑规则'}).isDisabled());await host.waitForFunction(()=>document.querySelector('.lobby-start-status')?.textContent.includes('等待所有玩家准备'));
  await guest.getByRole('button',{name:'准备好了',exact:true}).click();await host.waitForFunction(()=>document.querySelector('.lobby-start-status')?.textContent.includes('所有人已准备'));
  await host.getByRole('combobox',{name:'比赛长度'}).selectOption('single');await guest.getByRole('button',{name:'准备好了',exact:true}).waitFor();await expect(guest.getByRole('combobox',{name:'比赛长度'})).toHaveValue('single');assert.match(await host.locator('.lobby-start-status').innerText(),/重新准备/);
- await host.locator('.language-toggle').click();assert.match(await host.locator('.lobby-start-status').innerText(),/rule changes reset readiness/);
+ await host.locator('.language-toggle').click();assert.match(await host.locator('.lobby-start-status').innerText(),/rule or bot changes reset readiness/);
  for(const p of pages)assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  await host.getByRole('button',{name:'Table menu',exact:true}).click();await host.getByRole('button',{name:'Leave table',exact:true}).click();await guest.locator('.game-cover').first().waitFor();assert.deepEqual(errors,[]);
  console.log('PASS lobby start explanations, synchronized guest rule visibility, readiness reset and mobile fit');
