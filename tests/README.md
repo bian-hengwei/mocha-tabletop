@@ -121,7 +121,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `tests/ui/social-app-viewport.integration.mjs`：真实 App 在 320×568 和 568×320 下的默认及最大人数、表决/任务、终局公开身份、结算关闭与重开；支持 WebKit。
 
 - `tests/ui/century-viewport.integration.mjs`：商旅双语八尺寸，市场/订单/商队/已用商人切换、费用完整、末张牌横向可达、付款、弹窗旋转，以及五人密集手牌；支持 WebKit。
-- `tests/ui/game-viewport.integration.mjs`：按注册表遍历十二款游戏，最大人数、中英八尺寸，检查页面和所有桌面容器没有纵向滚动或内容裁剪；配合各游戏的状态/操作测试及实际截图验收，不能单独代表完整游戏流程。
+- `tests/ui/game-viewport.integration.mjs`：按注册表遍历十二款游戏，最大人数、中英八尺寸，检查页面和桌面容器没有意外纵向滚动或内容裁剪。晶石商会在高度不超过 360px 的横屏允许外层牌桌滚动，逐区验证完整可达、无覆盖、44px 宝石按钮、选择/清空及库存开关；内部容器仍禁止纵向溢出。配合各游戏的状态/操作测试及实际截图验收，不能单独代表完整游戏流程。
 - `tests/ui/bombs-viewport.integration.mjs`：喵喵危机中英八尺寸、最大五人，初始/选牌/响应/目标/索要/交牌/预知/拆弹/插入/结束十种状态，所有容器纵向溢出与裁切检查，实际操作及预知私密换座；支持 WebKit。
 
 ## 房间人机
