@@ -13,8 +13,8 @@ try{
   const fit=async locator=>{const r=await locator.boundingBox();assert(r&&r.x>=0&&r.y>=0&&r.x+r.width<=width+1&&r.y+r.height<=height+1,JSON.stringify(r));};
   await go('sushi');const cards=page.locator('.ng-sushi-hand-panel .ng-sushi-card');assert.equal(await cards.count(),10);
   const row=await cards.evaluateAll(xs=>xs.map(x=>x.getBoundingClientRect().y));assert(Math.max(...row)-Math.min(...row)<1);
-  await fit(page.locator('.ng-sushi-hand-panel'));await cards.first().click();await expect(cards.first()).toHaveAttribute('aria-pressed','true');
-  await page.waitForTimeout(350);await cards.first().click();await expect(cards.first()).toHaveAttribute('aria-pressed','false');
+  await fit(page.locator('.ng-sushi-hand-panel'));await cards.first().tap();await expect(cards.first()).toHaveAttribute('aria-pressed','true');
+  await page.waitForTimeout(350);await cards.first().tap();await expect(cards.first()).toHaveAttribute('aria-pressed','false');
   await cards.first().focus();await page.keyboard.press('Enter');await page.keyboard.press('Enter');await expect(cards.first()).toHaveAttribute('aria-pressed','false');
   await cards.last().scrollIntoViewIfNeeded();const touch=await cards.last().boundingBox();await page.touchscreen.tap(touch.x+touch.width/2,touch.y+touch.height/2);await page.touchscreen.tap(touch.x+touch.width/2,touch.y+touch.height/2);await expect(page.locator('.ng-sushi-hand-panel .ng-sushi-card:enabled')).toHaveCount(0);await expect(page.locator('.ng-sushi-card.ng-selected')).toHaveCount(1);
   await page.getByRole('button',{name:locale==='zh'?'重新选牌':'Choose again',exact:true}).click();await expect(page.locator('.ng-sushi-card.ng-selected')).toHaveCount(0);
@@ -38,8 +38,8 @@ try{
   await page.getByRole('button',{name:locale==='zh'?'结束升级':'Finish upgrading',exact:true}).click();await expect(page.locator('.ng-pocket-active')).toHaveCount(0);
   await page.screenshot({path:`${out}/century-${locale}-${width}.png`});
   await go('bombs');if(width<=600&&height>=451)await fit(page.locator('.bt-hand-zone'));const hand=page.locator('.bt-hand .bt-card');const attack=hand.filter({hasText:locale==='zh'?'攻击':'Attack'}).first(),skip=hand.filter({hasText:locale==='zh'?'跳过':'Skip'}).first();
-  await attack.click();await skip.click();await expect(page.locator('.bt-hand .bt-selected')).toHaveCount(1);await expect(skip).toHaveAttribute('aria-pressed','true');
-  await page.waitForTimeout(350);await skip.click();await expect(page.locator('.bt-hand .bt-selected')).toHaveCount(0);
+  await attack.tap();await skip.tap();await expect(page.locator('.bt-hand .bt-selected')).toHaveCount(1);await expect(skip).toHaveAttribute('aria-pressed','true');
+  await page.waitForTimeout(350);await skip.tap();await expect(page.locator('.bt-hand .bt-selected')).toHaveCount(0);
   const count=await hand.count();await attack.dblclick();await expect(hand).toHaveCount(count-1);await expect(page.locator('.bt-response')).toBeVisible();
   await page.screenshot({path:`${out}/bombs-${locale}-${width}.png`});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   await go('bombs&scenario=combo');const pair=hand.filter({hasText:locale==='zh'?'跳过':'Skip'});await pair.nth(0).click();await pair.nth(1).click();await pair.nth(1).dblclick();await expect(page.locator('.bt-hand .bt-selected')).toHaveCount(2);await expect(page.locator('.bt-response')).toHaveCount(0);

@@ -12,6 +12,7 @@ import {uno} from '../../src/core/games/uno';
 import {bombs} from '../../src/core/games/bombs';
 import {century} from '../../src/core/games/century';
 import {gems} from '../../src/core/games/gems';
+import {codenames} from '../../src/core/games/codenames';
 import {WordGamesTable} from '../../src/ui/WordGamesTable';
 import {NewGamesTable} from '../../src/ui/NewGamesTable';
 import {ActionSheet,ActionDock} from '../../src/ui/Boards';
@@ -96,6 +97,7 @@ function initialGame(){
   state.hands[0]=[{id:'test-plus-four',color:'wild',value:'wild4'},{id:'test-red-seven',color:'red',value:7},{id:'test-blue-nine',color:'blue',value:9}];state.discard=[{id:'test-red-one',color:'red',value:1}];
   state=uno.apply(state,players[0].id,{action:'wild:test-plus-four',values:['blue']});return uno.apply(state,players[1].id,{action:'challenge4',values:[]});
  }
+ if(kind==='codenames'&&params.get('scenario')==='long-words'){const state=codenames.create(players,11,{language:'en'});state.cards[0].word='Headphones';return state;}
  return modules[kind].create(players,11,{language:params.get('words')==='zh'?'zh':'en'});
 }
 function Fixture(){const locale=useLocale(),[game,setGame]=useState(initialGame),[viewer,setViewer]=useState(players[params.get("scenario")==="challenge"?1:0].id),[selection,setSelection]=useState<{a:Action;values:string[]}|null>(null);const view=modules[kind].view(game,viewer),command=(c:Command)=>setGame(modules[kind].apply(game,viewer,c)),open=(a:Action,values:string[]=[])=>setSelection({a,values});const props={view,selfID:viewer,command,open};return <main className={`app in-game game-${kind}`}><header className="topbar"><div className="brand"><b>{t(GAMES[kind].name)}</b></div><div className="top-tools"><select aria-label="Seat" value={viewer} onChange={e=>{setViewer(e.target.value);setSelection(null);}}>{players.map(p=><option value={p.id} key={p.id}>{p.name}{modules[kind].view(game,p.id).actions.length?' *':''}</option>)}</select><button className="compact" aria-label="Toggle language" onClick={()=>setLocale(locale==='en'?'zh':'en')}>{locale==='en'?'中文':'English'}</button></div></header><div className="game-surface">{['doudizhu','guandan','mahjong'].includes(kind)?<ClassicTable {...props}/>:kind==='gems'?<GemsTable {...props}/>:kind==='bombs'?<BombsTable {...props}/>:kind==='avalon'||kind==='werewolf'?<SocialTable {...props}/>:kind==="codenames"||kind==="undercover"?<WordGamesTable {...props}/>:<NewGamesTable {...props}/>}</div>{['gems','avalon','werewolf'].includes(kind)&&<ActionDock {...props}/>} {selection&&<ActionSheet action={selection.a} selected={selection.values} view={view} onClose={()=>setSelection(null)} onSubmit={command}/>}</main>;}

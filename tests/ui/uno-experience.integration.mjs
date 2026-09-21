@@ -9,7 +9,7 @@ try{for(const locale of ['zh','en']){
  const context=await browser.newContext({hasTouch:true,viewport:{width:390,height:844}});await context.addInitScript(locale=>localStorage.setItem('mocha-locale',locale),locale);
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  const begin=async(scenario='selection',extra='')=>{await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=uno&scenario=${scenario}${extra}`);await page.locator('.ng-uno').waitFor();};
- const scrollHint=page.locator('.ng-uno-scroll-hint');
+ const scrollHint=page.locator('.ng-hand-scroll-cue');
  const hand=page.locator('.ng-uno-hand .ng-uno-card'),play=page.locator('.ng-uno-play'),colors=page.locator('.ng-uno-colors button');
  const fits=async()=>{
   const r=await page.evaluate(()=>{const hand=document.querySelector('.ng-uno-hand'),bar=document.querySelector('.ng-uno-playbar'),surface=document.querySelector('.game-surface'),bounds=el=>el.getBoundingClientRect().toJSON();return{width:innerWidth,height:innerHeight,overflow:document.documentElement.scrollWidth>innerWidth,surfaceScroll:surface.scrollHeight-surface.clientHeight,rack:bounds(hand),rackOverflow:hand.scrollHeight-hand.clientHeight,bar:bar?bounds(bar):null,top:bounds(document.querySelector('.ng-uno-center .ng-uno-card')),overview:bounds(document.querySelector('.ng-uno-overview')),ys:[...hand.children].map(el=>Math.round(el.offsetTop)),buttons:[...document.querySelectorAll('.ng-uno-playbar button')].map(bounds)};});
@@ -23,7 +23,7 @@ try{for(const locale of ['zh','en']){
  }
  for(const [width,height]of sizes){
   await page.setViewportSize({width,height});await begin('long-hand','&players=10&waiting=1');
-  await expect(scrollHint).toBeVisible();await expect(scrollHint).toContainText(locale==='zh'?'手牌可左右滑动':'Swipe to see your hand');await expect(play).toHaveCount(0);await fits();
+  await expect(scrollHint).toBeVisible();await expect(scrollHint).toContainText(locale==='zh'?'滑动查看手牌':'Swipe hand');await expect(play).toHaveCount(0);await fits();
   const hint=await scrollHint.boundingBox();assert(hint&&hint.x>=0&&hint.y>=0&&hint.x+hint.width<=width+1&&hint.y+hint.height<=height+1,'waiting hand hint remains on screen');
   await hand.last().scrollIntoViewIfNeeded();await expect(hand.last()).toBeInViewport();await fits();
   await page.screenshot({path:`${out}/${locale}-waiting-rack-${width}.png`});
