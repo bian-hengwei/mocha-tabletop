@@ -1,4 +1,4 @@
-import { chromium } from '@playwright/test';
+import { chromium, webkit, expect } from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 
@@ -6,7 +6,7 @@ import fs from 'node:fs/promises';
 const baseURL=process.env.BASE_URL||'http://127.0.0.1:5174';
 const artifacts=process.env.CARD_ARTIFACTS||'test-results/cards';
 await fs.mkdir(artifacts,{recursive:true});
-const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||undefined});
+const browser=await(process.env.TEST_BROWSER==='webkit'?webkit.launch({headless:true}):chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||undefined}));
 const context=await browser.newContext({viewport:{width:844,height:390},deviceScaleFactor:2,isMobile:true,hasTouch:true});
 await context.addInitScript(()=>{localStorage.setItem('mocha-profile',JSON.stringify({id:'ui-cards',name:'测试商人',avatar:'🦊'}));localStorage.removeItem('mocha-practice-v1');});
 const page=await context.newPage(),errors=[];
@@ -23,6 +23,11 @@ async function reserve(){await page.getByRole('button',{name:'预留 1 级盲牌
 async function payDiscard(){const discard=page.locator('.action-dock').getByRole('button',{name:/^归还/});if(await discard.count()){await discard.click();const sheet=page.locator('.action-sheet'),footer=await sheet.locator('footer small').textContent();const amount=Number(footer.split('/').at(-1).trim());for(let i=0;i<amount;i++)await sheet.locator('.choice').nth(i).click();await confirmSheet();return true;}return false;}
 try{
   await begin('晶石商会');
+  await page.locator('.g-market-row .development-card:visible').first().click();
+  assert.match(await page.locator('.g-card-note').textContent(),/筹码不足.*永久奖励和黄金已计入/,'Explain why buying is unavailable even when reserving is possible');
+  assert.equal(await page.locator('.g-card-buttons').getByRole('button',{name:'查看支付',exact:true}).count(),0);
+  assert(await page.locator('.g-card-buttons').getByRole('button',{name:'预留',exact:true}).isEnabled());
+  await page.getByRole('button',{name:'关闭牌面',exact:true}).click();
   await seat('practice-0');await take(['白钻','蓝宝石','祖母绿']);
   await seat('practice-1');await reserve();
   await seat('practice-0');await take(['祖母绿','红宝石','黑玛瑙']);
@@ -49,16 +54,56 @@ try{
   await payDiscard();
   await seat('practice-0');
   let purchased=false;
-  for(let attempt=0;attempt<5&&!purchased;attempt++){
-    const cards=page.locator('.g-market .development-card, .g-reserved .development-card');
+  for(const level of [1,2,3]){
+    if(purchased)break;
+    if(await page.locator('.g-tier-tabs').isVisible())await page.locator('.g-tier-tabs button').nth(level-1).click();
+    const row=page.locator('.g-market-row').filter({has:page.locator('.level-'+level)});
+    const cards=row.locator('.development-card').or(page.locator('.g-reserved .development-card'));
     const count=await cards.count();
     for(let i=0;i<count;i++){
-      await cards.nth(i).click();const buy=page.locator('.g-card-inspector').getByRole('button',{name:'购买',exact:true});
+      await cards.nth(i).click();const buy=page.locator('.g-card-inspector').getByRole('button',{name:'查看支付',exact:true});
       if(await buy.count()){await buy.click();purchased=true;break;}
       await page.getByRole('button',{name:'关闭牌面',exact:true}).click();
     }
-    if(!purchased){throw new Error('Seed produced no affordable market or reserved card after balanced 10-token collection. Rerun with a new practice seed.');}
   }
+  assert(purchased,'No affordable card after inspecting every market tier and own reservations');
+  await page.getByLabel('待购买的发展牌和自动支付筹码').waitFor();
+  // Payment details must be visible before confirming, even after rotation or a language switch.
+  for(const locale of ['en','zh']){
+    await page.getByRole('button',{name:locale==='en'?'Switch to English':'切换为中文',exact:true}).click();
+    for(const [width,height] of [[320,568],[390,844],[430,932],[568,320],[844,390],[932,430],[768,1024],[1440,900]]){
+      await page.setViewportSize({width,height});
+      assert.equal(await page.locator('.g-payment').count(),1);
+      await expect.poll(()=>page.locator('.g-payment').evaluate(e=>{
+        const r=e.getBoundingClientRect(),tray=e.parentElement.getBoundingClientRect();
+        return r.left>=tray.left-1&&r.right<=tray.right+1&&r.top>=tray.top-1&&r.bottom<=tray.bottom+1&&r.top>=0&&r.bottom<=innerHeight+1;
+      })).toBe(true);
+      const tray=await page.locator('.g-own-tray').boundingBox();
+      const bankControls=await page.locator('.g-bank button').evaluateAll(xs=>xs.map(e=>e.getBoundingClientRect().toJSON()).filter(r=>r.height&&r.width));
+      assert(bankControls.every(r=>r.bottom<=tray.y+1),'Visible bank controls and payment summary do not overlap');
+      await expect(page.locator('.g-take')).toHaveCount(0);
+      for(const button of await page.locator('.action-dock button').all()){
+        const bounds=await button.evaluate(e=>{const r=e.getBoundingClientRect();return {text:e.textContent,width:r.width,height:r.height,top:r.top,bottom:r.bottom,viewport:innerHeight,scroll:e.scrollWidth,client:e.clientWidth};});
+        assert(bounds.width>=44&&bounds.height>=44&&bounds.top>=0&&bounds.bottom<=bounds.viewport+1&&bounds.scroll<=bounds.client+1,'Payment action remains readable and touchable: '+JSON.stringify(bounds));
+      }
+      const card=page.locator('.g-payment .development-card');
+      const box=await card.boundingBox();assert(box.width>=44&&box.height>=44,'Payment card has a reachable touch target');
+      await card.click();await page.getByRole('dialog').waitFor();await page.keyboard.press('Escape');
+      await page.locator('.g-payment-inventory').click();await page.getByRole('dialog').waitFor();await page.keyboard.press('Escape');
+      await page.screenshot({path:`${artifacts}/gems-payment-${locale}-${width}.png`});
+    }
+  }
+  await page.setViewportSize({width:844,height:390});
+
+  const pendingCardName=await page.locator('.g-payment .development-card').getAttribute('aria-label');
+  await page.locator('.action-dock').getByRole('button',{name:'取消',exact:true}).click();
+  await expect(page.locator('.g-payment')).toHaveCount(0);
+  await expect.poll(()=>page.locator('.g-own-tray').evaluate(e=>e.scrollLeft)).toBe(0);
+  await page.getByRole('button',{name:'查看我的全部库存',exact:true}).click();
+  assert((await page.getByRole('dialog').textContent()).includes('已购牌 0'),'Cancelling payment does not buy a card');
+  await page.getByRole('button',{name:'关闭公开库存',exact:true}).click();
+  await page.getByRole('button',{name:pendingCardName,exact:true}).first().click();
+  await page.getByRole('dialog').getByRole('button',{name:'查看支付',exact:true}).click();
   await page.getByLabel('待购买的发展牌和自动支付筹码').waitFor();
   const paymentPlan=await page.locator('.g-payment>.g-cost>span').evaluateAll(xs=>xs.map(x=>x.getAttribute('aria-label')));
   await page.locator('.action-dock').getByRole('button',{name:'选择筹码',exact:true}).click();
@@ -78,7 +123,7 @@ try{
   await page.getByRole('dialog').getByLabel('白钻 2 枚筹码',{exact:true}).waitFor();
   await page.getByRole('button',{name:'关闭公开库存',exact:true}).click();
   console.log('PASS gems: repeated same-color taps take exactly two tokens');
-  await seat('practice-1');await page.locator('.g-market .development-card').first().click();await page.locator('.g-card-inspector').getByRole('button',{name:'预留',exact:true}).click();
+  await seat('practice-1');await page.locator('.g-market-row:visible .development-card').first().click();await page.locator('.g-card-inspector').getByRole('button',{name:'预留',exact:true}).click();
   await seat('practice-0');await page.getByRole('button',{name:'查看 阿岚 的公开库存',exact:true}).click();assert.equal(await page.locator('.inventory-reserved .development-card').count(),1);assert.equal(await page.locator('.inventory-reserved .g-hidden-card').count(),0);await page.getByRole('button',{name:'关闭公开库存',exact:true}).click();
   await take(['蓝宝石','祖母绿','红宝石']);await seat('practice-1');await reserve();await seat('practice-0');await page.getByRole('button',{name:'查看 阿岚 的公开库存',exact:true}).click();assert.equal(await page.locator('.inventory-reserved .development-card').count(),1);assert.equal(await page.locator('.inventory-reserved .g-hidden-card').count(),1);await page.screenshot({path:`${artifacts}/gems-public-private-reserves.png`});await page.getByRole('button',{name:'关闭公开库存',exact:true}).click();
   await seat('practice-1');await page.getByRole('button',{name:'查看我的全部库存',exact:true}).click();assert.equal(await page.locator('.inventory-reserved .development-card').count(),2);assert.equal(await page.locator('.inventory-reserved .g-hidden-card').count(),0);await page.getByRole('button',{name:'关闭公开库存',exact:true}).click();
@@ -88,7 +133,7 @@ try{
   for(let turn=0;turn<20&&!(played&&drew);turn++){
     await activeSeat();
     if(!played){const hand=page.locator('.bt-hand');for(const title of ['预知三张','洗牌','攻击','跳过','索取']){const card=hand.getByRole('button',{name:title,exact:true}).first();if(await card.count()){await card.click();await page.getByRole('button',{name:'打出这张',exact:true}).click();played=true;if(title==='索取')await page.locator('.bt-seat.targetable').first().click();break;}}}
-    if(await page.locator('.bt-phase-response').count())for(const id of ['practice-0','practice-1','practice-2']){if(!await page.locator('.bt-phase-response').count())break;await seat(id);const pass=page.getByRole('button',{name:/^(不否决，继续|保持取消，继续)$/});if(await pass.count())await pass.click();}
+    if(await page.locator('.bt-phase-response').count())for(const id of ['practice-0','practice-1','practice-2']){if(!await page.locator('.bt-phase-response').count())break;await seat(id);const pass=page.getByRole('button',{name:/^继续$/});if(await pass.count())await pass.click();}
     await activeSeat();
     if(await page.locator('.bt-phase-future').count())await page.getByRole('button',{name:'看好了',exact:true}).click();
     if(await page.locator('.bt-phase-give').count()){await page.locator('.bt-hand .bt-card').first().click();await page.getByRole('button',{name:'交出这张',exact:true}).click();await activeSeat();}

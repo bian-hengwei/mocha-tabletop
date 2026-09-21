@@ -28,9 +28,9 @@ try{
    if(overflow.length)issues.push({kind,language,width,height,overflow,details:await page.locator('.social-table-v2,.social-board,.round-table,.seats,.seat-pagination').evaluateAll(xs=>xs.map(x=>({class:x.className,y:x.getBoundingClientRect().y,h:x.getBoundingClientRect().height,style:getComputedStyle(x).height,flex:getComputedStyle(x).flex}))) });
    for(const selector of ['.classic-hand-panel','.g-own-tray','.identity-deck','.bt-hand-zone','.ng-sushi-hand-panel','.ng-uno-hand-panel','.ng-century-hand-dock','.wg-secret-panel'])await expect(page.locator(selector)).toHaveCount(0);
    if(kind==='mahjong')await expect(page.locator('.classic-seat.seat-self')).toBeVisible();
-   if(width===320||width===844)await page.screenshot({path:`${out}/${scenario}-${language}-${width}.png`});
+   await page.screenshot({path:`${out}/${scenario}-${language}-${width}.png`});
    await page.locator('.audience-trigger').click();const dialog=page.getByRole('dialog',{name:language==='zh'?'观战席':'Spectators',exact:true});await expect(dialog).toBeVisible();
-   await expect(dialog.locator('.spectator-list li')).toHaveCount(20);await dialog.locator('.spectator-list li').last().scrollIntoViewIfNeeded();
+   await expect(dialog.locator('.spectator-list li')).toHaveCount(20);if(scenario==='gems')await page.screenshot({path:`${out}/audience-${language}-${width}.png`});await dialog.locator('.spectator-list li').last().scrollIntoViewIfNeeded();
    // Rotate with the long audience dialog open, then close and restore focus.
    await page.setViewportSize({width:height,height:width});await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0);await expect(page.locator('.audience-trigger')).toBeFocused();await page.setViewportSize({width,height});
   }

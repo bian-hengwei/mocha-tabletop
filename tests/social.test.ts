@@ -9,7 +9,7 @@ function nightFirst(state:WerewolfState,knife='skip',guard='skip'){
   let s=state;for(const p of s.players){const a=werewolf.view(s,p.id).actions[0];if(!a)continue;s=act(s,p.id,a.id,a.id==='wolf'?[knife]:a.id==='guard'?[guard]:a.id==='inspect'?['skip']:[]);}return s;
 }
 function nightSecond(state:WerewolfState,potion='skip'){
-  let s=state;for(const p of s.players){const a=werewolf.view(s,p.id).actions[0];if(!a)continue;s=act(s,p.id,a.id,a.id==='potion'?[potion]:[]);}return s;
+  let s=state;for(const p of s.players){if(s.stage!=='nightSecond')break;const a=werewolf.view(s,p.id).actions[0];if(!a)continue;s=act(s,p.id,a.id,a.id==='potion'?[potion]:[]);}return s;
 }
 function election(state:WerewolfState,candidates:string[]=[]){let s=state;for(const p of s.players)if(s.alive.includes(p.id))s=act(s,p.id,'signup',[candidates.includes(p.id)?'yes':'no']);return s;}
 function ready(state:WerewolfState){let s=state;for(const p of s.players)if(werewolf.view(s,p.id).actions.some(a=>a.id==='ready'))s=act(s,p.id,'ready');return s;}

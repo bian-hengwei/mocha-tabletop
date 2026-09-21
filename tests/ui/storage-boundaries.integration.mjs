@@ -21,6 +21,10 @@ try{
    await page.locator('.resume-session').waitFor();
    assert.match(await page.locator('.resume-session').textContent(),/ABC234/);
    assert.match(await page.locator('.profile-chip').textContent(),/Tab recovery/);
+   await page.getByRole('button',{name:'Switch to English',exact:true}).click();
+   assert.match(await page.locator('.resume-session').textContent(),/Resume your table · ABC234/);
+   await page.getByRole('button',{name:'切换为中文',exact:true}).click();
+   assert.match(await page.locator('.resume-session').textContent(),/回到上次的牌桌 · ABC234/);
    // Forgetting a synthetic recovery hint must be entirely local; do not join a room.
    await page.getByRole('button',{name:'忘记牌桌',exact:true}).click();
    await page.locator('.resume-session').waitFor({state:'detached'});

@@ -33,7 +33,7 @@ describe('dynamic messages preserve names and words independently of system term
   ['UNO爱好者 打出索取 → 梅林','UNO爱好者 打出索取 → 梅林','UNO爱好者 played Favor → 梅林'],
   ['梅林 打出 变色 → 红色','梅林 打出 变色 → 红色','梅林 played Wild → Red'],
   ['红队 打出 红色 跳过','红队 打出 红色 跳过','红队 played Red Skip'],
-  ['梅林 购买 蓝宝石矿场 · 1 分','梅林 购买 蓝宝石矿场 · 1 分','梅林 purchased Sapphire Mine · 1 points'],
+  ['梅林 购买 蓝宝石矿场 · 1 分','梅林 购买 蓝宝石矿场 · 1 分','梅林 purchased Sapphire Mine · 1 point'],
   ['梅林 · 同花顺','梅林 · 同花顺','梅林 · Straight flush'],
   ['小王 → 大王 · 小王','小王 → 大王 · 小王','小王 → 大王 · Small joker'],
   ['梅林 · 自摸 · +2','梅林 · 自摸 · +2','梅林 · Self-draw · +2'],

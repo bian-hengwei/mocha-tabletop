@@ -19,7 +19,27 @@ try{for(const language of ['zh','en']){
  for(const viewport of sizes){
   await page.setViewportSize(viewport);await visit('range');
   const vertical=await page.locator('.action-sheet').evaluate(sheet=>[sheet,...sheet.querySelectorAll('*')].filter(n=>n instanceof HTMLElement&&n.clientHeight>0&&n.scrollHeight>n.clientHeight+2&&['auto','scroll','hidden'].includes(getComputedStyle(n).overflowY)).map(n=>n.className));assert.deepEqual(vertical,[],'Gameplay choices never require vertical scrolling or clipped content');
-  await page.locator('.choice').last().scrollIntoViewIfNeeded();assert(await page.locator('.choice').last().evaluate(n=>{const r=n.getBoundingClientRect();return n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}),'Last choice is horizontally reachable');
+  const next=page.getByRole('button',{name:language==='zh'?'下一组选项':'Next choices',exact:true}),previous=page.getByRole('button',{name:language==='zh'?'上一组选项':'Previous choices',exact:true});
+  if(viewport.height<=500){
+  await expect(next).toBeVisible();await expect(previous).toBeDisabled();
+  const settleChoiceScroll=()=>expect.poll(()=>page.locator('.choices').evaluate(element=>{
+   const buttons=document.querySelectorAll('.choice-paging button');
+   return buttons[0].disabled===(element.scrollLeft<=4)&&buttons[1].disabled===(element.scrollLeft+element.clientWidth>=element.scrollWidth-4);
+  })).toBe(true);
+  for(let step=0;step<10&&await next.isEnabled();step++){await next.click();await settleChoiceScroll();}
+  await expect(next).toBeDisabled();await expect(page.locator('.choice').last()).toBeInViewport({ratio:1});
+  const arrow=await previous.boundingBox();assert(arrow.width>=44&&arrow.height>=44,'Choice paging has touch-sized controls');
+  assert((await page.locator('.action-sheet footer button').boundingBox()).height>=44,'Confirmation has a touch-sized target');
+  await page.screenshot({path:`test-results/action-sheet/${safari?'webkit':'chrome'}-${language}-${viewport.width}-last-choices.png`});
+  for(let step=0;step<10&&await previous.isEnabled();step++){await previous.click();await settleChoiceScroll();}
+  await expect(previous).toBeDisabled();
+  }else{
+   await expect(page.locator('.choice')).toHaveCount(10);
+   for(const choice of await page.locator('.choice').all())await expect(choice).toBeInViewport({ratio:1});
+   await expect(next).toHaveCount(0);
+   await page.screenshot({path:`test-results/action-sheet/${safari?'webkit':'chrome'}-${language}-${viewport.width}-all-players.png`});
+  }
+
   await expect(page.locator('.action-sheet footer button')).toBeDisabled();await page.locator('.choice').nth(1).click();await expect(page.locator('.action-sheet footer button')).toBeEnabled();
   assert.match(await page.locator('.action-sheet footer').innerText(),/1–2/,'Allowed selection range is explicit');
   await page.setViewportSize({width:viewport.height,height:viewport.width});await expect(page.locator('.choice[aria-pressed=true]')).toHaveCount(1);await page.setViewportSize(viewport);

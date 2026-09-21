@@ -17,6 +17,23 @@ try{
   await page.screenshot({path:`test-results/dialog-boundaries/${safari?'webkit':'chrome'}-install-${language}-landscape.png`});
   await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0);assert(await install.evaluate(node=>node===document.activeElement),'Escape returns focus to the install opener');
   await page.keyboard.press('Enter');await dialog.waitFor();await dialog.locator('header button').click();assert(await install.evaluate(node=>node===document.activeElement),'Pointer close returns focus to the install opener');
+  for(const [width,height] of [[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900]]){
+   await page.setViewportSize({width,height});
+   for(const button of await page.locator('.top-tools button,.home-footer button').all()){
+    const rect=await button.boundingBox();assert(rect&&rect.height>=44&&rect.width>=44,'Header controls must have usable touch targets');
+   }
+   const help=page.getByRole('button',{name:language==='zh'?'玩法和安装帮助':'Rules and app help',exact:true});await help.click();
+   const panel=page.getByRole('dialog'),content=panel.locator('.panel-content'),close=panel.getByRole('button',{name:language==='zh'?'关闭':'Close',exact:true});
+   if(await content.evaluate(node=>node.scrollHeight>node.clientHeight)){
+    await content.focus();await page.keyboard.press('PageDown');await expect.poll(()=>content.evaluate(node=>node.scrollTop)).toBeGreaterThan(0);
+   }
+   await content.evaluate(node=>node.scrollTo(0,node.scrollHeight));
+   const r=await close.boundingBox();assert(r&&r.y>=0&&r.y+r.height<=height&&r.width>=44&&r.height>=44,'Close stays visible after scrolling to the end');
+   assert(await close.evaluate(node=>{const r=node.getBoundingClientRect();return node.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}),'Close is not obscured by scrolling content');
+   await page.screenshot({path:`test-results/dialog-boundaries/${safari?'webkit':'chrome'}-help-${language}-${width}-scrolled.png`});
+   await close.click();await expect(panel).toHaveCount(0);assert(await help.evaluate(node=>node===document.activeElement));
+  }
+  await page.setViewportSize({width:844,height:390});
   await page.locator('.profile-chip').click();const profile=page.locator('.profile-editor'),input=profile.locator('input');await input.focus();
   for(const key of ['Escape','Tab'])for(const legacy of [false,true]){
    await input.evaluate((node,{key,legacy})=>node.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true,cancelable:true,isComposing:!legacy,keyCode:legacy?229:0})),{key,legacy});

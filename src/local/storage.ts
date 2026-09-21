@@ -6,11 +6,11 @@ export function readProfile():Player|null {
   } catch { return null; }
 }
 export type Result='win'|'loss'|'draw'|'host'|'completed';
-export interface MatchRecord {id:string;kind:GameKind;at:number;name:string;avatar:string;mode:'cloud'|'lan'|'practice';result:Result;summary:string;score?:number;playerCount:number}
+export interface MatchRecord {id:string;kind:GameKind;at:number;name:string;avatar:string;mode:'cloud'|'lan'|'practice'|'solo';result:Result;summary:string;score?:number;playerCount:number;botCount?:number}
 type HistoryStore={records:MatchRecord[];seen:string[]};
 const KEY='mocha-history-v1';
 function readStore():HistoryStore {
-  try {const data=JSON.parse(localStorage.getItem(KEY)||'null');return {records:Array.isArray(data?.records)?data.records.filter((r:any)=>r&&typeof r.id==='string'&&Object.hasOwn(GAMES,r.kind)&&Number.isFinite(r.at)&&r.at>0&&r.at<8640000000000000&&typeof r.avatar==='string'&&Number.isInteger(r.playerCount)&&r.playerCount>=0&&typeof r.name==='string'&&typeof r.summary==='string'&&['win','loss','draw','host','completed'].includes(r.result)&&['cloud','lan','practice'].includes(r.mode)):[],seen:Array.isArray(data?.seen)?data.seen.filter((id:any)=>typeof id==='string'):[]};}
+  try {const data=JSON.parse(localStorage.getItem(KEY)||'null');return {records:Array.isArray(data?.records)?data.records.filter((r:any)=>r&&typeof r.id==='string'&&Object.hasOwn(GAMES,r.kind)&&Number.isFinite(r.at)&&r.at>0&&r.at<8640000000000000&&typeof r.avatar==='string'&&Number.isInteger(r.playerCount)&&r.playerCount>=0&&(r.botCount===undefined||Number.isInteger(r.botCount)&&r.botCount>=0&&r.botCount<=r.playerCount)&&typeof r.name==='string'&&typeof r.summary==='string'&&['win','loss','draw','host','completed'].includes(r.result)&&['cloud','lan','practice','solo'].includes(r.mode)):[],seen:Array.isArray(data?.seen)?data.seen.filter((id:any)=>typeof id==='string'):[]};}
   catch{return {records:[],seen:[]};}
 }
 export const readHistory=()=>readStore().records;
@@ -32,5 +32,5 @@ export function makeRecord(view:GameView,id:string,selfID:string,player:Player,m
     if(view.kind==='werewolf')result=(b.winner.startsWith('狼人')===(b.ownRoleKey?isWolfRole(b.ownRoleKey):['狼人','狼王'].includes(b.ownRole)))?'win':'loss';
     if(view.kind==='avalon')result=(b.winner.startsWith('邪恶')===['莫甘娜','刺客','爪牙'].includes(b.ownRole))?'win':'loss';
   }
-  return {id,kind:view.kind,at:Date.now(),name:player.name,avatar:player.avatar,mode,result,summary:(b.winner||view.instruction||'本局结束').toString().slice(0,240),...(typeof own?.score==='number'?{score:own.score}:{}),playerCount:b.players?.length||0};
+  return {id,kind:view.kind,at:Date.now(),name:player.name,avatar:player.avatar,mode,result,summary:(b.winner||view.instruction||'本局结束').toString().slice(0,240),...(typeof own?.score==='number'?{score:own.score}:{}),playerCount:b.players?.length||0,...(Array.isArray(b.players)&&b.players.some((p:Player)=>p.bot)?{botCount:b.players.filter((p:Player)=>p.bot).length}:{})};
 }

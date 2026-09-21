@@ -53,7 +53,7 @@ describe('炸弹猫 effects',()=>{
   it('draw ends one normal turn',()=>{const s=bombFixture(),card=s.deck[0];const next=b(s,'draw');expect(next.hands.p0).toEqual([card]);expect(next.current).toBe('p1');expect(next.turnsRemaining).toBe(1);});
   it('attack stacks remaining turns, skip only removes one',()=>{let s=bombFixture();s.hands.p0=[bc('attack')];s.hands.p1=[bc('attack')];s.hands.p2=[bc('skip')];s=passAll(playKind(s,'attack'));expect(s.current).toBe('p1');expect(s.turnsRemaining).toBe(2);s=passAll(playKind(s,'attack'));expect(s.current).toBe('p2');expect(s.turnsRemaining).toBe(4);s=passAll(playKind(s,'skip'));expect(s.turnsRemaining).toBe(3);expect(s.current).toBe('p2');s=b(s,'draw');expect(s.turnsRemaining).toBe(2);});
   it('an attack after one attacked draw passes remaining+2',()=>{let s=bombFixture();s.hands.p0=[bc('attack')];s.hands.p1=[bc('attack')];s=passAll(playKind(s,'attack'));s=b(s,'draw');expect(s.current).toBe('p1');s=passAll(playKind(s,'attack'));expect(s.current).toBe('p2');expect(s.turnsRemaining).toBe(3);});
-  it('nope cancels an effect, another nope restores it and clears confirmations',()=>{let s=bombFixture();s.hands.p0=[bc('attack'),bc('nope')];s.hands.p1=[bc('nope')];s=playKind(s,'attack');s=b(s,'pass',[],'p2');s=b(s,'nope',[s.hands.p1[0].id],'p1');expect(s.phase.kind==='response'&&s.phase.effect.passed).toEqual([]);expect(s.phase.kind==='response'&&s.phase.effect.cancelled).toBe(true);s=b(s,'nope',[s.hands.p0[0].id],'p0');s=passAll(s);expect(s.current).toBe('p1');expect(s.turnsRemaining).toBe(2);expect(s.discard).toHaveLength(3);});
+  it('nope cancels an effect, another nope restores it and clears confirmations',()=>{let s=bombFixture();s.hands.p0=[bc('attack'),bc('nope')];s.hands.p1=[bc('nope')];s=playKind(s,'attack');s=b(s,'pass',[],'p2');s=b(s,'nope',[s.hands.p1[0].id],'p1');expect(s.phase.kind==='response'&&s.phase.effect.passed).toEqual(['p1']);expect(s.phase.kind==='response'&&s.phase.effect.cancelled).toBe(true);s=b(s,'nope',[s.hands.p0[0].id],'p0');s=passAll(s);expect(s.current).toBe('p1');expect(s.turnsRemaining).toBe(2);expect(s.discard).toHaveLength(3);});
   it('cancelled skip does not end the turn',()=>{let s=bombFixture();s.hands.p0=[bc('skip')];s.hands.p1=[bc('nope')];s=playKind(s,'skip');s=b(s,'nope',[s.hands.p1[0].id],'p1');s=passAll(s);expect(s.current).toBe('p0');expect(s.phase.kind).toBe('turn');});
   it('favor lets the target choose, keeping given card private',()=>{let s=bombFixture();s.hands.p0=[bc('favor')];s.hands.p1=[bc('defuse'),bc('skip')];s=playKind(s,'favor');expect(s.hands.p0).toHaveLength(1);s=b(s,'target',['p1']);s=passAll(s);expect(s.phase.kind).toBe('give');expect(bombs.view(s,'p0').actions).toEqual([]);const given=s.hands.p1[0];s=b(s,'give',[given.id],'p1');expect(s.hands.p0).toEqual([given]);expect(json(bombs.view(s,'p2'))).not.toContain(given.id);expect(s.current).toBe('p0');});
   it('cancelling target/triple request does not consume cards',()=>{let s=bombFixture();s.hands.p0=[bc('moonCat'),bc('moonCat'),bc('moonCat')];s=b(s,'triple',['moonCat']);s=b(s,'target',['p1']);s=b(s,'cancel');expect(s.hands.p0).toHaveLength(3);expect(s.discard).toHaveLength(0);});
@@ -68,6 +68,43 @@ describe('炸弹猫 effects',()=>{
   it('defuse cannot be noped; insert supports every position and is private',()=>{let s=bombFixture();s.hands.p0=[bc('defuse')];s.deck.unshift(bc('bomb'));s=b(s,'draw');expect(s.phase.kind).toBe('bomb');expect(bombs.view(s,'p1').actions).toEqual([]);s=b(s,'defuse');expect(s.phase.kind).toBe('insert');expect(bombs.view(s,'p0').actions[0].choices).toHaveLength(s.deck.length+1);s=b(s,'insert',['0']);expect(s.deck[0].kind).toBe('bomb');expect(s.current).toBe('p1');expect(json(bombs.view(s,'p1'))).not.toContain(s.deck[0].id);});
   it('explosion eliminates the player and hand, resets attacked turns, skips dead seats',()=>{let s=bombFixture();s.current='p1';s.turnsRemaining=4;s.attacked=true;s.hands.p1=[bc('nope')];s.deck.unshift(bc('bomb'));s=b(s,'draw');expect(s.alive).toEqual(['p0','p2']);expect(s.current).toBe('p2');expect(s.turnsRemaining).toBe(1);expect(s.attacked).toBe(false);expect(s.hands.p1).toEqual([]);expect(s.eliminatedCards).toHaveLength(2);expect(bombs.view(s,'p1').actions).toEqual([]);});
   it('allows voluntarily refusing defuse and identifies last survivor',()=>{let s=bombFixture(2);s.hands.p0=[bc('defuse')];s.deck.unshift(bc('bomb'));s=b(s,'draw');s=b(s,'explode');expect(bombs.view(s,'p1').finished).toBe(true);expect(bombs.view(s,'p1').board.winners).toEqual(['p1']);expect(bombs.view(s,'p1').actions).toEqual([]);});
+});
+
+describe('Bombs response acknowledgements',()=>{
+  it('counts playing as acknowledgement but preserves optional self-Nope',()=>{
+    let s=bombFixture();s.hands.p0=[bc('attack'),bc('nope')];s=playKind(s,'attack');
+    expect(bombs.view(s,'p0').actions.map(a=>a.id)).toEqual(['nope']);
+    expect(bombs.view(s,'p1').actions.map(a=>a.id)).toEqual(['pass']);
+    const before=json(s);expect(()=>b(s,'pass',[],'p0')).toThrow();expect(json(s)).toBe(before);
+    s=b(s,'pass',[],'p1');expect(s.phase.kind).toBe('response');
+    const passed=json(s);expect(()=>b(s,'pass',[],'p1')).toThrow();expect(json(s)).toBe(passed);
+    s=b(s,'pass',[],'p2');expect(s.current).toBe('p1');expect(s.turnsRemaining).toBe(2);
+  });
+  it('reopens everyone else after each Nope and resolves a counter chain once',()=>{
+    let s=bombFixture();s.hands.p0=[bc('attack'),bc('nope')];s.hands.p1=[bc('nope')];
+    s=playKind(s,'attack');s=b(s,'pass',[],'p2');s=b(s,'nope',[s.hands.p1[0].id],'p1');
+    expect(bombs.view(s,'p1').actions).toEqual([]);
+    expect(bombs.view(s,'p0').board.response).toMatchObject({passed:['p1'],cancelled:true,lastNopeBy:'p1'});
+    expect(bombs.view(s,'p2').actions.map(a=>a.id)).toEqual(['pass']);
+    s=b(s,'nope',[s.hands.p0[0].id],'p0');
+    expect(bombs.view(s,'p0').actions).toEqual([]);
+    expect(bombs.view(s,'p1').board.response).toMatchObject({passed:['p0'],cancelled:false,lastNopeBy:'p0'});
+    s=passAll(JSON.parse(json(s)));expect(s.current).toBe('p1');expect(s.turnsRemaining).toBe(2);expect(s.discard).toHaveLength(3);
+  });
+  it('finishes saved windows without lastNopeBy or preacknowledged actor',()=>{
+    let s=bombFixture();s.hands.p0=[bc('skip')];s=playKind(s,'skip');
+    if(s.phase.kind!=='response')throw Error('Expected response');
+    s.phase.effect.passed=[];delete s.phase.effect.lastNopeBy;
+    s=JSON.parse(json(s));expect(bombs.view(s,'p0').actions.map(a=>a.id)).toEqual(['pass']);
+    s=passAll(s);expect(s.current).toBe('p1');
+  });
+  it('does not reveal opponents Nope possession through response acknowledgements',()=>{
+    let s=bombFixture();s.hands.p0=[bc('attack')];s.hands.p1=[bc('nope')];s=playKind(s,'attack');
+    const other=structuredClone(s);other.hands.p1=[bc('skip')];
+    expect(bombs.view(s,'p2')).toEqual(bombs.view(other,'p2'));
+    expect(bombs.view(s,'p1').actions.map(a=>a.id)).toContain('pass');
+    expect(bombs.view(other,'p1').actions.map(a=>a.id)).toEqual(['pass']);
+  });
 });
 
 describe('complete serializable seeded matches',()=>{
