@@ -150,3 +150,9 @@
 @media(min-width:601px) and (min-height:501px){
  .g-playfield{grid-template-columns:80px minmax(0,1fr) 132px}
 }
+
+/* Full inventory names the resources; compact table summaries retain their density. */
+.g-inventory header>.icon{width:44px;height:44px;min-width:44px;min-height:44px}
+.inventory-summary>.stock-labeled{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:6px}
+.inventory-summary>.stock-labeled>div{min-width:0;grid-template-columns:24px minmax(18px,max-content);grid-template-rows:auto 26px auto;gap:3px;padding:5px;border:1px solid #b5cab133;border-radius:8px}
+.stock-labeled .stock-resource-label{grid-column:1/-1;text-align:center;font-size:11px;color:#eee5ce;line-height:1.4}.inventory-summary>.stock-labeled b{font-size:14px}.inventory-summary>.stock-labeled span{font-size:10px;line-height:1.3;flex-wrap:wrap}
