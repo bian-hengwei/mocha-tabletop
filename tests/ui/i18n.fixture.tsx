@@ -20,6 +20,13 @@ function initialGame(){
  if(kind==='gems'&&params.get('scenario')==='empty-tier'){
   const state=modules.gems.create(players,11);state.market[0]=[];state.decks[0]=[];return state;
  }
+ if(kind==='century'&&params.get('scenario')==='order-inspection'){
+  const state=century.create(players,11);
+  state.caravans[0].cubes=[2,1,0,0];
+  state.caravans[0].played=state.caravans[0].hand;state.caravans[0].hand=[];
+  state.goals=[{id:'order-short',cost:[3,1,1,1],points:14},{id:'order-ready',cost:[2,1,0,0],points:7}];
+  return state;
+ }
  if(kind==='century'&&params.get('scenario')==='table-dense'){
   const state=century.create(players,11);
   state.market.forEach(slot=>{slot.bonus=[1,1,1,1];});

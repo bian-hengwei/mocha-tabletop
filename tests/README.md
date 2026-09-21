@@ -119,6 +119,6 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `tests/ui/social-viewport.integration.mjs`：双语八尺寸、狼人三模式座位分页和阿瓦隆十席同屏、规则入口、身份隐藏、法官选择、直接表决与任务提交及按钮文字边界；支持 WebKit。
 - `tests/ui/social-app-viewport.integration.mjs`：真实 App 在中英八尺寸下的默认及最大人数、阿瓦隆全席同屏、表决/任务按钮文字边界、终局公开身份、结算关闭与重开；支持 WebKit。
 
-- `tests/ui/century-viewport.integration.mjs`：商旅双语八尺寸，市场/订单/商队/已用商人切换、费用完整、末张牌横向可达、付款、弹窗旋转，以及五人密集手牌；支持 WebKit。
+- `tests/ui/century-viewport.integration.mjs`：商旅双语八尺寸，市场/订单/商队/已用商人切换、费用完整、末张牌横向可达、付款、五人密集手牌与空手牌说明；订单详情显示香料名称及所需/持有/差额，覆盖可交单、材料不足、等待回合、旋转、Escape 与焦点恢复；支持 WebKit。
 - `tests/ui/game-viewport.integration.mjs`：按注册表遍历十二款游戏，最大人数、中英八尺寸，检查页面和所有桌面容器没有纵向滚动或内容裁剪；配合各游戏的状态/操作测试及实际截图验收，不能单独代表完整游戏流程。
 - `tests/ui/bombs-viewport.integration.mjs`：喵喵危机中英八尺寸、最大五人，初始/选牌/响应/目标/索要/交牌/预知/拆弹/插入/结束十种状态，所有容器纵向溢出与裁切检查；出牌自动确认、直接否决/反制及其余玩家重新响应；预知时手牌不响应选择、私密换座隐藏及查看结束后恢复选牌；支持 WebKit。

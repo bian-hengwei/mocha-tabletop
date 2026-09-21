@@ -1,4 +1,7 @@
 export const uiText: Record<string,string> = {
+  '订单详情':'Order details','香料':'Spice','所需':'Cost','持有':'Have','还缺':'Missing','查看费用':'View cost',
+  '香料不足，凑齐后可完成订单。':'Gather the missing spices to fulfill this order.',
+  '商人已全部使用。休整可收回所有商人。':'All merchants are used. Rest to recover them.',
   "选择宝石": "Choose gems", "或同色 2 枚": "or 2 same",
   "等级": "Tier", "本级市场已售罄": "This tier is sold out",
   "仍在选牌": "Still choosing",

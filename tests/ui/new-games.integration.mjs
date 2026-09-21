@@ -59,7 +59,7 @@ try{
    }
    const doneTrade=page.getByRole('button',{name:'结束交易',exact:true});if(await doneTrade.count()){traded=true;coverage.add('trade');await doneTrade.click();continue;}
    const pay=page.getByRole('button',{name:/^支付给第/});if(await pay.count()){await pay.click();await firstChoice();continue;}
-   const goals=panel('公开订单').locator('.ng-goal:not([disabled])');if(await goals.count()){await page.locator('.ng-century-tabs').getByRole('button',{name:'公开订单',exact:true}).click();await goals.first().click();await confirm();claimed=true;coverage.add('claim');continue;}
+   const goals=panel('公开订单').locator('.ng-goal.ng-claimable');if(await goals.count()){await page.locator('.ng-century-tabs').getByRole('button',{name:'公开订单',exact:true}).click();await goals.first().click();await page.getByRole('dialog',{name:'订单详情'}).getByRole('button',{name:'完成订单',exact:true}).click();claimed=true;coverage.add('claim');continue;}
    const hand=panel('你的商队').locator('.ng-spice-card:not([disabled])'),texts=await hand.evaluateAll(xs=>xs.map(x=>x.getAttribute('aria-label'))),cubes=await counts();
    const tradeIndex=texts.findIndex(t=>t.includes('→'));if(!traded&&tradeIndex>=0){await hand.nth(tradeIndex).click();await confirm();continue;}
    // Recruit an affordable exchange if none is available yet.

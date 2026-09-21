@@ -62,6 +62,28 @@ try{
   await tabs.getByRole('button',{name:caption('商队','Caravans'),exact:true}).click();await fits();
   const rivals=page.locator('.ng-century-page:not([hidden])>.ng-panel');assert.equal(await rivals.count(),4);await rivals.last().evaluate(n=>n.scrollIntoView({inline:'end',block:'nearest'}));await fits();
   await page.screenshot({path:`${out}/five-players-${language}-${width}.png`});
+  await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=century&scenario=order-inspection`);
+  await tabs.getByRole('button',{name:caption('公开订单','Public orders'),exact:true}).click();await fits();
+  await expect(page.locator('.ng-century-empty-hand')).toHaveText(caption('商人已全部使用。休整可收回所有商人。','All merchants are used. Rest to recover them.'));
+  await page.screenshot({path:`${out}/empty-hand-${language}-${width}.png`});
+  const orderCards=page.locator('.ng-goal'),inspector=page.getByRole('dialog',{name:caption('订单详情','Order details')});
+  await orderCards.first().click();await expect(inspector).toBeVisible();
+  const rows=inspector.locator('tbody tr');
+  assert.deepEqual(await rows.allTextContents(),language==='zh'?['姜黄321','藏红花11—','豆蔻101','肉桂101']:['Turmeric321','Saffron11—','Cardamom101','Cinnamon101']);
+  assert(await inspector.locator('.ng-order-details').evaluate(e=>e.scrollHeight<=e.clientHeight+1),'All four named costs and shortfall guidance fit without hidden rows');
+  await expect(inspector.getByRole('button',{name:caption('完成订单','Fulfill an order'),exact:true})).toHaveCount(0);
+  await page.screenshot({path:`${out}/order-details-${language}-${width}.png`});
+  await page.setViewportSize({width:height,height:width});
+  const bounds=await inspector.boundingBox();assert(bounds&&bounds.y>=0&&bounds.y+bounds.height<=width+1);
+  for(const control of await inspector.getByRole('button').all())assert(await control.evaluate(e=>{const r=e.getBoundingClientRect();return r.height>=44&&r.y>=0&&r.bottom<=innerHeight;}),'Inspector controls remain reachable after rotation');
+  await page.keyboard.press('Escape');await expect(inspector).toHaveCount(0);await expect(orderCards.first()).toBeFocused();
+  await page.setViewportSize({width,height});await orderCards.nth(1).click();
+  const fulfill=inspector.getByRole('button',{name:caption('完成订单','Fulfill an order'),exact:true});await expect(fulfill).toBeEnabled();await fulfill.click();
+  await expect(inspector).toHaveCount(0);await expect(page.locator('.ng-self small').first()).toContainText(caption('1 单','1 order'));
+  await expect(page.locator('.ng-pocket .ng-cubes b')).toHaveText(['0','0','0','0']);
+  await orderCards.first().click();await expect(inspector.getByRole('button',{name:caption('完成订单','Fulfill an order'),exact:true})).toHaveCount(0);
+  await page.keyboard.press('Escape');await page.getByRole('combobox',{name:'Seat',exact:true}).selectOption('english-player-1');
+  await orderCards.first().click();await page.keyboard.press('Escape');await fits();
   await context.close();console.log('PASS Century fixed viewport, public areas, all cards, payment, rotation, five players',language,width,height);
  }
  assert.deepEqual(errors,[]);
