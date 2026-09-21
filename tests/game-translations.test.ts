@@ -12,6 +12,7 @@ const textIn=(v:GameView)=>[v.phase,v.instruction,...v.log,...v.actions.flatMap(
 describe('engine translation coverage',()=>{
  it.each([
   ['0 张','0 cards'],['1 张','1 card'],['2 张','2 cards'],
+  ['1 种颜色','1 color'],['2 种颜色','2 colors'],['3 种颜色','3 colors'],['或同色 2 枚','or 2 same'],
   ['需要 3 位不同玩家','Needs 3 distinct players'],['需要 4 位不同玩家','Needs 4 distinct players'],['需要 2–4 位不同玩家','Needs 2–4 distinct players'],
   ['支付 1 枚任选香料','Pay any 1 spice cube'],['支付 2 枚任选香料','Pay any 2 spice cubes'],
   ['归还 1 枚香料','Return 1 spice'],['归还 2 枚香料','Return 2 spices'],

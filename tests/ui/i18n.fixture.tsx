@@ -17,6 +17,9 @@ import {ActionSheet,ActionDock} from '../../src/ui/Boards';
 const params=new URLSearchParams(location.search),kind=(params.get('kind')||'gems') as GameKind;
 const players=Array.from({length:params.get("players")==="max"?GAMES[kind].max:kind==='uno'&&params.get("players")==="10"?10:params.get("scenario")==="challenge"?3:GAMES[kind].min},(_,i)=>({id:`english-player-${i}`,name:['Alex','Blair','Casey','Drew','Eli','Frank','Grace','Hayden','Indigo','Jules'][i]||`Player ${i+1}`,avatar:['🦊','🐼','🐱','🐻'][i%4]}));
 function initialGame(){
+ if(kind==='gems'&&params.get('scenario')==='empty-tier'){
+  const state=modules.gems.create(players,11);state.market[0]=[];state.decks[0]=[];return state;
+ }
  if(kind==='century'&&params.get('scenario')==='table-dense'){
   const state=century.create(players,11);
   state.market.forEach(slot=>{slot.bonus=[1,1,1,1];});

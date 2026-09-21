@@ -1,4 +1,6 @@
 export const uiText: Record<string,string> = {
+  "选择宝石": "Choose gems", "或同色 2 枚": "or 2 same",
+  "等级": "Tier", "本级市场已售罄": "This tier is sold out",
   "仍在选牌": "Still choosing",
   "得分明细": "Score breakdown", "总分": "Total", "胜者": "Winner",
   "每轮得分已含寿司卷，布丁在终局另计。": "Round scores include maki rolls. Pudding is scored after round three.",
@@ -307,6 +309,8 @@ export const uiText: Record<string,string> = {
   "+4 可以被质疑。出牌者当时若持有原颜色牌，质疑成功，出牌者抽 4 张；否则质疑者抽 6 张并跳过。只有质疑者能核验出牌时的手牌。接受 +4 则抽 4 张并跳过。": "You may challenge +4. If the player held the previous color, the challenge succeeds and they draw 4. Otherwise, the challenger draws 6 and skips. Only the challenger sees the hand held at the time. Accepting +4 means drawing 4 and skipping."
 };
 export const uiPatterns: [RegExp,string,number[]?][] = [
+ [/^1 种颜色$/, '1 color'],
+ [/^(\d+) 种颜色$/, '$1 colors'],
  [/^(.+) 已出牌$/, '$1 played'],
  [/^1 单 · 金 (\d+) \/ 银 (\d+)$/, '1 order · Gold $1 / Silver $2'],
  [/^1 张手牌$/, '1 card in hand'],
