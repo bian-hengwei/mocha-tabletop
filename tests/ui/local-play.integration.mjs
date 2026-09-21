@@ -31,6 +31,7 @@ try{
   }
   for(const [width,height] of sizes){
    await page.setViewportSize({width,height});await page.locator('.cover-uno').click();await page.locator('.local-play-fields select').first().selectOption('10');
+   for(const select of await page.locator('.local-play-fields select').all())await reachable(select);
    const solo=page.getByRole('button',{name:locale==='zh'?'单人人机':'Solo vs bots',exact:true});await reachable(solo);await page.screenshot({path:`${out}/setup-${locale}-${width}x${height}.png`});
    await page.setViewportSize({width:height,height:width});await reachable(solo);await page.setViewportSize({width,height});await solo.click();await page.locator('.game-surface').waitFor();await page.screenshot({path:`${out}/solo-${locale}-${width}x${height}.png`});
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
