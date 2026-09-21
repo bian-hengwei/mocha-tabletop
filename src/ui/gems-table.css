@@ -151,6 +151,25 @@
  .g-playfield{grid-template-columns:80px minmax(0,1fr) 132px}
 }
 
+/* Name shared and personal resources even on compact tables. */
+.g-bank-title{margin:0;font-size:11px;line-height:14px;font-weight:500;color:#d8d8c0;flex-shrink:0}
+.g-own-stock>span{display:block;white-space:nowrap;font-size:11px;line-height:14px}
+@media(max-width:850px),(max-height:650px){
+ .g-own-stock{flex-direction:column;align-items:flex-start;gap:0}
+ .g-own-tray{height:58px;min-height:58px}
+}
+@media(max-width:600px) and (orientation:portrait){
+ .g-playfield{grid-template-rows:56px minmax(110px,1fr) 128px}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .g-bank{gap:2px}
+}
+@media(max-height:350px) and (orientation:landscape){
+ .g-bank{display:grid;grid-template-columns:50px minmax(0,1fr);grid-template-rows:54px 44px;gap:4px 6px;align-content:center}
+ .g-bank-title{text-align:center}
+ .g-bank-actions{grid-column:1/-1}
+}
+
 /* Keep the payment entry and close control readable and separately tappable. */
 .g-card-inspector{padding-top:44px}
 .g-card-inspector .close{width:44px;height:44px;min-width:44px;min-height:44px}

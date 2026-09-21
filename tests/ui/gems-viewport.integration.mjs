@@ -5,6 +5,8 @@ const base=process.env.BASE_URL||'http://127.0.0.1:5174',safari=process.env.TEST
 const browser=await(safari?webkit.launch():chromium.launch({executablePath:process.env.CHROME_PATH||undefined}));
 const out=`test-results/gems-viewport-${safari?'webkit':'chromium'}`;await fs.mkdir(out,{recursive:true});
 async function fits(page){
+ const labels=await page.locator('.g-bank-title,.g-own-stock>span').evaluateAll(xs=>xs.map(x=>{const r=x.getBoundingClientRect(),parent=x.parentElement.getBoundingClientRect();return {visible:r.width>0&&r.height>0,fits:r.left>=parent.left&&r.right<=parent.right&&r.top>=parent.top&&r.bottom<=parent.bottom&&r.bottom<=innerHeight,font:parseFloat(getComputedStyle(x).fontSize),clipped:x.scrollWidth>x.clientWidth};}));
+ assert.equal(labels.length,2,'Supply and personal inventory each have a label');assert(labels.every(x=>x.visible&&x.fits&&x.font>=11&&!x.clipped),'Resource ownership labels stay visible and readable');
  assert(await page.locator('.g-own-tray').evaluate(e=>e.scrollHeight<=e.clientHeight+2),'inventory tray content is not clipped vertically');
  const bad=await page.locator('.game-surface,.g-table *').evaluateAll(xs=>xs.filter(x=>x.clientHeight&&x.scrollHeight>x.clientHeight+2&&['auto','scroll'].includes(getComputedStyle(x).overflowY)).map(x=>x.className));assert.deepEqual(bad,[],'no vertical gameplay scrolling');
  const field=await page.locator('.g-playfield').boundingBox(),tray=await page.locator('.g-own-tray').boundingBox();assert(field.y+field.height<=tray.y+1,'market and inventory never overlap');
@@ -17,6 +19,7 @@ async function fits(page){
 try{for(const locale of ['zh','en'])for(const [width,height]of [[320,568],[390,844],[430,932],[568,320],[844,390],[932,430],[768,1024],[1440,900]]){
  const context=await browser.newContext({viewport:{width,height}});await context.addInitScript(l=>localStorage.setItem('mocha-locale',l),locale);const page=await context.newPage();await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=gems&players=max`);await page.locator('.g-table').waitFor();await fits(page);
  const take=page.locator('.g-take .primary'),firstToken=page.locator('.g-bank-gem').first();
+ await expect(page.locator('.g-bank-title')).toHaveText(locale==='zh'?'公共供应':'Shared supply');await expect(page.locator('.g-own-stock>span')).toHaveText(locale==='zh'?'我的库存':'My inventory');
  await expect(take).toContainText(locale==='zh'?'3 种颜色':'3 colors');await expect(take).toContainText(locale==='zh'?'或同色 2 枚':'or 2 same');
  await firstToken.click();await expect(take).toBeDisabled();await expect(take).toContainText(locale==='zh'?'3 种颜色':'3 colors');await fits(page);await page.screenshot({path:`${out}/${locale}-${width}-incomplete-selection.png`});
  await firstToken.click();await expect(take).toBeEnabled();await expect(take).toHaveText(locale==='zh'?'拿取 2':'Take 2');
