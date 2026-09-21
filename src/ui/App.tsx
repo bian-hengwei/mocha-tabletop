@@ -246,7 +246,7 @@ export function App() {
         client.replay(); setSheet(null); }}><RotateCcw size={18}/>{tx(practice ? '再来一局' : '返回准备，开新一局')}</button>)}<button onClick={() => setSheet('history')}><History size={18}/>{t("\u4E2A\u4EBA\u6218\u7EE9")}<ChevronRight size={16}/></button>{tx(!practice && <button onClick={() => void share()}><Share2 size={18}/>{t("\u5206\u4EAB\u9080\u8BF7")}<ChevronRight size={16}/></button>)}{tx(host && state.mode === 'lan' && <button onClick={() => { client.switchToCloud(); setSheet(null); }}><Cloud size={18}/>{t("\u5207\u6362\u4E91\u7AEF\u8054\u673A")}<ChevronRight size={16}/></button>)}{tx(host && room?.started && <button onClick={() => { if (window.confirm(t('结束当前对局，所有玩家返回准备？'))) {
         client.endGame();
         setSheet(null);
-    } }}><RotateCcw size={18}/>{t("\u7ED3\u675F\u672C\u5C40\uFF0C\u8FD4\u56DE\u51C6\u5907")}</button>)}<button onClick={() => { if (!view || window.confirm(t(practice ? '结束这局同屏试玩？' : host ? '离开将关闭这张牌桌，确定？' : '请房主结束本局后再离开。')))
+    } }}><RotateCcw size={18}/>{t("\u7ED3\u675F\u672C\u5C40\uFF0C\u8FD4\u56DE\u51C6\u5907")}</button>)}<button onClick={() => { if ((!view && !host) || window.confirm(t(practice ? '结束这局同屏试玩？' : host ? '离开将关闭这张牌桌，确定？' : '请房主结束本局后再离开。')))
         leave(); }}><LogOut size={18}/>{tx(practice ? '结束试玩' : '离开牌桌')}</button></div></Modal>)}
     {tx(action && view && <ActionSheet key={`${selfID}:${action.a.id}`} action={action.a} selected={action.values} view={view} onClose={() => setAction(null)} onSubmit={run}/>)}
     {tx((message || state.error) && <div className="toast" role="status"><span>{tx(message || state.error)}</span><button className="icon" aria-label={t("关闭提示")} onClick={() => { setMessage(''); client.clearError(); }}><X size={14}/></button></div>)}

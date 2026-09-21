@@ -1,4 +1,13 @@
 export const uiText: Record<string,string> = {
+  "最终得分": "Final scores",
+  "所有玩家的最终得分": "Final scores for every player",
+  "胜者": "Winner",
+  "第 1 轮": "Round 1",
+  "第 2 轮": "Round 2",
+  "第 3 轮": "Round 3",
+  "订单数": "Orders",
+  "金币": "Gold",
+  "银币": "Silver",
  '市场': 'Market', '规则': 'Rules', '翻页': 'Pages', '座位分页': 'Seat pages', '上一页': 'Previous page', '下一页': 'Next page',
  "目标":"Goal",
  "休整":"Rest",
