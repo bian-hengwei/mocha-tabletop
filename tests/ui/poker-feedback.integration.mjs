@@ -13,6 +13,46 @@ async function fits(page){
   assert(await button.evaluate(e=>{const r=e.getBoundingClientRect();return r.width>=44&&r.height>=44&&r.left>=0&&r.right<=innerWidth+1&&r.top>=0&&r.bottom<=innerHeight+1;}),'44px controls remain visible');
  }
 }
+async function fullHandWithoutHigherPlay(locale){
+ const context=await browser.newContext({viewport:{width:320,height:568}});
+ const page=await context.newPage();
+ const errors=[];page.on('pageerror',error=>errors.push(error.message));
+ await page.goto(base);
+ // Seed 68 gives the next player a full hand that cannot beat the opening joker.
+ // Only prepare the deal; the opening play, seat switch and pass use the real UI.
+ await page.evaluate(async locale=>{
+  const {guandan}=await import('/src/core/games/poker.ts');
+  const players=['Alex','Blair','Rain','Quinn'].map((name,i)=>({id:`practice-${i}`,name,avatar:['🦊','🐼','🐱','🐻'][i]}));
+  localStorage.setItem('mocha-profile',JSON.stringify(players[0]));
+  localStorage.setItem('mocha-locale',locale);
+  localStorage.setItem('mocha-practice-v1',JSON.stringify({at:Date.now(),practice:{id:'no-higher-play',kind:'guandan',players,game:guandan.create(players,68),viewer:players[0].id}}));
+ },locale);
+ await page.reload();
+ await page.locator('.classic-hand .classic-card').first().click();
+ await page.locator('.classic-controls .primary').click();
+ await page.getByRole('combobox',{name:locale==='zh'?'切换试玩座位':'Switch practice seat'}).selectOption('practice-1');
+ await expect(page.locator('.classic-hand .classic-card')).toHaveCount(27);
+ const hint=page.getByRole('button',{name:locale==='zh'?'无可压过的牌':'No higher play',exact:true});
+ await expect(hint).toBeDisabled();
+ for(const [width,height]of sizes){
+  await page.setViewportSize({width,height});
+  await fits(page);
+  assert(await page.locator('.game-surface').evaluate(e=>e.scrollHeight<=e.clientHeight+2),'full hand and response controls need no vertical scrolling');
+  const clipped=await page.locator('.classic-controls button').evaluateAll(buttons=>buttons.flatMap(button=>{
+   const box=button.getBoundingClientRect(),range=document.createRange();range.selectNodeContents(button);
+   return [...range.getClientRects()].some(r=>r.left<box.left-1||r.right>box.right+1||r.top<box.top-1||r.bottom>box.bottom+1)?[button.textContent]:[];
+  }));
+  assert.deepEqual(clipped,[],'complete button labels stay inside their touch targets');
+  await page.screenshot({path:`${out}/guandan-no-higher-${locale}-${width}.png`});
+ }
+ await page.setViewportSize({width:320,height:568});
+ await page.getByRole('button',{name:locale==='zh'?'不出':'Pass',exact:true}).click();
+ await expect(page.locator('.classic-selection')).toHaveText(locale==='zh'?'等待其他玩家操作':'Waiting for another player');
+ await expect(page.locator('.classic-hand .classic-card')).toHaveCount(27);
+ assert.deepEqual(errors,[]);
+ await context.close();
+ console.log('PASS full hand, no higher play, visible labels, rotation and actual pass',engine,locale);
+}
 try{for(const kind of ['guandan','doudizhu'])for(const locale of ['zh','en'])for(const[width,height]of sizes){
  const context=await browser.newContext({viewport:{width,height}});await context.addInitScript(l=>localStorage.setItem('mocha-locale',l),locale);const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=${kind}&scenario=response-feedback`);
@@ -29,4 +69,5 @@ try{for(const kind of ['guandan','doudizhu'])for(const locale of ['zh','en'])for
  for(const name of ['♠9','♥9','♣9','♦9'])await page.getByRole('button',{name,exact:true}).click();await expect(play).toBeEnabled();await expect(status).toHaveText(locale==='zh'?'已选 4 · 炸弹':'Selected 4 · Bomb');await play.click();
  await expect(page.locator('.classic-felt')).toContainText(locale==='zh'?'炸弹':'Bomb');await expect(page.locator('.classic-hand .classic-card')).toHaveCount(4);await expect(page.locator('.classic-card[aria-pressed="true"]')).toHaveCount(0);
  assert.deepEqual(errors,[]);await context.close();console.log('PASS response feedback, correction, rotation and legal play',engine,kind,locale,width,height);
-}}finally{await browser.close();}
+}for(const locale of ['zh','en'])await fullHandWithoutHigherPlay(locale);
+}finally{await browser.close();}

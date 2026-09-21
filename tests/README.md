@@ -30,7 +30,7 @@ npx playwright install chromium webkit
 | `node tests/ui/classic-dense.integration.mjs` | 密集牌河与副露、血流锁牌、记录弹窗焦点与旋转；支持 WebKit |
 | `node tests/ui/classic-cloud.integration.mjs` | 四个独立浏览器上下文，全部麻将模式、访客只读规则、刷新重连和两款扑克云端出牌；可对实际部署运行 |
 | `node tests/ui/poker-declaration.integration.mjs` | 掼蛋同花顺默认解释与手动宣告普通顺子；支持 WebKit |
-| `node tests/ui/poker-feedback.integration.mjs` | 掼蛋级牌与斗地主跟牌：区分无效牌型和无法压过、改选后正常出牌；双语八尺寸与旋转，支持 WebKit |
+| `node tests/ui/poker-feedback.integration.mjs` | 掼蛋级牌与斗地主跟牌：区分无效牌型和无法压过、改选后正常出牌；满手牌且无法压过时按钮文字完整、无需纵向滚动并实际不出；双语八尺寸与旋转，支持 WebKit |
 | `node tests/ui/classic-games.integration.mjs` | 六种新玩法，中英文四尺寸、点选/取消/换座、刷新恢复、扑克完整一轮与跨轮进贡；支持 WebKit |
 | `node tests/ui/mahjong-experience.integration.mjs` | 麻将双击/双触、键盘与慢速取消、定缺及自动过牌；中英七尺寸，支持 WebKit |
 | `node tests/ui/hand-experience.integration.mjs` | 寿司单张双击/双触、筷子顺序与取消锁定；商旅固定操作区；猫牌换选/组合与双击；中英八尺寸，支持 WebKit |
