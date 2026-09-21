@@ -1,4 +1,5 @@
 import {classicText,classicPatterns} from './i18n/classicText';
+import {botText} from './i18n/botText';
 import {useSyncExternalStore} from 'react';
 import {recognitionText} from './i18n/recognitionText';
 import {appText,appPatterns} from './i18n/appText';
@@ -14,7 +15,7 @@ export function setLocale(value:Locale){locale=value;try{localStorage.setItem('m
 export function useLocale(){return useSyncExternalStore(subscribe,getLocale);}
 const aliases:Record<string,string>={'危险目标':'刺客','闹闹牌':'爆炸牌','安抚':'拆弹','加班':'攻击','借一张':'索取','偷瞄三张':'预知三张','等等':'否决','阿瓦隆':'迷雾远征','狼人杀':'月夜议会','炸弹猫':'喵喵危机','宝石商人':'晶石商会','Sushi Go':'寿司小宴','SushiGo':'寿司小宴','香料之路':'香料商旅','UNO':'七彩接龙','Codenames':'密语行动','谁是卧底':'异词同伴','梅林':'先知','派西维尔':'守望者','莫甘娜':'伪先知','爪牙':'暗影同伴','忠臣':'远征队员'};
 function neutral(text:string){for(const [from,to]of Object.entries(aliases))text=text.replaceAll(from,to);return text;}
-const sourceText={...classicText,...gameText,...uiText,...wordGameText,...appText,...recognitionText};
+const sourceText={...classicText,...gameText,...uiText,...wordGameText,...appText,...recognitionText,...botText};
 const dictionary:Record<string,string>=Object.fromEntries(Object.entries(sourceText).flatMap(([key,value])=>[[key,value],[neutral(key),value]]));
 const dictionaryKeys=Object.keys(dictionary).filter(k=>/[\u3400-\u9fff]/u.test(k)).sort((a,b)=>b.length-a.length);
 const cache=new Map<string,string>();

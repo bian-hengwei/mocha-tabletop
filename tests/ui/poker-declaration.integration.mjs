@@ -69,7 +69,7 @@ async function fullHand(locale,response,declared){
  await expect(page.locator('.classic-selection')).toHaveText(locale==='zh'?'已选 5 · 同花顺':'Selected 5 · Straight flush');
  await choose(page,locale,declared,'K');await fits(page);
  await page.locator('.classic-controls .primary').click();
- await expect(page.locator('.played-caption span')).toHaveText(locale==='zh'?(declared?'顺子':'同花顺'):(declared?'Straight':'Straight flush'));
+ await expect(page.locator('.played-caption span')).toHaveText(comboName(locale,declared,'K'));
  await expect(page.locator('.classic-hand .classic-card')).toHaveCount(22);await expect(opener).toHaveCount(0);
  assert.deepEqual(errors,[]);await context.close();
  console.log('PASS full hand declaration, eight sizes, dialog rotation/focus, reselection and actual play',engine,locale,{response,declared});
@@ -83,6 +83,7 @@ try{
    const cards=page.locator('.classic-hand .classic-card');for(let i=0;i<5;i++)await cards.nth(i).click();
    await choose(page,locale,declared,'9');await page.locator('.classic-controls .primary').click();
    await expect(page.locator('.classic-felt')).toContainText(locale==='zh'?(declared?'顺子':'同花顺'):(declared?'Straight':'Straight flush'));
+   await expect(page.locator('.played-caption span')).toHaveText(comboName(locale,declared,'9'));
    await expect(cards).toHaveCount(1);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   }
   assert.deepEqual(errors,[]);await context.close();console.log('PASS strongest default and explicit weaker declaration',engine,locale);

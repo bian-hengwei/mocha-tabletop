@@ -29,7 +29,10 @@ try{
   await go('century');await fit(page.locator('.ng-century-hand-dock'));await fit(page.locator('.ng-century-hand-panel .ng-spice-card').first());
   await page.locator('.ng-century-overview').evaluate(e=>e.scrollTop=e.scrollHeight);await fit(page.locator('.ng-century-hand-dock'));
   await page.locator('.ng-century-hand-panel .ng-spice-card').nth(1).click();await fit(page.locator('.ng-pocket-active'));await expect(page.locator('.ng-century-hand-panel')).toHaveCount(0);
-  await page.getByRole('button',{name:locale==='zh'?'再升级 2 次':'Up to 2 more upgrades',exact:true}).click();await page.setViewportSize({width:height,height:width});
+  await page.getByRole('button',{name:locale==='zh'?'再升级 2 次':'Up to 2 more upgrades',exact:true}).click();
+  await expect(page.locator('.action-sheet .choice').first()).toContainText(locale==='zh'?'1 姜黄 → 1 藏红花':'1 Turmeric → 1 Saffron');
+  await page.screenshot({path:`${out}/century-upgrade-${locale}-${width}.png`});
+  await page.setViewportSize({width:height,height:width});
   assert(await page.locator('.action-sheet').evaluate(e=>{const r=e.getBoundingClientRect();return r.x>=0&&r.y>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1;}));
   await page.keyboard.press('Escape');await page.setViewportSize({width,height});
   await page.getByRole('button',{name:locale==='zh'?'结束升级':'Finish upgrading',exact:true}).click();await expect(page.locator('.ng-pocket-active')).toHaveCount(0);

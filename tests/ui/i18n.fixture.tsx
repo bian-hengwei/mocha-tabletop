@@ -11,6 +11,7 @@ import {SocialTable} from '../../src/ui/SocialTable';
 import {uno} from '../../src/core/games/uno';
 import {bombs} from '../../src/core/games/bombs';
 import {century} from '../../src/core/games/century';
+import {gems} from '../../src/core/games/gems';
 import {WordGamesTable} from '../../src/ui/WordGamesTable';
 import {NewGamesTable} from '../../src/ui/NewGamesTable';
 import {ActionSheet,ActionDock} from '../../src/ui/Boards';
@@ -27,6 +28,37 @@ function initialGame(){
   state.goals=[{id:'order-short',cost:[3,1,1,1],points:14},{id:'order-ready',cost:[2,1,0,0],points:7}];
   return state;
  }
+ if(kind==='guandan'&&params.get('scenario')==='spectator-lead'){
+  const state=modules.guandan.create(players,11);state.phase='play';state.current=1;state.hands[0]=[];state.order=[0];state.last=null;return state;
+ }
+ if((kind==='doudizhu'||kind==='guandan')&&params.get('scenario')==='played-single'){
+  const state=modules[kind].create(players,11);state.phase='play';state.current=0;if(kind==='doudizhu')state.landlord=0;state.level=Number(params.get('level')||2);
+  const rank=Number(params.get('rank')||12);
+  state.hands[0]=[{id:'caption-played',rank,suit:rank>=16?4:0},{id:'caption-retained',rank:3,suit:2}];
+  return modules[kind].apply(state,players[0].id,{action:'play',values:['caption-played']});
+ }
+
+ if(kind==='gems'&&['bank-scarce','bank-one','bank-no-pair','bank-full-hand'].includes(params.get('scenario')||'')){
+  const state=gems.create(players,11),scenario=params.get('scenario');
+  const bank=scenario==='bank-scarce'?[0,2,1,0,0,5]:scenario==='bank-one'?[0,0,0,3,0,5]:scenario==='bank-no-pair'?[3,3,3,3,3,5]:[5,5,5,5,5,5];
+  if(scenario==='bank-full-hand')state.merchants[0].tokens=state.bank.map((n,i)=>n-bank[i]);
+  else{let seat=0;state.bank.forEach((n,color)=>{for(let token=bank[color];token<n;token++)state.merchants[seat++%players.length].tokens[color]++;});}
+  state.bank=bank;
+  return state;
+ }
+ if(kind==='gems'&&params.get('scenario')==='inspection'){
+  const state=gems.create(players,11);
+  state.merchants[0].reserved.push(...state.market[0].splice(0,3));
+  state.merchants[0].bought.push(state.decks[0].pop()!);
+  const other=state.decks[0].pop()!;state.merchants[1].reserved.push(other);state.merchants[1].publicReserved=[other.id];
+  return state;
+ }
+ if(kind==='gems'&&params.get('scenario')==='payment'){
+  const state=gems.create(players,11);state.merchants[0].tokens[5]=5;state.bank[5]=0;
+  const buy=gems.view(state,players[0].id).actions.find(a=>a.id==='buy')!;
+  return gems.apply(state,players[0].id,{action:'buy',values:[buy.choices[0].id]});
+ }
+
  if(kind==='century'&&params.get('scenario')==='table-dense'){
   const state=century.create(players,11);
   state.market.forEach(slot=>{slot.bonus=[1,1,1,1];});
@@ -56,7 +88,7 @@ function initialGame(){
 
  if(kind==='uno'&&['selection','long-hand'].includes(params.get('scenario')||'')){
   const state=uno.create(players,11,{unoChallenge:params.get('challenge')!=='off'});state.current=0;state.phase='play';state.color='red';state.drawn=null;
-  state.hands[0]=[{id:'test-red-seven',color:'red',value:7},{id:'test-red-nine',color:'red',value:9},{id:'test-blue-eight',color:'blue',value:8},{id:'test-wild',color:'wild',value:'wild'},{id:'test-plus-four',color:'wild',value:'wild4'}];state.discard=[{id:'test-red-one',color:'red',value:1}];if(params.get('scenario')==='long-hand')state.hands[0].push(...state.deck.splice(0,23));return state;
+  state.hands[0]=[{id:'test-red-seven',color:'red',value:7},{id:'test-red-nine',color:'red',value:9},{id:'test-blue-eight',color:'blue',value:8},{id:'test-wild',color:'wild',value:'wild'},{id:'test-plus-four',color:'wild',value:'wild4'}];state.discard=[{id:'test-red-one',color:'red',value:1}];if(params.get('scenario')==='long-hand')state.hands[0].push(...state.deck.splice(0,23));if(params.get('waiting')==='1')state.current=1;return state;
  }
 
  if(kind==='uno'&&params.get('scenario')==='challenge'){

@@ -24,6 +24,8 @@ npx playwright install chromium webkit
 
 | 命令 | 验证范围 |
 | --- | --- |
+| `node tests/ui/gems-inspector.integration.mjs` | 晶石牌详情区分筹码不足、预留满位、自己的预留、他人预留、已购牌、等待及支付阶段；中英八尺寸与旋转，支持 WebKit |
+| `node tests/ui/gems-bank.integration.mjs` | 晶石筹码区中英八尺寸：可见取色数量/同色库存条件、不足三色、满手后归还、六色完整可见、44px 触控、选择/取消与旋转；支持 WebKit |
 | `node tests/ui/classic-assets.integration.mjs` | 90 张本地牌面/底板/背面与三张封面解码，大小王颜色映射；支持 WebKit |
 | `node tests/ui/classic-orientation.integration.mjs` | 六种新玩法，中英文九种尺寸、手牌滚动到末张、44px 触控与旋转保留选择；支持 WebKit |
 | `node tests/ui/table-layout.integration.mjs` | 麻将四方座位/牌河、换座方位盘、对手仅背面、斗地主出牌方向与叫分/不出标记；中英八尺寸，支持 WebKit |
@@ -31,10 +33,11 @@ npx playwright install chromium webkit
 | `node tests/ui/classic-cloud.integration.mjs` | 四个独立浏览器上下文，全部麻将模式、访客只读规则、刷新重连和两款扑克云端出牌；可对实际部署运行 |
 | `node tests/ui/poker-declaration.integration.mjs` | 掼蛋同花顺默认解释与手动宣告普通顺子；27 张手牌领出/跟牌、双语八尺寸、牌型弹窗旋转与焦点、清空重选及实际出牌；支持 WebKit |
 | `node tests/ui/poker-feedback.integration.mjs` | 掼蛋级牌与斗地主跟牌：区分无效牌型和无法压过、改选后正常出牌；满手牌且无法压过时按钮文字完整、无需纵向滚动并实际不出；双语八尺寸与旋转，支持 WebKit |
+| `node tests/ui/poker-caption.integration.mjs` | 上一手扑克的牌型与点数，掼蛋级牌、2、大小王映射及单张数量文案、出完手牌后等待具体玩家；中英八尺寸，支持 WebKit |
 | `node tests/ui/classic-games.integration.mjs` | 六种新玩法，中英文四尺寸、点选/取消/换座、刷新恢复、扑克完整一轮与跨轮进贡；支持 WebKit |
 | `node tests/ui/mahjong-experience.integration.mjs` | 麻将双击/双触、键盘与慢速取消、定缺及自动过牌；中英七尺寸，支持 WebKit |
 | `node tests/ui/hand-experience.integration.mjs` | 寿司单张双击/双触、筷子顺序与取消锁定；商旅固定操作区；猫牌换选/组合与双击；中英八尺寸，支持 WebKit |
-| `node tests/ui/uno-experience.integration.mjs` | UNO 双击/双触、万能牌选色、28 张单行手牌、10 人座位、八尺寸与旋转，支持 WebKit |
+| `node tests/ui/uno-experience.integration.mjs` | UNO 双击/双触、万能牌选色、28 张单行手牌、等待回合的溢出滑动提示、10 人座位、八尺寸与旋转，支持 WebKit |
 | `node tests/ui/mahjong-actions.integration.mjs` | 麻将确定性场景：自摸、血流继续、暗杠、抢杠、胡优先、碰与流局；支持 WebKit |
 | `node tests/network/message-text.integration.mjs` | 真实 Worker 的结构化姓名、投票公开时机、私密狼队计划与断线重连；使用 TEST_API_BASE |
 | `node tests/network/classic-games.integration.mjs` | 六种玩法的真实 Worker WebSocket 指令、私密视图、幂等与重连 |
@@ -58,6 +61,7 @@ npx playwright install chromium webkit
 | `node tests/ui/dialogs.integration.mjs` | 宝石、卡牌与秘密身份弹窗的焦点保护、Escape 和恢复；支持 WebKit |
 | `node tests/ui/i18n.integration.mjs` | 九款牌桌正文/无障碍标签英文检查、词库独立切换、确认出牌、私密 +4 核验与手机/短横屏 |
 | `node tests/ui/uno-selection.integration.mjs` | 接龙选牌高亮/抬升/取消、确认出牌、万能选色、换座清理、质疑开关与双语三尺寸 |
+| `node tests/ui/new-game-results.integration.mjs` | 寿司/商旅/接龙/晶石最终全员积分、晶石同分牌数比较、喵喵危机全员幸存/出局状态、寿司逐轮及布丁分、同分胜者标记、中英八尺寸、长昵称、文字不越出卡片及旋转；使用固定传输 fixture，支持 WebKit |
 | `node tests/ui/new-games.integration.mjs` | 寿司、香料、七彩接龙实际回合操作 |
 | `node tests/ui/word-games.integration.mjs` | 两款词语游戏中英文终局、全部词卡分页与切换语言保留词面；支持 WebKit |
 | `node tests/ui/offline.integration.mjs` | 生产预览 5176 的缓存、断网重载及十二款试玩 |
@@ -98,7 +102,7 @@ TEST_BROWSER=webkit BASE_URL=https://mocha-tabletop-web.pages.dev node tests/ui/
 
 避免占用已有服务，可运行 `npm run worker:dev -- --port 8794 --var ALLOWED_ORIGINS:http://127.0.0.1:5184 --persist-to .wrangler/classic-test` 与 `MOCHA_DEV_API=http://127.0.0.1:8794 npm run dev -- --port 5184 --strictPort`。测试分别设置 `BASE_URL` / `UI_BASE_URL` / `TEST_FRONTEND=http://127.0.0.1:5184`、`TEST_API_BASE=http://127.0.0.1:8794`。新脚本也支持默认开发端口。
 
-所有云端测试都会真实创建测试房间。服务保留每个来源十分钟内最多 15 次建房的限制；批量本地回归需分批执行，或停止仅供测试的 Worker 后换用新的 `--persist-to` 测试目录。不要关闭生产限流。
+所有云端测试都会真实创建测试房间。服务保留每个来源十分钟内合计最多 150 次建连、发现等请求（其中建房最多 15 次）的限制；WebSocket 刷新重连也会计数。连续多轮或双引擎验收应等待窗口恢复；批量本地回归需分批执行，或停止仅供测试的 Worker 后换用新的 `--persist-to` 测试目录。不要关闭生产限流。
 
 语言选择器刻意使用目标语言的原生名称（中文 / English），不计为未翻译文案。首次昵称填写弹窗也提供语言切换。浏览器回归使用独立上下文，避免影响日常牌局。
 
@@ -114,7 +118,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 网络延迟回归：`TEST_GAMES=century TEST_ACTION_DELAY_MS=600 TEST_SKIP_OFFLINE=1 BASE_URL=http://127.0.0.1:5174 node tests/ui/production.integration.mjs`。对真实 Worker 的回包延迟 600ms，验证提交中阻止后续操作，并在回包后继续升级/结束回合；也支持 WebKit。
 
-- `tests/ui/gems-viewport.integration.mjs`：晶石商会中英八尺寸无纵向滚动、全部市场层级、费用完整、牌面查看、宝石银行可见翻页、选择时布局稳定、实际拿取及库存入口；支持 WebKit。
+- `tests/ui/gems-viewport.integration.mjs`：晶石商会中英八尺寸无纵向滚动、全部市场层级、费用完整、牌面查看、六种公共筹码完整可见且保持 44px 触控、精确拿取条件、选择时布局稳定、实际拿取及库存入口；支持 WebKit。
 - `tests/ui/gems-results.integration.mjs`：晶石商会真实 App 的四人终局分数、已购牌/贵族数量及同分胜者，双语八尺寸、结束时清除选择、结算收起/重开、刷新和新局恢复；使用本地模拟 WebSocket，支持 WebKit。
 - `tests/ui/century-results.integration.mjs`：商旅真实 App 的五人终局分数、订单/金币/银币数量及同分胜者，房主/访客双语八尺寸、结算收起/重开、刷新、三人末轮目标及新局恢复；使用本地模拟 WebSocket，支持 WebKit。
 - `tests/ui/uno-sushi-viewport.integration.mjs`：寿司与七彩接龙中英七尺寸，公共区及手牌无纵向滚动、28 张手牌与溢出滑动提示、最大人数密集盘面逐张可达、选色、报单、私人质疑核验、筷子选牌/取消；支持 WebKit。 另检查真实 App 的五人寿司总分、逐轮与布丁明细、结算收起/重开及旋转。
@@ -127,3 +131,16 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `tests/ui/bombs-viewport.integration.mjs`：喵喵危机中英八尺寸、最大五人，初始/选牌/响应/目标/索要/交牌/预知/拆弹/插入/结束十种状态，所有容器纵向溢出与裁切检查；出牌自动确认、直接否决/反制及其余玩家重新响应；预知时手牌不响应选择、私密换座隐藏及查看结束后恢复选牌；支持 WebKit。
 
 - `tests/ui/guandan-results.integration.mjs`：真实 App 配合模拟房间回包，四人本轮/全场结算、名次/队伍/本轮得分/余牌、54 张公开剩余牌详情、房主/访客双语八尺寸、旋转和焦点、下一轮/重开、刷新及新局手牌恢复；支持 WebKit。
+
+## 房间人机
+
+- `npm test -- tests/bots-classic.test.ts tests/bots-cards.test.ts tests/room-bots.test.ts tests/network/server-recovery.test.ts`：策略合法性、完整终局、难度、混合席位、鉴权、定时执行、恢复和重开。
+- `BASE_URL=http://127.0.0.1:5207 node tests/ui/bots.integration.mjs`：八款支持游戏，中英七尺寸，人机配置、准备失效、最大人数、刷新恢复、对局与菜单旋转、空座加号选择及键盘焦点、双向切换语言与刷新保持、单人填满其余人机席位并开局及清理。可加 `TEST_BROWSER=webkit`。需要独立本地 Worker 与前端；截图位于忽略目录，须另行视觉审查。
+
+人机策略的自动模拟不替代真实 UI 实玩。完整实玩应记录真人账号与机器人席位数、各席位难度、版本及终局目标，分别核验每位真人实际看到的结果。
+
+- `TEST_FRONTEND=http://127.0.0.1:5207 node tests/network/bots.integration.mjs`：云端/局域网混合与单真人寿司完整三轮、权限视图、掉线恢复、房主重建、局域网转云端及清理。WebKit 可用 `TEST_BROWSER=webkit TEST_ROOM_MODES=cloud` 单独验证云端；这不计为局域网验证。
+
+- `BASE_URL=http://127.0.0.1:5207 node tests/ui/bots-boundary.integration.mjs`：真实 App 的人机轮间继续、重试和访客权限，中英七尺寸；另验三款经典游戏终局、剩余牌横向区域、收起结算与胡牌记录。使用固定传输 fixture，可用 `TEST_BROWSER=webkit`；不代替真实联机终局实玩。
+
+- `tests/ui/setup-dialog.integration.mjs`：八款人机游戏的建房方式可访问选择状态、双语七尺寸长规则滚动后关闭按钮可达、旋转与嵌套弹窗焦点恢复；支持 WebKit。

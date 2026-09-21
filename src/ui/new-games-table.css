@@ -138,6 +138,7 @@
 .ng-uno-overview>.ng-rules{padding:4px 0}
 .ng-uno>.ng-uno-hand-panel{flex:none;width:100%;margin:0;padding:9px 10px;background:#132e29f5}
 .ng-uno-hand-panel>h3{margin:0;gap:7px}
+.ng-uno-hand-panel .ng-uno-scroll-hint{margin-left:auto;text-align:right;font-size:10px;line-height:1.3}
 .ng-uno-gesture{margin-left:auto;text-align:right;max-width:65%;font-size:10px!important}
 .ng-uno .ng-uno-hand{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:9px;padding:18px 4px 10px;scrollbar-width:thin;scrollbar-color:#bca67966 transparent;overscroll-behavior-x:contain;touch-action:pan-x pinch-zoom}
 .ng-uno .ng-uno-hand>.ng-uno-card{flex:0 0 88px;width:88px;height:132px;aspect-ratio:auto;touch-action:manipulation}

@@ -1,3 +1,4 @@
+import {NewGameResults} from './NewGameResults';
 import {useCardDoubleTap} from './useCardDoubleTap';
 import { useDialog } from './useDialog';
 import { t } from '../i18n';
@@ -66,6 +67,7 @@ export function BombsTable({ view, selfID, command }: Props) {
     const handIDs=hand.map(c=>c.id).join('|'),context=[selfID,b.phase,b.current,handIDs,b.discard[0]?.id].join(':');
     const taps=useCardDoubleTap(context);
     useEffect(() => { setSelected([]); setInsertion(0); setExplosionPrompt(false); }, [context]);
+    if(view.finished)return <NewGameResults view={view} selfID={selfID}/>;
     const cards = hand.filter(c => selected.includes(c.id)), first = cards[0];
     const single = cards.length === 1 ? view.actions.find(a => ['play', 'nope', 'give'].includes(a.id) && a.choices.some(c => c.id === first.id)) : undefined;
     const combo = cards.length >= 2 && cards.length <= 3 && cards.every(c => c.kind === first.kind) ? get(cards.length === 2 ? 'pair' : 'triple') : undefined;

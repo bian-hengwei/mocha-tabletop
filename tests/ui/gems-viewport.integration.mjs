@@ -5,8 +5,9 @@ const base=process.env.BASE_URL||'http://127.0.0.1:5174',safari=process.env.TEST
 const browser=await(safari?webkit.launch():chromium.launch({executablePath:process.env.CHROME_PATH||undefined}));
 const out=`test-results/gems-viewport-${safari?'webkit':'chromium'}`;await fs.mkdir(out,{recursive:true});
 async function fits(page){
+ await page.locator('.game-surface').evaluate(el=>el.scrollTop=0);
  const labels=await page.locator('.g-bank-title,.g-own-stock>span').evaluateAll(xs=>xs.map(x=>{const r=x.getBoundingClientRect(),parent=x.parentElement.getBoundingClientRect();return {visible:r.width>0&&r.height>0,fits:r.left>=parent.left&&r.right<=parent.right&&r.top>=parent.top&&r.bottom<=parent.bottom&&r.bottom<=innerHeight,font:parseFloat(getComputedStyle(x).fontSize),clipped:x.scrollWidth>x.clientWidth};}));
- assert.equal(labels.length,2,'Supply and personal inventory each have a label');assert(labels.every(x=>x.visible&&x.fits&&x.font>=11&&!x.clipped),'Resource ownership labels stay visible and readable');
+ assert.equal(labels.length,2,'Supply and personal inventory each have a label');assert(labels.every(x=>x.visible&&x.fits&&x.font>=11&&!x.clipped),`Resource ownership labels stay visible and readable: ${JSON.stringify(labels)}`);
  assert(await page.locator('.g-own-tray').evaluate(e=>e.scrollHeight<=e.clientHeight+2),'inventory tray content is not clipped vertically');
  const bad=await page.locator('.game-surface,.g-table *').evaluateAll(xs=>xs.filter(x=>x.clientHeight&&x.scrollHeight>x.clientHeight+2&&['auto','scroll'].includes(getComputedStyle(x).overflowY)).map(x=>x.className));assert.deepEqual(bad,[],'no vertical gameplay scrolling');
  const field=await page.locator('.g-playfield').boundingBox(),tray=await page.locator('.g-own-tray').boundingBox();assert(field.y+field.height<=tray.y+1,'market and inventory never overlap');
@@ -14,14 +15,16 @@ async function fits(page){
  const clippedOptions=await page.locator('.g-take-options span,.g-tier-tabs button>span').evaluateAll(xs=>xs.filter(x=>{const b=x.closest('button').getBoundingClientRect(),r=x.getBoundingClientRect();return r.left<b.left||r.right>b.right||r.top<b.top||r.bottom>b.bottom;}).map(x=>x.textContent));assert.deepEqual(clippedOptions,[],'gem selection requirements and market tiers remain readable inside their buttons');
  if(await page.locator('.g-take .primary').isEnabled())await page.locator('.g-take .primary').click({trial:true});
  for(const selector of ['.g-market-row:visible','.g-bank','.g-own-tray']){const box=await page.locator(selector).first().boundingBox();assert(box.y>=0&&box.y+box.height<=page.viewportSize().height,'table section stays on screen '+selector);}
+ const tabs=await page.locator('.g-tier-tabs').boundingBox(),bank=await page.locator('.g-bank').boundingBox();if(tabs&&bank&&bank.x>tabs.x)assert(tabs.x+tabs.width<=bank.x+1,'market tabs do not overlap the shared-supply bank');
+ await page.locator('.game-surface').evaluate(el=>el.scrollTop=0);
  const costs=await page.locator('.g-market-row:visible .development-card>.g-cost').evaluateAll(xs=>xs.flatMap(x=>{const b=x.parentElement.getBoundingClientRect();return [...x.children].filter(c=>{const r=c.getBoundingClientRect();return r.left<b.left-1||r.right>b.right+1||r.top<b.top-1||r.bottom>b.bottom+1;}).map(c=>c.textContent)}));assert.deepEqual(costs,[],'all card costs fit');
 }
 try{for(const locale of ['zh','en'])for(const [width,height]of [[320,568],[390,844],[430,932],[568,320],[844,390],[932,430],[768,1024],[1440,900]]){
  const context=await browser.newContext({viewport:{width,height}});await context.addInitScript(l=>localStorage.setItem('mocha-locale',l),locale);const page=await context.newPage();await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=gems&players=max`);await page.locator('.g-table').waitFor();await fits(page);
  const take=page.locator('.g-take .primary'),firstToken=page.locator('.g-bank-gem').first();
  await expect(page.locator('.g-bank-title')).toHaveText(locale==='zh'?'公共供应':'Shared supply');await expect(page.locator('.g-own-stock>span')).toHaveText(locale==='zh'?'我的库存':'My inventory');
- await expect(take).toContainText(locale==='zh'?'3 种颜色':'3 colors');await expect(take).toContainText(locale==='zh'?'或同色 2 枚':'or 2 same');
- await firstToken.click();await expect(take).toBeDisabled();await expect(take).toContainText(locale==='zh'?'3 种颜色':'3 colors');await fits(page);await page.screenshot({path:`${out}/${locale}-${width}-incomplete-selection.png`});
+ await expect(take).toContainText(locale==='zh'?'取 3 色，各 1 枚':'3 colors, 1 each');await expect(take).toContainText(locale==='zh'?'或同色连点取 2（库存 ≥4）':'Or tap one color twice for 2 (stock ≥4)');
+ await firstToken.click();await expect(take).toBeDisabled();await expect(take).toContainText(locale==='zh'?'取 3 色，各 1 枚':'3 colors, 1 each');await fits(page);await page.screenshot({path:`${out}/${locale}-${width}-incomplete-selection.png`});
  await firstToken.click();await expect(take).toBeEnabled();await expect(take).toHaveText(locale==='zh'?'拿取 2':'Take 2');
  await page.getByRole('button',{name:locale==='zh'?'清空宝石选择':'Clear gem selection',exact:true}).click();await expect(take).toBeDisabled();
  for(const level of [1,2,3]){if(await page.locator('.g-tier-tabs').isVisible())await page.locator('.g-tier-tabs button').nth(level-1).click();const row=page.locator('.g-market-row').filter({has:page.locator('.level-'+level)});await expect(row).toBeVisible();await row.locator('.development-card').last().click();await expect(page.getByRole('dialog')).toBeVisible();const inspector=await page.getByRole('dialog').evaluate(e=>({h:e.clientHeight,s:e.scrollHeight,b:e.getBoundingClientRect().bottom}));assert(inspector.s<=inspector.h+2&&inspector.b<=height,'card details and actions fit without scrolling');await page.keyboard.press('Escape');await fits(page);}

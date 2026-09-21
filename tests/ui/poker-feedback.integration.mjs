@@ -48,7 +48,7 @@ async function fullHandWithoutHigherPlay(locale){
  }
  await page.setViewportSize({width:320,height:568});
  await page.getByRole('button',{name:locale==='zh'?'不出':'Pass',exact:true}).click();
- await expect(page.locator('.classic-selection')).toHaveText(locale==='zh'?'等待其他玩家操作':'Waiting for another player');
+ await expect(page.locator('.classic-selection')).toHaveText(locale==='zh'?'等待 Rain':'Waiting for Rain');
  await expect(page.locator('.classic-hand .classic-card')).toHaveCount(27);
  assert.deepEqual(errors,[]);
  await context.close();
