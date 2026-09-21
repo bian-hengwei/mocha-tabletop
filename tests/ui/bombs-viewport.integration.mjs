@@ -11,7 +11,17 @@ try{for(const locale of ['zh','en'])for(const [width,height] of [[320,568],[390,
  if(width===320||width===844||width===568)await page.screenshot({path:`${out}/${locale}-${width}-${scenario}.png`,animations:'disabled'});
  if(scenario==='turn'){await page.locator('.bt-deck').click();await expect(page.locator('.bt-danger')).toBeVisible();await fit('draw-bomb');}
  if(scenario==='selected'){await page.locator('.bt-focus .bt-primary').click();await expect(page.locator('.bt-response')).toBeVisible();}
- if(scenario==='response'){await page.locator('.bt-hand .bt-card').filter({hasText:locale==='zh'?'否决':'Nope'}).first().click();await page.locator('.bt-focus .bt-primary').click();await fit('nope');}
+ if(scenario==='response'){
+  await page.locator('.bt-response .bt-secondary').click();
+  await expect(page.locator('.bt-response-status')).toContainText(locale==='zh'?'你已确认，等待其他玩家':'Confirmed · Waiting for others');
+  await expect(page.locator('.bt-response .bt-secondary')).toHaveCount(0);await fit('responded');
+  if(width===320||width===844||width===568)await page.screenshot({path:`${out}/${locale}-${width}-responded.png`,animations:'disabled'});
+  await page.locator('.bt-hand .bt-card').filter({hasText:locale==='zh'?'否决':'Nope'}).first().click();await page.locator('.bt-focus .bt-primary').click();await fit('nope');
+  await expect(page.locator('.bt-response-status')).not.toContainText(locale==='zh'?'你已确认':'Confirmed');
+  await page.locator('.bt-response .bt-secondary').click();
+  await expect(page.locator('.bt-response-status')).toContainText(locale==='zh'?'你已确认取消，等待其他玩家':'Cancellation confirmed · Waiting for others');await fit('cancel-confirmed');
+  if(width===320||width===844||width===568)await page.screenshot({path:`${out}/${locale}-${width}-cancel-confirmed.png`,animations:'disabled'});
+ }
  if(scenario==='target'){await page.locator('.bt-seat.targetable').last().click();await expect(page.locator('.bt-response')).toBeVisible();}
  if(scenario==='request'){await page.locator('.bt-request button').last().scrollIntoViewIfNeeded();await fit('last-request');await page.locator('.bt-request button').last().click();await expect(page.locator('.bt-response')).toBeVisible();}
  if(scenario==='give'){await page.locator('.bt-hand .bt-card').first().click();await page.locator('.bt-focus .bt-primary').click();await expect(page.locator('.bt-phase-turn')).toBeVisible();}

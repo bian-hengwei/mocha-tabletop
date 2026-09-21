@@ -110,6 +110,8 @@ export const uiText: Record<string,string> = {
   "索要 ·": "Request · ",
   "已等等，可再次恢复": "Cancelled; another Nope can restore it",
   "等待确认": "Waiting for confirmation",
+  "你已确认，等待其他玩家": "Confirmed · Waiting for others",
+  "你已确认取消，等待其他玩家": "Cancellation confirmed · Waiting for others",
   "保持等等": "Keep cancelled",
   "不等等": "Allow it",
   "点手里的等等牌，可以改变结果。": "Tap a Nope in your hand to change the outcome.",
