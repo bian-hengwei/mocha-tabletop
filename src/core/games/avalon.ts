@@ -16,15 +16,15 @@ export const avalon:GameModule<AvalonState>={
     const deck=shuffle<AvalonRole>(['merlin','percival','morgana','assassin',...Array(evilCount-2).fill('minion'),...Array(players.length-evilCount-2).fill('servant')],rng);
     return {players:structuredClone(players),roles:Object.fromEntries(players.map((p,i)=>[p.id,deck[i]])),stage:'propose',leader:Math.floor(rng()*players.length),team:[],votes:{},results:[],failCounts:[],rejections:0,publicVotes:{},winner:null,log:['圆桌已就绪。']};
   },
-  view(s,id){
-    if(!s.players.some(p=>p.id===id)) throw new Error('不是本局玩家');
+  view(s,id,spectator=false){if(spectator)id='';
+    if(!spectator&&!s.players.some(p=>p.id===id)) throw new Error('不是本局玩家');
     const role=s.roles[id], quest=Math.min(s.results.length+1,5), sizes=avalonTeamSizes(s.players.length), name=(id:string)=>s.players.find(p=>p.id===id)!.name;
     const choices=(ids:string[])=>ids.map(id=>({id,title:name(id)}));
-    const knowledge=[{id:'role',title:labels[role],detail:evil(role)?'邪恶阵营':'正义阵营'}];
+    const knowledge=spectator?[]:[{id:'role',title:labels[role],detail:evil(role)?'邪恶阵营':'正义阵营'}];
     if(evil(role)||role==='merlin')knowledge.push({id:'evil',title:'邪恶玩家',detail:s.players.filter(p=>p.id!==id&&evil(s.roles[p.id])).map(p=>p.name).join('、')});
     if(role==='percival')knowledge.push({id:'merlin',title:'梅林 / 莫甘娜',detail:s.players.filter(p=>['merlin','morgana'].includes(s.roles[p.id])).map(p=>p.name).join('、')});
     const actions:GameView['actions']=[];
-    if(!s.winner){
+    if(!spectator&&!s.winner){
       if(s.stage==='propose'&&s.players[s.leader].id===id)actions.push(action('propose',`选择 ${sizes[s.results.length]} 名队员`,choices(s.players.map(p=>p.id)),sizes[s.results.length],sizes[s.results.length]));
       if(s.stage==='approve'&&!Object.hasOwn(s.votes,id))actions.push(action('approve','队伍表决',[{id:'yes',title:'赞成'},{id:'no',title:'反对'}],1,1));
       if(s.stage==='mission'&&s.team.includes(id)&&!Object.hasOwn(s.votes,id))actions.push(action('mission','秘密任务',[{id:'success',title:'成功'},...(evil(role)?[{id:'fail',title:'失败'}]:[])],1,1,s.players.length>=7&&s.results.length===3?'两张失败牌才会失败':''));

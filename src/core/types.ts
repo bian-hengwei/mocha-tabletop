@@ -8,6 +8,7 @@ export interface GameText {template:string;values?:Record<string,string|GameText
 export interface Item { id: string; title: string; detail?: string; detailText?:GameText; symbol?: string }
 export interface Section { id: string; title: string; items: Item[]; private?: boolean }
 export interface GameView {
+  spectating?: boolean;
   kind: GameKind; phase: string; instruction: string; finished: boolean;
   actions: Action[]; sections: Section[]; log: string[]; logText?:Record<number,GameText>;
   /** Game-specific REDACTED render data. Never put other hands/roles/deck here. */
@@ -16,7 +17,8 @@ export interface GameView {
 export interface Command { action: string; values: string[]; text?: string }
 export interface GameModule<S = any> {
   create(players: Player[], seed: number, options?: GameOptions): S;
-  view(state: S, playerID: string): GameView;
+  /** Spectator projections ignore playerID and include public information only. */
+  view(state: S, playerID: string, spectator?: boolean): GameView;
   /** Returns new serializable state. Invalid commands throw, original stays intact. */
   apply(state: S, playerID: string, command: Command): S;
 }

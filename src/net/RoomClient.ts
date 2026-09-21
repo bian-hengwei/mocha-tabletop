@@ -1,10 +1,10 @@
-import {applyMatch,createMatch,validProfile,viewMatch,optionsKey,validateMatchForRoom,type ClientState,type MatchState,type RoomInfo,type RoomCandidate,type RoomMode} from '../core/room';
+import {applyMatch,createMatch,validProfile,viewRoomMatch,optionsKey,validateMatchForRoom,type ClientState,type MatchState,type RoomInfo,type RoomCandidate,type RoomMode} from '../core/room';
 import type {Command,GameKind,Player,GameOptions} from '../core/types';
 export type {ClientState,RoomCandidate,RoomMode} from '../core/room';
 const API=(import.meta.env.VITE_API_BASE||'').replace(/\/$/,'');
 const randomToken=()=>Array.from(crypto.getRandomValues(new Uint8Array(24)),b=>b.toString(16).padStart(2,'0')).join('');
 const initial=():ClientState=>({status:'idle',transport:'none',paused:false,actionRevision:0});
-interface Session {profile:Player;code:string;invite?:string;token:string;savedAt?:number;expiresAt?:number}
+interface Session {spectator?:boolean;profile:Player;code:string;invite?:string;token:string;savedAt?:number;expiresAt?:number}
 export interface SavedSession {profile:Player;code:string;savedAt:number;expiresAt:number}
 const SESSION_KEY='mocha-room-session';
 const SESSION_TTL=6*60*60*1000;
@@ -47,8 +47,8 @@ export class RoomClient {
  async create(profile:Player,kind:GameKind,mode:RoomMode,options?:GameOptions){
   this.reset();const generation=this.connectGeneration;try{this.patch({status:'connecting',selfID:profile.id,mode});const result=await this.http('/api/create',{profile,kind,mode,options,token:this.token});if(generation!==this.connectGeneration)return;await this.join(profile,result.code,result.invite);}catch(e){if(generation!==this.connectGeneration)return;this.patch({status:'idle'});this.fail(e);}
  }
- async join(profile:Player,code:string,invite?:string){
-  try{code=code.toUpperCase().trim();if(!/^[A-Z2-9]{6}$/.test(code))throw new Error('请输入六位房间码');this.reset();this.session={profile:validProfile(profile),code,invite,token:this.token,savedAt:Date.now(),expiresAt:Date.now()+SESSION_TTL};this.saveSession();this.stopped=false;this.patch({status:'connecting',selfID:profile.id});this.openSocket();}catch(e){if(!this.state.room)this.terminal(e instanceof Error?e.message:String(e));else this.fail(e);}
+ async join(profile:Player,code:string,invite?:string,spectator=false){
+  try{code=code.toUpperCase().trim();if(!/^[A-Z2-9]{6}$/.test(code))throw new Error('请输入六位房间码');this.reset();this.session={spectator,profile:validProfile(profile),code,invite,token:this.token,savedAt:Date.now(),expiresAt:Date.now()+SESSION_TTL};this.saveSession();this.stopped=false;this.patch({status:'connecting',selfID:profile.id});this.openSocket();}catch(e){if(!this.state.room)this.terminal(e instanceof Error?e.message:String(e));else this.fail(e);}
  }
  /** Same-device resume hint; never exposes the authentication token. */
  getSavedSession():SavedSession|undefined {const s=this.readSession();return s?{profile:s.profile,code:s.code,savedAt:s.savedAt!,expiresAt:s.expiresAt!}:undefined;}
@@ -68,6 +68,8 @@ export class RoomClient {
  private saveSession(){if(!this.session)return;const raw=JSON.stringify(this.session);let saved=false;for(const storage of availableStorage())try{storage.setItem(SESSION_KEY,raw);saved=true;}catch{}if(!saved)this.fail('浏览器无法保存房间；关闭网页后可能无法恢复');}
  private clearSavedSession(){for(const storage of availableStorage())try{const raw=storage.getItem(SESSION_KEY);if(!this.session||!raw||JSON.parse(raw).code===this.session.code)storage.removeItem(SESSION_KEY);}catch{}}
  async discover():Promise<RoomCandidate[]>{try{return await this.http('/api/discover');}catch(e){this.fail(e);return [];}}
+ setSpectators(allowed:boolean){this.control({type:'setSpectators',allowed});}
+ setSeat(spectator:boolean){this.control({type:'setSeat',spectator});}
  ready(ready:boolean){this.control({type:'ready',ready});}
  removePlayer(playerID:string){this.control({type:'removePlayer',playerID});}
  approve(playerID:string,accept:boolean){this.control({type:'approve',playerID,accept});}
@@ -77,14 +79,14 @@ export class RoomClient {
  endGame(){this.control({type:'endGame'});}
  action(command:Command){
   if(this.state.actionPending)return;
-  try{if(this.state.paused)throw new Error('连接恢复后继续');const r=this.state.room;if(!r||!r.started)throw new Error('牌局未开始');
+  try{if(this.state.paused)throw new Error('连接恢复后继续');const r=this.state.room;if(!r||!r.started)throw new Error('牌局未开始');if(!r.players.some(p=>p.id===this.session?.profile.id))throw new Error('观众不能操作牌局');
    this.patch({actionPending:true});
    const msg={type:'action',command,requestID:crypto.randomUUID(),actionRevision:this.state.actionRevision};
    if(r.mode==='cloud')this.control(msg);else if(this.session?.profile.id===r.hostID)this.applyLocal(r.hostID,msg);else {const p=this.peers.get(r.hostID);if(!p?.proven||p.dc?.readyState!=='open'||p.dc.bufferedAmount>=1000000)throw new Error('与房主的连接已中断');this.sendDC(p,msg);}
   }catch(e){this.fail(e);}
  }
  switchToCloud(){const r=this.state.room;if(!r||r.hostID!==this.session?.profile.id){this.fail('请由房主切换');return;}if(r.started&&!this.localMatch){this.fail('房主牌局状态丢失，请结束本局重新开桌');return;}this.control({type:'switchToCloud',match:this.localMatch});}
- leave(){if(this.state.room?.started&&this.state.room.hostID!==this.session?.profile.id){this.fail('请让房主结束本局，再离开牌桌');return;}this.control({type:'leave'});this.removeLocal();this.clearSavedSession();this.reset();this.patch(initial());}
+ leave(){if(this.state.room?.started&&this.state.room.hostID!==this.session?.profile.id&&this.state.room.players.some(p=>p.id===this.session?.profile.id)){this.fail('请让房主结束本局，再离开牌桌');return;}this.control({type:'leave'});this.removeLocal();this.clearSavedSession();this.reset();this.patch(initial());}
  destroy(){this.reset();window.removeEventListener('online',this.onOnline);document.removeEventListener('visibilitychange',this.onVisible);this.listeners.clear();}
  private onOnline=()=>{if(!this.stopped&&this.ws?.readyState!==WebSocket.OPEN)this.connect();};
  private onVisible=()=>{if(document.visibilityState==='visible'&&!this.stopped){if(this.ws?.readyState!==WebSocket.OPEN)this.connect();if(this.state.room?.mode==='lan'){for(const p of this.peers.values()){if(Date.now()-p.lastHeard>18000)p.proven=false;}this.ensurePeers();this.localStatus();}}};
@@ -129,7 +131,7 @@ export class RoomClient {
  private ensurePeers(){
   const r=this.state.room;if(!r||r.mode!=='lan'||!this.session)return;
   if(typeof RTCPeerConnection==='undefined'){this.fail('此浏览器不支持直连，请由房主切换云端');return;}
-  const host=this.session.profile.id===r.hostID;const wanted=host?r.players.filter(p=>p.id!==r.hostID).map(p=>p.id):[r.hostID];
+  const host=this.session.profile.id===r.hostID;const wanted=host?[...r.players,...r.spectators||[]].filter(p=>p.id!==r.hostID).map(p=>p.id):[r.hostID];
   for(const [id,peer]of this.peers)if(!wanted.includes(id)){clearTimeout(peer.pairingTimer);peer.pc.close();peer.dc?.close();this.peers.delete(id);}
   if(host)for(const id of wanted){const peer=this.peers.get(id);if(!peer||peer.pc.connectionState==='failed'||peer.pc.connectionState==='closed'||peer.pc.connectionState==='disconnected'){peer?.pc.close();void this.offer(id);}}
   if(!this.heartbeat)this.heartbeat=setInterval(()=>{
@@ -148,10 +150,10 @@ export class RoomClient {
   pc.onconnectionstatechange=()=>{if(this.peers.get(id)!==p)return;if(['failed','disconnected','closed'].includes(pc.connectionState)){p.proven=false;this.localStatus();if(this.isHost){this.broadcastLocal();this.retryPeer(id,p);}}};
   return p;
  }
- private retryPeer(id:string,peer:Peer){if(this.peerRetry.has(id)||this.stopped)return;if((this.peerAttempts.get(id)||0)>=4){this.fail('局域网尚未连通；可由房主切换云端模式');return;}const attempt=(this.peerAttempts.get(id)||0)+1;this.peerAttempts.set(id,attempt);this.peerRetry.set(id,setTimeout(()=>{this.peerRetry.delete(id);if(this.peers.get(id)!==peer||peer.proven||this.ws?.readyState!==WebSocket.OPEN)return;peer.pc.close();void this.offer(id);},Math.min(1500*attempt,6000)));}
+ private retryPeer(id:string,peer:Peer){if(this.peerRetry.has(id)||this.stopped)return;if((this.peerAttempts.get(id)||0)>=4){if(this.state.room?.spectators?.some(p=>p.id===id))return;this.fail('局域网尚未连通；可由房主切换云端模式');return;}const attempt=(this.peerAttempts.get(id)||0)+1;this.peerAttempts.set(id,attempt);this.peerRetry.set(id,setTimeout(()=>{this.peerRetry.delete(id);if(this.peers.get(id)!==peer||peer.proven||this.ws?.readyState!==WebSocket.OPEN)return;peer.pc.close();void this.offer(id);},Math.min(1500*attempt,6000)));}
  private async offer(id:string){try{const p=this.peer(id);this.bindDC(id,p,p.pc.createDataChannel('mocha-tabletop',{ordered:true}));await p.pc.setLocalDescription(await p.pc.createOffer());this.sendSignal(id,{description:p.pc.localDescription});}catch(e){this.fail(e);}}
  private sendSignal(to:string,data:any){this.control({type:'signal',to,data});}
- private async signal(id:string,data:any){const r=this.state.room;if(!r||r.mode!=='lan'||!r.players.some(p=>p.id===id))return;let p=this.peers.get(id);
+ private async signal(id:string,data:any){const r=this.state.room;if(!r||r.mode!=='lan'||![...r.players,...r.spectators||[]].some(p=>p.id===id))return;let p=this.peers.get(id);
   if(data.description?.type==='offer'){if(this.isHost)return;const pendingCandidates=p?.pending||[];p?.pc.close();p=this.peer(id);p.pending=pendingCandidates;await p.pc.setRemoteDescription(data.description);for(const candidate of p.pending)await p.pc.addIceCandidate(candidate);p.pending=[];await p.pc.setLocalDescription(await p.pc.createAnswer());this.sendSignal(id,{description:p.pc.localDescription});}
   else if(data.description?.type==='answer'&&p){await p.pc.setRemoteDescription(data.description);for(const candidate of p.pending)await p.pc.addIceCandidate(candidate);p.pending=[];}
   else if(data.candidate){if(!p)p=this.peer(id);if(p.pc.remoteDescription)await p.pc.addIceCandidate(data.candidate);else p.pending.push(data.candidate);}
@@ -168,15 +170,15 @@ export class RoomClient {
     if(!p.proven)return;
     if(msg.type==='action'&&this.isHost){try{this.applyLocal(id,msg);}catch(e){this.sendDC(p,{type:'error',error:e instanceof Error?e.message:'操作无效'});}return;}
     if(msg.type==='error'){this.fail(msg.error);return;}
-    if(msg.type==='lanSnapshot'&&!this.isHost&&id===this.state.room?.hostID){this.patch({room:msg.room,view:msg.view,actionRevision:msg.actionRevision||0,paused:!!msg.paused,transport:'lan',status:msg.room.started?'playing':'lobby',error:undefined});}
+    if(msg.type==='lanSnapshot'&&!this.isHost&&id===this.state.room?.hostID){if(msg.room.revision<this.state.room.revision)return;this.patch({room:msg.room,view:msg.view,actionRevision:msg.actionRevision||0,paused:!!msg.paused,transport:'lan',status:msg.room.started?'playing':'lobby',error:undefined});}
    }catch(e){this.fail(e);}
   };
  }
  private sendDC(p:Peer,msg:any){if(p.dc?.readyState==='open'&&p.dc.bufferedAmount<1000000)p.dc.send(JSON.stringify(msg));}
  private localStatus(){const r=this.state.room;if(!r||r.mode!=='lan')return;const connected=this.isHost?r.players.every(p=>p.id===r.hostID||this.peers.get(p.id)?.proven):!!this.peers.get(r.hostID)?.proven;this.patch({transport:connected?'lan':'none',paused:r.started&&(!connected||this.isHost&&!this.localMatch)});}
  private applyLocal(actor:string,msg:any){const r=this.state.room;if(!r||!this.localMatch||!r.started||!this.isHost)throw new Error('等待房主开始');if(this.state.paused)throw new Error('有玩家掉线，恢复连接后继续');this.localMatch=applyMatch(this.localMatch,r.kind,r.players,actor,msg.command,msg.requestID,msg.actionRevision);this.persistLocal();this.broadcastLocal();}
- private broadcastLocal(){const r=this.state.room;if(!r||r.mode!=='lan'||!this.isHost)return;this.localStatus();const room={...r,players:r.players.map(p=>({...p,connected:p.id===r.hostID||!!this.peers.get(p.id)?.proven}))};
-  for(const p of room.players){const data={type:'lanSnapshot',room:{...room,pending:p.id===r.hostID?room.pending:[]},...(this.localMatch?viewMatch(this.localMatch,r.kind,p.id):{view:undefined,actionRevision:0}),paused:this.state.paused};
+ private broadcastLocal(){const r=this.state.room;if(!r||r.mode!=='lan'||!this.isHost)return;this.localStatus();const room={...r,spectators:(r.spectators||[]).map(p=>({...p,connected:!!this.peers.get(p.id)?.proven})),players:r.players.map(p=>({...p,connected:p.id===r.hostID||!!this.peers.get(p.id)?.proven}))};
+  for(const p of [...room.players,...room.spectators]){const data={type:'lanSnapshot',room:{...room,pending:p.id===r.hostID?room.pending:[]},...(this.localMatch?viewRoomMatch(this.localMatch,r,p.id):{view:undefined,actionRevision:0}),paused:this.state.paused};
    if(p.id===r.hostID)this.patch({view:data.view,actionRevision:data.actionRevision});else {const peer=this.peers.get(p.id);if(peer?.proven)this.sendDC(peer,data);}
   }
  }

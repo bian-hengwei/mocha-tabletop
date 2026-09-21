@@ -119,3 +119,13 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `tests/ui/century-viewport.integration.mjs`：商旅双语八尺寸，市场/订单/商队/已用商人切换、费用完整、末张牌横向可达、付款、弹窗旋转，以及五人密集手牌；支持 WebKit。
 - `tests/ui/game-viewport.integration.mjs`：按注册表遍历十二款游戏，最大人数、中英八尺寸，检查页面和所有桌面容器没有纵向滚动或内容裁剪；配合各游戏的状态/操作测试及实际截图验收，不能单独代表完整游戏流程。
 - `tests/ui/bombs-viewport.integration.mjs`：喵喵危机中英八尺寸、最大五人，初始/选牌/响应/目标/索要/交牌/预知/拆弹/插入/结束十种状态，所有容器纵向溢出与裁切检查，实际操作及预知私密换座；支持 WebKit。
+
+
+## 观战回归
+
+- `npx vitest run tests/spectators.test.ts tests/network/server-recovery.test.ts`：十二款公开投影、身份/手牌/密钥/私人核验过滤、终局公开信息、观战容量、席位切换、审批、权限、关闭及恢复。
+- `TEST_API_BASE=http://127.0.0.1:8799 node tests/network/spectators.integration.mjs`：真实云端加入、跨开局审批、链接/房间号观战、操作拒绝、断线不暂停、重连与关闭后凭据撤销。
+- `BASE_URL=http://127.0.0.1:5199 node tests/ui/spectators-live.integration.mjs`：真实 App 的云端及 WebRTC 观战流程、房主开关、准备室切换、对局中批准、公开库存、刷新和离开；默认测试两种模式，可用 `TEST_MODES=cloud` 或 `lan` 选测。
+- `BASE_URL=http://127.0.0.1:5199 node tests/ui/spectators.integration.mjs`：模拟已认证快照，在真实 App 中检查十二款观战桌面、中英七尺寸、二十位观众名单、弹窗旋转和焦点恢复；可用 `TEST_GAMES=mahjong,werewolf` 选测。此项不替代真实联机验证。
+
+以上浏览器测试使用 Chromium，截图写入忽略的 `test-results/`。两个端口必须指向同一份代码，并按上方独立副本说明配置 Worker 来源与 Vite 代理。
