@@ -4,6 +4,8 @@ export const uiText: Record<string,string> = {
   '公共供应':'Shared supply',
   '贵族数':'Patrons',
   '玩家名称':'Player',
+  '订单数':'Orders','金币数':'Gold coins','银币数':'Silver coins',
+  '触发末轮的订单数':'Orders to trigger the final round',
   '已购牌数':'Cards bought',
   '15 分触发最后一轮；平分时已购牌较少者获胜。':'15 points triggers the final round. Ties favor fewer purchased cards.',
   '订单详情':'Order details','香料':'Spice','所需':'Cost','持有':'Have','还缺':'Missing','查看费用':'View cost',

@@ -58,6 +58,7 @@ jobs:
           node tests/ui/werewolf-lineups.integration.mjs
           node tests/ui/proactive-new-games.integration.mjs
           node tests/ui/century-viewport.integration.mjs
+          node tests/ui/century-results.integration.mjs
           node tests/ui/gems-viewport.integration.mjs
           node tests/ui/gems-results.integration.mjs
           node tests/ui/bombs-viewport.integration.mjs
