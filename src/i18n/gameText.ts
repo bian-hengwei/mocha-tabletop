@@ -208,6 +208,7 @@ export const gamePatterns:[RegExp,string,number[]?][]=[
  [/^第 (\d+) 轮 · 最后一轮$/,'Round $1 · Final round'],[/^第 (\d+) 轮$/,'Round $1'],
  [/^(白钻|蓝宝石|祖母绿|红宝石|黑玛瑙)(矿场|商路|工坊) · (\d+) 分$/,'$1 $2 · $3 points',[1,2]],
  [/^([⚪🔵🟢🔴⚫🟡]+) (白钻|蓝宝石|祖母绿|红宝石|黑玛瑙|黄金) · (\d+)$/,'$1 $2 · $3',[2]],
+ [/^归还 1 枚$/,'Return 1 token'],
  [/^归还 (\d+) 枚$/,'Return $1 tokens'],[/^拿取 (\d+) 种宝石$/,'Take $1 different colors'],[/^盲抽 (\d+) 级$/,'Reserve a hidden level-$1 card'],
  [/^贵族 (\d+)$/,'Patron $1'],[/^贵族 (\d+) · 3 分$/,'Patron $1 · 3 points'],[/^支付 (.+)$/,'Pay $1',[1]],[/^(\d+) 级市场$/,'Level $1 market'],
  [/^胜者：(.+) · (\d+) 分$/,'Winner: $1 · $2 points'],[/^胜者：(.+)$/,'Winner: $1'],[/^(.+) 获得贵族 · \+3 分$/,'$1 welcomed a patron · +3 points'],

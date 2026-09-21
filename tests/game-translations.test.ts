@@ -16,6 +16,7 @@ describe('engine translation coverage',()=>{
   ['需要 3 位不同玩家','Needs 3 distinct players'],['需要 4 位不同玩家','Needs 4 distinct players'],['需要 2–4 位不同玩家','Needs 2–4 distinct players'],
   ['支付 1 枚任选香料','Pay any 1 spice cube'],['支付 2 枚任选香料','Pay any 2 spice cubes'],
   ['归还 1 枚香料','Return 1 spice'],['归还 2 枚香料','Return 2 spices'],
+  ['归还 0 枚','Return 0 tokens'],['归还 1 枚','Return 1 token'],['归还 2 枚','Return 2 tokens'],
   ['归还 1 枚香料（还需 2 枚）','Return 1 spice (2 still to return)'],['归还 2 枚香料（还需 1 枚）','Return 2 spices (1 still to return)'],
   [' · 还可升级 1 次',' · 1 upgrade left'],[' · 还可升级 2 次',' · 2 upgrades left'],
   ['升级 1 次','Upgrade 1 step'],['升级 2 次','Upgrade 2 steps'],
