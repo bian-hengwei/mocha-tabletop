@@ -15,7 +15,7 @@ async function noError(){assert.equal(await page.locator('.toast').count(),0,awa
 async function capture(name){await page.screenshot({path:`${artifacts}/${name}.png`,fullPage:true});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false,'no document overflow');}
 try{
  if(process.env.ONLY_GAME!=='century'){
- await begin('寿司小宴');let turns=0;while(!await page.locator('.end-banner').count()&&turns++<80){await page.getByRole('combobox',{name:'切换试玩座位'}).selectOption('practice-'+((turns-1)%2));await page.locator('.ng-hand .ng-sushi-card:not([disabled])').first().click();await page.getByRole('button',{name:/^确认 1 张/}).click();await noError();}assert(await page.locator('.end-banner').count(),'Sushi must finish');await capture('sushi-finished');console.log('PASS real App Sushi Go: complete three rounds via '+turns+' user selections');
+ await begin('寿司小宴');let turns=0;while(!await page.locator('.end-banner').count()&&turns++<80){await page.getByRole('combobox',{name:'切换试玩座位'}).selectOption('practice-'+((turns-1)%2));await page.locator('.ng-hand .ng-sushi-card:not([disabled])').first().click();await page.getByRole('button',{name:/^确认 1 张/}).click();await noError();if(turns===1)assert.match(await page.locator('.ng-heading strong').textContent(),/仍在选牌/,'Waiting identifies the remaining chooser');}assert(await page.locator('.end-banner').count(),'Sushi must finish');assert.equal(await page.locator('.sushi-results tbody tr').count(),2,'Both final scores and round breakdowns are shown');assert.equal(await page.locator('.ng-sushi-hand-panel').count(),0,'No empty hand panel after scoring');await capture('sushi-finished');await page.getByRole('button',{name:'收起结算',exact:true}).click();await page.getByRole('button',{name:'得分明细',exact:true}).click();assert.equal(await page.locator('.sushi-results tbody tr').count(),2,'Final details can be reopened');console.log('PASS real App Sushi Go: complete three rounds via '+turns+' user selections');
  await begin('七彩接龙','single');turns=0;const seen=new Set();
  while(!await page.locator('.end-banner').count()&&turns++<700){
   await active();
@@ -59,7 +59,7 @@ try{
    }
    const doneTrade=page.getByRole('button',{name:'结束交易',exact:true});if(await doneTrade.count()){traded=true;coverage.add('trade');await doneTrade.click();continue;}
    const pay=page.getByRole('button',{name:/^支付给第/});if(await pay.count()){await pay.click();await firstChoice();continue;}
-   const goals=panel('公开订单').locator('.ng-goal:not([disabled])');if(await goals.count()){await page.locator('.ng-century-tabs').getByRole('button',{name:'公开订单',exact:true}).click();await goals.first().click();await confirm();claimed=true;coverage.add('claim');continue;}
+   const goals=panel('公开订单').locator('.ng-goal.ng-claimable');if(await goals.count()){await page.locator('.ng-century-tabs').getByRole('button',{name:'公开订单',exact:true}).click();await goals.first().click();await page.getByRole('dialog',{name:'订单详情'}).getByRole('button',{name:'完成订单',exact:true}).click();claimed=true;coverage.add('claim');continue;}
    const hand=panel('你的商队').locator('.ng-spice-card:not([disabled])'),texts=await hand.evaluateAll(xs=>xs.map(x=>x.getAttribute('aria-label'))),cubes=await counts();
    const tradeIndex=texts.findIndex(t=>t.includes('→'));if(!traded&&tradeIndex>=0){await hand.nth(tradeIndex).click();await confirm();continue;}
    // Recruit an affordable exchange if none is available yet.

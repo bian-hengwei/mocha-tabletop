@@ -4,7 +4,7 @@ import { useDialog } from './useDialog';
 import { t } from '../i18n';
 function tx<T>(value: T): T | string { return typeof value === 'string' ? t(value) : value; }
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { Check, ChevronRight, Crown, Eye, Gem, LockKeyhole, Moon, Shield, Skull, Sparkles, Swords, X } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Crown, Eye, Gem, LockKeyhole, Moon, Shield, Skull, Sparkles, Swords, X } from 'lucide-react';
 import type { Action, Command, GameView } from '../core/types';
 import { GEM_COLORS } from '../core/games/gems';
 import './action-sheet-viewport.css';
@@ -185,9 +185,29 @@ export function ActionSheet({ action, selected, view, onClose, onSubmit }: {
         setError('');
         setValues(old => old.includes(id) ? old.filter(x => x !== id) : current.max === 1 ? [id] : old.length < current.max ? [...old, id] : old);
     };
+    const playerChoices = current.choices.length > 0 && current.choices.every(choice => view.board.players?.some((player: { id: string }) => player.id === choice.id));
+    const choicesRef = useRef<HTMLDivElement>(null);
+    const [choiceScroll, setChoiceScroll] = useState({ before: false, after: false });
+    useLayoutEffect(() => {
+        const element = choicesRef.current;
+        if (!element) return;
+        const update = () => {
+            const before = element.scrollLeft > 4, after = element.scrollLeft + element.clientWidth < element.scrollWidth - 4;
+            setChoiceScroll(old => old.before === before && old.after === after ? old : { before, after });
+        };
+        const observer = new ResizeObserver(update);
+        observer.observe(element);
+        element.addEventListener('scroll', update);
+        update();
+        return () => { observer.disconnect(); element.removeEventListener('scroll', update); };
+    }, [current.id, current.choices]);
+    const scrollChoices = (direction: number) => {
+        const element = choicesRef.current;
+        if (element) element.scrollBy({ left: direction * element.clientWidth, behavior: 'auto' });
+    };
     const selectionSummary = current.max === 0 ? '' : current.min === current.max ? `已选 ${values.length} / ${current.max}` : `可选 ${current.min}–${current.max} 项 · 已选 ${values.length}`;
 
-    return <div className="modal-shade" onClick={onClose}><section ref={dialogRef} tabIndex={-1} className="action-sheet" role="dialog" aria-modal="true" aria-label={tx(current.title)} onClick={e => e.stopPropagation()}><div className="sheet-heading"><div><h2>{tx(current.title)}</h2></div><button className="icon" aria-label={t("关闭选择")} onClick={onClose}><X /></button></div>{tx(current.help && <p>{tx(current.help)}</p>)}{tx(action.id === 'pay_custom' && view.board.payment && <div className="inline-actions"><span>{t("折扣后费用")}</span><Cost values={view.board.payment.needed}/><small>{t("黄金可代任意颜色")}</small></div>)}<div className="choices">{tx(current.choices.map(c => <button className={`choice ${values.includes(c.id) ? 'selected' : ''}`} key={c.id} aria-pressed={values.includes(c.id)} onClick={() => choose(c.id)}><span>{c.translateTitle === false || view.board.players?.some((player: { id: string; name: string }) => player.id === c.id && player.name === c.title) ? c.title : t(c.title)}</span>{tx(c.subtitle && <small>{tx(c.subtitle)}</small>)}{tx(values.includes(c.id) && <Check size={15}/>)}</button>))}</div>{tx(error && <p className="error" role="alert">{tx(error)}</p>)}<footer>{selectionSummary && <small role="status">{tx(selectionSummary)}</small>}<button style={{ marginLeft: 'auto' }} className="compact primary" disabled={!valid} onClick={() => {
+    return <div className="modal-shade" onClick={onClose}><section ref={dialogRef} tabIndex={-1} className="action-sheet" role="dialog" aria-modal="true" aria-label={tx(current.title)} onClick={e => e.stopPropagation()}><div className="sheet-heading"><div><h2>{tx(current.title)}</h2></div>{(choiceScroll.before || choiceScroll.after) && <div className="choice-paging" role="group" aria-label={t("选项翻页")}><button type="button" aria-label={t("上一组选项")} disabled={!choiceScroll.before} onClick={() => scrollChoices(-1)}><ChevronLeft size={20}/></button><button type="button" aria-label={t("下一组选项")} disabled={!choiceScroll.after} onClick={() => scrollChoices(1)}><ChevronRight size={20}/></button></div>}<button className="icon" aria-label={t("关闭选择")} onClick={onClose}><X /></button></div>{tx(current.help && <p>{tx(current.help)}</p>)}{tx(action.id === 'pay_custom' && view.board.payment && <div className="inline-actions"><span>{t("折扣后费用")}</span><Cost values={view.board.payment.needed}/><small>{t("黄金可代任意颜色")}</small></div>)}<div ref={choicesRef} className={`choices${playerChoices ? " player-choices" : ""}`} style={playerChoices ? { "--choice-rows": Math.min(5, Math.ceil(current.choices.length / 2)) } as CSSProperties : undefined} tabIndex={0} aria-label={t("可选项")}>{tx(current.choices.map(c => <button className={`choice ${values.includes(c.id) ? 'selected' : ''}`} key={c.id} aria-pressed={values.includes(c.id)} onClick={() => choose(c.id)}><span>{c.translateTitle === false || view.board.players?.some((player: { id: string; name: string }) => player.id === c.id && player.name === c.title) ? c.title : t(c.title)}</span>{tx(c.subtitle && <small>{tx(c.subtitle)}</small>)}{tx(values.includes(c.id) && <Check size={15}/>)}</button>))}</div>{tx(error && <p className="error" role="alert">{tx(error)}</p>)}<footer>{selectionSummary && <small role="status">{tx(selectionSummary)}</small>}<button style={{ marginLeft: 'auto' }} className="compact primary" disabled={!valid} onClick={() => {
             try {
                 onSubmit({ action: action.id, values });
                 onClose();

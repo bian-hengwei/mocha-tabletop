@@ -1,7 +1,7 @@
 import {beforeEach,afterEach,describe,it,expect,vi} from 'vitest';
 vi.mock('cloudflare:workers',()=>({DurableObject:class {}}));
 // Keep the Workers runtime out of the DOM-only application typecheck.
-const {GameRoom}=await import('../../worker/'+'index');
+const {GameRoom,RoomDirectory,default:worker}=await import('../../worker/'+'index');
 const host={id:'host0000',name:'房主',avatar:'🦊',ready:true,connected:true};
 const guest={id:'guest000',name:'朋友',avatar:'🐻',ready:true,connected:true};
 class ServerSocket {messages:any[]=[];closed?:number;constructor(public attachment:any={opened:Date.now()}){}deserializeAttachment(){return this.attachment;}serializeAttachment(a:any){this.attachment=a;}send(raw:string){this.messages.push(JSON.parse(raw));}close(code:number){this.closed=code;}get snapshot(){return this.messages.filter(m=>m.type==='snapshot').at(-1);}}
@@ -23,8 +23,132 @@ describe('authoritative reconnect and presence',()=>{
  it('allows only the lobby host to remove an offline seat',async()=>{await message(sockets[0],{type:'removePlayer',playerID:guest.id});expect(sockets[0].messages.at(-1).error).toContain('只能移除离线');await server.webSocketClose(sockets[1]);await message(sockets[0],{type:'removePlayer',playerID:guest.id});expect(server.data.info.players.map((p:any)=>p.id)).toEqual([host.id]);expect(server.data.tokens[guest.id]).toBeUndefined();});
  it('never removes a player midgame and gives each new round a distinct persistent match ID',async()=>{await message(sockets[0],{type:'start'});const firstID=server.data.info.matchID;expect(firstID).toBeTruthy();await server.webSocketClose(sockets[1]);await message(sockets[0],{type:'removePlayer',playerID:guest.id});expect(sockets[0].messages.at(-1).error).toContain('准备室');expect(server.data.info.players).toHaveLength(2);await message(sockets[0],{type:'endGame'});expect(server.data.info.matchID).toBeUndefined();sockets[1].attachment={id:guest.id,authenticated:true,opened:Date.now()};await message(sockets[1],{type:'ready',ready:true});await message(sockets[0],{type:'start'});expect(server.data.info.matchID).toBeTruthy();expect(server.data.info.matchID).not.toBe(firstID);});
 });
+describe('active room expiry',()=>{
+ it('keeps a live match beyond its original six-hour deadline without redealing',async()=>{
+  server.data.expires=Date.now()+6*3600000;const originalExpiry=server.data.expires;
+  await message(sockets[0],{type:'start'});const match=structuredClone(server.data.match),matchID=server.data.info.matchID;
+  const put=vi.spyOn(server.ctx.storage,'put'),index=vi.spyOn(server.env.DIRECTORY,'getByName');
+  for(let hour=0;hour<7;hour++){
+   await vi.advanceTimersByTimeAsync(3600000);
+   for(const socket of sockets)await message(socket,{type:'ping'});
+   await server.alarm();
+   expect(server.data.expires).toBe(Date.now()+6*3600000);
+   for(const socket of sockets){expect(socket.closed).toBeUndefined();expect(socket.snapshot.room.expiresAt).toBe(server.data.expires);expect(socket.snapshot.room.matchID).toBe(matchID);}
+  }
+  expect(Date.now()).toBeGreaterThan(originalExpiry);expect(server.data.match).toEqual(match);
+  expect(put).toHaveBeenCalledWith('room',expect.objectContaining({expires:server.data.expires}));expect(index).toHaveBeenCalled();
+ });
+ it('coalesces heartbeat persistence instead of writing on every ping',async()=>{
+  server.data.expires=Date.now()+6*3600000;const expires=server.data.expires,put=vi.spyOn(server.ctx.storage,'put');
+  for(let count=0;count<14;count++){await vi.advanceTimersByTimeAsync(20000);await message(sockets[0],{type:'ping'});}
+  expect(put).not.toHaveBeenCalled();expect(server.data.expires).toBe(expires);
+  await vi.advanceTimersByTimeAsync(21000);await message(sockets[0],{type:'ping'});
+  expect(put).toHaveBeenCalledTimes(1);expect(server.data.expires).toBe(Date.now()+6*3600000);expect(alarm).toBe(Date.now()+30000);
+  await message(sockets[1],{type:'ping'});expect(put).toHaveBeenCalledTimes(1);
+ });
+ it('does not renew for anonymous probes, applicants, invalid messages or failed authentication',async()=>{
+  const expires=server.data.expires,pending=member('pending0',true),anonymous=new ServerSocket();sockets.push(pending,anonymous);
+  await server.fetch(new Request('https://internal/status'));
+  await message(pending,{type:'ping'});expect(pending.messages.at(-1)).toEqual({type:'pong'});
+  await message(anonymous,{type:'ping'});await message(anonymous,{type:'hello',profile:host,token:'c'.repeat(48)});
+  await message(anonymous,{type:'hello',profile:{id:'pending1',name:'Applicant',avatar:'🦊'},token:'c'.repeat(48)});
+  await message(sockets[0],{type:'unknown'});await message(sockets[1],{type:'start'});
+  expect(server.data.expires).toBe(expires);
+ });
+ it('renews admitted reconnects and valid lobby activity, including client expiry snapshots',async()=>{
+  const oldExpiry=server.data.expires;await message(sockets[1],{type:'ready',ready:false});
+  expect(server.data.expires).toBeGreaterThan(oldExpiry);expect(sockets[0].snapshot.room.expiresAt).toBe(server.data.expires);
+  await server.webSocketClose(sockets[0]);await vi.advanceTimersByTimeAsync(10*60000);
+  const restored=new ServerSocket();sockets.push(restored);await message(restored,{type:'hello',profile:host,token:'a'.repeat(48)});
+  expect(restored.snapshot.room.expiresAt).toBe(Date.now()+6*3600000);expect(restored.snapshot.room.players).toHaveLength(2);
+ });
+ it('renews valid LAN signaling while rejecting invalid relay activity',async()=>{
+  server.data.info.mode='lan';const oldExpiry=server.data.expires;
+  await message(sockets[1],{type:'signal',to:'unknown0',data:{type:'offer'}});expect(server.data.expires).toBe(oldExpiry);
+  await message(sockets[1],{type:'signal',to:host.id,data:{type:'offer'}});
+  expect(server.data.expires).toBe(Date.now()+6*3600000);expect(sockets[0].messages).toContainEqual({type:'signal',from:guest.id,data:{type:'offer'}});
+ });
+ it('still expires abandoned rooms and never revives an expired or dissolved room',async()=>{
+  const remove=vi.spyOn(server.ctx.storage,'deleteAll');server.data.expires=Date.now()+60000;
+  await vi.advanceTimersByTimeAsync(60001);const expired=server.data.expires;
+  await message(sockets[0],{type:'ping'});expect(server.data.expires).toBe(expired);expect(sockets[0].messages.at(-1).type).toBe('error');
+  expect((await server.fetch(new Request('https://internal/status'))).status).toBe(404);
+  await server.alarm();expect(remove).toHaveBeenCalledOnce();expect(server.data).toBeUndefined();
+ });
+ it('does not extend the expiry after the host dissolves the room',async()=>{
+  const expires=server.data.expires;await message(sockets[0],{type:'leave'});expect(server.data.ended).toBe(true);expect(server.data.expires).toBe(expires);
+  await message(sockets[1],{type:'ping'});expect(server.data.expires).toBe(expires);expect(sockets[1].messages.at(-1).type).toBe('error');
+ });
+});
+describe('directory expiry reconciliation',()=>{
+ const setup=()=>{
+  const entry={code:'ABC234',kind:'gems',mode:'cloud',hostName:host.name,count:2,max:4,hash:'original-network',expires:Date.now()-1};
+  const entries=new Map<string,unknown>([['room:ABC234',entry]]);
+  const fetch=vi.fn((request:Request)=>server.fetch(request) as Promise<Response>);
+  const setAlarm=vi.fn();
+  const directory=Object.assign(Object.create(RoomDirectory.prototype) as InstanceType<typeof RoomDirectory>,{
+   ctx:{storage:{
+    async get<T>(key:string){return entries.get(key) as T|undefined;},
+    async put(key:string,value:unknown){entries.set(key,structuredClone(value));},
+    async delete(key:string){return entries.delete(key);},
+    async list<T>({prefix}:{prefix:string}){return new Map([...entries].filter(([key])=>key.startsWith(prefix))) as Map<string,T>;},
+    setAlarm,
+   }},env:{ROOMS:{getByName:()=>({fetch})}},
+  });
+  return {directory,entries,entry,fetch,setAlarm};
+ };
+ it('repairs a missed renewal before deleting its discovery entry and keeps the original network',async()=>{
+  const {directory,entries,entry,setAlarm}=setup();
+  await message(sockets[0],{type:'ping'});const expires=server.data.expires;
+  await directory.alarm();
+  expect(entries.get('room:ABC234')).toEqual({...entry,expires});
+  expect(server.data.expires).toBe(expires);expect(setAlarm).toHaveBeenCalledWith(Date.now()+3600000);
+ });
+ it('keeps an active match hidden from discovery when repairing its stale index',async()=>{
+  const {directory,entries,entry}=setup();await message(sockets[0],{type:'start'});
+  await directory.alarm();expect(entries.get('room:ABC234')).toEqual({...entry,count:0,expires:server.data.expires});
+ });
+ it.each(['expired','ended','deleted'])('removes an authoritative %s room',async state=>{
+  const {directory,entries}=setup();
+  if(state==='expired')server.data.expires=Date.now();else if(state==='ended')server.data.ended=true;else server.data=undefined;
+  await directory.alarm();expect(entries.has('room:ABC234')).toBe(false);
+ });
+ it.each(['throw','503'])('retains a stale index during %s failure and repairs it on the next sweep',async failure=>{
+  const {directory,entries,entry,fetch,setAlarm}=setup();
+  if(failure==='throw')fetch.mockRejectedValueOnce(new Error('unavailable'));else fetch.mockResolvedValueOnce(new Response(null,{status:503}));
+  await directory.alarm();expect(entries.get('room:ABC234')).toEqual(entry);expect(setAlarm).toHaveBeenCalled();
+  await directory.alarm();expect(entries.get('room:ABC234')).toEqual({...entry,expires:server.data.expires});
+ });
+ it('does not overwrite a newer index update that arrives during the room lookup',async()=>{
+  const {directory,entries,entry,fetch}=setup();const renewed={...entry,expires:Date.now()+3600000,count:0};
+  fetch.mockImplementationOnce(async()=>{entries.set('room:ABC234',renewed);return new Response(null,{status:404});});
+  await directory.alarm();expect(entries.get('room:ABC234')).toEqual(renewed);
+ });
+ it('still clears expired rate limits without probing healthy entries',async()=>{
+  const {directory,entries,entry,fetch}=setup();entries.set('room:ABC234',{...entry,expires:Date.now()+3600000});
+  entries.set('limit:old',{since:Date.now()-600001});entries.set('limit:current',{since:Date.now()});
+  await directory.alarm();expect(fetch).not.toHaveBeenCalled();expect(entries.has('limit:old')).toBe(false);expect(entries.has('limit:current')).toBe(true);
+ });
+ it('never exposes internal directory metadata through the public room route',async()=>{
+  const env={...server.env,ROOMS:{getByName:()=>({fetch:(req:Request)=>server.fetch(req)})},ASSETS:{fetch:()=>new Response(null,{status:404})}};
+  const publicStatus=await worker.fetch(new Request('http://127.0.0.1/api/rooms/ABC234'),env);
+  expect(await publicStatus.json()).toEqual({ok:true});
+  const direct=await worker.fetch(new Request('http://127.0.0.1/api/directory-entry'),env);expect(direct.status).toBe(404);
+ });
+});
 
 describe('room-owned bot seats and durable turns',()=>{
+ it('keeps the scheduled bot turn when an admitted heartbeat renews room expiry',async()=>{
+  await server.webSocketClose(sockets[1]);await message(sockets[0],{type:'removePlayer',playerID:guest.id});
+  await message(sockets[0],{type:'addBot',difficulty:'normal'});await message(sockets[0],{type:'start'});
+  await message(sockets[0],{type:'action',command:{action:'take_distinct',values:['white','blue','green']},actionRevision:server.data.match.actorRevisions[host.id]});
+  const due=server.data.botDue,revision=server.data.match.revision;expect(due).toBe(Date.now()+700);
+  server.data.expires=Date.now()+3600000;
+  await vi.advanceTimersByTimeAsync(100);await message(sockets[0],{type:'ping'});
+  expect(server.data.expires).toBe(Date.now()+6*3600000);expect(server.data.botDue).toBe(due);expect(alarm).toBe(due);
+  await vi.advanceTimersByTimeAsync(600);await server.alarm();expect(server.data.match.revision).toBe(revision+1);
+  await server.alarm();expect(server.data.match.revision).toBe(revision+1);
+ });
  it('lets only the lobby host configure bots and resets human readiness',async()=>{
   await message(sockets[1],{type:'addBot',difficulty:'hard'});expect(sockets[1].messages.at(-1).error).toContain('只有房主');expect(server.data.info.players).toHaveLength(2);
   for(const difficulty of ['expert',null,{},1]){await message(sockets[0],{type:'addBot',difficulty});expect(server.data.info.players).toHaveLength(2);}

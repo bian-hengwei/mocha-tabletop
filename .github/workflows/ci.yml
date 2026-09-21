@@ -47,6 +47,8 @@ jobs:
           node tests/ui/uno-experience.integration.mjs
           node tests/ui/hand-experience.integration.mjs
           node tests/ui/poker-declaration.integration.mjs
+          node tests/ui/poker-feedback.integration.mjs
+          node tests/ui/guandan-results.integration.mjs
           node tests/ui/identity-portraits.integration.mjs
           node tests/ui/illustrated-games.integration.mjs
           node tests/ui/word-privacy.integration.mjs
@@ -57,7 +59,9 @@ jobs:
           node tests/ui/werewolf-lineups.integration.mjs
           node tests/ui/proactive-new-games.integration.mjs
           node tests/ui/century-viewport.integration.mjs
+          node tests/ui/century-results.integration.mjs
           node tests/ui/gems-viewport.integration.mjs
+          node tests/ui/gems-results.integration.mjs
           node tests/ui/bombs-viewport.integration.mjs
           node tests/ui/uno-sushi-viewport.integration.mjs
           node tests/ui/word-viewport.integration.mjs

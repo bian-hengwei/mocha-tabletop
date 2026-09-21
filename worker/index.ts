@@ -77,8 +77,25 @@ export class RoomDirectory extends DurableObject<Env>{
    return json({error:'不存在'},404);
   }catch(e){return json({error:error(e)},400);}
  }
- async alarm(){const now=Date.now();for(const [key,value]of await this.ctx.storage.list<any>()){if(key.startsWith('room:')&&value.expires<now||key.startsWith('limit:')&&value.since+600000<now)await this.ctx.storage.delete(key);}await this.ctx.storage.setAlarm(now+3600000);}
+ async alarm(){
+  const now=Date.now();
+  for(const [key,entry]of await this.ctx.storage.list<Entry>({prefix:'room:'})){
+   if(entry.expires>now)continue;
+   try{
+    // A missed index write must not delete a room that renewed its authoritative lease.
+    const response=await this.env.ROOMS.getByName(entry.code).fetch(new Request('https://internal/directory-entry'));
+    const update=response.ok?await response.json() as Omit<Entry,'hash'>:undefined;
+    const current=await this.ctx.storage.get<Entry>(key);
+    if(!current||current.expires>now)continue;
+    if(response.status===404)await this.ctx.storage.delete(key);
+    else if(update)await this.ctx.storage.put(key,{...update,hash:current.hash});
+   }catch{/* Keep the entry on transient failure and retry at the next sweep. */}
+  }
+  for(const [key,value]of await this.ctx.storage.list<{since:number}>({prefix:'limit:'}))if(value.since+600000<now)await this.ctx.storage.delete(key);
+  await this.ctx.storage.setAlarm(now+3600000);
+ }
 }
+const ROOM_TTL=6*3600000,ACTIVITY_RENEW_INTERVAL=5*60000;
 interface StoredRoom {info:RoomInfo;tokens:Record<string,string>;pendingTokens:Record<string,string>;invite:string;match?:MatchState;ended?:boolean;expires:number;controlSeen:Record<string,string[]>;botDue?:number;botRevision?:number}
 interface Attachment {id?:string;authenticated?:boolean;pending?:boolean;opened:number;messages?:number;window?:number;lastSeen?:number}
 export class GameRoom extends DurableObject<Env>{
@@ -93,6 +110,12 @@ export class GameRoom extends DurableObject<Env>{
   await this.scheduleAlarm();
  }
  private async scheduleAlarm(){const d=this.data;if(d)await this.ctx.storage.setAlarm(Math.min(d.expires,d.botDue??Infinity,this.ctx.getWebSockets().length?Date.now()+30000:Infinity));}
+ // Renew admitted-player activity in batches, rather than writing on every heartbeat.
+ private async renewActivity(now:number){
+  const d=this.data;if(!d||d.ended||d.expires<=now||d.expires>=now+ROOM_TTL-ACTIVITY_RENEW_INTERVAL)return false;
+  const expires=now+ROOM_TTL;await this.ctx.storage.put('room',{...d,expires});d.expires=expires;
+  await this.scheduleAlarm();return true;
+ }
  private sockets(id?:string){return this.ctx.getWebSockets().filter(ws=>{const a=ws.deserializeAttachment() as Attachment;return a.authenticated&&(!id||a.id===id);});}
  private connected(id:string){return !!this.data?.info.players.find(p=>p.id===id)?.bot||this.sockets(id).length>0;}
  private infoFor(id:string):RoomInfo{const r=this.data!.info;return {...r,expiresAt:this.data!.expires,pending:id===r.hostID?r.pending:[],players:r.players.map(p=>({...p,connected:this.connected(p.id)}))};}
@@ -102,17 +125,20 @@ export class GameRoom extends DurableObject<Env>{
   send(ws,{type:'snapshot',room:info,...match,paused:info.mode==='cloud'&&info.started&&info.players.some(p=>!p.connected),invite:a.id===info.hostID?d.invite:undefined});
  }
  private broadcast(){for(const ws of this.sockets())this.snapshot(ws);}
- private async index(){const d=this.data!;await this.env.DIRECTORY.getByName('directory-v1').fetch(new Request('https://internal/internal/update',{method:'POST',body:JSON.stringify({code:d.info.code,kind:d.info.kind,mode:d.info.mode,hostName:d.info.players.find(p=>p.id===d.info.hostID)?.name||'',count:d.ended||d.info.started?0:d.info.players.length,max:roomLimits(d.info.kind,d.info.options).max,expires:d.expires})}));}
+ private directoryEntry():Omit<Entry,'hash'>{const d=this.data!;return {code:d.info.code,kind:d.info.kind,mode:d.info.mode,hostName:d.info.players.find(p=>p.id===d.info.hostID)?.name||'',count:d.ended||d.info.started?0:d.info.players.length,max:roomLimits(d.info.kind,d.info.options).max,expires:d.expires};}
+ private async index(){await this.env.DIRECTORY.getByName('directory-v1').fetch(new Request('https://internal/internal/update',{method:'POST',body:JSON.stringify(this.directoryEntry())}));}
  async fetch(req:Request):Promise<Response>{
   try{
    const path=new URL(req.url).pathname;
    if(path==='/init'){
     if(this.data)return json({error:'房间已存在'},409);
     const b=await req.json() as any;validKind(b.kind);const options=normalizeGameOptions(b.kind,b.options,b.profile.id);
-    this.data={info:{code:b.code,kind:b.kind,mode:b.mode,hostID:b.profile.id,options,players:[{...b.profile,ready:true,connected:false}],pending:[],started:false,revision:1},tokens:{[b.profile.id]:b.token},pendingTokens:{},invite:b.invite,expires:Date.now()+6*3600000,controlSeen:{}};
+    this.data={info:{code:b.code,kind:b.kind,mode:b.mode,hostID:b.profile.id,options,players:[{...b.profile,ready:true,connected:false}],pending:[],started:false,revision:1},tokens:{[b.profile.id]:b.token},pendingTokens:{},invite:b.invite,expires:Date.now()+ROOM_TTL,controlSeen:{}};
     await this.save();return json({ok:true});
    }
-   if(!this.data||this.data.ended||this.data.expires<Date.now())return json({error:'房间已结束或不存在'},404);
+   if(!this.data||this.data.ended||this.data.expires<=Date.now())return json({error:'房间已结束或不存在'},404);
+   // Only the directory binding can request lease metadata; public probes use /status.
+   if(path==='/directory-entry')return json(this.directoryEntry());
    // Existence only: browser WebSocket errors do not expose HTTP 404 status.
    if(path==='/status')return json({ok:true});
    if(this.ctx.getWebSockets().length>44)return json({error:'房间连接过多'},429);
@@ -138,16 +164,16 @@ export class GameRoom extends DurableObject<Env>{
     }
     for(const old of this.sockets(p.id)){if(old!==ws){old.serializeAttachment({opened:0});old.close(4001,'已在另一窗口连接');}}
     ws.serializeAttachment({...a,id:p.id,authenticated:true,pending:!d.tokens[p.id]});
-    r.revision++;await this.save();this.broadcast();await this.index();return;
+    r.revision++;await this.save();if(d.tokens[p.id])await this.renewActivity(now);this.broadcast();await this.index();return;
    }
    if(!a.authenticated||!a.id)throw new Error('请先连接房间');
    const id=a.id;
-   if(msg.type==='ping'){send(ws,{type:'pong'});return;}
+   if(msg.type==='ping'){if(!a.pending&&d.tokens[id]&&r.players.some(p=>p.id===id)&&await this.renewActivity(now)){this.broadcast();await this.index();}send(ws,{type:'pong'});return;}
    if(a.pending){if(msg.type==='leave'){r.pending=r.pending.filter(p=>p.id!==id);delete d.pendingTokens[id];await this.save();ws.close(1000,'已离开');this.broadcast();return;}throw new Error('正在等待房主同意');}
    if(msg.type==='signal'){
     if(r.mode!=='lan')throw new Error('当前不是局域网模式');
     if(typeof msg.to!=='string'||!d.tokens[msg.to]||(id!==r.hostID&&msg.to!==r.hostID))throw new Error('配对对象无效');
-    for(const target of this.sockets(msg.to))send(target,{type:'signal',from:id,data:msg.data});return;
+    for(const target of this.sockets(msg.to))send(target,{type:'signal',from:id,data:msg.data});if(await this.renewActivity(now)){this.broadcast();await this.index();}return;
    }
    if(typeof msg.requestID!=='string'||!msg.requestID||msg.requestID.length>100)throw new Error('请求编号无效');
    if(d.controlSeen[id]?.includes(msg.requestID)){this.snapshot(ws);return;}
@@ -194,7 +220,7 @@ export class GameRoom extends DurableObject<Env>{
     else if(r.started)throw new Error('牌局中请让房主结束本局再离桌');
     else {r.players=r.players.filter(p=>p.id!==id);delete d.tokens[id];ws.serializeAttachment({opened:0});ws.close(1000,'离桌');}
    }else throw new Error('未知操作');
-   d.controlSeen[id]=[...(d.controlSeen[id]||[]),msg.requestID].slice(-128);r.revision++;await this.save();this.broadcast();if(msg.type!=='action'&&msg.type!=='ready')await this.index();
+   d.controlSeen[id]=[...(d.controlSeen[id]||[]),msg.requestID].slice(-128);r.revision++;await this.save();const renewed=await this.renewActivity(now);this.broadcast();if(renewed||msg.type!=='action'&&msg.type!=='ready')await this.index();
   }catch(e){send(ws,{type:'error',error:error(e)});}
  }
  async webSocketClose(ws:WebSocket){const a=ws.deserializeAttachment() as Attachment;ws.serializeAttachment({opened:0});try{ws.close(1000,'连接已关闭');}catch{}if(this.data&&a.id){if(a.pending){this.data.info.pending=this.data.info.pending.filter(p=>p.id!==a.id);delete this.data.pendingTokens[a.id];}this.data.info.revision++;await this.save();this.broadcast();}}

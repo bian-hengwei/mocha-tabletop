@@ -1,0 +1,81 @@
+/* Avalon keeps the whole team visible while players cast private ballots. */
+.social-table-v2.council{gap:8px;padding:4px 0}
+.avalon-board{display:flex;flex-direction:column;flex:1;min-height:0;gap:10px}
+.avalon-board .quest-track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:stretch;flex-shrink:0;height:72px;min-height:0;padding:0;gap:8px}
+.avalon-board .quest{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;min-width:0;border:1px solid #b7b99a30;border-radius:12px;background:#1526218c;color:#bec8b8}
+.avalon-board .quest.current{border-color:#d4b873;background:linear-gradient(135deg,#74623c69,#243b30);box-shadow:inset 0 0 0 1px #d4b87325}
+.avalon-board .quest>span{display:grid;place-items:center;width:28px;height:28px;border:0;background:transparent;box-shadow:none;font:600 18px/1 Georgia,serif;color:#e7d7ad}
+.avalon-board .quest.success>span{color:#a8ddba}.avalon-board .quest.failed>span{color:#edaba4}
+.avalon-board .quest small{font-size:12px;line-height:1.25;white-space:nowrap;color:inherit}
+.avalon-board .quest em{display:block;font-style:normal;color:#e7cd90}
+.avalon-board .avalon-summary{position:static;inset:auto;transform:none;display:flex!important;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:5px 14px;flex-shrink:0;min-height:42px;padding:0 4px;text-align:left;white-space:normal;color:#e5deca}
+.social-table-v2.council .avalon-board .avalon-summary{visibility:visible}
+.avalon-team-heading{display:flex;align-items:center;gap:8px}.avalon-team-heading b{font-size:15px;font-weight:600}.avalon-team-heading b span{margin-left:8px;color:#e4cd94;font-variant-numeric:tabular-nums}
+.avalon-leader{display:flex;align-items:center;gap:5px;min-width:0;max-width:30%;font-size:12px;color:#c8b987}.avalon-leader svg{flex-shrink:0}.avalon-leader span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.avalon-rejections{margin-left:auto;white-space:nowrap;font-size:12px;color:#bdc6b9}.avalon-rejections b{margin-left:5px;font-weight:500;color:#e3b5a3}
+.avalon-vote-legend{flex-basis:100%;display:flex;align-items:center;flex-wrap:wrap;gap:3px;font-size:11px;line-height:15px;color:#c3ccbb}
+.avalon-vote-legend>span:first-child{margin-right:3px}
+.avalon-previous-vote{display:inline-flex;align-items:center;gap:1px;min-width:17px;font:10px/15px ui-monospace,monospace}
+.avalon-vote-legend .avalon-previous-vote .vote-mark{position:static;inset:auto;width:10px;height:15px;border:0;border-radius:0;background:none;font-size:10px}
+.avalon-board .avalon-summary h2{margin:0;font-size:18px;line-height:1.35;letter-spacing:0;color:#efe0ba;overflow-wrap:anywhere}
+.avalon-board .avalon-roster{position:static;inset:auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-auto-rows:minmax(44px,1fr);gap:10px;flex:1;min-height:0;padding:0}
+.social-table-v2.council .avalon-roster .avalon-seat{position:relative;inset:auto!important;transform:none;display:grid;grid-template-columns:1fr;grid-template-rows:1fr auto auto;align-items:center;justify-items:center;gap:5px;width:auto;height:auto;min-width:0;min-height:44px;padding:18px 12px 12px;border:1px solid #b4bfac30;border-radius:14px;background:linear-gradient(145deg,#33443aaf,#172b23e6);box-shadow:0 3px 10px #05140c24;color:#ececdd;opacity:1}
+.social-table-v2.council .avalon-seat.team{border-color:#cdb570;background:linear-gradient(145deg,#655c35aa,#294435);box-shadow:inset 0 0 0 1px #cfb57530}
+.social-table-v2.council .avalon-seat.self{border-left:3px solid #cedabd}
+.avalon-seat[aria-disabled=true]{cursor:default}.avalon-seat[aria-disabled=false]:hover{border-color:#edcf86;background-color:#526043}.avalon-seat:focus-visible{outline:2px solid #f2d59b;outline-offset:2px}
+.social-table-v2.council .avalon-seat .seat-avatar{display:grid;place-items:center;width:60px;height:60px;font-size:40px;line-height:1;border:1px solid #d3d2ae44;background:#182d25;box-shadow:none;border-radius:50%;align-self:end}
+.social-table-v2.council .avalon-seat>b{width:100%;max-width:100%;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;line-height:20px;text-align:center}
+.social-table-v2.council .avalon-seat>small{display:flex;align-items:center;justify-content:center;gap:3px;max-width:100%;min-height:16px;font-size:12px;line-height:16px;color:#c8d1ba;overflow:hidden;white-space:nowrap}
+.avalon-seat>small>span{overflow:hidden;text-overflow:ellipsis}.avalon-seat>small>svg{flex-shrink:0}
+.avalon-seat-number{position:absolute;top:8px;left:10px;font:12px/16px ui-monospace,monospace;color:#b5c2ab}
+.avalon-crown{position:absolute;top:9px;right:10px;color:#efd087}
+.avalon-board .vote-mark{position:absolute;inset:auto 8px 8px auto;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;background:#11251e;border:1px solid #91bda065;color:#aedab9;font-size:12px;line-height:1;box-shadow:none}
+.avalon-board .vote-mark.rejected{color:#edb3ab;border-color:#c08a7765}
+.social-table-v2.council .identity-deck{background:#192d27;border-color:#99ad9555;border-radius:10px;width:100%;letter-spacing:0}
+.social-table-v2.council .identity-deck>span{letter-spacing:0;color:#ddd5bc}
+.social-table-v2.council .council-decision{position:static;inset:auto;transform:none;order:0;padding:0;border:0;min-width:0;flex-shrink:0}
+.social-table-v2.council .council-decision>div{display:flex;gap:8px;margin:0}
+.social-table-v2.council .council-token{position:relative;display:flex;flex-direction:row;align-items:center;justify-content:center;flex:1;gap:8px;width:auto;min-width:0;height:48px;min-height:44px;padding:10px 14px;transform:none;border:1px solid #b5c6a784;border-radius:10px;background:linear-gradient(135deg,#556d48,#2f5140);box-shadow:inset 0 1px #e3edd81a;color:#f0f0da;letter-spacing:0}
+.social-table-v2.council .council-token.dark{background:linear-gradient(135deg,#61463d,#493536);border-color:#c0918177;color:#f4ddd5}
+.social-table-v2.council .council-token>b{position:static;transform:none;flex:0 1 auto;font-size:15px;line-height:20px;letter-spacing:0;white-space:normal;overflow-wrap:anywhere}
+.social-table-v2.council .council-token>svg{width:20px;height:20px;flex-shrink:0}
+.social-table-v2.council .council-token:hover{filter:brightness(1.12)}
+.social-table-v2.council .council-token:focus-visible{outline:2px solid #f2d59b;outline-offset:2px}
+@media(max-width:600px) and (orientation:portrait){
+ .social-table-v2.council{gap:6px}.avalon-board{gap:6px}
+ .avalon-board .quest-track{height:56px;gap:5px}.avalon-board .quest{border-radius:9px;gap:2px}.avalon-board .quest>span{width:24px;height:24px;font-size:16px}.avalon-board .quest small{font-size:11px}
+ .avalon-board .avalon-summary{min-height:42px;gap:3px 8px;padding:0 2px}.avalon-team-heading{gap:5px}.avalon-team-heading b{font-size:13px}.avalon-team-heading b span{margin-left:3px}.avalon-leader{max-width:36%;font-size:11px}.avalon-rejections{font-size:11px}.avalon-rejections b{margin-left:2px}
+ .avalon-board .avalon-roster{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .social-table-v2.council .avalon-roster .avalon-seat{grid-template-columns:32px minmax(0,1fr);grid-template-rows:1fr 1fr;column-gap:6px;row-gap:0;padding:7px 8px 7px 19px;border-radius:10px;justify-items:start}
+ .social-table-v2.council .avalon-seat .seat-avatar{grid-row:1/3;width:30px;height:30px;font-size:22px;align-self:center}
+ .social-table-v2.council .avalon-seat>b{align-self:end;text-align:left;font-size:12px;line-height:15px}
+ .social-table-v2.council .avalon-seat>small{align-self:start;justify-content:flex-start;font-size:10px;line-height:14px;min-height:14px}
+ .avalon-seat-number{left:4px;top:5px;font-size:10px;line-height:12px}.avalon-crown{top:auto;bottom:4px;right:4px;width:11px;height:11px}
+ .avalon-board .vote-mark{inset:2px 2px auto auto;width:13px;height:13px;font-size:9px;background:#13291ff2}
+ .avalon-board .avalon-summary h2{font-size:15px}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .social-table-v2.council{display:grid;grid-template-columns:minmax(140px,1fr) minmax(240px,1fr);grid-template-rows:minmax(0,1fr) 44px;gap:5px 10px;padding:0}
+ .avalon-board{grid-column:1/-1;gap:4px}.avalon-board .quest-track{height:40px;gap:6px}.avalon-board .quest{flex-direction:row;gap:6px;border-radius:8px}.avalon-board .quest>span{width:22px;height:22px;font-size:15px}.avalon-board .quest small{font-size:10px}
+ .avalon-board .avalon-summary{min-height:24px;gap:5px 12px;padding:0 4px}.avalon-team-heading b{font-size:12px}.avalon-leader,.avalon-rejections{font-size:11px}
+ .avalon-board .avalon-roster{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+ .social-table-v2.council .avalon-roster .avalon-seat{grid-template-columns:26px minmax(0,1fr);grid-template-rows:1fr 1fr;gap:0 4px;justify-items:start;padding:5px 5px 5px 15px;border-radius:8px}
+ .social-table-v2.council .avalon-seat .seat-avatar{grid-row:1/3;width:25px;height:25px;font-size:19px;align-self:center}
+ .social-table-v2.council .avalon-seat>b{align-self:end;font-size:11px;line-height:14px;text-align:left}.social-table-v2.council .avalon-seat>small{align-self:start;justify-content:flex-start;font-size:10px;line-height:14px;min-height:14px}
+ .avalon-seat-number{left:3px;top:3px;font-size:9px;line-height:10px}.avalon-crown{top:auto;bottom:2px;right:2px;width:10px;height:10px}.avalon-board .vote-mark{inset:1px 1px auto auto;width:12px;height:12px;font-size:9px}
+ .social-table-v2.council .identity-deck{grid-column:1;grid-row:2;width:100%;height:44px}.social-table-v2.council:not(.is-decision) .identity-deck{grid-column:1/-1}
+ .social-table-v2.council .council-decision{grid-column:2;grid-row:2;position:static;inset:auto}.social-table-v2.council .council-token{height:44px;padding:8px;font-size:13px}
+ .avalon-board .avalon-summary h2{font-size:14px}
+}
+@media(max-width:650px) and (max-height:500px) and (orientation:landscape){
+ .social-table-v2.council .avalon-roster .avalon-seat{grid-template-rows:minmax(0,1fr) auto}
+ .social-table-v2.council .avalon-seat .seat-avatar{grid-row:1}
+ .social-table-v2.council .avalon-seat>b{align-self:center}
+ .social-table-v2.council .avalon-seat>small{grid-column:1/-1;justify-self:center}
+}
+@media(max-width:360px) and (orientation:portrait){
+ .social-table-v2.council .avalon-roster .avalon-seat{grid-template-columns:24px minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;column-gap:4px;padding:3px 6px 3px 16px}
+ .social-table-v2.council .avalon-seat .seat-avatar{grid-row:1;width:22px;height:22px;font-size:18px}
+ .social-table-v2.council .avalon-seat>b{align-self:center}
+ .social-table-v2.council .avalon-seat>small{grid-column:1/-1;justify-self:center}
+}

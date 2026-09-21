@@ -1,11 +1,12 @@
-import { chromium } from '@playwright/test';
+import {pagedSeat} from './seat-pages.mjs';
+import { chromium, webkit } from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 
 // UI-only integration: no game-state injection, direct engine calls, or private React access.
 // Run against an already running Vite server: node tests/ui/social.integration.mjs
 const origin=process.env.BASE_URL||process.env.UI_BASE_URL||'http://127.0.0.1:5174';
-const browser=await chromium.launch({executablePath:process.env.CHROME_PATH||undefined,headless:true});
+const browser=await(process.env.TEST_BROWSER==='webkit'?webkit.launch({headless:true}):chromium.launch({executablePath:process.env.CHROME_PATH||undefined,headless:true}));
 const output=new URL('./artifacts/',import.meta.url);await fs.mkdir(output,{recursive:true});
 const results=[];
 try{
@@ -19,7 +20,11 @@ for(const viewport of [{width:667,height:375},{width:844,height:390}]){
   const seats=()=>page.locator('.seat');
   const dock=label=>page.locator('.dock-actions').getByRole('button',{name:label,exact:true});
   async function submit(label,options=[]){
-    await dock(label).click();
+    if(['队伍表决','秘密任务'].includes(label)){
+      await page.locator('.council-decision').getByRole('button',{name:options[0],exact:true}).click();
+      assert.equal(await page.locator('.action-sheet').count(),0,'An explicit ballot submits without another confirmation');
+      return;
+    }else await dock(label).click();
     if(await page.locator('.action-sheet').isVisible()){
       for(const option of options)await page.locator('.action-sheet .choices').getByRole('button',{name:option,exact:true}).click();
       await page.locator('.action-sheet').getByRole('button',{name:await page.locator('.action-sheet .choice').count()?'确认':label,exact:true}).click();
@@ -73,26 +78,27 @@ for(const viewport of [{width:667,height:375},{width:844,height:390}]){
   const wolves=wolfRoles.map((r,i)=>r==='狼人'?i:-1).filter(i=>i>=0);
   async function night(){
     for(let i=0;i<9;i++){
-      await viewer(i);if(await seats().nth(i).getAttribute('class').then(s=>s.includes('out')))continue;
+      await viewer(i);if(await (await pagedSeat(page,'.seat',i)).getAttribute('class').then(s=>s.includes('out')))continue;
       const label=(await page.locator('.dock-actions button').first().textContent()).trim();await submit(label,['狼人袭击','查验身份','守护'].includes(label)?['放弃']:[]);
     }
     for(let i=0;i<9;i++){
-      await viewer(i);if(await seats().nth(i).getAttribute('class').then(s=>s.includes('out')))continue;
-      const label=(await page.locator('.dock-actions button').first().textContent()).trim();await submit(label,label==='女巫用药'?['不用药']:[]);
+      if(wolfRoles[i]==='女巫')continue;
+      await viewer(i);assert.equal(await page.locator('.dock-actions button').count(),0,'Other players should not have to close their eyes again');
     }
+    await viewer(wolfRoles.indexOf('女巫'));await submit('女巫用药',['不用药']);
   }
   await layout('werewolf-night');await night();
   for(let i=0;i<9;i++){await viewer(i);await submit('警长竞选',[i<2?'上警':'不上警']);}
   for(let i=0;i<9;i++){await viewer(i);await submit('发言结束');}
-  const sheriffName=await seats().nth(0).locator('b').textContent();for(let i=2;i<9;i++){await viewer(i);await submit('选警长',[sheriffName]);}
+  const sheriffName=await (await pagedSeat(page,'.seat',0)).locator('b').textContent();for(let i=2;i<9;i++){await viewer(i);await submit('选警长',[sheriffName]);}
   assert.match(await page.locator('.night-counter').textContent(),/第 1 天/);await layout('werewolf-day');
   for(let i=0;i<9;i++){await viewer(i);await submit('发言结束');}
-  const wolfName=await seats().nth(wolves[0]).locator('b').textContent();for(let i=0;i<9;i++){await viewer(i);await submit('放逐',[wolfName]);}
+  const wolfName=await (await pagedSeat(page,'.seat',wolves[0])).locator('b').textContent();for(let i=0;i<9;i++){await viewer(i);await submit('放逐',[wolfName]);}
   // If the randomly assigned first wolf was sheriff, resolve their public badge action.
   if(wolves[0]===0){await viewer(0);await submit('移交警徽',['放弃']);}
   assert.match(await page.locator('.night-counter').textContent(),/第 2 夜/);await night();
   await viewer(wolves[1]);await submit('自爆');const other=wolfRoles.findIndex(r=>r!=='狼人');await viewer(other);
-  assert.equal(await seats().nth(wolves[1]).locator('small').textContent(),'狼人','Publicly exploded wolf role is visible');
+  assert.equal(await (await pagedSeat(page,'.seat',wolves[1])).locator('small').textContent(),'狼人','Publicly exploded wolf role is visible');
   if(wolves[1]===0){await viewer(0);await submit('移交警徽',['放弃']);}
   await layout('werewolf-explosion');
   assert.deepEqual(errors,[],'No browser runtime errors');await context.close();

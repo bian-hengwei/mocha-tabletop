@@ -7,7 +7,7 @@ const out=`test-results/game-viewport-${engine}`;await fs.mkdir(out,{recursive:t
 const sizes=[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900],[568,320]],errors=[],layoutIssues=[];
 async function checkShortGemsTable(page,language){
  const surface=page.locator('.game-surface');
- assert(['auto','scroll'].includes(await surface.evaluate(el=>getComputedStyle(el).overflowY)),'short Gems table must allow outer scrolling');
+ assert(await surface.evaluate(el=>el.scrollHeight<=el.clientHeight+2),'short Gems table fits without outer scrolling');
  await surface.evaluate(el=>el.scrollTop=0);
  await page.screenshot({path:`${out}/gems-${language}-568-top.png`});
  for(const selector of ['.g-merchants','.g-nobles','.g-tier-tabs','.g-market-row:visible','.g-bank','.g-own-tray']){
@@ -15,10 +15,10 @@ async function checkShortGemsTable(page,language){
   assert(await section.evaluate(el=>{
    const r=el.getBoundingClientRect(),s=el.closest('.game-surface').getBoundingClientRect();
    return r.top>=Math.max(0,s.top)-1&&r.bottom<=Math.min(innerHeight,s.bottom)+1&&r.left>=s.left-1&&r.right<=s.right+1&&el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));
-  }),`short Gems section is fully reachable and unobstructed: ${selector}`);
+  }),`short Gems section stays fully visible and unobstructed: ${selector}`);
  }
  await page.screenshot({path:`${out}/gems-${language}-568-bottom.png`});
- // Exercise the controls after scrolling, including the inventory below the bank.
+ // Exercise the controls and inventory in the compact layout.
  await page.locator('.g-bank').scrollIntoViewIfNeeded();
  for(const gem of await page.locator('.g-bank-gem').all()){
   const box=await gem.boundingBox();assert(box&&box.width>=43.5&&box.height>=43.5,'gem touch target retains its size');
@@ -41,7 +41,7 @@ try{
     await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=${kind}&players=max`);await expect(page.locator('.game-surface').locator(':scope>*').first()).toBeVisible();
     const shortGems=kind==='gems'&&height<=360&&width>height;
     if(shortGems)await checkShortGemsTable(page,language);
-    const overflow=await page.locator('.game-surface').evaluate((surface,allowOuter)=>[surface,...surface.querySelectorAll('*')].filter(node=>node instanceof HTMLElement&&node.clientHeight>0&&node.scrollHeight>node.clientHeight+2&&['auto','scroll','hidden'].includes(getComputedStyle(node).overflowY)&&!node.matches('.illustrated-tile,.role-art')&&!(allowOuter&&node===surface&&['auto','scroll'].includes(getComputedStyle(node).overflowY))).map(node=>({class:node.className,height:node.clientHeight,content:node.scrollHeight})),shortGems);
+    const overflow=await page.locator('.game-surface').evaluate(surface=>[surface,...surface.querySelectorAll('*')].filter(node=>node instanceof HTMLElement&&node.clientHeight>0&&node.scrollHeight>node.clientHeight+2&&['auto','scroll','hidden'].includes(getComputedStyle(node).overflowY)&&!node.matches('.illustrated-tile,.role-art')).map(node=>({class:node.className,height:node.clientHeight,content:node.scrollHeight})));
     if(overflow.length)layoutIssues.push({kind,language,width,height,overflow});
     assert(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+1&&document.documentElement.scrollWidth<=innerWidth+1),`${kind}: document fits viewport`);
     if(width===320||width===844)await page.screenshot({path:`${out}/${kind}-${language}-${width}.png`});
@@ -49,5 +49,5 @@ try{
    console.log(layoutIssues.some(issue=>issue.language===language&&issue.width===width)?'FAIL':'PASS','all twelve maximum-player tables have bounded, reachable layouts',language,width,height);
   }
  }
- assert.deepEqual(errors,[]);assert.deepEqual(layoutIssues,[],'No unintended vertical scroll or clipping; short Gems outer scrolling must remain reachable');
+ assert.deepEqual(errors,[]);assert.deepEqual(layoutIssues,[],'All game surfaces must fit without vertical scroll or clipping');
 }finally{await browser.close();}

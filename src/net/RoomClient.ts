@@ -6,7 +6,7 @@ export type {ClientState,RoomCandidate,RoomMode} from '../core/room';
 const API=(import.meta.env.VITE_API_BASE||'').replace(/\/$/,'');
 const randomToken=()=>Array.from(crypto.getRandomValues(new Uint8Array(24)),b=>b.toString(16).padStart(2,'0')).join('');
 const initial=():ClientState=>({status:'idle',transport:'none',paused:false,actionRevision:0});
-interface Session {profile:Player;code:string;invite?:string;token:string;savedAt?:number;expiresAt?:number}
+interface Session {profile:Player;code:string;invite?:string;token:string;savedAt?:number;expiresAt?:number;pendingApproval?:boolean}
 export interface SavedSession {profile:Player;code:string;savedAt:number;expiresAt:number}
 const SESSION_KEY='mocha-room-session';
 const SESSION_TTL=6*60*60*1000;
@@ -53,16 +53,18 @@ export class RoomClient {
  async join(profile:Player,code:string,invite?:string){
   try{code=code.toUpperCase().trim();if(!/^[A-Z2-9]{6}$/.test(code))throw new Error('请输入六位房间码');this.reset();this.session={profile:validProfile(profile),code,invite,token:this.token,savedAt:Date.now(),expiresAt:Date.now()+SESSION_TTL};this.saveSession();this.stopped=false;this.patch({status:'connecting',selfID:profile.id});this.openSocket();}catch(e){if(!this.state.room)this.terminal(e instanceof Error?e.message:String(e));else this.fail(e);}
  }
+ /** Public details of this attempt, including when browser storage is unavailable. */
+ getConnectionTarget(){const s=this.session;return s?{code:s.code,profile:s.profile}:undefined;}
  /** Same-device resume hint; never exposes the authentication token. */
  getSavedSession():SavedSession|undefined {const s=this.readSession();return s?{profile:s.profile,code:s.code,savedAt:s.savedAt!,expiresAt:s.expiresAt!}:undefined;}
  /** Forget a previous room without sending any room mutation. */
  forgetSession(){this.clearSavedSession();if(this.state.status==='idle'||this.state.status==='disconnected'){this.reset();this.patch(initial());}}
- /** Close only this connection attempt; retain the room credential for a later resume. */
- cancelConnection(){this.reset();this.patch(initial());}
+ /** Withdraw a known pending request; retain admitted or legacy room recovery. */
+ cancelConnection(){if(this.session?.pendingApproval===true){if(this.ws?.readyState===WebSocket.OPEN)this.control({type:'leave'});this.clearSavedSession();}this.reset();this.patch(initial());}
  /** Only available outside a room; affects this browser's identity, never other players. */
  resetIdentity(){if(this.state.room||this.state.status==='connecting'||this.state.status==='reconnecting')throw new Error('请先离开牌桌，再重置本机用户');this.clearSavedSession();this.reset();this.networkToken=undefined;for(const storage of availableStorage())try{storage.removeItem('mocha-network-token');for(let i=storage.length-1;i>=0;i--){const key=storage.key(i);if(key?.startsWith('mocha-host-'))storage.removeItem(key);}}catch{}this.patch(initial());}
  /** Restore the last room even after closing the tab, or retry a dropped connection. */
- async connect(){if(this.session){this.stopped=false;this.reconnects=0;this.patch({status:'reconnecting'});this.openSocket();return;}const s=this.readSession();if(s){this.reset();this.session=s;this.stopped=false;this.patch({status:'connecting',selfID:s.profile.id});this.openSocket();}}
+ async connect(){if(this.session){this.stopped=false;this.reconnects=0;this.patch({status:'reconnecting',waitingApproval:false});this.openSocket();return;}const s=this.readSession();if(s){this.reset();this.session=s;this.stopped=false;this.patch({status:'connecting',selfID:s.profile.id});this.openSocket();}}
  private readSession():Session|undefined {
   for(const storage of availableStorage()){try{const raw=storage.getItem(SESSION_KEY);if(!raw)continue;const s=JSON.parse(raw) as Session;validProfile(s.profile);if(!/^[A-Z2-9]{6}$/.test(s.code)||typeof s.token!=='string'||!/^[a-f0-9]{48,128}$/.test(s.token))throw new Error('invalid session');
    s.savedAt=typeof s.savedAt==='number'?s.savedAt:Date.now();s.expiresAt=typeof s.expiresAt==='number'?s.expiresAt:s.savedAt+SESSION_TTL;if(s.expiresAt<=Date.now())throw new Error('expired session');return s;
@@ -108,7 +110,7 @@ export class RoomClient {
   ws.onclose=e=>{if(generation!==this.connectGeneration||this.stopped)return;clearTimeout(this.handshakeTimer);clearInterval(this.socketHeartbeat);if(e.code===4001||e.code===4003){this.terminal(e.code===4001?'此玩家已在另一窗口连接，可在这里重新加入':'入桌申请未通过',e.code===4001);return;}
    void this.checkRoomAvailability(generation);
    const lanAlive=this.state.mode==='lan'&&this.state.transport==='lan'&&!this.state.paused;
-   if(!lanAlive)this.patch({status:'reconnecting',paused:!!this.state.room?.started});
+   if(!lanAlive)this.patch({status:'reconnecting',waitingApproval:false,paused:!!this.state.room?.started});
    if(this.reconnects<6)this.reconnectTimer=setTimeout(()=>this.openSocket(),Math.min(1000*2**this.reconnects++,15000));else if(!lanAlive)this.patch({status:'disconnected',error:'连接未恢复，请点重连'});
   };
  }
@@ -116,11 +118,12 @@ export class RoomClient {
   if(msg.type==='error'){this.starting=false;if(!this.state.room)this.terminal(msg.error);else this.fail(msg.error);return;}
   if(msg.type==='rejected'||msg.type==='ended'){this.terminal(msg.error);return;}
   if(msg.type==='pong')return;
-  if(msg.type==='pending'){this.reconnects=0;this.patch({waitingApproval:true,status:'connecting',error:undefined});return;}
-  if(msg.type==='signal'){void this.signal(msg.from,msg.data).catch(e=>this.fail(e));return;}
+  if(msg.type==='pending'){this.reconnects=0;if(this.session)this.session.pendingApproval=true;this.patch({waitingApproval:true,status:'connecting',error:undefined});this.saveSession();return;}
+  if(msg.type==='signal'){void this.signal(msg.from,msg.data);return;}
   if(msg.type!=='snapshot')return;
-  this.reconnects=0;const room=msg.room as RoomInfo;if(this.session){this.session.expiresAt=room.expiresAt||this.session.expiresAt;this.saveSession();}const old=this.state.room;const host=room.hostID===this.session?.profile.id;
+  this.reconnects=0;const room=msg.room as RoomInfo;if(this.session){this.session.pendingApproval=false;this.session.expiresAt=room.expiresAt||this.session.expiresAt;}const old=this.state.room;const host=room.hostID===this.session?.profile.id;
   this.patch({room,mode:room.mode,selfID:this.session?.profile.id,waitingApproval:false,status:room.started?'playing':'lobby',error:undefined,inviteURL:msg.invite?`${location.origin}${location.pathname}?room=${room.code}#invite=${msg.invite}`:this.state.inviteURL});
+  this.saveSession();
   if(room.mode==='cloud'){this.dropPeers();this.localMatch=undefined;this.patch({transport:'cloud',view:msg.view,actionRevision:msg.actionRevision||0,paused:!!msg.paused});return;}
   if(!room.started){this.localBotError=undefined;this.localMatch=undefined;this.removeLocal();this.patch({view:undefined,actionRevision:0});}
   else if(host&&!this.localMatch){
@@ -152,21 +155,26 @@ export class RoomClient {
   // A bounded handshake watchdog also covers lost offer/answer signaling.
   if(this.isHost)p.pairingTimer=setTimeout(()=>{if(this.peers.get(id)===p&&!p.proven)this.retryPeer(id,p);},8000);
   pc.onicecandidate=e=>{if(e.candidate&&this.peers.get(id)===p)this.sendSignal(id,{candidate:e.candidate.toJSON()});};
-  pc.ondatachannel=e=>this.bindDC(id,p,e.channel);
+  pc.ondatachannel=e=>{if(this.peers.get(id)===p)this.bindDC(id,p,e.channel);};
   pc.onconnectionstatechange=()=>{if(this.peers.get(id)!==p)return;if(['failed','disconnected','closed'].includes(pc.connectionState)){p.proven=false;this.localStatus();if(this.isHost){this.broadcastLocal();this.retryPeer(id,p);}}};
+  // A replacement connection is untrusted until its data channel proves the nonce.
+  this.localStatus();
   return p;
  }
+ private currentPeer(id:string,p:Peer,generation:number){return generation===this.connectGeneration&&this.peers.get(id)===p;}
  private retryPeer(id:string,peer:Peer){if(this.peerRetry.has(id)||this.stopped)return;if((this.peerAttempts.get(id)||0)>=4){this.fail('局域网尚未连通；可由房主切换云端模式');return;}const attempt=(this.peerAttempts.get(id)||0)+1;this.peerAttempts.set(id,attempt);this.peerRetry.set(id,setTimeout(()=>{this.peerRetry.delete(id);if(this.peers.get(id)!==peer||peer.proven||this.ws?.readyState!==WebSocket.OPEN)return;peer.pc.close();void this.offer(id);},Math.min(1500*attempt,6000)));}
- private async offer(id:string){try{const p=this.peer(id);this.bindDC(id,p,p.pc.createDataChannel('mocha-tabletop',{ordered:true}));await p.pc.setLocalDescription(await p.pc.createOffer());this.sendSignal(id,{description:p.pc.localDescription});}catch(e){this.fail(e);}}
+ private async offer(id:string){const generation=this.connectGeneration;let p:Peer|undefined;try{p=this.peer(id);this.bindDC(id,p,p.pc.createDataChannel('mocha-tabletop',{ordered:true}));const offer=await p.pc.createOffer();if(!this.currentPeer(id,p,generation))return;await p.pc.setLocalDescription(offer);if(!this.currentPeer(id,p,generation))return;this.sendSignal(id,{description:p.pc.localDescription});}catch(e){if(generation===this.connectGeneration&&(!p||this.peers.get(id)===p))this.fail(e);}}
  private sendSignal(to:string,data:any){this.control({type:'signal',to,data});}
- private async signal(id:string,data:any){const r=this.state.room;if(!r||r.mode!=='lan'||!r.players.some(p=>p.id===id))return;let p=this.peers.get(id);
-  if(data.description?.type==='offer'){if(this.isHost)return;const pendingCandidates=p?.pending||[];p?.pc.close();p=this.peer(id);p.pending=pendingCandidates;await p.pc.setRemoteDescription(data.description);for(const candidate of p.pending)await p.pc.addIceCandidate(candidate);p.pending=[];await p.pc.setLocalDescription(await p.pc.createAnswer());this.sendSignal(id,{description:p.pc.localDescription});}
-  else if(data.description?.type==='answer'&&p){await p.pc.setRemoteDescription(data.description);for(const candidate of p.pending)await p.pc.addIceCandidate(candidate);p.pending=[];}
-  else if(data.candidate){if(!p)p=this.peer(id);if(p.pc.remoteDescription)await p.pc.addIceCandidate(data.candidate);else p.pending.push(data.candidate);}
+ private async signal(id:string,data:any){const generation=this.connectGeneration;const r=this.state.room;if(!r||r.mode!=='lan'||!r.players.some(p=>p.id===id))return;let p=this.peers.get(id);
+  try{
+   if(data.description?.type==='offer'){if(this.isHost)return;const pendingCandidates=p?.pending||[];p?.pc.close();p=this.peer(id);p.pending=pendingCandidates;await p.pc.setRemoteDescription(data.description);if(!this.currentPeer(id,p,generation))return;for(const candidate of p.pending){await p.pc.addIceCandidate(candidate);if(!this.currentPeer(id,p,generation))return;}p.pending=[];const answer=await p.pc.createAnswer();if(!this.currentPeer(id,p,generation))return;await p.pc.setLocalDescription(answer);if(!this.currentPeer(id,p,generation))return;this.sendSignal(id,{description:p.pc.localDescription});}
+   else if(data.description?.type==='answer'&&p){await p.pc.setRemoteDescription(data.description);if(!this.currentPeer(id,p,generation))return;for(const candidate of p.pending){await p.pc.addIceCandidate(candidate);if(!this.currentPeer(id,p,generation))return;}p.pending=[];}
+   else if(data.candidate){if(!p)p=this.peer(id);if(p.pc.remoteDescription){await p.pc.addIceCandidate(data.candidate);if(!this.currentPeer(id,p,generation))return;}else p.pending.push(data.candidate);}
+  }catch(e){if(p&&this.currentPeer(id,p,generation))this.fail(e);}
  }
  private get isHost(){return this.state.room?.hostID===this.session?.profile.id;}
  private bindDC(id:string,p:Peer,dc:RTCDataChannel){p.dc=dc;
-  dc.onopen=()=>{p.lastHeard=Date.now();this.sendDC(p,{type:'probe',nonce:p.nonce});};
+  dc.onopen=()=>{if(this.peers.get(id)!==p)return;p.lastHeard=Date.now();this.sendDC(p,{type:'probe',nonce:p.nonce});};
   dc.onclose=()=>{if(this.peers.get(id)!==p)return;p.proven=false;this.localStatus();if(this.isHost){this.broadcastLocal();this.retryPeer(id,p);}};
   dc.onmessage=e=>{if(this.peers.get(id)!==p)return;try{if(typeof e.data!=='string'||e.data.length>150000)throw new Error('局域网消息过大');const msg=JSON.parse(e.data);p.lastHeard=Date.now();
     if(msg.type==='probe'){this.sendDC(p,{type:'proof',nonce:msg.nonce});return;}

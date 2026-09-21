@@ -25,7 +25,24 @@ for(const locale of ['zh','en']){
  await page.goto(`${base}/tests/ui/bots-boundary.fixture.html?locale=${locale}&state=round&kind=uno&guest=1`);await expect(button).toHaveCount(0);await page.close();
 }
 for(const locale of ['zh','en'])for(const kind of ['doudizhu','guandan','mahjong']){
- const page=await browser.newPage();await page.goto(`${base}/tests/ui/bots-boundary.fixture.html?locale=${locale}&state=finished&kind=${kind}`);await expect(page.locator('.end-banner')).toBeVisible();await page.getByRole('button',{name:locale==='zh'?'收起结算':'Dismiss result',exact:true}).click();
+ const page=await browser.newPage();await page.goto(`${base}/tests/ui/bots-boundary.fixture.html?locale=${locale}&state=finished&kind=${kind}`);
+ if(kind==='guandan'){
+  const result=page.locator('.gd-results'),rows=result.locator('.gd-result-standings tbody tr');
+  await expect(result).toBeVisible();await expect(rows).toHaveCount(4);
+  assert.deepEqual(await rows.evaluateAll(items=>items.map(row=>[...row.querySelectorAll('td')].map(cell=>cell.textContent?.trim()))),[['1','1','3','27'],['2','1','3','27'],['3','2','-3','27'],['4','2','-3','27']]);
+  assert.deepEqual((await rows.locator('th').allTextContents()).map(text=>text.replace(/\s+/g,' ').trim()),locale==='zh'?['🦊Host · 我','🐼Guest','🤖Mocha 1','🤖Mocha 2']:['🦊Host · Me','🐼Guest','🤖Mocha 1','🤖Mocha 2']);
+  for(const[width,height]of[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900]]){
+   await page.setViewportSize({width,height});const box=await result.boundingBox();assert(box&&box.x>=0&&box.y>=0&&box.x+box.width<=width+1&&box.y+box.height<=height+1,`guandan/${locale}/${width}: dedicated result fits viewport`);
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'page overflow');
+   assert(await page.locator('.classic-arena,.classic-hand-panel,.seat-turn-label').count()===0,'no stale active-play interface at result');
+   await page.screenshot({path:`${out}/finished-${kind}-${locale}-${width}x${height}.png`});
+  }
+  const hands=page.getByRole('button',{name:locale==='zh'?'查看剩余手牌':'View remaining cards',exact:true});await hands.click();
+  const dialog=page.getByRole('dialog',{name:locale==='zh'?'剩余手牌':'Remaining cards',exact:true});await expect(dialog).toBeVisible();await expect(dialog.locator('.gd-hand-list>section')).toHaveCount(4);await expect(dialog.locator('.classic-face')).toHaveCount(108);
+  await page.setViewportSize({width:390,height:844});await page.setViewportSize({width:844,height:390});const dialogBox=await dialog.boundingBox();assert(dialogBox&&dialogBox.x>=0&&dialogBox.y>=0&&dialogBox.x+dialogBox.width<=844&&dialogBox.y+dialogBox.height<=390,'Guandan remaining-hands dialog fits after rotation');
+  await page.keyboard.press('Tab');assert(await dialog.evaluate(el=>el.contains(document.activeElement)),'focus remains in Guandan remaining-hands dialog');await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0);await expect(hands).toBeFocused();await page.close();continue;
+ }
+ await expect(page.locator('.end-banner')).toBeVisible();await page.getByRole('button',{name:locale==='zh'?'收起结算':'Dismiss result',exact:true}).click();
  for(const[width,height]of[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900]]){
   await page.setViewportSize({width,height});const rows=await page.locator('.classic-result-player').all();assert.equal(rows.length,kind==='doudizhu'?3:4);
   for(const row of rows){const box=await row.boundingBox();assert(box&&box.y>=0&&box.y+box.height<=height,`${kind}/${locale}/${width}: every player's final score and hand visible`);}

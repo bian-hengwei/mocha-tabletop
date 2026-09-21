@@ -31,8 +31,9 @@ npx playwright install chromium webkit
 | `node tests/ui/table-layout.integration.mjs` | 麻将四方座位/牌河、换座方位盘、对手仅背面、斗地主出牌方向与叫分/不出标记；中英八尺寸，支持 WebKit |
 | `node tests/ui/classic-dense.integration.mjs` | 密集牌河与副露、血流锁牌、记录弹窗焦点与旋转；支持 WebKit |
 | `node tests/ui/classic-cloud.integration.mjs` | 四个独立浏览器上下文，全部麻将模式、访客只读规则、刷新重连和两款扑克云端出牌；可对实际部署运行 |
+| `node tests/ui/poker-declaration.integration.mjs` | 掼蛋同花顺默认解释与手动宣告普通顺子；27 张手牌领出/跟牌、双语八尺寸、牌型弹窗旋转与焦点、清空重选及实际出牌；支持 WebKit |
+| `node tests/ui/poker-feedback.integration.mjs` | 掼蛋级牌与斗地主跟牌：区分无效牌型和无法压过、改选后正常出牌；满手牌且无法压过时按钮文字完整、无需纵向滚动并实际不出；双语八尺寸与旋转，支持 WebKit |
 | `node tests/ui/poker-caption.integration.mjs` | 上一手扑克的牌型与点数，掼蛋级牌、2、大小王映射及单张数量文案、出完手牌后等待具体玩家；中英八尺寸，支持 WebKit |
-| `node tests/ui/poker-declaration.integration.mjs` | 掼蛋同花顺默认解释与手动宣告普通顺子；支持 WebKit |
 | `node tests/ui/classic-games.integration.mjs` | 六种新玩法，中英文四尺寸、点选/取消/换座、刷新恢复、扑克完整一轮与跨轮进贡；支持 WebKit |
 | `node tests/ui/mahjong-experience.integration.mjs` | 麻将双击/双触、键盘与慢速取消、定缺及自动过牌；中英七尺寸，支持 WebKit |
 | `node tests/ui/hand-experience.integration.mjs` | 寿司单张双击/双触、筷子顺序与取消锁定；商旅固定操作区；猫牌换选/组合与双击；中英八尺寸，支持 WebKit |
@@ -44,30 +45,33 @@ npx playwright install chromium webkit
 | `node tests/ui/identity-portraits.integration.mjs` | 14 个身份 × 10 种尺寸，完整插画、相邻角色遮罩、关闭可达性、长记录和旋转；支持 WebKit |
 | `node tests/ui/illustrated-games.integration.mjs` | 寿司/商旅/接龙双语插画、牌面数值与手机/桌面尺寸 |
 | `node tests/ui/word-privacy.integration.mjs` | 秘密信息换座再切回隐藏、完整重开与词语游戏布局 |
+| `node tests/ui/setup-selection.integration.mjs` | 固定人数标签、开桌模式选中状态、固定关闭/创建按钮、键盘/指针操作、中英七尺寸与弹窗旋转；支持 WebKit |
+| `node tests/ui/header-controls.integration.mjs` | 十二款游戏从首页进入试玩，检查顶部控件可见、无遮挡、44px 触控范围及长昵称；中英七尺寸与旋转，支持 WebKit |
 | `node tests/ui/app-usability.integration.mjs` | 首次进入语言切换、原生语言名称、语言记忆、精确教程和多层弹窗键盘操作 |
 | `node tests/ui/player-names.integration.mjs` | 中英昵称与系统术语隔离：座位、秘密情报、法官面板、选人及真实库存弹窗；支持 WebKit |
-| `node tests/ui/action-sheet.integration.mjs` | 最新操作与失效选项、数量范围、错误恢复、取消，以及真实投票昵称和牌面词确认；中英七尺寸与旋转，需 Vite，支持 WebKit |
+| `node tests/ui/action-sheet.integration.mjs` | 最新操作与失效选项、数量范围、错误恢复、取消、竖屏十人完整选项、短横屏可见翻页，以及真实投票昵称和牌面词确认；中英七尺寸与旋转，需 Vite，支持 WebKit |
 | `node tests/ui/pwa-update.integration.mjs` | 独立临时 HTTP 服务上的真实 Service Worker 升级、安装等待、旧缓存清理、断网资源与 API 不缓存；Chromium，无需启动应用服务 |
 | `node tests/ui/history-names.integration.mjs` | 历史记录、附近房主及离线名单在中英切换后保留原名；本地模拟网络；支持 WebKit |
 | `node tests/ui/profile-input.integration.mjs` | 中英昵称输入：输入法候选确认不提前提交，普通回车保存、关闭及刷新记忆；支持 WebKit |
-| `node tests/ui/dialog-boundaries.integration.mjs` | 安装说明焦点约束、背景不可交互、旋转和关闭后焦点恢复；输入法 Escape/Tab 不触发弹窗快捷键；支持 WebKit |
+| `node tests/ui/dialog-boundaries.integration.mjs` | 安装说明焦点约束、背景不可交互、旋转和关闭后焦点恢复；帮助内容滚到底部仍可关闭，中英七尺寸触控范围；输入法 Escape/Tab 不触发弹窗快捷键；支持 WebKit |
+| `node tests/ui/finished-recovery.integration.mjs` | 玩家离线或刷新后仍可查看终局结果与记录，未结束的新局仍暂停；本地模拟消息，中英七尺寸，支持 WebKit |
 | `node tests/ui/storage-boundaries.integration.mjs` | 存储区属性不可读时首屏、临时身份及标签页恢复入口可用；恢复 socket 在测试内拦截，不连接真实房间；支持 WebKit |
 | `node tests/ui/lobby-usability.integration.mjs` | 开局等待原因、访客只读规则、修改规则后重新准备和手机布局 |
-| `node tests/ui/lobby-layout.integration.mjs` | 狼人杀长规则与待审批入桌请求的中英七尺寸旋转、按钮触控、实际批准/准备/开局；需要本地 Worker，支持 WebKit |
-| `node tests/ui/dialogs.integration.mjs` | 宝石、卡牌与秘密身份弹窗的焦点保护、Escape 和恢复 |
+| `node tests/ui/lobby-layout.integration.mjs` | 狼人杀长规则、入桌申请的房间与昵称提示、待审批请求的中英七尺寸旋转、取消申请后刷新不再自动申请、按钮触控、实际批准/准备/开局；需要本地 Worker，支持 WebKit |
+| `node tests/ui/dialogs.integration.mjs` | 宝石、卡牌与秘密身份弹窗的焦点保护、Escape 和恢复；支持 WebKit |
 | `node tests/ui/i18n.integration.mjs` | 九款牌桌正文/无障碍标签英文检查、词库独立切换、确认出牌、私密 +4 核验与手机/短横屏 |
 | `node tests/ui/uno-selection.integration.mjs` | 接龙选牌高亮/抬升/取消、确认出牌、万能选色、换座清理、质疑开关与双语三尺寸 |
 | `node tests/ui/new-game-results.integration.mjs` | 寿司/商旅/接龙/晶石最终全员积分、晶石同分牌数比较、喵喵危机全员幸存/出局状态、寿司逐轮及布丁分、同分胜者标记、中英八尺寸、长昵称、文字不越出卡片及旋转；使用固定传输 fixture，支持 WebKit |
 | `node tests/ui/new-games.integration.mjs` | 寿司、香料、七彩接龙实际回合操作 |
-| `node tests/ui/word-games.integration.mjs` | 两款词语游戏中英文终局与切换语言保留词面 |
+| `node tests/ui/word-games.integration.mjs` | 两款词语游戏中英文终局、全部词卡分页与切换语言保留词面；支持 WebKit |
 | `node tests/ui/offline.integration.mjs` | 生产预览 5176 的缓存、断网重载及十二款试玩 |
 | `node tests/ui/install.integration.mjs` | 直接安装提示、取消/完成状态、iOS/桌面帮助与竖屏 |
 | `node tests/ui/personal.integration.mjs` | 48 头像、身份保存、试玩恢复、战绩去重/删除、重置身份、存储禁用 |
 | `node tests/ui/responsive.integration.mjs` | 320px 手机至桌面、短横屏、数字溢出、全部座位与操作可达性 |
-| `node tests/ui/cards.integration.mjs` | 晶石商会、喵喵危机的实际界面操作 |
+| `node tests/ui/cards.integration.mjs` | 晶石商会、喵喵危机的实际界面操作，遍历所有市场层级；支付摘要在中英八尺寸与旋转后可见，取消恢复库存且不购买；支持 WebKit |
 | `node tests/ui/gems-layout.integration.mjs` | 宝石牌桌布局 |
 | `node tests/ui/bombs-table.integration.mjs` | 喵喵危机牌桌布局 |
-| `node tests/ui/social.integration.mjs` | 月夜议会与迷雾远征界面 |
+| `node tests/ui/social.integration.mjs` | 月夜议会单次闭眼、女巫阶段等待与迷雾远征直接投票、座位操作；支持 WebKit |
 | `node tests/ui/social-hosted.integration.mjs` | 月夜议会法官、发身份界面 |
 | `node tests/ui/social-max.integration.mjs` | 最大人数的身份和座位布局 |
 | `node tests/ui/social-modes.integration.mjs` | 从首页进入月夜议会不同模式 |
@@ -114,15 +118,19 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 网络延迟回归：`TEST_GAMES=century TEST_ACTION_DELAY_MS=600 TEST_SKIP_OFFLINE=1 BASE_URL=http://127.0.0.1:5174 node tests/ui/production.integration.mjs`。对真实 Worker 的回包延迟 600ms，验证提交中阻止后续操作，并在回包后继续升级/结束回合；也支持 WebKit。
 
-- `tests/ui/gems-viewport.integration.mjs`：晶石商会中英八尺寸、全部市场层级、费用完整、牌面查看、实际拿取及库存入口；320px 高短横屏允许外层牌桌滚动并逐区验证可达，其余尺寸无需纵向滚动，支持 WebKit。
-- `tests/ui/uno-sushi-viewport.integration.mjs`：寿司与七彩接龙中英七尺寸，公共区及手牌无纵向滚动、28 张手牌、最大人数密集盘面逐张可达、选色、报单、私人质疑核验、筷子选牌/取消；支持 WebKit。
+- `tests/ui/gems-viewport.integration.mjs`：晶石商会中英八尺寸无纵向滚动、全部市场层级、费用完整、牌面查看、六种公共筹码完整可见且保持 44px 触控、精确拿取条件、选择时布局稳定、实际拿取及库存入口；支持 WebKit。
+- `tests/ui/gems-results.integration.mjs`：晶石商会真实 App 的四人终局分数、已购牌/贵族数量及同分胜者，双语八尺寸、结束时清除选择、结算收起/重开、刷新和新局恢复；使用本地模拟 WebSocket，支持 WebKit。
+- `tests/ui/century-results.integration.mjs`：商旅真实 App 的五人终局分数、订单/金币/银币数量及同分胜者，房主/访客双语八尺寸、结算收起/重开、刷新、三人末轮目标及新局恢复；使用本地模拟 WebSocket，支持 WebKit。
+- `tests/ui/uno-sushi-viewport.integration.mjs`：寿司与七彩接龙中英七尺寸，公共区及手牌无纵向滚动、28 张手牌与溢出滑动提示、最大人数密集盘面逐张可达、选色、报单、私人质疑核验、筷子选牌/取消；支持 WebKit。 另检查真实 App 的五人寿司总分、逐轮与布丁明细、结算收起/重开及旋转。
 
-- `tests/ui/social-viewport.integration.mjs`：双语八尺寸、狼人三模式和阿瓦隆的全席分页、规则入口、身份隐藏、法官选择、表决及任务提交；支持 WebKit。
-- `tests/ui/social-app-viewport.integration.mjs`：真实 App 在 320×568 和 568×320 下的默认及最大人数、表决/任务、终局公开身份、结算关闭与重开；支持 WebKit。
+- `tests/ui/social-viewport.integration.mjs`：双语八尺寸、狼人三模式座位分页和阿瓦隆十席同屏、规则入口、身份隐藏、法官选择、直接表决与任务提交及按钮文字边界；支持 WebKit。
+- `tests/ui/social-app-viewport.integration.mjs`：真实 App 在中英八尺寸下的默认及最大人数、阿瓦隆全席同屏、表决/任务按钮文字边界、终局公开身份、结算关闭与重开；支持 WebKit。
 
-- `tests/ui/century-viewport.integration.mjs`：商旅双语八尺寸，市场/订单/商队/已用商人切换、费用完整、末张牌横向可达、付款、弹窗旋转，以及五人密集手牌；支持 WebKit。
-- `tests/ui/game-viewport.integration.mjs`：按注册表遍历十二款游戏，最大人数、中英八尺寸，检查页面和桌面容器没有意外纵向滚动或内容裁剪。晶石商会在高度不超过 360px 的横屏允许外层牌桌滚动，逐区验证完整可达、无覆盖、44px 宝石按钮、选择/清空及库存开关；内部容器仍禁止纵向溢出。配合各游戏的状态/操作测试及实际截图验收，不能单独代表完整游戏流程。
-- `tests/ui/bombs-viewport.integration.mjs`：喵喵危机中英八尺寸、最大五人，初始/选牌/响应/目标/索要/交牌/预知/拆弹/插入/结束十种状态，所有容器纵向溢出与裁切检查，实际操作及预知私密换座；支持 WebKit。
+- `tests/ui/century-viewport.integration.mjs`：商旅双语八尺寸，市场/订单/商队/已用商人切换、费用完整、末张牌横向可达、付款、五人密集手牌与空手牌说明；订单详情显示香料名称及所需/持有/差额，覆盖可交单、材料不足、等待回合、旋转、Escape 与焦点恢复；支持 WebKit。
+- `tests/ui/game-viewport.integration.mjs`：按注册表遍历十二款游戏，最大人数、中英八尺寸，检查页面和所有桌面容器没有纵向滚动或内容裁剪；晶石短横屏另检查各区无遮挡、44px 筹码、选择/清空和库存开关。配合各游戏的状态/操作测试及实际截图验收，不能单独代表完整游戏流程。
+- `tests/ui/bombs-viewport.integration.mjs`：喵喵危机中英八尺寸、最大五人，初始/选牌/响应/目标/索要/交牌/预知/拆弹/插入/结束十种状态，所有容器纵向溢出与裁切检查；出牌自动确认、直接否决/反制及其余玩家重新响应；预知时手牌不响应选择、私密换座隐藏及查看结束后恢复选牌；支持 WebKit。
+
+- `tests/ui/guandan-results.integration.mjs`：真实 App 配合模拟房间回包，四人本轮/全场结算、名次/队伍/本轮得分/余牌、54 张公开剩余牌详情、房主/访客双语八尺寸、旋转和焦点、下一轮/重开、刷新及新局手牌恢复；支持 WebKit。
 
 ## 房间人机
 

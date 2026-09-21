@@ -1,8 +1,12 @@
 export const classicText:Record<string,string>={
+ '玩家名':'Player','本轮得分':'Round score',
+ '查看剩余手牌':'View remaining cards','剩余手牌':'Remaining cards','手牌':'Cards','手牌已出完':'All cards played','等待开始下一轮':'Waiting for the next round',
+
  '行动中':'Playing','座位方位':'Seat directions',
  '已胡牌：只打新摸牌':'Hand locked: discard only the drawn tile',
- '手牌可左右滑动':'Swipe to see your hand',
- '出牌牌型':'Declare combination',
+ '手牌可左右滑动':'Swipe to see your hand','滑动查看手牌':'Swipe hand',
+ '出牌牌型':'Declare combination','牌型':'Type',
+ '这组牌压不过上家':'Cannot beat the previous play','牌型不成立':'Not a valid combination',
  '本局和局':'Draw', '提示':'Hint',
  '斗地主':'Dou Dizhu','掼蛋':'Guan Dan','麻将':'Mahjong',
  '广东推倒胡':'Guangdong Push Down','四川血战':'Sichuan Blood Battle','血流成河':'Blood Flow','红中赖子':'Red Dragon Wild','麻将玩法':'Mahjong variant','可碰、杠，不吃牌':'Pung and kong, no chow',

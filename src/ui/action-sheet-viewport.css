@@ -1,9 +1,9 @@
 .action-sheet{display:flex;flex-direction:column;overflow:hidden;max-height:calc(100dvh - 20px)}
 .action-sheet .sheet-heading,.action-sheet>p,.action-sheet>.inline-actions,.action-sheet>footer{flex:none}
-.action-sheet .choices{display:grid;grid-template-columns:none;grid-auto-flow:column;grid-template-rows:repeat(3,minmax(48px,auto));grid-auto-columns:minmax(130px,1fr);overflow-x:auto;overflow-y:hidden;min-height:0;max-height:none;gap:6px;padding:3px 3px 8px;scrollbar-width:thin;scroll-snap-type:x proximity;overscroll-behavior-x:contain}
+.action-sheet .choices{display:grid;grid-template-columns:none;grid-auto-flow:column;grid-template-rows:repeat(var(--choice-rows,3),minmax(48px,auto));grid-auto-columns:minmax(130px,1fr);overflow-x:auto;overflow-y:hidden;min-height:0;max-height:none;gap:6px;padding:3px 3px 8px;scrollbar-width:thin;scroll-snap-type:x proximity;overscroll-behavior-x:contain}
 .action-sheet .choices:empty{display:none}
 .action-sheet .choice{min-height:48px;scroll-snap-align:start;overflow-wrap:anywhere;padding:7px}
-.action-sheet .choices:not(:has(.choice:nth-child(4))){grid-template-rows:minmax(48px,auto)}
+.action-sheet .choices:not(:has(.choice:nth-child(4))){--choice-rows:1}
 .action-sheet footer{gap:8px}
 @media(max-height:500px){
  .action-sheet{padding:10px 14px}
@@ -13,3 +13,13 @@
  .action-sheet .choices{grid-template-rows:minmax(48px,auto);grid-auto-columns:145px}
  .action-sheet>footer{padding-top:7px}
 }
+
+.action-sheet .sheet-heading{gap:8px}
+.action-sheet .sheet-heading>div:first-child{flex:1;min-width:0}
+.action-sheet .choice-paging{display:flex;flex:none;gap:2px}
+.action-sheet .choice-paging button,.action-sheet .sheet-heading>.icon{width:44px;height:44px;flex:none;display:grid;place-items:center;padding:0}
+.action-sheet .choice-paging button{border:1px solid #c8bc8a40;border-radius:8px;background:#ffffff08}
+.action-sheet .choice-paging button:disabled{opacity:.3}
+.action-sheet>footer .compact{min-height:44px}
+
+@media(min-height:501px){.action-sheet .choices.player-choices{grid-auto-columns:calc((100% - 6px)/2)}}

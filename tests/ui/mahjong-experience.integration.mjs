@@ -13,7 +13,7 @@ try{for(const locale of ['zh','en']){
  const rack=page.locator('.classic-hand'),last=()=>rack.locator('button').last();
  const discards=()=>page.locator('.river-self .river .classic-face');
  const checkTurn=async()=>{await expect(discards()).toHaveCount(1);await expect(page.locator('.classic-seat.current')).toContainText('Blair');await expect(page.getByRole('button',{name:locale==='zh'?'过':'Pass',exact:true})).toHaveCount(0);await expect(page.getByRole('alert')).toHaveCount(0);};
- for(const [width,height] of sizes){await page.setViewportSize({width,height});await begin();await last().scrollIntoViewIfNeeded();
+ for(const [width,height] of sizes){await page.setViewportSize({width,height});await begin();const overflow=await page.locator('.classic-hand-scroll').evaluate(e=>e.scrollWidth>e.clientWidth+2);if(overflow)await expect(page.locator('.hand-scroll-cue')).toBeVisible();else await expect(page.locator('.hand-scroll-cue')).toHaveCount(0);await last().scrollIntoViewIfNeeded();
   await last().click();await expect(last()).toHaveAttribute('aria-pressed','true');await expect(discards()).toHaveCount(0);
   await page.screenshot({path:`${out}/${locale}-${width}.png`});
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));

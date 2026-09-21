@@ -8,9 +8,11 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { Check, Crown, Eye, EyeOff, Flame, LockKeyhole, Moon, Shield, Skull, Sparkles, Sun, Swords, X } from 'lucide-react';
 import type { Action, Command, GameView } from '../core/types';
 import { SocialBoard } from './Boards';
+import { AvalonBoard } from './AvalonBoard';
 import { RoleArt } from './Art';
 import './social-table.css';
 import './social-viewport.css';
+import './avalon-table.css';
 type Props = {
     view: GameView;
     selfID: string;
@@ -72,7 +74,7 @@ export function SocialTable(props: Props) {
     return <div className={`social-table-v2 ${hosted ? 'hosted' : ''} ${b.isModerator ? 'moderator' : ''} ${view.kind === 'avalon' ? 'council' : ''} ${quick ? 'is-decision' : ''}`}>
       {view.kind==='werewolf'&&<button className="social-rules-button" onClick={()=>setRulesOpen(true)}>{t('规则')}</button>}
       {rulesOpen&&<div className="modal-shade"><div ref={rulesRef} className="panel social-rules-panel" role="dialog" aria-modal="true" aria-label={t('规则')} tabIndex={-1}><button className="icon" aria-label={t('关闭')} onClick={()=>setRulesOpen(false)}><X/></button><WolfRuleStrip preset={b.preset} winRule={b.winRule}/></div></div>}
-  {tx(hosted ? (b.isModerator ? <JudgeTable view={view} open={open}/> : <PersonalCard view={view} selfID={selfID} onReveal={() => setRevealed(true)}/>) : <><SocialBoard {...props}/><button className="identity-deck" onClick={() => setRevealed(true)} aria-label={t("查看我的身份")}><RoleBack /><span>{t("我的身份")}</span></button>{tx(quick && <div className="council-decision"><small>{tx(quick.title)}</small><div>{tx(quick.choices.map(c => <button className={`council-token ${c.id === 'no' || c.id === 'fail' ? 'dark' : ''}`} key={c.id} onClick={() => open(quick, [c.id])} aria-label={tx(c.title)}>{tx(c.id === 'yes' || c.id === 'success' ? <Check /> : <X />)}<b>{tx(c.title)}</b></button>))}</div></div>)}</>)}
+  {tx(hosted ? (b.isModerator ? <JudgeTable view={view} open={open}/> : <PersonalCard view={view} selfID={selfID} onReveal={() => setRevealed(true)}/>) : <>{view.kind === 'avalon' ? <AvalonBoard {...props}/> : <SocialBoard {...props}/>}<button className="identity-deck" onClick={() => setRevealed(true)} aria-label={t("查看我的身份")}><RoleBack /><span>{t("我的身份")}</span></button>{quick && <div className="council-decision" role="group" aria-label={t(quick.title)}><div>{quick.choices.map(c => <button type="button" className={`council-token ${c.id === 'no' || c.id === 'fail' ? 'dark' : ''}`} key={c.id} onClick={() => props.command({ action: quick.id, values: [c.id] })} aria-label={t(c.title)}>{c.id === 'yes' || c.id === 'success' ? <Check /> : <X />}<b>{t(c.title)}</b></button>)}</div></div>}</>)}
   {tx(revealed && <IdentityReveal key={`${selfID}:${b.dealNumber || 0}`} view={view} onClose={() => setRevealed(false)}/>)}
  </div>;
 }

@@ -1,11 +1,12 @@
 import {collectWordPages,findWordPage} from './word-test-pages.mjs';
-import { chromium } from '@playwright/test';
+import {chromium,webkit} from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 const base=process.env.BASE_URL||'http://127.0.0.1:5173';
-const artifacts='test-results/word-privacy';
+const safari=process.env.TEST_BROWSER==='webkit';
+const artifacts=`test-results/word-privacy${safari?'-webkit':''}`;
 await fs.mkdir(artifacts,{recursive:true});
-const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||undefined});
+const browser=await(safari?webkit.launch():chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||undefined}));
 const sizes=[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900],[568,320]];
 const errors=[];
 try{
@@ -23,9 +24,10 @@ try{
     const overflow=await page.locator('.wg-table button,.wg-table strong,.wg-table input,.wg-table select').evaluateAll(nodes=>nodes.flatMap(el=>{const r=el.getBoundingClientRect();return r.width&&el.scrollWidth>el.clientWidth+2?[{text:el.textContent,client:el.clientWidth,scroll:el.scrollWidth}]:[];}));
     assert.deepEqual(overflow,[],`${locale} ${name} ${width}: clipped labels`);
 const overlaps=await page.locator('.wg-word,.wg-odd-player').evaluateAll(xs=>xs.flatMap((e,i)=>{const a=e.getBoundingClientRect();return xs.slice(i+1).filter(x=>{const b=x.getBoundingClientRect();return a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;}).map(x=>[e.textContent,x.textContent]);}));assert.deepEqual(overlaps,[],'cards must never overlap');
+    await page.screenshot({path:`${artifacts}/${name}-${locale}-${width}.png`});
     if(name==='signals-captain'&&width===320&&height===568){
      const firstRow=await page.locator('.wg-word').evaluateAll(cards=>cards.map(card=>{const rect=card.getBoundingClientRect();return {bottom:rect.bottom,height:rect.height,font:Number.parseFloat(getComputedStyle(card.querySelector('strong')).fontSize)};}));
-     assert(firstRow.every(card=>card.bottom<=height&&card.height>=44&&card.font>=12),'Every visible word must fit, retain a 44px target and remain readable on a short portrait phone');
+     assert(firstRow.every(card=>card.bottom<=height&&card.height>=44&&card.font>=12),'Every visible word must fit, retain a 44px target and remain readable on a short portrait phone '+JSON.stringify(firstRow));
      const submit=await page.locator('.wg-clue-submit').boundingBox();assert(submit.width>=44&&submit.height>=44,'Compact send control must retain its touch target');
     }
     const atlas=await page.locator('.wg-table svg image').evaluateAll(nodes=>[...new Set(nodes.map(el=>el.getAttribute('href')))]);
@@ -36,7 +38,6 @@ const overlaps=await page.locator('.wg-word,.wg-odd-player').evaluateAll(xs=>xs.
      const compact=await page.locator('.wg-secret-panel').boundingBox();assert(compact.height<=90,'The hidden secret control must stay compact while voting');
      const first=await page.locator('.wg-odd-player').first().boundingBox();assert(first.y<height,'At least the first voting targets must enter the initial viewport');
     }
-    await page.screenshot({path:`${artifacts}/${name}-${locale}-${width}.png`});
    }
    await page.setViewportSize({width:390,height:844});
   };

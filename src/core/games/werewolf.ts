@@ -6,6 +6,8 @@ export { werewolfPreset, type WolfRole } from '../werewolfPresets';
 type Stage='signup'|'electionSpeech'|'electionVote'|'nightFirst'|'nightSecond'|'discussion'|'vote'|'pk'|'hunter'|'badge';
 export interface WerewolfState {
   options?:GameOptions;
+  // Unversioned saves finish their current night with the original acknowledgements.
+  nightFlowVersion?:2;
   players:Player[]; roles:Record<string,WolfRole>; alive:string[]; stage:Stage; submissions:Record<string,string>;
   candidates:string[]; electionRunoff:boolean; electionPending:boolean; electionExplosions:number; dayRunoff:boolean;
   sheriff:string|null; night:number; previousGuard:string|null; guarded:string|null; victim:string|null; poisoned:string|null;
@@ -54,7 +56,7 @@ function actionsFor(s:WerewolfState,id:string):Action[]{
   return actions;
 }
 function beginNight(s:WerewolfState){
-  s.stage='nightFirst';s.submissions={};s.guarded=null;s.victim=null;s.poisoned=null;s.rescued=false;s.dayRunoff=false;
+  s.nightFlowVersion=2;s.stage='nightFirst';s.submissions={};s.guarded=null;s.victim=null;s.poisoned=null;s.rescued=false;s.dayRunoff=false;
   s.candidates=s.electionPending&&s.electionExplosions>0?s.candidates.filter(id=>s.alive.includes(id)):[];
 }
 function evaluateWinner(s:WerewolfState){
@@ -78,6 +80,23 @@ function resolveNight(s:WerewolfState,next:'discussion'|'nightFirst'='discussion
   s.continuation=next;s.submissions={};afterDeath(s);
 }
 function finishElection(s:WerewolfState){s.electionPending=false;s.log.push(s.sheriff?`${name(s,s.sheriff)} 当选警长，放逐票计 1.5 票。`:'本局无警长。');resolveNight(s);}
+function finishNightActions(s:WerewolfState){
+  s.submissions={};
+  if(!s.electionPending){resolveNight(s);return;}
+  if(s.electionExplosions>0){
+    s.candidates=s.candidates.filter(p=>s.alive.includes(p));
+    if(s.candidates.length<=1){s.sheriff=s.candidates[0]??null;finishElection(s);}
+    else s.stage='electionSpeech';
+  }else{s.stage='signup';s.candidates=[];s.electionRunoff=false;}
+}
+function beginPotionStep(s:WerewolfState){
+  s.stage='nightSecond';s.submissions={};
+  if(s.nightFlowVersion===2){
+    // Everyone else has already acted or closed their eyes in the first step.
+    s.submissions=Object.fromEntries(living(s).filter(id=>s.roles[id]!=='witch').map(id=>[id,'ready']));
+    if(Object.keys(s.submissions).length===s.alive.length)finishNightActions(s);
+  }
+}
 function explode(s:WerewolfState,id:string){
   const election=s.stage==='electionSpeech';remove(s,id);s.revealed.push(id);s.log.push(`${name(s,id)} 公开狼人身份并自爆，白天结束。`);s.submissions={};
   if(election){s.electionExplosions++;if(s.electionExplosions>=2){s.electionPending=false;s.log.push('连续两次警上自爆，警徽流失。');}else s.log.push('警长竞选推迟到次日。');resolveNight(s,'nightFirst');}
@@ -102,7 +121,7 @@ function resolveVote(s:WerewolfState){
 export const standardWerewolf:GameModule<WerewolfState>={
   create(players,seed,options){
     assertPlayers(players,6,18);werewolfVictory(['wolf','villager','seer'],options?.werewolfWin);const deck=shuffle(werewolfPreset(players.length,options?.werewolfPreset),seeded(seed));
-    return {options:{...options,werewolfMode:'standard'},players:structuredClone(players),roles:Object.fromEntries(players.map((p,i)=>[p.id,deck[i]])),alive:players.map(p=>p.id),stage:'nightFirst',submissions:{},candidates:[],electionRunoff:false,electionPending:true,electionExplosions:0,dayRunoff:false,sheriff:null,night:1,previousGuard:null,guarded:null,victim:null,poisoned:null,rescued:false,antidote:true,poison:true,investigations:{},hunterID:null,badgeOwner:null,continuation:'discussion',winner:null,log:[`${players.length} 人局 · ${options?.werewolfWin==='parity'?'人数平衡':'屠边'} · 首夜结束后竞选警长`],revealed:[],publicVotes:{}};
+    return {options:{...options,werewolfMode:'standard'},nightFlowVersion:2,players:structuredClone(players),roles:Object.fromEntries(players.map((p,i)=>[p.id,deck[i]])),alive:players.map(p=>p.id),stage:'nightFirst',submissions:{},candidates:[],electionRunoff:false,electionPending:true,electionExplosions:0,dayRunoff:false,sheriff:null,night:1,previousGuard:null,guarded:null,victim:null,poisoned:null,rescued:false,antidote:true,poison:true,investigations:{},hunterID:null,badgeOwner:null,continuation:'discussion',winner:null,log:[`${players.length} 人局 · ${options?.werewolfWin==='parity'?'人数平衡':'屠边'} · 首夜结束后竞选警长`],revealed:[],publicVotes:{}};
   },
   view(s,id){
     if(!s.players.some(p=>p.id===id))throw new Error('不是本局玩家');
@@ -134,10 +153,10 @@ export const standardWerewolf:GameModule<WerewolfState>={
       case 'nightFirst':
         s.submissions={...s.submissions,[id]:value};if(command.action==='guard')s.guarded=value==='skip'?null:value;
         if(command.action==='inspect'&&value!=='skip')s.investigations={...s.investigations,[value]:isWolfRole(s.roles[value])?'狼人':'好人'};
-        if(Object.keys(s.submissions).length===s.alive.length){const targets=new Set(living(s).filter(p=>isWolfRole(s.roles[p])).map(p=>s.submissions[p]));s.victim=targets.size===1&&![...targets].includes('skip')?[...targets][0]:null;s.previousGuard=s.guarded;s.submissions={};s.stage='nightSecond';}break;
+        if(Object.keys(s.submissions).length===s.alive.length){const targets=new Set(living(s).filter(p=>isWolfRole(s.roles[p])).map(p=>s.submissions[p]));s.victim=targets.size===1&&![...targets].includes('skip')?[...targets][0]:null;s.previousGuard=s.guarded;beginPotionStep(s);}break;
       case 'nightSecond':
         s.submissions={...s.submissions,[id]:value};if(command.action==='potion'){if(value==='save'){s.antidote=false;s.rescued=true;}else if(value.startsWith('poison:')){s.poison=false;s.poisoned=value.slice(7);}}
-        if(Object.keys(s.submissions).length===s.alive.length){s.submissions={};if(s.electionPending){if(s.electionExplosions>0){s.candidates=s.candidates.filter(p=>s.alive.includes(p));if(s.candidates.length<=1){s.sheriff=s.candidates[0]??null;finishElection(s);}else s.stage='electionSpeech';}else{s.stage='signup';s.candidates=[];s.electionRunoff=false;}}else resolveNight(s);}break;
+        if(Object.keys(s.submissions).length===s.alive.length)finishNightActions(s);break;
     }
     return s;
   }

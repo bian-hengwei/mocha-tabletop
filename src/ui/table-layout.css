@@ -100,6 +100,13 @@
  .mahjong-table .classic-hand-panel,.game-table-doudizhu .classic-hand-panel{padding-top:4px;padding-bottom:5px}
  .game-table-doudizhu .classic-arena{min-height:220px}
 }
+@media(max-width:740px) and (orientation:portrait){
+ .mahjong-table .river-seat>header{font-size:10px;line-height:1.3;flex-wrap:wrap;column-gap:4px;color:#dce5d7}
+ .mahjong-table .river-seat>header>span{font-size:9px;color:#bbcebb}
+ .mahjong-table .classic-seat small{font-size:9px;color:#c0d1bd}
+ .mahjong-table .mahjong-compass{width:44px;height:44px;font-size:8px;color:#d4ddc2}
+ .mahjong-table .mahjong-compass>b{font-size:16px}
+}
 @media(max-height:500px) and (orientation:landscape){
  .mahjong-table .classic-arena{min-height:149px}
  .mahjong-table .classic-seat.seat-left,.mahjong-table .classic-seat.seat-right{top:33%!important;flex-direction:row;width:105px;max-width:105px}
@@ -177,4 +184,8 @@
  .mahjong-table :is(.river-across,.river-self)>header{grid-column:1/-1;grid-row:1}
  .mahjong-table :is(.river-across,.river-self) .mahjong-melds{grid-column:1;grid-row:2;max-height:none;align-items:center}
  .mahjong-table :is(.river-across,.river-self) .river{grid-column:2;grid-row:2;min-width:0;align-items:center}
+}
+/* Tall phones have room for public poker ranks without changing compact landscape play. */
+@media(min-width:381px) and (max-width:740px) and (min-height:651px) and (orientation:portrait){
+ .poker-table .played .classic-face.mini{width:38px}
 }

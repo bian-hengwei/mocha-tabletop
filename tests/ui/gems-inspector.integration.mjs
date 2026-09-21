@@ -25,13 +25,13 @@ try{for(const locale of ['zh','en']){
  await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=gems`);
  await page.locator('.g-tier-active .development-card').first().click();
  await expect(dialog.getByRole('button',{name:label('预留','Reserve'),exact:true})).toBeEnabled();
- await checkNote(label('筹码不足，暂时无法购买','Not enough gems to buy this card yet.'),'can-reserve');
+ await checkNote(label('筹码不足，暂不能购买。永久奖励和黄金已计入。','Not enough tokens to buy. Bonuses and gold are already counted.'),'can-reserve');
  await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=gems&scenario=inspection`);
  await page.locator('.g-tier-active .development-card').first().click();
  await expect(dialog.getByRole('button',{name:label('预留','Reserve'),exact:true})).toHaveCount(0);
  await checkNote(label('筹码不足，暂时无法购买；预留位置已满','Not enough gems to buy this card yet. All reserve slots are full.'),'full-market');
  await page.locator('.g-reserved .development-card').first().click();
- await checkNote(label('筹码不足，暂时无法购买','Not enough gems to buy this card yet.'),'own-reserved');
+ await checkNote(label('筹码不足，暂不能购买。永久奖励和黄金已计入。','Not enough tokens to buy. Bonuses and gold are already counted.'),'own-reserved');
  await page.getByRole('button',{name:label('查看我的全部库存','View my full inventory'),exact:true}).click();
  await page.locator('.purchased-columns .development-card').first().click();
  await checkNote(label('这张发展牌已经购入','This development card has already been purchased.'),'bought');
@@ -42,6 +42,6 @@ try{for(const locale of ['zh','en']){
  await checkNote(label('等待你的回合','Wait for your turn.'),'waiting');
  await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=gems&scenario=payment`);
  await page.locator('.g-payment .development-card').click();
- await checkNote(label('请先确认或取消当前购买','Confirm or cancel the current purchase first.'),'payment');
+ await checkNote(label('在底部确认支付，或取消购买','Confirm payment below, or cancel the purchase.'),'payment');
  assert.deepEqual(errors,[]);await page.close();console.log(`PASS ${engine}/${locale}: purchase and reserve explanations, ownership, waiting, payment, eight sizes and rotation`);
 }}finally{await browser.close();}

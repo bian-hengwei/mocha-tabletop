@@ -1,8 +1,8 @@
-import { chromium } from '@playwright/test';
+import { chromium, webkit } from '@playwright/test';
 import assert from 'node:assert/strict';
 
 const base = process.env.BASE_URL || 'http://127.0.0.1:5174';
-const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' });
+const browser = process.env.TEST_BROWSER==='webkit' ? await webkit.launch() : await chromium.launch({ headless: true, executablePath: process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' });
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 page.setDefaultTimeout(5000);
 await page.addInitScript(() => { localStorage.removeItem('mocha-practice-v1'); localStorage.setItem('mocha-profile', JSON.stringify({ id: 'keyboard-audit', name: '键盘测试', avatar: '🦊' })); });
