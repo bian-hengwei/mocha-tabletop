@@ -24,3 +24,8 @@
 @media(max-height:480px) and (orientation:landscape){.mahjong-assist.panel{max-height:calc(100dvh - 16px);padding:10px 16px}.mahjong-waits{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
 .mahjong-assist-discard option{background:#fffdf6;color:#263e33}
+ .mahjong-table .classic-controls:has(.mahjong-assist-button):has(.history-button){display:grid;grid-template-columns:repeat(4,minmax(44px,1fr))}
+@media(max-height:360px) and (orientation:landscape){
+ .mahjong-table .classic-hand-panel:has(.mahjong-assist-button):has(.history-button){grid-template-columns:minmax(0,1fr) minmax(232px,44%)}
+ .mahjong-table .classic-controls:has(.mahjong-assist-button):has(.history-button){grid-template-columns:repeat(4,minmax(44px,1fr))}
+}
