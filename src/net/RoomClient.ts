@@ -4,7 +4,7 @@ export type {ClientState,RoomCandidate,RoomMode} from '../core/room';
 const API=(import.meta.env.VITE_API_BASE||'').replace(/\/$/,'');
 const randomToken=()=>Array.from(crypto.getRandomValues(new Uint8Array(24)),b=>b.toString(16).padStart(2,'0')).join('');
 const initial=():ClientState=>({status:'idle',transport:'none',paused:false,actionRevision:0});
-interface Session {profile:Player;code:string;invite?:string;token:string;savedAt?:number;expiresAt?:number}
+interface Session {profile:Player;code:string;invite?:string;token:string;savedAt?:number;expiresAt?:number;pendingApproval?:boolean}
 export interface SavedSession {profile:Player;code:string;savedAt:number;expiresAt:number}
 const SESSION_KEY='mocha-room-session';
 const SESSION_TTL=6*60*60*1000;
@@ -56,8 +56,8 @@ export class RoomClient {
  getSavedSession():SavedSession|undefined {const s=this.readSession();return s?{profile:s.profile,code:s.code,savedAt:s.savedAt!,expiresAt:s.expiresAt!}:undefined;}
  /** Forget a previous room without sending any room mutation. */
  forgetSession(){this.clearSavedSession();if(this.state.status==='idle'||this.state.status==='disconnected'){this.reset();this.patch(initial());}}
- /** Close only this connection attempt; retain the room credential for a later resume. */
- cancelConnection(){this.reset();this.patch(initial());}
+ /** Withdraw a known pending request; retain admitted or legacy room recovery. */
+ cancelConnection(){if(this.session?.pendingApproval===true){if(this.ws?.readyState===WebSocket.OPEN)this.control({type:'leave'});this.clearSavedSession();}this.reset();this.patch(initial());}
  /** Only available outside a room; affects this browser's identity, never other players. */
  resetIdentity(){if(this.state.room||this.state.status==='connecting'||this.state.status==='reconnecting')throw new Error('请先离开牌桌，再重置本机用户');this.clearSavedSession();this.reset();this.networkToken=undefined;for(const storage of availableStorage())try{storage.removeItem('mocha-network-token');for(let i=storage.length-1;i>=0;i--){const key=storage.key(i);if(key?.startsWith('mocha-host-'))storage.removeItem(key);}}catch{}this.patch(initial());}
  /** Restore the last room even after closing the tab, or retry a dropped connection. */
@@ -110,10 +110,10 @@ export class RoomClient {
   if(msg.type==='error'){this.starting=false;if(!this.state.room)this.terminal(msg.error);else this.fail(msg.error);return;}
   if(msg.type==='rejected'||msg.type==='ended'){this.terminal(msg.error);return;}
   if(msg.type==='pong')return;
-  if(msg.type==='pending'){this.reconnects=0;this.patch({waitingApproval:true,status:'connecting',error:undefined});return;}
+  if(msg.type==='pending'){this.reconnects=0;if(this.session){this.session.pendingApproval=true;this.saveSession();}this.patch({waitingApproval:true,status:'connecting',error:undefined});return;}
   if(msg.type==='signal'){void this.signal(msg.from,msg.data);return;}
   if(msg.type!=='snapshot')return;
-  this.reconnects=0;const room=msg.room as RoomInfo;if(this.session){this.session.expiresAt=room.expiresAt||this.session.expiresAt;this.saveSession();}const old=this.state.room;const host=room.hostID===this.session?.profile.id;
+  this.reconnects=0;const room=msg.room as RoomInfo;if(this.session){this.session.pendingApproval=false;this.session.expiresAt=room.expiresAt||this.session.expiresAt;this.saveSession();}const old=this.state.room;const host=room.hostID===this.session?.profile.id;
   this.patch({room,mode:room.mode,selfID:this.session?.profile.id,waitingApproval:false,status:room.started?'playing':'lobby',error:undefined,inviteURL:msg.invite?`${location.origin}${location.pathname}?room=${room.code}#invite=${msg.invite}`:this.state.inviteURL});
   if(room.mode==='cloud'){this.dropPeers();this.localMatch=undefined;this.patch({transport:'cloud',view:msg.view,actionRevision:msg.actionRevision||0,paused:!!msg.paused});return;}
   if(!room.started){this.localMatch=undefined;this.removeLocal();this.patch({view:undefined,actionRevision:0});}

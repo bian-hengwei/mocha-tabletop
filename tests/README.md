@@ -54,7 +54,7 @@ npx playwright install chromium webkit
 | `node tests/ui/finished-recovery.integration.mjs` | 玩家离线或刷新后仍可查看终局结果与记录，未结束的新局仍暂停；本地模拟消息，中英七尺寸，支持 WebKit |
 | `node tests/ui/storage-boundaries.integration.mjs` | 存储区属性不可读时首屏、临时身份及标签页恢复入口可用；恢复 socket 在测试内拦截，不连接真实房间；支持 WebKit |
 | `node tests/ui/lobby-usability.integration.mjs` | 开局等待原因、访客只读规则、修改规则后重新准备和手机布局 |
-| `node tests/ui/lobby-layout.integration.mjs` | 狼人杀长规则、入桌申请的房间与昵称提示、待审批请求的中英七尺寸旋转、按钮触控、实际批准/准备/开局；需要本地 Worker，支持 WebKit |
+| `node tests/ui/lobby-layout.integration.mjs` | 狼人杀长规则、入桌申请的房间与昵称提示、待审批请求的中英七尺寸旋转、取消申请后刷新不再自动申请、按钮触控、实际批准/准备/开局；需要本地 Worker，支持 WebKit |
 | `node tests/ui/dialogs.integration.mjs` | 宝石、卡牌与秘密身份弹窗的焦点保护、Escape 和恢复；支持 WebKit |
 | `node tests/ui/i18n.integration.mjs` | 九款牌桌正文/无障碍标签英文检查、词库独立切换、确认出牌、私密 +4 核验与手机/短横屏 |
 | `node tests/ui/uno-selection.integration.mjs` | 接龙选牌高亮/抬升/取消、确认出牌、万能选色、换座清理、质疑开关与双语三尺寸 |

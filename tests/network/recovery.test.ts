@@ -36,6 +36,27 @@ describe('same-device room recovery',()=>{
  it('preserves resume credentials and LAN checkpoint when a second tab takes over',async()=>{const c=client();await c.join(profile,'ABC234');localStorage.setItem('mocha-host-ABC234','checkpoint');Socket.all[0].open();Socket.all[0].close(4001);expect(c.getSavedSession()?.code).toBe('ABC234');expect(localStorage.getItem('mocha-host-ABC234')).toBe('checkpoint');expect(c.state.error).toContain('另一窗口');});
  it('clears current recovery on explicit leave but never clears another tab room',async()=>{const c=client();await c.join(profile,'ABC234');Socket.all[0].open();localStorage.setItem('mocha-room-session',JSON.stringify({profile,token,code:'XYZ234'}));c.leave();expect(sessionStorage.getItem('mocha-room-session')).toBeNull();expect(JSON.parse(localStorage.getItem('mocha-room-session')!).code).toBe('XYZ234');});
  it('cancels a resume attempt without dissolving the room or forgetting its credential',async()=>{const c=client();await c.join(profile,'ABC234');Socket.all[0].open();c.cancelConnection();expect(Socket.all[0].sent.some(m=>m.type==='leave')).toBe(false);expect(c.state.status).toBe('idle');expect(c.getSavedSession()?.code).toBe('ABC234');expect(vi.getTimerCount()).toBe(0);});
+ it.each([false,true])('does not resubmit a cancelled admission request after reload (disconnected: %s)',async disconnected=>{
+  vi.stubGlobal('fetch',vi.fn(async()=>new Response('{}')));
+  const c=client();await c.join(guest,'ABC234');const socket=Socket.all[0];socket.open();socket.receive({type:'pending'});
+  if(disconnected){socket.close();await vi.advanceTimersByTimeAsync(1);expect(c.state.waitingApproval).toBe(false);}
+  c.cancelConnection();expect(c.state.status).toBe('idle');expect(c.getSavedSession()).toBeUndefined();
+  expect(localStorage.getItem('mocha-room-session')).toBeNull();expect(sessionStorage.getItem('mocha-room-session')).toBeNull();
+  expect(socket.sent.some(m=>m.type==='leave')).toBe(!disconnected);expect(vi.getTimerCount()).toBe(0);
+  const reopened=client();await reopened.connect();expect(Socket.all).toHaveLength(1);
+ });
+ it('remembers pending admission across reload, then preserves an approved seat when cancelling recovery',async()=>{
+  const first=client();await first.join(guest,'ABC234');Socket.all[0].open();Socket.all[0].receive({type:'pending'});first.destroy();sessionStorage.clear();
+  const reopened=client();await reopened.connect();reopened.cancelConnection();expect(reopened.getSavedSession()).toBeUndefined();
+  await reopened.join(guest,'ABC234');const socket=Socket.all.at(-1)!;socket.open();socket.receive({type:'pending'});socket.receive({type:'snapshot',room:room()});
+  reopened.cancelConnection();expect(reopened.getSavedSession()?.code).toBe('ABC234');
+  await reopened.connect();Socket.all.at(-1)!.open();expect(Socket.all.at(-1)!.sent[0]).toMatchObject({type:'hello',profile:guest,token});
+ });
+ it('cancels a pending request without deleting another tab’s saved room',async()=>{
+  const c=client();await c.join(guest,'ABC234');Socket.all[0].open();Socket.all[0].receive({type:'pending'});
+  localStorage.setItem('mocha-room-session',JSON.stringify({profile,token,code:'XYZ234'}));c.cancelConnection();
+  expect(sessionStorage.getItem('mocha-room-session')).toBeNull();expect(JSON.parse(localStorage.getItem('mocha-room-session')!).code).toBe('XYZ234');
+ });
  it('restores a LAN host checkpoint after browser close and rejects a different round',async()=>{const r=room('lan',true),match=createMatch('gems',r.players);const c=client() as any;await c.join(profile,r.code);c.ensurePeers=()=>{};localStorage.setItem('mocha-host-'+r.code,JSON.stringify({kind:r.kind,matchID:r.matchID,players:r.players.map(p=>p.id).join(','),match}));Socket.all[0].open();Socket.all[0].receive({type:'snapshot',room:r});expect(c.localMatch).toEqual(match);expect(c.state.view).toBeDefined();c.localMatch=undefined;Socket.all[0].receive({type:'snapshot',room:{...r,matchID:'different-round'}});expect(c.localMatch).toBeUndefined();expect(c.state.paused).toBe(true);expect(c.state.error).toContain('状态已丢失');});
  it('resets only idle network identity and local checkpoints, preserving unrelated storage',async()=>{const c=client();localStorage.setItem('mocha-host-ABC234','checkpoint');localStorage.setItem('other-app','keep');c.resetIdentity();expect(localStorage.getItem('mocha-network-token')).toBeNull();expect(localStorage.getItem('mocha-host-ABC234')).toBeNull();expect(localStorage.getItem('other-app')).toBe('keep');await c.join(profile,'ABC234');expect(()=>c.resetIdentity()).toThrow('先离开');});
 });
