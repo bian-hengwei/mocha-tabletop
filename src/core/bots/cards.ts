@@ -246,6 +246,7 @@ function centuryBot(view: GameView, _selfID: string, difficulty: BotDifficulty, 
 function unoBot(view: GameView, selfID: string, difficulty: BotDifficulty, rng: () => number): Command | undefined {
   const board = view.board as unknown as UnoBoard;
   if (board.phase === 'roundEnd') return command(action(view, 'nextRound'));
+  if (board.phase === 'penalty') return command(action(view, 'acceptPenalty'));
   if (board.phase === 'unoCall') return command(action(view, 'callUno'));
   if (board.phase === 'unoCatch') return command(difficulty === 'easy' && rng() < .5 ? action(view, 'passUno') : action(view, 'catchUno'));
   if (board.phase === 'wild4') return command(difficulty === 'hard' && rng() < .35 ? action(view, 'challenge4') : action(view, 'accept4'));

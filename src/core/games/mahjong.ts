@@ -72,7 +72,7 @@ function waitsFor(s:MahjongState,i:number,hand:Tile[],seen:number[]):MahjongWait
  return result;
 }
 function assistance(s:MahjongState,i:number,legal:Action[]):MahjongAssistance|null{
- if(s.finished||!active(s,i)||s.phase==='exchange'||s.phase==='que')return null;
+ if(i<0||s.finished||!active(s,i)||s.phase==='exchange'||s.phase==='que')return null;
  const seen=visibleCounts(s,i),discard=legal.find(a=>a.id==='discard'),hu=legal.some(a=>a.id==='hu'),selfDraw=s.phase==='discard';
  // Identical tile values have identical wait lists, including the known discarded tile.
  const byValue=new Map<number,MahjongWait[]>();

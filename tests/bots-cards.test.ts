@@ -124,3 +124,15 @@ describe('redacted card bots', () => {
     }
   }, 30000); // Twenty complete matches per difficulty also run on shared CI CPUs.
 });
+
+it.each(['easy','normal','hard'] as const)('confirms mandatory UNO penalties at %s difficulty',difficulty=>{
+ const roster=players(2);
+ for(const count of [2,4] as const){
+  let state=uno.create(roster,8,{unoChallenge:false});state.current=0;state.phase='play';state.color='red';state.drawn=null;delete state.pendingPenalty;
+  state.discard=[unoCard('top','red',1)];state.hands[0]=[unoCard('penalty',count===2?'red':'wild',count===2?'draw2':'wild4'),unoCard('keep','blue',7),unoCard('keep2','green',8)];
+  state=uno.apply(state,roster[0].id,{action:count===2?'play':'wild:penalty',values:count===2?['penalty']:['blue']});
+  const decision=cardsBot(uno.view(state,roster[1].id),roster[1].id,difficulty,seeded(1));expect(decision).toEqual({action:'acceptPenalty',values:[]});
+  expect(cardsBot(uno.view(state,roster[0].id),roster[0].id,difficulty,seeded(1))).toBeUndefined();
+  const after=uno.apply(state,roster[1].id,decision!);expect(after.hands[1]).toHaveLength(state.hands[1].length+count);expect(after.current).toBe(0);
+ }
+});
