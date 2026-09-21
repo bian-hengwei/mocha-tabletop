@@ -110,11 +110,12 @@ export class RoomClient {
   if(msg.type==='error'){this.starting=false;if(!this.state.room)this.terminal(msg.error);else this.fail(msg.error);return;}
   if(msg.type==='rejected'||msg.type==='ended'){this.terminal(msg.error);return;}
   if(msg.type==='pong')return;
-  if(msg.type==='pending'){this.reconnects=0;if(this.session){this.session.pendingApproval=true;this.saveSession();}this.patch({waitingApproval:true,status:'connecting',error:undefined});return;}
+  if(msg.type==='pending'){this.reconnects=0;if(this.session)this.session.pendingApproval=true;this.patch({waitingApproval:true,status:'connecting',error:undefined});this.saveSession();return;}
   if(msg.type==='signal'){void this.signal(msg.from,msg.data);return;}
   if(msg.type!=='snapshot')return;
-  this.reconnects=0;const room=msg.room as RoomInfo;if(this.session){this.session.pendingApproval=false;this.session.expiresAt=room.expiresAt||this.session.expiresAt;this.saveSession();}const old=this.state.room;const host=room.hostID===this.session?.profile.id;
+  this.reconnects=0;const room=msg.room as RoomInfo;if(this.session){this.session.pendingApproval=false;this.session.expiresAt=room.expiresAt||this.session.expiresAt;}const old=this.state.room;const host=room.hostID===this.session?.profile.id;
   this.patch({room,mode:room.mode,selfID:this.session?.profile.id,waitingApproval:false,status:room.started?'playing':'lobby',error:undefined,inviteURL:msg.invite?`${location.origin}${location.pathname}?room=${room.code}#invite=${msg.invite}`:this.state.inviteURL});
+  this.saveSession();
   if(room.mode==='cloud'){this.dropPeers();this.localMatch=undefined;this.patch({transport:'cloud',view:msg.view,actionRevision:msg.actionRevision||0,paused:!!msg.paused});return;}
   if(!room.started){this.localMatch=undefined;this.removeLocal();this.patch({view:undefined,actionRevision:0});}
   else if(host&&!this.localMatch){

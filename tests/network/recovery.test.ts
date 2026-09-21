@@ -57,6 +57,12 @@ describe('same-device room recovery',()=>{
   localStorage.setItem('mocha-room-session',JSON.stringify({profile,token,code:'XYZ234'}));c.cancelConnection();
   expect(sessionStorage.getItem('mocha-room-session')).toBeNull();expect(JSON.parse(localStorage.getItem('mocha-room-session')!).code).toBe('XYZ234');
  });
+ it.each(['pending','snapshot'])('keeps the storage failure explanation after a %s reply',async type=>{
+  for(const storage of [localStorage,sessionStorage])vi.spyOn(storage,'setItem').mockImplementation(()=>{throw new DOMException('Storage full','QuotaExceededError');});
+  const c=client();await c.join(guest,'ABC234');Socket.all[0].open();Socket.all[0].receive(type==='pending'?{type}:{type,room:room()});
+  expect(c.state.status).toBe(type==='pending'?'connecting':'lobby');expect(c.state.error).toContain('浏览器无法保存房间');
+  expect(c.getConnectionTarget()).toEqual({code:'ABC234',profile:guest});
+ });
  it('restores a LAN host checkpoint after browser close and rejects a different round',async()=>{const r=room('lan',true),match=createMatch('gems',r.players);const c=client() as any;await c.join(profile,r.code);c.ensurePeers=()=>{};localStorage.setItem('mocha-host-'+r.code,JSON.stringify({kind:r.kind,matchID:r.matchID,players:r.players.map(p=>p.id).join(','),match}));Socket.all[0].open();Socket.all[0].receive({type:'snapshot',room:r});expect(c.localMatch).toEqual(match);expect(c.state.view).toBeDefined();c.localMatch=undefined;Socket.all[0].receive({type:'snapshot',room:{...r,matchID:'different-round'}});expect(c.localMatch).toBeUndefined();expect(c.state.paused).toBe(true);expect(c.state.error).toContain('状态已丢失');});
  it('resets only idle network identity and local checkpoints, preserving unrelated storage',async()=>{const c=client();localStorage.setItem('mocha-host-ABC234','checkpoint');localStorage.setItem('other-app','keep');c.resetIdentity();expect(localStorage.getItem('mocha-network-token')).toBeNull();expect(localStorage.getItem('mocha-host-ABC234')).toBeNull();expect(localStorage.getItem('other-app')).toBe('keep');await c.join(profile,'ABC234');expect(()=>c.resetIdentity()).toThrow('先离开');});
 });
