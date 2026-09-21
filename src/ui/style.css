@@ -33,7 +33,7 @@ html[lang=en] .compact,html[lang=en] .text-button{letter-spacing:0}html[lang=en]
 .panel.app-panel{display:flex;flex-direction:column;overflow:hidden;padding:0}
 .app-panel>header{flex:none;margin:0;padding:12px 22px;border-bottom:1px solid #d4c59f24}
 .panel-content{min-height:0;overflow:auto;padding:17px 22px 22px;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#a99c7299 transparent}
-.app-panel>header .icon,.top-tools .icon,.profile-chip{min-width:44px;min-height:44px;flex-shrink:0}
+.app-panel>header .icon,.top-tools .icon,.profile-chip,.end-banner .dismiss-result{min-width:44px;min-height:44px;flex-shrink:0}
 .top-tools .compact,.top-tools .language-toggle{min-height:44px}
 .top-tools{max-width:100%}
 .practice-switch,.practice-switch select{min-width:0}

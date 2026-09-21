@@ -25,6 +25,7 @@ try{
   for(const [width,height] of [[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900]]){
    await page.setViewportSize({width,height});await expect(page.locator('.end-banner')).toBeVisible();
    await expect(page.locator('.end-banner')).toContainText(locale==='zh'?'正义获胜':'Good wins');
+   const close=await page.locator('.dismiss-result').boundingBox();assert(close&&close.width>=44&&close.height>=44,'result dismissal has a full44px touch target');
    await page.screenshot({path:`test-results/finished-recovery/${engine}-${locale}-${width}.png`});
   }
   await page.reload();await expect(page.locator('.end-banner')).toBeVisible();await expect(page.locator('.pause-overlay')).toHaveCount(0);

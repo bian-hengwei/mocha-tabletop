@@ -28,6 +28,7 @@
 .wg-signals .wg-word{min-height:0;padding:15px 3px 4px}.wg-signals .wg-word>strong{line-height:1.2}
 .wg-signals .wg-illustrated-heading{min-height:50px;padding:5px 8px;margin:0}.wg-signals .wg-teams,.wg-signals .wg-clue-form{margin:0}.wg-signals .wg-team{padding:5px}.wg-signals .wg-clue-form{padding:6px;gap:5px}
 @media(max-width:649px) and (min-height:500px){.wg-team>header{flex-wrap:nowrap;gap:3px}.wg-team header>strong{white-space:nowrap;font-size:11px}.wg-team header>span{display:flex;align-items:center;gap:2px;font-size:9px}.wg-team header b{font-size:18px;margin-left:0}.wg-heading small{font-size:9px}.wg-signals .wg-heading h2{font-size:17px}.wg-role-controls{max-width:63%}.wg-role{font-size:9px}.wg-signals .wg-role-controls .wg-key-toggle{font-size:9px;padding:4px}}
+@media(max-width:649px) and (min-height:500px){.wg-signals .wg-word{min-height:44px}}
 .wg-card-emblem>b{font-size:10px;line-height:1;font-family:inherit}.wg-word:not(.wg-unknown) .wg-card-emblem{opacity:.85}
 
 .wg-illustrated-heading .wg-heading-art{height:100%;top:0;transform:none}
