@@ -1,4 +1,6 @@
 export const classicText:Record<string,string>={
+ '查看剩余手牌':'View remaining cards','剩余手牌':'Remaining cards','手牌':'Cards','手牌已出完':'All cards played','等待开始下一轮':'Waiting for the next round',
+
  '行动中':'Playing','座位方位':'Seat directions',
  '已胡牌：只打新摸牌':'Hand locked: discard only the drawn tile',
  '手牌可左右滑动':'Swipe to see your hand','滑动查看手牌':'Swipe hand',

@@ -7,15 +7,16 @@ import {MAHJONG_MODES,tileTitle,type Tile} from '../core/games/mahjong';
 import {MahjongArt,PokerArt} from './ClassicCardArt';
 import {useDialog} from './useDialog';
 import {useCardDoubleTap} from './useCardDoubleTap';
+import {GuandanResults} from './GuandanResults';
 import './classic-table.css';
 import './table-layout.css';
-type Props={view:GameView;selfID:string;command:(c:Command)=>void;open:(a:Action,selected?:string[])=>void};
+type Props={view:GameView;selfID:string;command:(c:Command)=>void;open:(a:Action,selected?:string[])=>void;onReplay?:()=>void;replayLabel?:string};
 function Face({card,mahjong,mini=false}:{card:PokerCard|Tile;mahjong:boolean;mini?:boolean}){
  const label=t(mahjong?tileTitle(card as Tile):pokerTitle(card as PokerCard));
  return <span className={`classic-face ${mahjong?'tile-face':'poker-face'} ${mini?'mini':''}`} role="img" aria-label={label} title={label}>{mahjong?<MahjongArt value={(card as Tile).value}/>:<PokerArt rank={(card as PokerCard).rank} suit={(card as PokerCard).suit}/>}</span>;
 }
 function Back({mahjong=false}:{mahjong?:boolean}){return <span className={`classic-face mini card-back ${mahjong?'tile-face':'poker-face'}`} aria-hidden="true">{mahjong?<MahjongArt back/>:<PokerArt back/>}</span>;}
-export function ClassicTable({view,selfID,command,open}:Props){
+export function ClassicTable({view,selfID,command,open,onReplay,replayLabel}:Props){
  const [historyOpen,setHistoryOpen]=useState(false),historyRef=useDialog<HTMLElement>(historyOpen,()=>setHistoryOpen(false));
  const b=view.board,isMahjong=view.kind==='mahjong',hand=b.hand as (PokerCard|Tile)[],[selected,setSelected]=useState<string[]>([]),[declaration,setDeclaration]=useState('');
  const selectAction=view.actions.find(a=>['play','discard','exchange','return'].includes(a.id));
@@ -26,7 +27,7 @@ export function ClassicTable({view,selfID,command,open}:Props){
   const update=()=>setHiddenHand(rail.scrollWidth>rail.clientWidth+2);
   const observer=new ResizeObserver(update);observer.observe(rail);observer.observe(handNode);update();
   return()=>observer.disconnect();
- },[]);
+ },[view.kind,b.phase,view.finished]);
  const signature=hand.map(c=>c.id).join('|');
  useEffect(()=>setSelected([]),[selfID,b.current,b.phase,b.turn,b.round,signature]);
  const taps=useCardDoubleTap([selfID,b.current,b.phase,b.turn,b.round,signature].join(':'));
@@ -51,6 +52,7 @@ export function ClassicTable({view,selfID,command,open}:Props){
  const rows=isMahjong||view.kind==='doudizhu'?1:hand.length>10?2:1,columns=Math.ceil(hand.length/rows);
  const wind=(offset:number)=>t(['东','南','西','北'][(meIndex+offset+4)%4]).slice(0,1);
  const submit=()=>{command({action:selectAction!.id,values:selected,...(selectAction!.id==='play'&&combo?{text:combinationKey(combo)}:{})});setSelected([]);};
+ if(view.kind==='guandan'&&!playing)return <GuandanResults key={`${b.round}:${view.finished}`} view={view} selfID={selfID} onNext={view.actions.some(a=>a.id==='nextRound')?()=>command({action:'nextRound',values:[]}):undefined} onReplay={onReplay} replayLabel={replayLabel}/>;
  return <div className={`classic-table ${isMahjong?'mahjong-table':'poker-table'} game-table-${view.kind} ${view.finished||b.phase==='roundEnd'?'is-finished':''}`}>
   <header className="classic-edition"><span><i/>{t(isMahjong?MAHJONG_MODES[b.mode as keyof typeof MAHJONG_MODES]:view.kind==='guandan'?'双副牌 · 对家合作':'经典叫分 · 三人局')}</span><strong>{isMahjong?`${t('余牌')} ${b.wallCount}`:view.kind==='guandan'?`${t('级牌')} ${rankName(b.level===2?15:b.level)} · ${t('轮次')} ${b.round}`:`${t('底分')} ${b.bid} · ×${b.multiplier}`}</strong></header>
   <div className="classic-arena">
