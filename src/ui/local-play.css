@@ -1,0 +1,6 @@
+.local-play-options{margin:14px 0;padding:12px;border:1px solid #d3bf8244;border-radius:10px;background:#d5bd8108}
+.local-play-options h3{font-size:13px;margin:0 0 10px}.local-play-fields{display:flex;gap:12px}.local-play-fields label{display:flex;flex:1;min-width:0;flex-direction:column;gap:6px;font-size:12px}.local-play-fields select{width:100%;min-height:44px;padding:6px 10px;border:1px solid #d3bf8244;border-radius:7px;background:#183029;color:inherit;font:inherit}.local-play-actions{display:flex;gap:8px;margin-top:12px}.local-play-actions button{flex:1;min-height:44px;justify-content:center;white-space:normal}.local-play-options p{font-size:11px;line-height:1.5;margin:10px 0 0;color:#b8c3b3}.local-play-summary{display:flex;align-items:center;gap:5px;font-size:11px;white-space:nowrap}.local-play-summary svg{flex-shrink:0}
+
+.local-play-summary small{display:block;font-size:10px;color:#b8c3b3;margin-top:2px}
+
+.solo-game .brand>.icon{min-width:44px;min-height:44px;flex-shrink:0}

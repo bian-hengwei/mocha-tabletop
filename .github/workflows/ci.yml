@@ -40,6 +40,7 @@ jobs:
           node tests/ui/profile-input.integration.mjs
           node tests/ui/dialog-boundaries.integration.mjs
           node tests/ui/storage-boundaries.integration.mjs
+          node tests/ui/local-play.integration.mjs
           node tests/ui/language.integration.mjs
           node tests/ui/i18n.integration.mjs
           node tests/ui/mahjong-actions.integration.mjs
