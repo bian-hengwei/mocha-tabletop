@@ -8,6 +8,16 @@ Doudizhu, Guan Dan, Mahjong, Crystal Guild, Kitten Chaos, Sushi Social, Spice Ca
 
 Moonlit Council, Mistbound Quest, Secret Signals and Odd Word Out require free-form conversation and do not support bots. Remove bots before switching to one of these games. Changes to bots or difficulty reset human readiness. Bot settings remain fixed during a game and are retained when returning to the lobby.
 
+## 单人人机 / Solo vs bots
+
+在游戏开局页的“单机游玩”中选择总人数与难度，再点击“单人人机”。第一席由你操作，所有剩余席位使用同一难度；固定人数游戏会显示规则要求的人数。同屏试玩仍可独立选择人数并切换座位，交流类游戏仅提供此模式。月夜议会的总人数包含法官席位（如启用）。
+
+Choose a total player count and difficulty under Local play, then select Solo vs bots. You control the first seat; all other seats use the selected difficulty. Fixed-count games show their required count. Pass & play remains available with a player-count selector and seat switching; discussion games offer this local mode only. Moonlit Council's total includes the moderator when enabled.
+
+首次完成资源缓存后，两种单机模式均可离线游玩。刷新恢复及终局重开保留人数、难度和规则；单人人机只显示你的视图，战绩单独标记。轮间确认与人机重试沿用房间人机的操作。
+
+Both local modes work offline after assets are cached. Reloading and replaying preserve player count, difficulty and rules. Solo renders only your seat's view and labels its results separately. Between-round confirmation and bot retry work as in room games.
+
 ## 决策与恢复 / Decisions and recovery
 
 人机使用本地策略，不调用付费模型服务。简单侧重基础合法操作，普通使用手牌与资源估值，困难增加组合、目标及公开对手信息的分析。这些级别是策略强度选项，不承诺固定胜率。任何级别都只使用该席位的过滤视图，不读取其他玩家的秘密牌、未公开身份或牌堆顺序，也不修改规则与发牌概率。

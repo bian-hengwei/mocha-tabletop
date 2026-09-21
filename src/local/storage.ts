@@ -6,11 +6,11 @@ export function readProfile():Player|null {
   } catch { return null; }
 }
 export type Result='win'|'loss'|'draw'|'host'|'completed';
-export interface MatchRecord {id:string;kind:GameKind;at:number;name:string;avatar:string;mode:'cloud'|'lan'|'practice';result:Result;summary:string;score?:number;playerCount:number;botCount?:number}
+export interface MatchRecord {id:string;kind:GameKind;at:number;name:string;avatar:string;mode:'cloud'|'lan'|'practice'|'solo';result:Result;summary:string;score?:number;playerCount:number;botCount?:number}
 type HistoryStore={records:MatchRecord[];seen:string[]};
 const KEY='mocha-history-v1';
 function readStore():HistoryStore {
-  try {const data=JSON.parse(localStorage.getItem(KEY)||'null');return {records:Array.isArray(data?.records)?data.records.filter((r:any)=>r&&typeof r.id==='string'&&Object.hasOwn(GAMES,r.kind)&&Number.isFinite(r.at)&&r.at>0&&r.at<8640000000000000&&typeof r.avatar==='string'&&Number.isInteger(r.playerCount)&&r.playerCount>=0&&(r.botCount===undefined||Number.isInteger(r.botCount)&&r.botCount>=0&&r.botCount<=r.playerCount)&&typeof r.name==='string'&&typeof r.summary==='string'&&['win','loss','draw','host','completed'].includes(r.result)&&['cloud','lan','practice'].includes(r.mode)):[],seen:Array.isArray(data?.seen)?data.seen.filter((id:any)=>typeof id==='string'):[]};}
+  try {const data=JSON.parse(localStorage.getItem(KEY)||'null');return {records:Array.isArray(data?.records)?data.records.filter((r:any)=>r&&typeof r.id==='string'&&Object.hasOwn(GAMES,r.kind)&&Number.isFinite(r.at)&&r.at>0&&r.at<8640000000000000&&typeof r.avatar==='string'&&Number.isInteger(r.playerCount)&&r.playerCount>=0&&(r.botCount===undefined||Number.isInteger(r.botCount)&&r.botCount>=0&&r.botCount<=r.playerCount)&&typeof r.name==='string'&&typeof r.summary==='string'&&['win','loss','draw','host','completed'].includes(r.result)&&['cloud','lan','practice','solo'].includes(r.mode)):[],seen:Array.isArray(data?.seen)?data.seen.filter((id:any)=>typeof id==='string'):[]};}
   catch{return {records:[],seen:[]};}
 }
 export const readHistory=()=>readStore().records;

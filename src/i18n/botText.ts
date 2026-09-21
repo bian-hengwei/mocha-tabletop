@@ -1,4 +1,10 @@
 export const botText:Record<string,string>={
+ '单机游玩':'Local play','总人数':'Total players','单机总人数':'Local player count','单机人机难度':'Solo bot difficulty','单人人机':'Solo vs bots',
+ '单人人机：其余座位均为所选难度的人机':'Solo: all other seats use the selected bot difficulty.',
+ '单机人数不符合当前规则':'The player count does not fit these rules',
+ '结束这局单人人机？':'End this solo game?','结束单机':'End solo game',
+ '含法官席位':'Includes the moderator seat',
+
  '人机':'Bot','人机难度':'Bot difficulty','新的人机难度':'New bot difficulty','添加人机':'Add bot','移除人机':'Remove bot',
  '添加玩家':'Add player','邀请朋友':'Invite a friend','简单人机':'Easy bot','普通人机':'Normal bot','困难人机':'Hard bot',
  '简单':'Easy','普通':'Normal','困难':'Hard','人机对局':'With bots',

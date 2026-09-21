@@ -144,3 +144,8 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `BASE_URL=http://127.0.0.1:5207 node tests/ui/bots-boundary.integration.mjs`：真实 App 的人机轮间继续、重试和访客权限，中英七尺寸；另验三款经典游戏终局、剩余牌横向区域、收起结算与胡牌记录。使用固定传输 fixture，可用 `TEST_BROWSER=webkit`；不代替真实联机终局实玩。
 
 - `tests/ui/setup-dialog.integration.mjs`：八款人机游戏的建房方式可访问选择状态、双语七尺寸长规则滚动后关闭按钮可达、旋转与嵌套弹窗焦点恢复；支持 WebKit。
+
+## 单机模式
+
+- `npx vitest run tests/practice.test.ts tests/storage.test.ts`：八款人机游戏的全部合法人数与三档难度、合法推进、完整寿司三轮、单人视图/操作边界、旧试玩存档、保存/重开与战绩。
+- `BASE_URL=http://127.0.0.1:5218 node tests/ui/local-play.integration.mjs`：真实 App 单机人数/难度选择、八款人机与四款交流游戏、双语八尺寸与旋转、刷新/语言/重开/战绩/退出；支持 `TEST_BROWSER=webkit`。对生产预览可加 `TEST_OFFLINE=1` 验证缓存后断网开局与恢复（Chromium）。终局界面使用显式 fixture，完整规则终局由单测覆盖。
