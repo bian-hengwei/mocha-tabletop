@@ -123,9 +123,9 @@ export const standardWerewolf:GameModule<WerewolfState>={
     assertPlayers(players,6,18);werewolfVictory(['wolf','villager','seer'],options?.werewolfWin);const deck=shuffle(werewolfPreset(players.length,options?.werewolfPreset),seeded(seed));
     return {options:{...options,werewolfMode:'standard'},nightFlowVersion:2,players:structuredClone(players),roles:Object.fromEntries(players.map((p,i)=>[p.id,deck[i]])),alive:players.map(p=>p.id),stage:'nightFirst',submissions:{},candidates:[],electionRunoff:false,electionPending:true,electionExplosions:0,dayRunoff:false,sheriff:null,night:1,previousGuard:null,guarded:null,victim:null,poisoned:null,rescued:false,antidote:true,poison:true,investigations:{},hunterID:null,badgeOwner:null,continuation:'discussion',winner:null,log:[`${players.length} 人局 · ${options?.werewolfWin==='parity'?'人数平衡':'屠边'} · 首夜结束后竞选警长`],revealed:[],publicVotes:{}};
   },
-  view(s,id){
-    if(!s.players.some(p=>p.id===id))throw new Error('不是本局玩家');
-    const role=s.roles[id],knowledge:Item[]=[{id:'role',title:labels[role],detail:isWolfRole(role)?'狼人阵营':'好人阵营'}];
+  view(s,id,spectator=false){if(spectator)id='';
+    if(!spectator&&!s.players.some(p=>p.id===id))throw new Error('不是本局玩家');
+    const role=s.roles[id],knowledge:Item[]=spectator?[]:[{id:'role',title:labels[role],detail:isWolfRole(role)?'狼人阵营':'好人阵营'}];
     if(isWolfRole(role)){
       knowledge.push({id:'wolves',title:'狼队友',detail:s.players.filter(p=>isWolfRole(s.roles[p.id])&&p.id!==id).map(p=>p.name).join('、')});
       if(s.stage==='nightFirst')knowledge.push({id:'wolfPlans',title:'狼队刀口',detail:s.players.filter(p=>isWolfRole(s.roles[p.id])&&Object.hasOwn(s.submissions,p.id)).map(p=>`${p.name}：${s.submissions[p.id]==='skip'?'空刀':name(s,s.submissions[p.id])}`).join('；'),detailText:{template:'{plans}',values:{plans:textList(s.players.filter(p=>isWolfRole(s.roles[p.id])&&Object.hasOwn(s.submissions,p.id)).map(p=>({template:s.submissions[p.id]==='skip'?'{name}：空刀':'{name}{separator}{target}',values:{name:p.name,separator:{template:'：'},target:name(s,s.submissions[p.id])}})))}}});
@@ -134,7 +134,7 @@ export const standardWerewolf:GameModule<WerewolfState>={
     if(role==='witch')knowledge.push({id:'potions',title:'药剂',detail:`解药 ${s.antidote?'有':'无'} · 毒药 ${s.poison?'有':'无'}`});
     const night=s.stage==='nightFirst'||s.stage==='nightSecond';
     const stages:Record<Stage,string>={signup:'警长竞选 · 上警',electionSpeech:s.electionRunoff?'警长竞选 · PK':'警长竞选 · 发言',electionVote:'警长竞选 · 投票',nightFirst:`第 ${s.night} 夜`,nightSecond:`第 ${s.night} 夜`,discussion:`第 ${s.night} 天 · 发言`,vote:s.dayRunoff?'PK 复投':'放逐投票',pk:'平票 PK',hunter:gunTitle(s),badge:'警徽移交'};
-    const actions=actionsFor(s,id);
+    const actions=spectator?[]:actionsFor(s,id);
     const candidates=['electionSpeech','electionVote','pk'].includes(s.stage)||(s.stage==='vote'&&s.dayRunoff)?s.candidates:[];
     return {kind:'werewolf',phase:s.winner??stages[s.stage],instruction:s.winner?'本局结束':actions.length?'轮到你了':'等待其他玩家',finished:!!s.winner,actions,sections:[{id:'identity',title:'你的身份',private:true,items:knowledge}],log:[...s.log],logText:structuredClone(s.logText||{}),board:{preset:s.options?.werewolfPreset||'auto',winRule:s.options?.werewolfWin||'sides',stage:s.winner?'finished':night?'night':s.stage,night:s.night,ownRole:labels[role],ownRoleKey:role,ownKnowledge:knowledge,players:s.players.map(p=>({...p,alive:s.alive.includes(p.id),revealedIdiot:s.idiotRevealed===p.id,sheriff:s.sheriff===p.id,candidate:candidates.includes(p.id),...(p.id===id||s.winner||s.revealed.includes(p.id)?{role:labels[s.roles[p.id]],roleKey:s.roles[p.id]}:{})})),candidates:[...candidates],sheriff:s.sheriff,publicVotes:{...s.publicVotes},winner:s.winner}};
   },
@@ -170,4 +170,4 @@ function applyWerewolf(state:WerewolfState,id:string,command:Command):WerewolfSt
 function applyWerewolf(state:HostedWerewolfState,id:string,command:Command):HostedWerewolfState;
 function applyWerewolf(state:WerewolfState|HostedWerewolfState,id:string,command:Command):WerewolfState|HostedWerewolfState;
 function applyWerewolf(state:WerewolfState|HostedWerewolfState,id:string,command:Command){return isHostedWerewolf(state)?werewolfHosted.apply(state,id,command):standardWerewolf.apply(state,id,command);}
-export const werewolf={create:createWerewolf,view:(state:WerewolfState|HostedWerewolfState,id:string)=>isHostedWerewolf(state)?werewolfHosted.view(state,id):standardWerewolf.view(state,id),apply:applyWerewolf};
+export const werewolf={create:createWerewolf,view:(state:WerewolfState|HostedWerewolfState,id:string,spectator=false)=>isHostedWerewolf(state)?werewolfHosted.view(state,id,spectator):standardWerewolf.view(state,id,spectator),apply:applyWerewolf};

@@ -78,6 +78,9 @@
     },
     {
       "script": "tests/ui/table-layout.integration.mjs"
+    },
+    {
+      "script": "tests/ui/spectators.integration.mjs"
     }
   ],
   "cards": [
@@ -136,6 +139,12 @@
     },
     {
       "script": "tests/ui/word-usability.integration.mjs"
+    },
+    {
+      "script": "tests/network/spectators.integration.mjs"
+    },
+    {
+      "script": "tests/ui/spectators-live.integration.mjs"
     }
   ]
 }

@@ -44,9 +44,9 @@ export const bombs:GameModule<BombsState>={
     for(let i=0;i<players.length-1;i++)s.deck.push(make('bomb'));
     shuffle(s);return s;
   },
-  view(s,playerID){
-    if(!s.players.some(p=>p.id===playerID))return{kind:'bombs',phase:'不在本局',instruction:'仅本局玩家可查看',finished:finished(s),actions:[],sections:[],log:[],board:{}};
-    const mine=s.current===playerID&&s.alive.includes(playerID)&&!finished(s),hand=s.hands[playerID],phase=s.phase;
+  view(s,playerID,spectator=false){if(spectator)playerID='';
+    if(!spectator&&!s.players.some(p=>p.id===playerID))return{kind:'bombs',phase:'不在本局',instruction:'仅本局玩家可查看',finished:finished(s),actions:[],sections:[],log:[],board:{}};
+    const mine=s.current===playerID&&s.alive.includes(playerID)&&!finished(s),hand=s.hands[playerID]||[],phase=s.phase;
     let label='自由出牌',instruction=mine?'出牌，或抽一张':`等待 ${name(s,s.current)}`;
     const actions:Action[]=[],sections:GameView['sections']=[{id:'hand',title:'我的手牌',private:true,items:hand.map(c=>({id:c.id,title:BOMB_TITLES[c.kind],detail:HELP[c.kind]}))},{id:'discard',title:'最近弃牌',items:s.discard.slice(-12).reverse().map(c=>({id:c.id,title:BOMB_TITLES[c.kind]}))}];
     const board:Record<string,any>={phase:phase.kind,hand,players:s.players.map(p=>({...p,alive:s.alive.includes(p.id),count:s.hands[p.id].length})),current:s.current,deckCount:s.deck.length,discard:s.discard.slice(-12).reverse(),turnsRemaining:s.turnsRemaining,attacked:s.attacked,winners:finished(s)?s.alive:[]};

@@ -4,7 +4,10 @@ import { modules } from './registry';
 import { WEREWOLF_PRESETS, werewolfPreset, werewolfPresetLimits } from './werewolfPresets';
 export type RoomMode = 'cloud' | 'lan';
 export interface RoomPlayer extends Player { ready:boolean; connected:boolean }
-export interface RoomInfo {botError?:string;expiresAt?:number;matchID?:string;code:string;kind:GameKind;mode:RoomMode;hostID:string;options?:GameOptions;players:RoomPlayer[];pending:Player[];started:boolean;revision:number}
+export interface RoomSpectator extends Player {connected:boolean}
+export interface JoinRequest extends Player {spectator?:boolean}
+export const MAX_SPECTATORS=20;
+export interface RoomInfo {botError?:string;spectators?:RoomSpectator[];allowSpectators?:boolean;expiresAt?:number;matchID?:string;code:string;kind:GameKind;mode:RoomMode;hostID:string;options?:GameOptions;players:RoomPlayer[];pending:JoinRequest[];started:boolean;revision:number}
 export interface RoomCandidate {code:string;kind:GameKind;mode:RoomMode;hostName:string;count:number;max:number}
 export interface ClientState {status:'idle'|'connecting'|'lobby'|'playing'|'reconnecting'|'disconnected';mode?:RoomMode;room?:RoomInfo;selfID?:string;view?:GameView;error?:string;transport:'none'|'cloud'|'lan';paused:boolean;inviteURL?:string;actionRevision:number;actionPending?:boolean;waitingApproval?:boolean}
 export interface MatchState {schemaVersion?:2;options?:GameOptions;game:any;revision:number;actorRevisions:Record<string,number>;seen:Record<string,string[]>}
@@ -84,3 +87,11 @@ export function applyMatch(match:MatchState,kind:GameKind,players:Player[],actor
  return {...match,game,revision:match.revision+1,actorRevisions,seen:{...match.seen,[actor]:[...(match.seen[actor]||[]),requestID].slice(-128)}};
 }
 export function viewMatch(match:MatchState,kind:GameKind,id:string){return {view:modules[kind].view(match.game,id),actionRevision:match.actorRevisions[id]||0};}
+
+/** Only authenticated room members may reach this projection. Spectators never borrow a seat. */
+export function viewRoomMatch(match:MatchState,room:RoomInfo,id:string){
+ if(room.players.some(p=>p.id===id))return viewMatch(match,room.kind,id);
+ if(room.allowSpectators===false||!room.spectators?.some(p=>p.id===id))throw new Error('不在本局中');
+ const view=modules[room.kind].view(match.game,'',true);
+ return {view:{...view,spectating:true,instruction:view.finished?view.instruction:'观战中 · 仅显示公开信息',actions:[],sections:view.sections.filter(section=>!section.private)},actionRevision:0};
+}
