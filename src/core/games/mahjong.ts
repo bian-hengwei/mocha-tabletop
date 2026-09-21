@@ -42,6 +42,47 @@ function valueOfWin(s:MahjongState,i:number,tile?:Tile){const hand=tile?[...s.ha
  if(counts.filter(n=>n%3===2).length===1&&counts.every(n=>n%3===0||n%3===2))value*=2;
  return Math.min(16,value);
 }
+/** Predictions use the same table scoring as settlement, without future kong bonuses. */
+function winPoints(base:number,selfDraw:boolean,kong:boolean){return Math.min(32,base*(selfDraw?2:1)*(kong?2:1));}
+export interface MahjongWait {value:number;unseen:number;discardMultiplier:number|null;selfDrawMultiplier:number}
+export interface MahjongAssistance {
+ waits:MahjongWait[];
+ discards:{tile:Tile;waits:MahjongWait[]}[];
+ currentWin:{multiplier:number;selfDraw:boolean}|null;
+}
+/** Only the viewer's hand and visible tiles contribute to counts. IDs deduplicate
+ * a claimed discard, pending tile and repeated Blood Flow win records. */
+function visibleCounts(s:MahjongState,i:number){
+ const visible=new Map<string,Tile>();
+ const add=(tiles:Tile[])=>tiles.forEach(tile=>visible.set(tile.id,tile));
+ add(s.hands[i]);s.discards.forEach(add);
+ s.melds.forEach((melds,owner)=>melds.forEach(meld=>{if(owner===i||meld.type!=='concealed')add(meld.tiles);}));
+ if(s.pending)add([s.pending.tile]);s.wins.forEach(w=>add([w.tile]));
+ const counts=Array<number>(34).fill(0);visible.forEach(tile=>counts[tile.value]++);return counts;
+}
+function waitsFor(s:MahjongState,i:number,hand:Tile[],seen:number[]):MahjongWait[]{
+ if(hand.length!==13-s.melds[i].length*3)return[];
+ const probe={...s,hands:s.hands.map((tiles,owner)=>owner===i?hand:tiles)},owned=[...hand,...s.melds[i].flatMap(m=>m.tiles)],result:MahjongWait[]=[];
+ for(let value=0;value<(isSichuan(s)?27:34);value++){
+  if(owned.filter(tile=>tile.value===value).length>=4)continue;
+  const tile={id:'wait-probe',value};if(!canHu(probe,i,tile))continue;
+  const base=valueOfWin(probe,i,tile);
+  result.push({value,unseen:Math.max(0,4-seen[value]),discardMultiplier:s.mode==='laizi'&&value===33?null:winPoints(base,false,false),selfDrawMultiplier:winPoints(base,true,false)});
+ }
+ return result;
+}
+function assistance(s:MahjongState,i:number,legal:Action[]):MahjongAssistance|null{
+ if(s.finished||!active(s,i)||s.phase==='exchange'||s.phase==='que')return null;
+ const seen=visibleCounts(s,i),discard=legal.find(a=>a.id==='discard'),hu=legal.some(a=>a.id==='hu'),selfDraw=s.phase==='discard';
+ // Identical tile values have identical wait lists, including the known discarded tile.
+ const byValue=new Map<number,MahjongWait[]>();
+ const discards=(discard?.choices??[]).map(choice=>{
+  const tile=s.hands[i].find(tile=>tile.id===choice.id)!;
+  if(!byValue.has(tile.value))byValue.set(tile.value,waitsFor(s,i,s.hands[i].filter(t=>t.id!==tile.id),seen));
+  return{tile,waits:byValue.get(tile.value)!};
+ });
+ return{waits:waitsFor(s,i,s.hands[i],seen),discards,currentWin:hu?{multiplier:winPoints(valueOfWin(s,i,selfDraw?undefined:s.pending!.tile),selfDraw,s.afterKong||s.pending?.rob!==undefined),selfDraw}:null};
+}
 function pay(s:MahjongState,from:number,to:number,points:number,kong=false){s.scores[from]-=points;s.scores[to]+=points;if(kong)s.kongPayments.push({from,to,points});}
 function readyValue(s:MahjongState,i:number){if(!clearQue(s,i))return 0;let max=0;for(let v=0;v<(isSichuan(s)?27:34);v++){if(s.hands[i].filter(t=>t.value===v).length+s.melds[i].flatMap(m=>m.tiles).filter(t=>t.value===v).length>=4)continue;const tile={id:'probe',value:v};if(canHu(s,i,tile))max=Math.max(max,valueOfWin(s,i,tile));}return max;}
 function finish(s:MahjongState,exhausted=false){
@@ -53,7 +94,7 @@ function finish(s:MahjongState,exhausted=false){
  s.finished=true;s.pending=null;const high=Math.max(...s.scores);s.winners=high>0?s.players.filter((_,i)=>s.scores[i]===high).map(p=>p.id):[];s.history.push(exhausted?'牌墙已空，本局结束':'本局结束');
 }
 function draw(s:MahjongState,i:number,kong=false){if(!s.wall.length){finish(s,true);return;}s.current=i;s.phase='discard';s.pending=null;s.selfWon=false;s.afterKong=kong;const tile=s.wall.pop()!;s.hands[i].push(tile);s.drawn=tile.id;s.turn++;}
-function win(s:MahjongState,i:number,from:number,tile:Tile,selfDraw:boolean){let value=valueOfWin(s,i,selfDraw?undefined:tile);if(selfDraw)value*=2;if(s.afterKong||s.pending?.rob!==undefined)value*=2;value=Math.min(32,value);
+function win(s:MahjongState,i:number,from:number,tile:Tile,selfDraw:boolean){const value=winPoints(valueOfWin(s,i,selfDraw?undefined:tile),selfDraw,s.afterKong||s.pending?.rob!==undefined);
  if(selfDraw){for(let p=0;p<4;p++)if(p!==i&&active(s,p))pay(s,p,i,value);}else pay(s,from,i,value);
  s.wins.push({player:i,from,tile,points:value,selfDraw});if(!s.won.includes(i))s.won.push(i);s.history.push(`${s.players[i].name} · ${selfDraw?'自摸':'胡牌'} · +${value}`);
 }
@@ -86,7 +127,7 @@ function actions(s:MahjongState,id:string):Action[]{const i=s.players.findIndex(
 }
 export const mahjong:GameModule<MahjongState>={
  create(players,seed,options){assertPlayers(players,4,4);const mode=options?.mahjongMode||'guangdong';if(!Object.hasOwn(MAHJONG_MODES,mode))throw Error('Mahjong mode is invalid');const wall=shuffle(mahjongTiles(mode),seeded(seed)),hands=players.map(()=>wall.splice(0,13));const first=wall.pop()!;hands[0].push(first);return{players:structuredClone(players),mode,hands,wall,melds:players.map(()=>[]),discards:players.map(()=>[]),current:0,phase:mode==='sichuan'||mode==='bloodflow'?'exchange':'discard',exchange:{},missing:{},pending:null,won:[],wins:[],scores:[0,0,0,0],kongPayments:[],finished:false,winners:[],history:[],drawn:first.id,selfWon:false,afterKong:false,turn:1};},
- view(s,id){const me=s.players.findIndex(p=>p.id===id);if(me<0)return{kind:'mahjong',phase:'',instruction:'仅本局玩家可查看',finished:s.finished,actions:[],sections:[],log:[],board:{}};const legal=actions(s,id);return structuredClone({kind:'mahjong',phase:s.finished?'本局结束':MAHJONG_MODES[s.mode],instruction:s.finished?(s.winners.length?`胜者：${s.players.filter(p=>s.winners.includes(p.id)).map(p=>p.name).join('、')}`:'本局和局'):s.phase==='exchange'?'选择同一花色的三张牌，交给下家':s.phase==='que'?'选择一门花色，本局优先打完':s.phase==='respond'?'等待碰杠胡响应':legal.length?'轮到你了':'等待其他玩家操作',finished:s.finished,actions:legal,sections:[],log:s.history.slice(-40),board:{hand:[...s.hands[me]].sort((a,b)=>a.value-b.value),current:s.players[s.current].id,phase:s.phase,mode:s.mode,wallCount:s.wall.length,drawn:me===s.current?s.drawn:null,wildValue:s.mode==='laizi'?33:-1,turn:s.turn,pending:s.pending?{tile:s.pending.tile,from:s.pending.from,rob:s.pending.rob!==undefined}:null,wins:s.wins,winners:s.winners,players:s.players.map((p,i)=>({...p,count:s.hands[i].length,score:s.scores[i],won:s.won.includes(i),missing:s.phase==='que'&&i!==me?undefined:s.missing[i],discards:s.discards[i],melds:s.melds[i].map(m=>m.type==='concealed'&&i!==me&&!s.finished?{type:m.type,count:4,tiles:[],from:m.from}:m),...(s.finished?{hand:s.hands[i]}:{})}))}});},
+ view(s,id){const me=s.players.findIndex(p=>p.id===id);if(me<0)return{kind:'mahjong',phase:'',instruction:'仅本局玩家可查看',finished:s.finished,actions:[],sections:[],log:[],board:{}};const legal=actions(s,id);return structuredClone({kind:'mahjong',phase:s.finished?'本局结束':MAHJONG_MODES[s.mode],instruction:s.finished?(s.winners.length?`胜者：${s.players.filter(p=>s.winners.includes(p.id)).map(p=>p.name).join('、')}`:'本局和局'):s.phase==='exchange'?'选择同一花色的三张牌，交给下家':s.phase==='que'?'选择一门花色，本局优先打完':s.phase==='respond'?'等待碰杠胡响应':legal.length?'轮到你了':'等待其他玩家操作',finished:s.finished,actions:legal,sections:[],log:s.history.slice(-40),board:{assistance:assistance(s,me,legal),hand:[...s.hands[me]].sort((a,b)=>a.value-b.value),current:s.players[s.current].id,phase:s.phase,mode:s.mode,wallCount:s.wall.length,drawn:me===s.current?s.drawn:null,wildValue:s.mode==='laizi'?33:-1,turn:s.turn,pending:s.pending?{tile:s.pending.tile,from:s.pending.from,rob:s.pending.rob!==undefined}:null,wins:s.wins,winners:s.winners,players:s.players.map((p,i)=>({...p,count:s.hands[i].length,score:s.scores[i],won:s.won.includes(i),missing:s.phase==='que'&&i!==me?undefined:s.missing[i],discards:s.discards[i],melds:s.melds[i].map(m=>m.type==='concealed'&&i!==me&&!s.finished?{type:m.type,count:4,tiles:[],from:m.from}:m),...(s.finished?{hand:s.hands[i]}:{})}))}});},
  apply(state,id,cmd){validateCommand(this.view(state,id),cmd);const s=structuredClone(state),me=s.players.findIndex(p=>p.id===id);
  if(cmd.action==='exchange'){const tiles=cmd.values.map(cid=>s.hands[me].find(t=>t.id===cid)!);if(new Set(tiles.map(t=>tileSuit(t.value))).size!==1)throw Error('换三张需要相同花色');s.exchange[me]=cmd.values;if(Object.keys(s.exchange).length===4){const exchanged=[0,1,2,3].map(i=>s.hands[i].filter(t=>s.exchange[i].includes(t.id)));s.hands=s.hands.map((hand,i)=>[...hand.filter(t=>!s.exchange[i].includes(t.id)),...exchanged[(i+3)%4]]);s.exchange={};s.drawn=s.hands[0].at(-1)!.id;s.phase='que';}return s;}
  if(cmd.action==='que'){s.missing[me]=Number(cmd.values[0]);if(Object.keys(s.missing).length===4)s.phase='discard';return s;}
