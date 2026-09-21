@@ -27,7 +27,7 @@ try{
   }
   for(const kind of ['avalon','undercover','codenames','werewolf']){
    await page.locator('.cover-'+kind).click();assert.equal(await page.getByRole('button',{name:locale==='zh'?'单人人机':'Solo vs bots',exact:true}).count(),0);
-   const countSelect=page.locator('.local-play-fields select');const values=await countSelect.locator('option').evaluateAll(options=>options.map(o=>o.value));await countSelect.selectOption(values.at(-1));await page.getByRole('button',{name:locale==='zh'?'同屏试玩':'Pass & play',exact:true}).click();await page.locator('.game-surface').waitFor();assert.equal((await saved(page)).players.length,Number(values.at(-1)));assert.equal(await page.locator('.practice-switch option').count(),Number(values.at(-1)));await exit(page,locale,false);
+   const countSelect=page.locator('.local-play-fields select');const values=await countSelect.locator('option').evaluateAll(options=>options.map(o=>o.value));await countSelect.selectOption(values.at(-1));if(kind==='werewolf')await expect(page.locator('.wolf-composition header b')).toContainText(String(Number(values.at(-1))-1));await page.getByRole('button',{name:locale==='zh'?'同屏试玩':'Pass & play',exact:true}).click();await page.locator('.game-surface').waitFor();assert.equal((await saved(page)).players.length,Number(values.at(-1)));assert.equal(await page.locator('.practice-switch option').count(),Number(values.at(-1)));await exit(page,locale,false);
   }
   for(const [width,height] of sizes){
    await page.setViewportSize({width,height});await page.locator('.cover-uno').click();await page.locator('.local-play-fields select').first().selectOption('10');
