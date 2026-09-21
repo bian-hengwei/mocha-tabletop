@@ -15,6 +15,16 @@ const client=()=>{const c=new RoomClient();clients.push(c);return c;};
 beforeEach(()=>{vi.useFakeTimers();Socket.all=[];vi.stubGlobal('localStorage',new MemoryStorage());vi.stubGlobal('sessionStorage',new MemoryStorage());vi.stubGlobal('location',{origin:'https://table.test',pathname:'/'});vi.stubGlobal('window',{addEventListener(){},removeEventListener(){}});vi.stubGlobal('document',{visibilityState:'visible',addEventListener(){},removeEventListener(){}});vi.stubGlobal('WebSocket',Socket);localStorage.setItem('mocha-network-token',token);});
 afterEach(()=>{clients.forEach(c=>c.destroy());clients=[];vi.useRealTimers();vi.unstubAllGlobals();});
 describe('same-device room recovery',()=>{
+ it('persists a renewed server expiry and reconnects after the original deadline',async()=>{
+  const first=client();await first.join(profile,'ABC234');Socket.all[0].open();
+  const initial=room(),renewed=initial.expiresAt!+6*3600000;
+  Socket.all[0].receive({type:'snapshot',room:initial});
+  Socket.all[0].receive({type:'snapshot',room:{...initial,expiresAt:renewed}});
+  expect(first.getSavedSession()?.expiresAt).toBe(renewed);first.destroy();sessionStorage.clear();
+  vi.setSystemTime(initial.expiresAt!+1);const restored=client();
+  expect(restored.getSavedSession()).toMatchObject({code:'ABC234',profile,expiresAt:renewed});
+  await restored.connect();Socket.all[1].open();expect(Socket.all[1].sent[0]).toMatchObject({type:'hello',profile,token});
+ });
  it('uses tab recovery when the localStorage property itself is blocked',()=>{sessionStorage.setItem('mocha-room-session',JSON.stringify({profile,token,code:'ABC234'}));Object.defineProperty(globalThis,'localStorage',{configurable:true,get(){throw new DOMException('Storage denied','SecurityError');}});expect(client().getSavedSession()?.code).toBe('ABC234');});
  it('keeps a stable create/join credential when local writes are full and tab storage works',async()=>{localStorage.removeItem('mocha-network-token');localStorage.setItem=()=>{throw new DOMException('Storage full','QuotaExceededError');};const request=vi.fn(async(_url:string,_init?:RequestInit)=>new Response(JSON.stringify({code:'ABC234',invite:'invite-1'})));vi.stubGlobal('fetch',request);const c=client();await c.create(profile,'gems','cloud');expect(Socket.all).toHaveLength(1);Socket.all[0].open();expect(Socket.all[0].sent[0].token).toBe(JSON.parse(request.mock.calls[0][1]!.body as string).token);expect(c.getSavedSession()?.code).toBe('ABC234');});
  it('can join and reconnect in memory when both storage properties are blocked',async()=>{for(const name of ['localStorage','sessionStorage'])Object.defineProperty(globalThis,name,{configurable:true,get(){throw new DOMException('Storage denied','SecurityError');}});const c=client();expect(()=>c.getSavedSession()).not.toThrow();await c.join(profile,'ABC234');expect(Socket.all).toHaveLength(1);Socket.all[0].open();const first=Socket.all[0].sent[0].token;await c.connect();Socket.all[1].open();expect(Socket.all[1].sent[0].token).toBe(first);expect(()=>c.leave()).not.toThrow();expect(()=>c.resetIdentity()).not.toThrow();});

@@ -77,12 +77,19 @@ export class RoomDirectory extends DurableObject<Env>{
  }
  async alarm(){const now=Date.now();for(const [key,value]of await this.ctx.storage.list<any>()){if(key.startsWith('room:')&&value.expires<now||key.startsWith('limit:')&&value.since+600000<now)await this.ctx.storage.delete(key);}await this.ctx.storage.setAlarm(now+3600000);}
 }
+const ROOM_TTL=6*3600000,ACTIVITY_RENEW_INTERVAL=5*60000;
 interface StoredRoom {info:RoomInfo;tokens:Record<string,string>;pendingTokens:Record<string,string>;invite:string;match?:MatchState;ended?:boolean;expires:number;controlSeen:Record<string,string[]>}
 interface Attachment {id?:string;authenticated?:boolean;pending?:boolean;opened:number;messages?:number;window?:number;lastSeen?:number}
 export class GameRoom extends DurableObject<Env>{
  private data?:StoredRoom;
  constructor(ctx:DurableObjectState,env:Env){super(ctx,env);ctx.blockConcurrencyWhile(async()=>{this.data=await ctx.storage.get<StoredRoom>('room');if(this.data?.info.started&&this.data.info.mode==='cloud'&&!this.data.info.matchID){this.data.info.matchID=crypto.randomUUID();await this.save();}});}
  private async save(){if(this.data)await this.ctx.storage.put('room',this.data);}
+ // Renew admitted-player activity in batches, rather than writing on every heartbeat.
+ private async renewActivity(now:number){
+  const d=this.data;if(!d||d.ended||d.expires<=now||d.expires>=now+ROOM_TTL-ACTIVITY_RENEW_INTERVAL)return false;
+  const expires=now+ROOM_TTL;await this.ctx.storage.put('room',{...d,expires});d.expires=expires;
+  await this.ctx.storage.setAlarm(Math.min(expires,now+30000));return true;
+ }
  private sockets(id?:string){return this.ctx.getWebSockets().filter(ws=>{const a=ws.deserializeAttachment() as Attachment;return a.authenticated&&(!id||a.id===id);});}
  private connected(id:string){return this.sockets(id).length>0;}
  private infoFor(id:string):RoomInfo{const r=this.data!.info;return {...r,expiresAt:this.data!.expires,pending:id===r.hostID?r.pending:[],players:r.players.map(p=>({...p,connected:this.connected(p.id)}))};}
@@ -99,7 +106,7 @@ export class GameRoom extends DurableObject<Env>{
    if(path==='/init'){
     if(this.data)return json({error:'房间已存在'},409);
     const b=await req.json() as any;validKind(b.kind);const options=normalizeGameOptions(b.kind,b.options,b.profile.id);
-    this.data={info:{code:b.code,kind:b.kind,mode:b.mode,hostID:b.profile.id,options,players:[{...b.profile,ready:true,connected:false}],pending:[],started:false,revision:1},tokens:{[b.profile.id]:b.token},pendingTokens:{},invite:b.invite,expires:Date.now()+6*3600000,controlSeen:{}};
+    this.data={info:{code:b.code,kind:b.kind,mode:b.mode,hostID:b.profile.id,options,players:[{...b.profile,ready:true,connected:false}],pending:[],started:false,revision:1},tokens:{[b.profile.id]:b.token},pendingTokens:{},invite:b.invite,expires:Date.now()+ROOM_TTL,controlSeen:{}};
     await this.save();await this.ctx.storage.setAlarm(this.data.expires);return json({ok:true});
    }
    if(!this.data||this.data.ended||this.data.expires<Date.now())return json({error:'房间已结束或不存在'},404);
@@ -128,16 +135,16 @@ export class GameRoom extends DurableObject<Env>{
     }
     for(const old of this.sockets(p.id)){if(old!==ws){old.serializeAttachment({opened:0});old.close(4001,'已在另一窗口连接');}}
     ws.serializeAttachment({...a,id:p.id,authenticated:true,pending:!d.tokens[p.id]});
-    r.revision++;await this.save();this.broadcast();await this.index();return;
+    r.revision++;await this.save();if(d.tokens[p.id])await this.renewActivity(now);this.broadcast();await this.index();return;
    }
    if(!a.authenticated||!a.id)throw new Error('请先连接房间');
    const id=a.id;
-   if(msg.type==='ping'){send(ws,{type:'pong'});return;}
+   if(msg.type==='ping'){if(!a.pending&&d.tokens[id]&&r.players.some(p=>p.id===id)&&await this.renewActivity(now)){this.broadcast();await this.index();}send(ws,{type:'pong'});return;}
    if(a.pending){if(msg.type==='leave'){r.pending=r.pending.filter(p=>p.id!==id);delete d.pendingTokens[id];await this.save();ws.close(1000,'已离开');this.broadcast();return;}throw new Error('正在等待房主同意');}
    if(msg.type==='signal'){
     if(r.mode!=='lan')throw new Error('当前不是局域网模式');
     if(typeof msg.to!=='string'||!d.tokens[msg.to]||(id!==r.hostID&&msg.to!==r.hostID))throw new Error('配对对象无效');
-    for(const target of this.sockets(msg.to))send(target,{type:'signal',from:id,data:msg.data});return;
+    for(const target of this.sockets(msg.to))send(target,{type:'signal',from:id,data:msg.data});if(await this.renewActivity(now)){this.broadcast();await this.index();}return;
    }
    if(typeof msg.requestID!=='string'||!msg.requestID||msg.requestID.length>100)throw new Error('请求编号无效');
    if(d.controlSeen[id]?.includes(msg.requestID)){this.snapshot(ws);return;}
@@ -178,7 +185,7 @@ export class GameRoom extends DurableObject<Env>{
     else if(r.started)throw new Error('牌局中请让房主结束本局再离桌');
     else {r.players=r.players.filter(p=>p.id!==id);delete d.tokens[id];ws.serializeAttachment({opened:0});ws.close(1000,'离桌');}
    }else throw new Error('未知操作');
-   d.controlSeen[id]=[...(d.controlSeen[id]||[]),msg.requestID].slice(-128);r.revision++;await this.save();this.broadcast();if(msg.type!=='action'&&msg.type!=='ready')await this.index();
+   d.controlSeen[id]=[...(d.controlSeen[id]||[]),msg.requestID].slice(-128);r.revision++;await this.save();const renewed=await this.renewActivity(now);this.broadcast();if(renewed||msg.type!=='action'&&msg.type!=='ready')await this.index();
   }catch(e){send(ws,{type:'error',error:error(e)});}
  }
  async webSocketClose(ws:WebSocket){const a=ws.deserializeAttachment() as Attachment;ws.serializeAttachment({opened:0});try{ws.close(1000,'连接已关闭');}catch{}if(this.data&&a.id){if(a.pending){this.data.info.pending=this.data.info.pending.filter(p=>p.id!==a.id);delete this.data.pendingTokens[a.id];}this.data.info.revision++;await this.save();this.broadcast();}}

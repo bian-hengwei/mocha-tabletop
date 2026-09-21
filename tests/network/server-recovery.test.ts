@@ -23,3 +23,60 @@ describe('authoritative reconnect and presence',()=>{
  it('allows only the lobby host to remove an offline seat',async()=>{await message(sockets[0],{type:'removePlayer',playerID:guest.id});expect(sockets[0].messages.at(-1).error).toContain('只能移除离线');await server.webSocketClose(sockets[1]);await message(sockets[0],{type:'removePlayer',playerID:guest.id});expect(server.data.info.players.map((p:any)=>p.id)).toEqual([host.id]);expect(server.data.tokens[guest.id]).toBeUndefined();});
  it('never removes a player midgame and gives each new round a distinct persistent match ID',async()=>{await message(sockets[0],{type:'start'});const firstID=server.data.info.matchID;expect(firstID).toBeTruthy();await server.webSocketClose(sockets[1]);await message(sockets[0],{type:'removePlayer',playerID:guest.id});expect(sockets[0].messages.at(-1).error).toContain('准备室');expect(server.data.info.players).toHaveLength(2);await message(sockets[0],{type:'endGame'});expect(server.data.info.matchID).toBeUndefined();sockets[1].attachment={id:guest.id,authenticated:true,opened:Date.now()};await message(sockets[1],{type:'ready',ready:true});await message(sockets[0],{type:'start'});expect(server.data.info.matchID).toBeTruthy();expect(server.data.info.matchID).not.toBe(firstID);});
 });
+describe('active room expiry',()=>{
+ it('keeps a live match beyond its original six-hour deadline without redealing',async()=>{
+  server.data.expires=Date.now()+6*3600000;const originalExpiry=server.data.expires;
+  await message(sockets[0],{type:'start'});const match=structuredClone(server.data.match),matchID=server.data.info.matchID;
+  const put=vi.spyOn(server.ctx.storage,'put'),index=vi.spyOn(server.env.DIRECTORY,'getByName');
+  for(let hour=0;hour<7;hour++){
+   await vi.advanceTimersByTimeAsync(3600000);
+   for(const socket of sockets)await message(socket,{type:'ping'});
+   await server.alarm();
+   expect(server.data.expires).toBe(Date.now()+6*3600000);
+   for(const socket of sockets){expect(socket.closed).toBeUndefined();expect(socket.snapshot.room.expiresAt).toBe(server.data.expires);expect(socket.snapshot.room.matchID).toBe(matchID);}
+  }
+  expect(Date.now()).toBeGreaterThan(originalExpiry);expect(server.data.match).toEqual(match);
+  expect(put).toHaveBeenCalledWith('room',expect.objectContaining({expires:server.data.expires}));expect(index).toHaveBeenCalled();
+ });
+ it('coalesces heartbeat persistence instead of writing on every ping',async()=>{
+  server.data.expires=Date.now()+6*3600000;const expires=server.data.expires,put=vi.spyOn(server.ctx.storage,'put');
+  for(let count=0;count<14;count++){await vi.advanceTimersByTimeAsync(20000);await message(sockets[0],{type:'ping'});}
+  expect(put).not.toHaveBeenCalled();expect(server.data.expires).toBe(expires);
+  await vi.advanceTimersByTimeAsync(21000);await message(sockets[0],{type:'ping'});
+  expect(put).toHaveBeenCalledTimes(1);expect(server.data.expires).toBe(Date.now()+6*3600000);expect(alarm).toBe(Date.now()+30000);
+  await message(sockets[1],{type:'ping'});expect(put).toHaveBeenCalledTimes(1);
+ });
+ it('does not renew for anonymous probes, applicants, invalid messages or failed authentication',async()=>{
+  const expires=server.data.expires,pending=member('pending0',true),anonymous=new ServerSocket();sockets.push(pending,anonymous);
+  await server.fetch(new Request('https://internal/status'));
+  await message(pending,{type:'ping'});expect(pending.messages.at(-1)).toEqual({type:'pong'});
+  await message(anonymous,{type:'ping'});await message(anonymous,{type:'hello',profile:host,token:'c'.repeat(48)});
+  await message(anonymous,{type:'hello',profile:{id:'pending1',name:'Applicant',avatar:'🦊'},token:'c'.repeat(48)});
+  await message(sockets[0],{type:'unknown'});await message(sockets[1],{type:'start'});
+  expect(server.data.expires).toBe(expires);
+ });
+ it('renews admitted reconnects and valid lobby activity, including client expiry snapshots',async()=>{
+  const oldExpiry=server.data.expires;await message(sockets[1],{type:'ready',ready:false});
+  expect(server.data.expires).toBeGreaterThan(oldExpiry);expect(sockets[0].snapshot.room.expiresAt).toBe(server.data.expires);
+  await server.webSocketClose(sockets[0]);await vi.advanceTimersByTimeAsync(10*60000);
+  const restored=new ServerSocket();sockets.push(restored);await message(restored,{type:'hello',profile:host,token:'a'.repeat(48)});
+  expect(restored.snapshot.room.expiresAt).toBe(Date.now()+6*3600000);expect(restored.snapshot.room.players).toHaveLength(2);
+ });
+ it('renews valid LAN signaling while rejecting invalid relay activity',async()=>{
+  server.data.info.mode='lan';const oldExpiry=server.data.expires;
+  await message(sockets[1],{type:'signal',to:'unknown0',data:{type:'offer'}});expect(server.data.expires).toBe(oldExpiry);
+  await message(sockets[1],{type:'signal',to:host.id,data:{type:'offer'}});
+  expect(server.data.expires).toBe(Date.now()+6*3600000);expect(sockets[0].messages).toContainEqual({type:'signal',from:guest.id,data:{type:'offer'}});
+ });
+ it('still expires abandoned rooms and never revives an expired or dissolved room',async()=>{
+  const remove=vi.spyOn(server.ctx.storage,'deleteAll');server.data.expires=Date.now()+60000;
+  await vi.advanceTimersByTimeAsync(60001);const expired=server.data.expires;
+  await message(sockets[0],{type:'ping'});expect(server.data.expires).toBe(expired);expect(sockets[0].messages.at(-1).type).toBe('error');
+  expect((await server.fetch(new Request('https://internal/status'))).status).toBe(404);
+  await server.alarm();expect(remove).toHaveBeenCalledOnce();expect(server.data).toBeUndefined();
+ });
+ it('does not extend the expiry after the host dissolves the room',async()=>{
+  const expires=server.data.expires;await message(sockets[0],{type:'leave'});expect(server.data.ended).toBe(true);expect(server.data.expires).toBe(expires);
+  await message(sockets[1],{type:'ping'});expect(server.data.expires).toBe(expires);expect(sockets[1].messages.at(-1).type).toBe('error');
+ });
+});
