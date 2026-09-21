@@ -1,11 +1,12 @@
 import {Check, Eye, X} from 'lucide-react';
 import type {RoomInfo} from '../core/room';
 import type {RoomClient} from '../net/RoomClient';
-import {t} from '../i18n';
+import {t,useLocale} from '../i18n';
 import './spectators.css';
 
 export function JoinRequests({room,client}:{room:RoomInfo;client:RoomClient}){
- return <div className="join-requests">{room.pending.map(p=><div key={p.id}><span>{p.avatar} {p.name} {t(p.spectator||room.started?'申请观战':'想入座')}</span><button className="icon" aria-label={`${t('拒绝')} ${p.name}`} onClick={()=>client.approve(p.id,false)}><X size={16}/></button><button className="icon approve" aria-label={`${t('同意')} ${p.name}`} onClick={()=>client.approve(p.id,true)}><Check size={16}/></button></div>)}</div>;
+ const locale=useLocale();
+ return <div className="join-requests">{room.pending.map(p=><div key={p.id}><span>{p.avatar} {p.name} {t(p.spectator||room.started?'申请观战':'想入座')}</span><button className="icon" aria-label={`${t('拒绝')}${locale==='en'?' ':''}${p.name}`} onClick={()=>client.approve(p.id,false)}><X size={16}/></button><button className="icon approve" aria-label={`${t('同意')}${locale==='en'?' ':''}${p.name}`} onClick={()=>client.approve(p.id,true)}><Check size={16}/></button></div>)}</div>;
 }
 export function RoomAudience({room,selfID,client}:{room:RoomInfo;selfID:string;client:RoomClient}){
  const host=room.hostID===selfID,spectators=room.spectators||[],watching=spectators.some(p=>p.id===selfID),allowed=room.allowSpectators!==false;
