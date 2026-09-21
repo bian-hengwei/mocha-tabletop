@@ -349,3 +349,6 @@
 
 .ng-uno-turn-label{margin-left:auto;flex-shrink:0;padding:2px 7px;border:1px solid #c8ba7866;border-radius:8px;color:#eee0b0;background:#b8a66b1c;font-size:11px;line-height:16px;font-weight:500;white-space:nowrap}
 .ng-hand-scroll-cue{display:inline-block;margin-left:8px;white-space:nowrap;color:#c8c7aa}
+
+.ng-century .ng-century-hand-panel>.ng-century-hand-heading{gap:2px 5px}
+.ng-century .ng-century-scroll-cue{font-size:10px;line-height:14px;font-weight:400;color:#c8c7aa;letter-spacing:normal;white-space:nowrap}
