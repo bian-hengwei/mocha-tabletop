@@ -44,10 +44,15 @@ for(const kind of ['uno','mahjong']){
    const actions=snap.view.actions;
    let action=actions.find(action=>action.id==='acceptPenalty')||actions.find(action=>action.id==='hu')||actions.find(action=>action.id==='callUno')||actions.find(action=>action.id==='passUno')||actions.find(action=>action.id==='pass')||actions.find(action=>action.id==='play')||actions[0];
    let values=action.choices.slice(0,action.min).map(choice=>choice.id);
-   if(kind==='uno'&&action.id==='play'){
-    const attack=action.choices.find(choice=>snap.view.board.hand.find(card=>card.id===choice.id)?.value==='draw2');if(attack)values=[attack.id];
+   if(kind==='uno'&&!pending&&snap.view.board.phase==='play'){
+    // Keep ordinary cards so a random deal cannot end before a penalty is exercised.
+    // Repeated draws eventually expose the matching Draw Two from the finite deck.
+    const play=actions.find(action=>action.id==='play'),attack=play?.choices.find(choice=>snap.view.board.hand.find(card=>card.id===choice.id)?.value==='draw2');
+    const plus=actions.find(action=>action.id.startsWith('wild:')&&snap.view.board.hand.find(card=>card.id===action.id.slice(5))?.value==='wild4');
+    if(attack){action=play;values=[attack.id];}
+    else if(plus){action=plus;values=[plus.choices[0].id];}
+    else{action=actions.find(action=>action.id==='draw')||actions.find(action=>action.id==='pass');assert(action);values=[];}
    }
-   if(kind==='uno'&&actions.some(action=>action.id.startsWith('wild:'))&&!pending){const plus=actions.find(action=>action.id.startsWith('wild:')&&snap.view.board.hand.find(card=>card.id===action.id.slice(5))?.value==='wild4');if(plus){action=plus;values=[plus.choices[0].id];}}
    const command={action:action.id,values},requestID=randomUUID(),offsets=clients.map(client=>client.messages.length);
    actor.send({type:'action',command,requestID,actionRevision:snap.actionRevision});
    await Promise.all(clients.map((client,i)=>client.wait(message=>message.view&&message.room.revision>snap.room.revision,offsets[i])));
