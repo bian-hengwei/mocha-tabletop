@@ -41,6 +41,7 @@ function initialGame(){
  if((kind==='guandan'||kind==='doudizhu')&&params.get('scenario')==='response-feedback'){
   const state=modules[kind].create(players,11);state.phase='play';state.current=0;state.landlord=0;state.bid=1;state.level=5;
   if(kind==='guandan'){state.levels=[2,5];state.round=2;}
+  state.hands[1]=state.hands[1].slice(0,1);
   state.hands[0]=[7,7,8,9,9,9,9,3].map((rank,i)=>({id:`response-${i}`,rank,suit:[0,2,0,0,1,2,3,0][i]}));
   state.last={player:1,cards:[0,2].map(suit=>({id:`previous-${suit}`,rank:kind==='guandan'?5:10,suit})),combo:{type:'对子',power:kind==='guandan'?17:10,size:2,bomb:0}};
   return state;

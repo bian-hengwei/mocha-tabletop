@@ -16,6 +16,9 @@ async function fits(page){
 try{for(const kind of ['guandan','doudizhu'])for(const locale of ['zh','en'])for(const[width,height]of sizes){
  const context=await browser.newContext({viewport:{width,height}});await context.addInitScript(l=>localStorage.setItem('mocha-locale',l),locale);const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=${kind}&scenario=response-feedback`);
+ const rail=page.locator('.classic-hand-scroll');const overflow=await rail.evaluate(e=>e.scrollWidth>e.clientWidth+2);await expect(rail).toHaveAttribute('aria-label',locale==='zh'?(overflow?'手牌可左右滑动':'我的手牌'):(overflow?'Swipe to see your hand':'My hand'));
+ await expect(page.locator('.classic-seat.seat-right small').first()).toContainText(locale==='zh'?'1 张':'1 card ·');
+ await expect(page.locator('.classic-seat.seat-self small').first()).toContainText(locale==='zh'?'8 张':'8 cards ·');
  const status=page.locator('.classic-selection'),play=page.locator('.classic-controls .primary'),clear=page.getByRole('button',{name:locale==='zh'?'清空选择':'Clear selection',exact:true});
  for(const name of ['♠7','♣7'])await page.getByRole('button',{name,exact:true}).click();
  await expect(status).toHaveText(locale==='zh'?'这组牌压不过上家':'Cannot beat the previous play');await expect(play).toBeDisabled();await fits(page);await page.screenshot({path:`${out}/${kind}-${locale}-${width}.png`});
