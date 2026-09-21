@@ -22,8 +22,17 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run check
+      - name: Share the tested build with integration groups
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: integration-dist
+          path: dist/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
   integration:
     name: Integration (${{ matrix.group }})
+    needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -38,6 +47,11 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci
+      - name: Restore the tested build for Worker assets
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: integration-dist
+          path: dist/
       - name: Install browser for integration tests
         run: npx playwright install --with-deps chromium
       - name: Run integration group
@@ -52,11 +66,11 @@ jobs:
           worker_pid=$!
           trap 'kill "$server_pid" "$worker_pid" 2>/dev/null || true' EXIT
           for attempt in {1..30}; do
-            if curl -fsS "$BASE_URL" > /dev/null && curl -fsS "$BASE_URL/api/health" > /dev/null; then break; fi
+            if curl -fsS --max-time 2 "$BASE_URL" > /dev/null && curl -fsS --max-time 2 "$BASE_URL/api/health" > /dev/null; then break; fi
             sleep 1
           done
-          curl -fsS "$BASE_URL" > /dev/null
-          curl -fsS "$BASE_URL/api/health"
+          curl -fsS --max-time 5 "$BASE_URL" > /dev/null
+          curl -fsS --max-time 5 "$BASE_URL/api/health"
           node scripts/ci-integration.mjs "$CI_GROUP"
       - name: Show service logs on failure
         if: failure()
