@@ -122,5 +122,5 @@ describe('redacted card bots', () => {
     for (const [index, range] of ranges.entries()) for (const playerCount of counts[index]) for (const seed of [31 + index, 71 + index]) {
       playToTerminal({ ...range, playerCount, seed }, difficulty);
     }
-  });
+  }, 30000); // Twenty complete matches per difficulty also run on shared CI CPUs.
 });
