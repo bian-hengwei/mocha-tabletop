@@ -47,6 +47,7 @@ jobs:
           node tests/ui/uno-experience.integration.mjs
           node tests/ui/hand-experience.integration.mjs
           node tests/ui/poker-declaration.integration.mjs
+          node tests/ui/poker-feedback.integration.mjs
           node tests/ui/identity-portraits.integration.mjs
           node tests/ui/illustrated-games.integration.mjs
           node tests/ui/word-privacy.integration.mjs

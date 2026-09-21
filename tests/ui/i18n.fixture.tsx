@@ -38,6 +38,13 @@ function initialGame(){
  if(kind==='sushi'&&params.get('scenario')==='chopsticks'){const state=modules.sushi.create(players,11);state.table[0]=[{id:'table-chopsticks',kind:'chopsticks'}];state.hands[0]=[{id:'wasabi-first',kind:'wasabi'},{id:'squid-second',kind:'squid'},...state.hands[0].slice(2)];return state;}
  if(kind==='bombs'&&params.get('scenario')==='combo'){const state=bombs.create(players,11);state.hands[players[0].id]=[{id:'skip-a',kind:'skip',title:'跳过'},{id:'skip-b',kind:'skip',title:'跳过'},{id:'attack-a',kind:'attack',title:'攻击'},...state.hands[players[0].id].filter(c=>c.kind==='nope')];return state;}
 
+ if((kind==='guandan'||kind==='doudizhu')&&params.get('scenario')==='response-feedback'){
+  const state=modules[kind].create(players,11);state.phase='play';state.current=0;state.landlord=0;state.bid=1;state.level=5;
+  if(kind==='guandan'){state.levels=[2,5];state.round=2;}
+  state.hands[0]=[7,7,8,9,9,9,9,3].map((rank,i)=>({id:`response-${i}`,rank,suit:[0,2,0,0,1,2,3,0][i]}));
+  state.last={player:1,cards:[0,2].map(suit=>({id:`previous-${suit}`,rank:kind==='guandan'?5:10,suit})),combo:{type:'对子',power:kind==='guandan'?17:10,size:2,bomb:0}};
+  return state;
+ }
  if(kind==='guandan'&&params.get('scenario')==='declare'){const state=modules.guandan.create(players,11);state.hands[0]=[5,6,7,8,9,3].map((rank,i)=>({id:`declare-${i}`,rank,suit:0}));return state;}
  if(kind==='uno'&&params.get('scenario')==='call'){let state=uno.create(players,11);state.current=0;state.phase='play';state.color='red';state.drawn=null;state.hands[0]=[{id:'call-red',color:'red',value:2},{id:'last-blue',color:'blue',value:7}];state.discard=[{id:'top-red',color:'red',value:1}];return uno.apply(state,players[0].id,{action:'play',values:['call-red']});}
  if(kind==='uno'&&params.get('scenario')==='no-match'){
