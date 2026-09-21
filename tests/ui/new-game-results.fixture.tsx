@@ -6,8 +6,8 @@ import '../../src/ui/style.css';
 // Substitute only transport. Fixed final totals exercise the real filtered
 // views, App result overlay, and scoreboard, without replaying a random game.
 const params=new URLSearchParams(location.search);
-const kind=params.get('kind')==='bombs'?'bombs':params.get('kind')==='uno'?'uno':params.get('kind')==='century'?'century':'sushi';
-const count=kind==='uno'?10:5;
+const kind=params.get('kind')==='gems'?'gems':params.get('kind')==='bombs'?'bombs':params.get('kind')==='uno'?'uno':params.get('kind')==='century'?'century':'sushi';
+const count=kind==='gems'?4:kind==='uno'?10:5;
 const room:RoomInfo={code:'ABC234',kind,mode:'cloud',hostID:'result-0',started:true,revision:1,matchID:'result-fixture',pending:[],players:Array.from({length:count},(_,i)=>({
  id:`result-${i}`,name:params.has('long')?(i%2?`长昵称玩家甲乙丙丁${i}`:`Long name player ${i}`):i===0?'Host':i===1?'Guest':`Mocha ${i-1}`,avatar:i<2?'🦊':'🤖',connected:true,ready:true,...(i>=2?{bot:{difficulty:'normal' as const}}:{}),
 }))};
@@ -15,7 +15,15 @@ const self=room.players[params.has('guest')?1:0];
 localStorage.clear();localStorage.setItem('mocha-profile',JSON.stringify(self));localStorage.setItem('mocha-locale',params.get('locale')||'zh');
 const match=createMatch(kind,room.players),game=match.game;
 game.finished=true;game.winners=[room.players[2].id];
-if(kind==='bombs'){
+if(kind==='gems'){
+ const scores=[12,15,17,17],counts=[7,6,5,params.has('tie')?5:6];
+ game.merchants.forEach((m:{bought:unknown[];nobles:unknown[]},i:number)=>{
+  let points=scores[i]-3;
+  m.bought=Array.from({length:counts[i]},(_,j)=>{const value=Math.min(5,points);points-=value;return {id:`gem-${i}-${j}`,tier:3,bonus:'white',points:value,cost:[1,1,1,1,1]};});
+  m.nobles=[{id:`noble-${i}`,cost:[3,3,3,0,0]}];
+ });
+ if(params.has('tie'))game.winners=[room.players[2].id,room.players[3].id];
+}else if(kind==='bombs'){
  game.alive=[room.players[2].id];game.current=room.players[2].id;game.phase={kind:'turn'};
  for(const p of room.players)if(p.id!==game.current)game.hands[p.id]=[];
 }else if(kind==='sushi'){

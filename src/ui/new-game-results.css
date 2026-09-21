@@ -33,3 +33,5 @@
 
 .ng-final-status{margin:0;font-size:14px;line-height:1.4;color:#c0c6b1}
 .ng-final-player.winner .ng-final-status{color:#f1e5bd}
+.ng-final-note{flex:none;margin:0;font-size:12px;line-height:1.4;color:#c0c6b1}
+.ng-final-gems .ng-final-grid,.ng-final-gems .ng-final-details{grid-template-columns:repeat(2,minmax(0,1fr))}

@@ -34,6 +34,7 @@ export const uiText: Record<string,string> = {
   "异色": "Different colors",
   "同色 ×2": "Same color ×2",
   "拿取": "Take",
+  "同分时，已购发展牌较少者获胜；仍相同则共享胜利。": "On equal scores, the player with fewer development cards wins; if still tied, share victory.",
   "或同色连点取 2（库存 ≥4）": "Or tap one color twice for 2 (stock ≥4)",
   "我的筹码": "My tokens",
   "待购买的发展牌和自动支付筹码": "Selected card and automatic payment",

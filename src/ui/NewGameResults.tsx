@@ -12,6 +12,8 @@ interface ResultPlayer {
  orderCount?:number;
  gold?:number;
  silver?:number;
+ bought?:unknown[];
+ nobles?:unknown[];
 }
 
 export function NewGameResults({view,selfID}:{view:GameView;selfID:string}) {
@@ -23,6 +25,7 @@ export function NewGameResults({view,selfID}:{view:GameView;selfID:string}) {
   Number(winners.includes(b.player.id))-Number(winners.includes(a.player.id))||(b.player.score??0)-(a.player.score??0)||a.index-b.index);
  return <section className={`ng-final-results ng-final-${view.kind}`} aria-label={t(survival?'本局结果':'最终得分')}>
   <header><h2>{t(survival?'本局结果':'得分')}</h2><p>{t(winners.length===1?'胜者':'共同胜者')}{t('：')} {new Intl.ListFormat(locale,{style:'long',type:'conjunction'}).format(players.filter(p=>winners.includes(p.id)).map(p=>p.name))}</p></header>
+  {view.kind==='gems'&&<p className="ng-final-note">{t('同分时，已购发展牌较少者获胜；仍相同则共享胜利。')}</p>}
   <ol className="ng-final-grid" tabIndex={0} aria-label={t(survival?'所有玩家的结果':'所有玩家的最终得分')}>
    {rows.map(({player:p,index})=>{
     const winner=winners.includes(p.id);
@@ -37,6 +40,7 @@ export function NewGameResults({view,selfID}:{view:GameView;selfID:string}) {
       {rounds.length===3?<div className="ng-final-pudding"><dt>{t('布丁')}<small> ×{p.puddings}</small></dt><dd>{puddingPoints>0?'+':''}{puddingPoints}</dd></div>:<div><dt>{t('布丁')}</dt><dd>{p.puddings}</dd></div>}
      </dl>}
      {view.kind==='century'&&<dl className="ng-final-details"><div><dt>{t('订单数')}</dt><dd>{p.orderCount}</dd></div><div><dt>{t('金币')}</dt><dd>{p.gold}</dd></div><div><dt>{t('银币')}</dt><dd>{p.silver}</dd></div></dl>}
+     {view.kind==='gems'&&<dl className="ng-final-details"><div><dt>{t('已购牌')}</dt><dd>{p.bought?.length}</dd></div><div><dt>{t('贵族')}</dt><dd>{p.nobles?.length}</dd></div></dl>}
     </li>;
    })}
   </ol>

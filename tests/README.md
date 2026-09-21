@@ -57,7 +57,7 @@ npx playwright install chromium webkit
 | `node tests/ui/dialogs.integration.mjs` | 宝石、卡牌与秘密身份弹窗的焦点保护、Escape 和恢复 |
 | `node tests/ui/i18n.integration.mjs` | 九款牌桌正文/无障碍标签英文检查、词库独立切换、确认出牌、私密 +4 核验与手机/短横屏 |
 | `node tests/ui/uno-selection.integration.mjs` | 接龙选牌高亮/抬升/取消、确认出牌、万能选色、换座清理、质疑开关与双语三尺寸 |
-| `node tests/ui/new-game-results.integration.mjs` | 寿司/商旅/接龙最终全员积分、喵喵危机全员幸存/出局状态、寿司逐轮及布丁分、同分胜者标记、中英八尺寸、长昵称、文字不越出卡片及旋转；使用固定传输 fixture，支持 WebKit |
+| `node tests/ui/new-game-results.integration.mjs` | 寿司/商旅/接龙/晶石最终全员积分、晶石同分牌数比较、喵喵危机全员幸存/出局状态、寿司逐轮及布丁分、同分胜者标记、中英八尺寸、长昵称、文字不越出卡片及旋转；使用固定传输 fixture，支持 WebKit |
 | `node tests/ui/new-games.integration.mjs` | 寿司、香料、七彩接龙实际回合操作 |
 | `node tests/ui/word-games.integration.mjs` | 两款词语游戏中英文终局与切换语言保留词面 |
 | `node tests/ui/offline.integration.mjs` | 生产预览 5176 的缓存、断网重载及十二款试玩 |

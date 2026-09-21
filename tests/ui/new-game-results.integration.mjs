@@ -5,9 +5,9 @@ const base=process.env.BASE_URL||'http://127.0.0.1:5174',engine=process.env.TEST
 const out=`test-results/new-game-results-${engine}`;await fs.mkdir(out,{recursive:true});
 const browser=await(engine==='webkit'?webkit:chromium).launch();
 const sizes=[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900],[568,320]];
-const totals={bombs:[null,null,null,null,null],sushi:[22,20,25,24,25],century:[15,20,31,16,27],uno:[120,310,530,99,400,210,111,97,55,8]};
+const totals={gems:[12,15,17,17],bombs:[null,null,null,null,null],sushi:[22,20,25,24,25],century:[15,20,31,16,27],uno:[120,310,530,99,400,210,111,97,55,8]};
 try{
- for(const locale of ['zh','en'])for(const kind of ['sushi','century','uno','bombs']){
+ for(const locale of ['zh','en'])for(const kind of ['sushi','century','uno','bombs','gems']){
   const page=await browser.newPage();page.setDefaultTimeout(7000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`${base}/tests/ui/new-game-results.fixture.html?locale=${locale}&kind=${kind}`);
   await expect(page.locator('.end-banner')).toBeVisible();await page.setViewportSize({width:390,height:844});await page.setViewportSize({width:844,height:390});
@@ -20,6 +20,11 @@ try{
   }
   if(kind==='bombs'){await expect(page.locator('.ng-final-status')).toHaveText(locale==='zh'?['最后的幸存者','已出局','已出局','已出局','已出局']:['Last survivor','Eliminated','Eliminated','Eliminated','Eliminated']);await expect(page.locator('.bt-hand-zone,.bt-arena,.ng-final-player-heading>strong')).toHaveCount(0);}
   await expect(page.locator('.ng-final-player.winner')).toHaveCount(1);await expect(page.locator('.ng-final-player.winner')).toContainText('Mocha 1');
+  if(kind==='gems'){
+   await expect(page.locator('.g-table,.action-dock')).toHaveCount(0);
+   await expect(page.locator('.ng-final-player.winner .ng-final-details dd')).toHaveText(['5','1']);
+   await expect(page.locator('.ng-final-note')).toContainText(locale==='zh'?'已购发展牌较少者获胜':'fewer development cards wins');
+  }
   if(kind==='sushi'){
    const winner=page.locator('.ng-final-player.winner');await expect(winner.locator('.ng-final-details dd')).toHaveText(['8','7','7','+3']);
    await expect(rows.filter({has:page.locator('.ng-final-player-heading>b').filter({hasText:'Mocha 2'})}).locator('.ng-final-details dd')).toHaveText(['10','10','10','-6']);
@@ -41,15 +46,15 @@ try{
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1));
    await page.screenshot({path:`${out}/${kind}-${locale}-${width}-long.png`});
   }
-  if(kind==='sushi'){
-   await page.goto(`${base}/tests/ui/new-game-results.fixture.html?locale=${locale}&kind=sushi&tie=1`);
+  if(kind==='sushi'||kind==='gems'){
+   await page.goto(`${base}/tests/ui/new-game-results.fixture.html?locale=${locale}&kind=${kind}&tie=1`);
    await page.getByRole('button',{name:locale==='zh'?'收起结算':'Dismiss result',exact:true}).click();
    await expect(page.locator('.ng-final-player.winner')).toHaveCount(2);
-   await expect(page.locator('.ng-final-results>header p')).toHaveText(locale==='en'?'Winners: Mocha 1 and Mocha 3':'共同胜者： Mocha 1和Mocha 3');
+   await expect(page.locator('.ng-final-results>header p')).toHaveText(locale==='en'?`Winners: Mocha 1 and Mocha ${kind==='gems'?2:3}`:`共同胜者： Mocha 1和Mocha ${kind==='gems'?2:3}`);
    for(const[width,height]of[[320,568],[568,320]]){
     await page.setViewportSize({width,height});
     assert(await page.locator('.ng-final-grid').evaluate(el=>el.scrollHeight<=el.clientHeight+1),'tied results fit');
-    await page.screenshot({path:`${out}/sushi-${locale}-${width}-tie.png`});
+    await page.screenshot({path:`${out}/${kind}-${locale}-${width}-tie.png`});
    }
   }
   assert.deepEqual(errors,[]);await page.close();console.log(`PASS ${engine} ${locale} ${kind}: final results and winner cues, game-specific totals/status, eight sizes, long names and rotation`);
