@@ -151,6 +151,12 @@
  .g-playfield{grid-template-columns:80px minmax(0,1fr) 132px}
 }
 
+/* Keep the payment entry and close control readable and separately tappable. */
+.g-card-inspector{padding-top:44px}
+.g-card-inspector .close{width:44px;height:44px;min-width:44px;min-height:44px}
+.g-card-buttons{flex-wrap:wrap}
+.g-card-buttons .compact{min-height:44px;min-width:max-content;flex:1 0 auto}
+
 /* Full inventory names the resources; compact table summaries retain their density. */
 .g-inventory header>.icon{width:44px;height:44px;min-width:44px;min-height:44px}
 .inventory-summary>.stock-labeled{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:6px}

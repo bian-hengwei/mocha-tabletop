@@ -25,7 +25,7 @@ try{
   await begin('晶石商会');
   await page.locator('.g-market-row .development-card:visible').first().click();
   assert.match(await page.locator('.g-card-note').textContent(),/筹码不足.*永久奖励和黄金已计入/,'Explain why buying is unavailable even when reserving is possible');
-  assert.equal(await page.locator('.g-card-buttons').getByRole('button',{name:'购买',exact:true}).count(),0);
+  assert.equal(await page.locator('.g-card-buttons').getByRole('button',{name:'查看支付',exact:true}).count(),0);
   assert(await page.locator('.g-card-buttons').getByRole('button',{name:'预留',exact:true}).isEnabled());
   await page.getByRole('button',{name:'关闭牌面',exact:true}).click();
   await seat('practice-0');await take(['白钻','蓝宝石','祖母绿']);
@@ -61,7 +61,7 @@ try{
     const cards=row.locator('.development-card').or(page.locator('.g-reserved .development-card'));
     const count=await cards.count();
     for(let i=0;i<count;i++){
-      await cards.nth(i).click();const buy=page.locator('.g-card-inspector').getByRole('button',{name:'购买',exact:true});
+      await cards.nth(i).click();const buy=page.locator('.g-card-inspector').getByRole('button',{name:'查看支付',exact:true});
       if(await buy.count()){await buy.click();purchased=true;break;}
       await page.getByRole('button',{name:'关闭牌面',exact:true}).click();
     }
