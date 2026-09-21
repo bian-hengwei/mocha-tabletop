@@ -1,7 +1,7 @@
 .ng-final-results{height:100%;width:100%;max-width:1120px;min-height:0;min-width:0;margin:auto;padding:18px;display:flex;flex-direction:column;gap:14px;color:#e6e8d7;box-sizing:border-box}
 .ng-final-results *{box-sizing:border-box}
 .ng-final-results>header{flex:none;min-width:0;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-.ng-final-results h2{margin:0;font-size:22px;line-height:1.25;color:#e6d29e}
+.ng-final-results h2{flex:none;margin:0;font-size:22px;line-height:1.25;color:#e6d29e}
 .ng-final-results header p{margin:5px 0 0;font-size:14px;line-height:1.4;overflow-wrap:anywhere}
 .ng-final-grid{flex:1;min-height:0;min-width:0;margin:0;padding:3px;list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:max-content;align-content:safe center;gap:10px;overflow:auto;overscroll-behavior:contain;scrollbar-color:#acb58d66 transparent}
 .ng-final-grid:focus-visible{outline:2px solid #e6d29e;outline-offset:1px;border-radius:10px}

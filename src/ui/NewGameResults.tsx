@@ -1,5 +1,5 @@
 import {Crown} from 'lucide-react';
-import {t} from '../i18n';
+import {t,useLocale} from '../i18n';
 import type {GameView} from '../core/types';
 import './new-game-results.css';
 
@@ -15,13 +15,14 @@ interface ResultPlayer {
 }
 
 export function NewGameResults({view,selfID}:{view:GameView;selfID:string}) {
+ const locale=useLocale();
  const players=view.board.players as ResultPlayer[];
  const winners=view.board.winners as string[];
  const rounds=(view.board.roundScores??[]) as number[][];
  const rows=players.map((player,index)=>({player,index})).sort((a,b)=>
   Number(winners.includes(b.player.id))-Number(winners.includes(a.player.id))||b.player.score-a.player.score||a.index-b.index);
  return <section className={`ng-final-results ng-final-${view.kind}`} aria-label={t('最终得分')}>
-  <header><h2>{t('最终得分')}</h2><p>{t('胜者')}{t('：')} {players.filter(p=>winners.includes(p.id)).map(p=>p.name).join('、')}</p></header>
+  <header><h2>{t('得分')}</h2><p>{t(winners.length===1?'胜者':'共同胜者')}{t('：')} {new Intl.ListFormat(locale,{style:'long',type:'conjunction'}).format(players.filter(p=>winners.includes(p.id)).map(p=>p.name))}</p></header>
   <ol className="ng-final-grid" tabIndex={0} aria-label={t('所有玩家的最终得分')}>
    {rows.map(({player:p,index})=>{
     const winner=winners.includes(p.id);

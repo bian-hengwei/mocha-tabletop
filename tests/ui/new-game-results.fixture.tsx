@@ -20,6 +20,11 @@ if(kind==='sushi'){
  // The two 25-point seats are separated by pudding count, not seat order.
  game.round=3;game.step=7;game.scores=[22,20,25,24,25];game.puddings=[2,3,3,1,2];
  game.roundScores=[[7,5,8,10,8],[7,6,7,10,8],[8,6,7,10,9]];
+ if(params.has('tie')){
+  // Three players share +6 pudding points; two share the highest final total.
+  game.puddings=[2,3,3,1,3];game.roundScores=[[7,6,8,10,7],[7,6,7,10,8],[8,6,8,10,8]];
+  game.winners=[room.players[2].id,room.players[4].id];
+ }
  game.hands=room.players.map(()=>[]);game.table=room.players.map(()=>[]);
 }else if(kind==='uno'){
  game.scores=[120,310,530,99,400,210,111,97,55,8];game.roundNumber=4;game.phase='roundEnd';game.roundWinner=room.players[2].id;game.roundPoints=220;

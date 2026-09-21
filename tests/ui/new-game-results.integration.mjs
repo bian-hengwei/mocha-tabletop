@@ -40,6 +40,17 @@ try{
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1));
    await page.screenshot({path:`${out}/${kind}-${locale}-${width}-long.png`});
   }
+  if(kind==='sushi'){
+   await page.goto(`${base}/tests/ui/new-game-results.fixture.html?locale=${locale}&kind=sushi&tie=1`);
+   await page.getByRole('button',{name:locale==='zh'?'收起结算':'Dismiss result',exact:true}).click();
+   await expect(page.locator('.ng-final-player.winner')).toHaveCount(2);
+   await expect(page.locator('.ng-final-results>header p')).toHaveText(locale==='en'?'Winners: Mocha 1 and Mocha 3':'共同胜者： Mocha 1和Mocha 3');
+   for(const[width,height]of[[320,568],[568,320]]){
+    await page.setViewportSize({width,height});
+    assert(await page.locator('.ng-final-grid').evaluate(el=>el.scrollHeight<=el.clientHeight+1),'tied results fit');
+    await page.screenshot({path:`${out}/sushi-${locale}-${width}-tie.png`});
+   }
+  }
   assert.deepEqual(errors,[]);await page.close();console.log(`PASS ${engine} ${locale} ${kind}: all final totals, winner tie, pudding adjustment, eight sizes, long names and rotation`);
  }
 }finally{await browser.close();}

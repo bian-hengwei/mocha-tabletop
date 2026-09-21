@@ -11,12 +11,26 @@ import {SocialTable} from '../../src/ui/SocialTable';
 import {uno} from '../../src/core/games/uno';
 import {bombs} from '../../src/core/games/bombs';
 import {century} from '../../src/core/games/century';
+import {gems} from '../../src/core/games/gems';
 import {WordGamesTable} from '../../src/ui/WordGamesTable';
 import {NewGamesTable} from '../../src/ui/NewGamesTable';
 import {ActionSheet,ActionDock} from '../../src/ui/Boards';
 const params=new URLSearchParams(location.search),kind=(params.get('kind')||'gems') as GameKind;
 const players=Array.from({length:params.get("players")==="max"?GAMES[kind].max:kind==='uno'&&params.get("players")==="10"?10:params.get("scenario")==="challenge"?3:GAMES[kind].min},(_,i)=>({id:`english-player-${i}`,name:['Alex','Blair','Casey','Drew','Eli','Frank','Grace','Hayden','Indigo','Jules'][i]||`Player ${i+1}`,avatar:['🦊','🐼','🐱','🐻'][i%4]}));
 function initialGame(){
+ if(kind==='gems'&&params.get('scenario')==='inspection'){
+  const state=gems.create(players,11);
+  state.merchants[0].reserved.push(...state.market[0].splice(0,3));
+  state.merchants[0].bought.push(state.decks[0].pop()!);
+  const other=state.decks[0].pop()!;state.merchants[1].reserved.push(other);state.merchants[1].publicReserved=[other.id];
+  return state;
+ }
+ if(kind==='gems'&&params.get('scenario')==='payment'){
+  const state=gems.create(players,11);state.merchants[0].tokens[5]=5;state.bank[5]=0;
+  const buy=gems.view(state,players[0].id).actions.find(a=>a.id==='buy')!;
+  return gems.apply(state,players[0].id,{action:'buy',values:[buy.choices[0].id]});
+ }
+
  if(kind==='century'&&params.get('scenario')==='table-dense'){
   const state=century.create(players,11);
   state.market.forEach(slot=>{slot.bonus=[1,1,1,1];});

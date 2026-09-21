@@ -1,7 +1,16 @@
 export const uiText: Record<string,string> = {
+  '这张发展牌已经购入': 'This development card has already been purchased.',
+  '这是其他玩家的预留牌': 'This card is reserved by another player.',
+  '请先确认或取消当前购买': 'Confirm or cancel the current purchase first.',
+  '筹码不足，暂时无法购买': 'Not enough gems to buy this card yet.',
+  '筹码不足，暂时无法购买；预留位置已满': 'Not enough gems to buy this card yet. All reserve slots are full.',
+  '预留位置已满': 'All reserve slots are full.',
+
+  "得分": "Scores",
   "最终得分": "Final scores",
   "所有玩家的最终得分": "Final scores for every player",
   "胜者": "Winner",
+  "共同胜者": "Winners",
   "第 1 轮": "Round 1",
   "第 2 轮": "Round 2",
   "第 3 轮": "Round 3",

@@ -24,6 +24,7 @@ npx playwright install chromium webkit
 
 | 命令 | 验证范围 |
 | --- | --- |
+| `node tests/ui/gems-inspector.integration.mjs` | 晶石牌详情区分筹码不足、预留满位、自己的预留、他人预留、已购牌、等待及支付阶段；中英八尺寸与旋转，支持 WebKit |
 | `node tests/ui/gems-bank.integration.mjs` | 晶石筹码区中英八尺寸：六色完整可见、44px 触控、三色/同色两枚选择、取消与旋转；支持 WebKit |
 | `node tests/ui/classic-assets.integration.mjs` | 90 张本地牌面/底板/背面与三张封面解码，大小王颜色映射；支持 WebKit |
 | `node tests/ui/classic-orientation.integration.mjs` | 六种新玩法，中英文九种尺寸、手牌滚动到末张、44px 触控与旋转保留选择；支持 WebKit |
@@ -112,7 +113,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 网络延迟回归：`TEST_GAMES=century TEST_ACTION_DELAY_MS=600 TEST_SKIP_OFFLINE=1 BASE_URL=http://127.0.0.1:5174 node tests/ui/production.integration.mjs`。对真实 Worker 的回包延迟 600ms，验证提交中阻止后续操作，并在回包后继续升级/结束回合；也支持 WebKit。
 
-- `tests/ui/gems-viewport.integration.mjs`：晶石商会中英八尺寸无纵向滚动、全部市场层级、费用完整、牌面查看、横向宝石银行、实际拿取及库存入口；支持 WebKit。
+- `tests/ui/gems-viewport.integration.mjs`：晶石商会中英八尺寸、全部市场层级、费用完整、牌面查看、实际拿取及库存入口；320px 高短横屏允许外层牌桌滚动并逐区验证可达，其余尺寸无需纵向滚动，支持 WebKit。
 - `tests/ui/uno-sushi-viewport.integration.mjs`：寿司与七彩接龙中英七尺寸，公共区及手牌无纵向滚动、28 张手牌、最大人数密集盘面逐张可达、选色、报单、私人质疑核验、筷子选牌/取消；支持 WebKit。
 
 - `tests/ui/social-viewport.integration.mjs`：双语八尺寸、狼人三模式和阿瓦隆的全席分页、规则入口、身份隐藏、法官选择、表决及任务提交；支持 WebKit。
