@@ -15,7 +15,7 @@ for(const seed of process.env.LAYOUT_ONLY?[]:[9,20,43]){
   await chooseActive();const cls=await page.locator('.bt-table').getAttribute('class'),phase=cls.split('bt-phase-')[1];covered.add(phase);
   if(phase==='response'){
     if(!nopeUsed){for(const id of ['a','b','c']){await switchSeat(id);const nope=page.locator('.bt-hand').getByRole('button',{name:'否决',exact:true}).first();if(await nope.count()){await nope.click();const play=page.getByRole('button',{name:'否决这张',exact:true});if(await play.count()){await play.click();nopeUsed=true;covered.add('nope');break;}}}}
-    for(const id of ['a','b','c']){if(!(await page.locator('.bt-table').getAttribute('class')).includes('bt-phase-response'))break;await switchSeat(id);const pass=page.getByRole('button',{name:/^(不否决，继续|保持取消，继续)$/});if(await pass.count())await pass.click();}
+    for(const id of ['a','b','c']){if(!(await page.locator('.bt-table').getAttribute('class')).includes('bt-phase-response'))break;await switchSeat(id);const pass=page.getByRole('button',{name:/^继续$/});if(await pass.count())await pass.click();}
   }else if(phase==='target'){await page.locator('.bt-seat.targetable').first().click();}
   else if(phase==='request'){await page.locator('.bt-request').getByRole('button',{name:'拆弹',exact:true}).click();}
   else if(phase==='give'){await page.locator('.bt-hand .bt-card').first().click();await page.getByRole('button',{name:'交出这张',exact:true}).click();}

@@ -47,6 +47,7 @@ try{
   const current=await roomPage.locator('html').getAttribute('lang');if((locale==='en')!==(current==='en'))await roomPage.locator('.language-toggle').click();
   await expect(roomPage.locator('.presence-notice')).toBeVisible();
   assert.ok((await roomPage.locator('.presence-notice').textContent()).startsWith('梅林、红队'),`${locale} offline names remain verbatim`);
+  await expect(roomPage.locator('.presence-notice>span').first()).toHaveText(locale==='zh'?'梅林、红队 暂时离线 · 所有座位已保留':'梅林、红队 are offline · Seats reserved');
  }
  assert.deepEqual(roomErrors,[]);await lobby.close();
  console.log('PASS real App legacy history summaries, nearby hosts and offline names remain unchanged through zh/en/zh');

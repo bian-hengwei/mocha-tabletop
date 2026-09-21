@@ -102,7 +102,7 @@
 }
 .social-table-v2 .table-emblem:has(h2)>b{display:none}
 .social-table-v2 .table-emblem h2{font-size:18px;line-height:1.25;margin:0;letter-spacing:1px}
-/* Decision cards already open the complete action flow; do not duplicate its dock. */
+/* Ballot buttons submit directly; keep a single decision area. */
 .app.game-avalon:has(.social-table-v2.is-decision)>.action-dock{display:none}
 @media(max-height:350px) and (orientation:landscape){
  .social-table-v2 .seats .seat{padding:1px}

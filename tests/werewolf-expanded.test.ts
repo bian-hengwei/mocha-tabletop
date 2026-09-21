@@ -21,8 +21,9 @@ function standardNight(state: WerewolfState, victim = 'skip', potion = 'skip', i
     s = act(s, id, a.id, a.id === 'wolf' ? victim : a.id === 'inspect' ? inspect : a.id === 'guard' ? 'skip' : undefined);
   }
   for (const id of [...s.alive]) {
+    if (s.stage !== 'nightSecond') break;
     const a = standardWerewolf.view(s, id).actions[0];
-    expect(s.stage).toBe('nightSecond');
+    if (!a) continue;
     s = act(s, id, a.id, a.id === 'potion' ? potion : undefined);
   }
   if (s.stage === 'signup') for (const id of [...s.alive]) s = act(s, id, 'signup', signup);

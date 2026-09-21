@@ -185,7 +185,7 @@
  .ng-uno-overview .ng-uno-status{gap:5px}.ng-uno-overview .ng-uno-status>strong{font-size:12px}.ng-uno-overview .ng-color-badge{padding:5px 12px}
 }
 @media(max-height:500px) and (orientation:landscape){
- .game-uno.in-game .topbar{height:42px;min-height:42px;padding:3px 0;flex-wrap:nowrap}
+ .game-uno.in-game .topbar{height:46px;min-height:46px;padding:0;flex-wrap:nowrap}
  .ng-uno-overview{grid-template-rows:max-content max-content max-content;align-items:start}
  .ng-uno-overview>.ng-uno-center>div:first-child{width:48px}.ng-uno-overview .ng-uno-center .ng-uno-card>strong{font-size:24px}
  .ng-uno-overview>.ng-rules{grid-column:1;grid-row:2}.ng-uno-overview>.ng-heading~.ng-rules{grid-row:3}
@@ -262,7 +262,7 @@
 }
 /* Short landscape needs a full-height market beside the private caravan. */
 @media(max-height:360px) and (orientation:landscape){
- .game-century.in-game .topbar{height:42px;min-height:42px;padding:3px 0;flex-wrap:nowrap}
+ .game-century.in-game .topbar{height:46px;min-height:46px;padding:0;flex-wrap:nowrap}
  .ng-table.ng-century{display:grid;grid-template-columns:minmax(0,1fr) 210px;align-items:stretch}
  .ng-century-overview{min-width:0;height:100%}
  .ng-century-hand-dock{min-height:0;overflow:hidden}
@@ -346,3 +346,6 @@
  .ng-century-overview .ng-avatar{font-size:20px}
  .ng-century .ng-pocket{padding:4px 7px}
 }
+
+.ng-uno-turn-label{margin-left:auto;flex-shrink:0;padding:2px 7px;border:1px solid #c8ba7866;border-radius:8px;color:#eee0b0;background:#b8a66b1c;font-size:11px;line-height:16px;font-weight:500;white-space:nowrap}
+.ng-hand-scroll-cue{display:inline-block;margin-left:8px;white-space:nowrap;color:#c8c7aa}
