@@ -10,7 +10,7 @@
 .bot-match-status{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:5px 0;font-size:12px;flex-shrink:0}
 .bot-match-status[role=alert]{color:#f2c99f}
 .bot-match-status button{min-height:44px}
-.lobby-seats:has(.bot-seat){grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.lobby-seats:has(.bot-seat){flex:0 0 auto;align-content:start;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
 .lobby:has(.bot-seat) .lobby-controls{position:sticky;bottom:0;z-index:2;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:10px 0;background:#1d2d25;box-shadow:0 -8px 14px #1d2d25}
 .lobby:has(.bot-seat) .lobby-controls select{min-width:0;width:100%}
 .lobby:has(.bot-seat) .lobby-controls .primary{margin-left:0;min-height:44px}
