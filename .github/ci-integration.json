@@ -81,6 +81,9 @@
     },
     {
       "script": "tests/ui/table-layout.integration.mjs"
+    },
+    {
+      "script": "tests/network/uno-mahjong-assistance.integration.mjs"
     }
   ],
   "cards": [

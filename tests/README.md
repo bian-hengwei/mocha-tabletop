@@ -17,7 +17,7 @@ npm run check
 
 ## GitHub CI
 
-每个 PR 和 main 推送都运行 `npm run check`，以及四组并行的 Chromium/联机回归。分组清单位于 [ci-integration.json](../.github/ci-integration.json)，工作流位于 [ci.yml](../.github/workflows/ci.yml)。四组保留原有全部 42 个集成脚本及参数：
+每个 PR 和 main 推送都运行 `npm run check`，以及四组并行的 Chromium/联机回归。分组清单位于 [ci-integration.json](../.github/ci-integration.json)，工作流位于 [ci.yml](../.github/workflows/ci.yml)。四组按清单运行全部集成脚本及其参数：
 
 | 分组 | 范围 |
 | --- | --- |
@@ -70,6 +70,7 @@ npx playwright install chromium webkit
 | `node tests/ui/uno-experience.integration.mjs` | UNO 双击/双触、万能牌选色、28 张单行手牌、等待回合的溢出滑动提示、10 人座位、八尺寸与旋转，支持 WebKit |
 | `node tests/ui/mahjong-actions.integration.mjs` | 麻将确定性场景：自摸、血流继续、暗杠、抢杠、胡优先、碰与流局；支持 WebKit |
 | `node tests/network/message-text.integration.mjs` | 真实 Worker 的结构化姓名、投票公开时机、私密狼队计划与断线重连；使用 TEST_API_BASE |
+| `node tests/network/uno-mahjong-assistance.integration.mjs` | Uno 罚摸确认/重试去重/恢复、麻将私有助手计数与恢复；使用 TEST_API_BASE，清理测试房间 |
 | `node tests/network/classic-games.integration.mjs` | 六种玩法的真实 Worker WebSocket 指令、私密视图、幂等与重连 |
 | `node tests/ui/language.integration.mjs` | 十二款英文入口与双版本规则，检查未翻译文本 |
 | `node tests/ui/identity-portraits.integration.mjs` | 14 个身份 × 10 种尺寸，完整插画、相邻角色遮罩、关闭可达性、长记录和旋转；支持 WebKit |
