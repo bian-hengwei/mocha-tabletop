@@ -18,6 +18,9 @@ import {ActionSheet,ActionDock} from '../../src/ui/Boards';
 const params=new URLSearchParams(location.search),kind=(params.get('kind')||'gems') as GameKind;
 const players=Array.from({length:params.get("players")==="max"?GAMES[kind].max:kind==='uno'&&params.get("players")==="10"?10:params.get("scenario")==="challenge"?3:GAMES[kind].min},(_,i)=>({id:`english-player-${i}`,name:['Alex','Blair','Casey','Drew','Eli','Frank','Grace','Hayden','Indigo','Jules'][i]||`Player ${i+1}`,avatar:['🦊','🐼','🐱','🐻'][i%4]}));
 function initialGame(){
+ if(kind==='guandan'&&params.get('scenario')==='spectator-lead'){
+  const state=modules.guandan.create(players,11);state.phase='play';state.current=1;state.hands[0]=[];state.order=[0];state.last=null;return state;
+ }
  if((kind==='doudizhu'||kind==='guandan')&&params.get('scenario')==='played-single'){
   const state=modules[kind].create(players,11);state.phase='play';state.current=0;if(kind==='doudizhu')state.landlord=0;state.level=Number(params.get('level')||2);
   const rank=Number(params.get('rank')||12);
@@ -25,6 +28,14 @@ function initialGame(){
   return modules[kind].apply(state,players[0].id,{action:'play',values:['caption-played']});
  }
 
+ if(kind==='gems'&&['bank-scarce','bank-one','bank-no-pair','bank-full-hand'].includes(params.get('scenario')||'')){
+  const state=gems.create(players,11),scenario=params.get('scenario');
+  const bank=scenario==='bank-scarce'?[0,2,1,0,0,5]:scenario==='bank-one'?[0,0,0,3,0,5]:scenario==='bank-no-pair'?[3,3,3,3,3,5]:[5,5,5,5,5,5];
+  if(scenario==='bank-full-hand')state.merchants[0].tokens=state.bank.map((n,i)=>n-bank[i]);
+  else{let seat=0;state.bank.forEach((n,color)=>{for(let token=bank[color];token<n;token++)state.merchants[seat++%players.length].tokens[color]++;});}
+  state.bank=bank;
+  return state;
+ }
  if(kind==='gems'&&params.get('scenario')==='inspection'){
   const state=gems.create(players,11);
   state.merchants[0].reserved.push(...state.market[0].splice(0,3));

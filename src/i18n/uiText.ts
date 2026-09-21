@@ -34,6 +34,7 @@ export const uiText: Record<string,string> = {
   "异色": "Different colors",
   "同色 ×2": "Same color ×2",
   "拿取": "Take",
+  "或同色连点取 2（库存 ≥4）": "Or tap one color twice for 2 (stock ≥4)",
   "我的筹码": "My tokens",
   "待购买的发展牌和自动支付筹码": "Selected card and automatic payment",
   "免费": "Free",
@@ -322,6 +323,9 @@ export const uiText: Record<string,string> = {
   "+4 可以被质疑。出牌者当时若持有原颜色牌，质疑成功，出牌者抽 4 张；否则质疑者抽 6 张并跳过。只有质疑者能核验出牌时的手牌。接受 +4 则抽 4 张并跳过。": "You may challenge +4. If the player held the previous color, the challenge succeeds and they draw 4. Otherwise, the challenger draws 6 and skips. Only the challenger sees the hand held at the time. Accepting +4 means drawing 4 and skipping."
 };
 export const uiPatterns: [RegExp,string,number[]?][] = [
+ [/^取 1 色，各 1 枚$/, '1 color, 1 token'],
+ [/^取 (\d+) 色，各 1 枚$/, '$1 colors, 1 each'],
+ [/^1 单 · 金 (\d+) \/ 银 (\d+)$/, '1 order · Gold $1 / Silver $2'],
  [/^(\d+) 单 · 金 (\d+) \/ 银 (\d+)$/, '$1 orders · Gold $2 / Silver $3'],
  [/^已选 (\d+) \/ (\d+)$/, 'Selected $1 / $2'],
  [/^可选 (\d+)–(\d+) 项 · 已选 (\d+)$/, 'Choose $1–$2 · Selected $3'],

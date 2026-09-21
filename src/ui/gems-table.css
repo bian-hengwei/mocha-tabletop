@@ -40,7 +40,7 @@
  .g-market{display:grid;grid-template-rows:44px minmax(0,1fr);gap:5px}
  .g-market-row{display:none;grid-template-columns:44px repeat(4,minmax(0,1fr));gap:5px}
  .g-market-row.g-tier-active{display:grid}
- .g-bank-hint{display:none}
+ .g-bank-hint{display:block}
  .g-bank-gem{width:44px;height:44px;aspect-ratio:1}
  .g-take{height:44px;min-height:44px;gap:4px}
  .g-take .compact,.g-take .icon{height:44px;min-height:44px}
@@ -90,7 +90,7 @@
 }
 
 @media(max-width:600px) and (orientation:portrait){
- .g-playfield{grid-template-rows:56px minmax(110px,1fr) 112px}
+ .g-playfield{grid-template-rows:56px minmax(110px,1fr) 146px}
  .g-bank{flex-direction:column;gap:6px;padding:5px 2px;min-width:0}
  .g-bank-gems{display:grid;grid-template-columns:repeat(6,44px);justify-content:space-between;min-width:0;width:100%;gap:4px;padding:3px 5px}
  .g-bank-gem{width:44px;height:44px}
@@ -101,14 +101,15 @@
 
 @media(max-width:850px),(max-height:650px){.merchant-head>small{display:none}.merchant-head{flex-wrap:nowrap}.g-merchant{flex-basis:110px}.merchant-head>b{flex:1}}
 @media(max-height:500px) and (orientation:landscape){
+ .g-playfield{grid-template-columns:60px minmax(0,1fr) 158px}
  .g-bank{min-width:0;padding:0}
- .g-bank-gems{display:grid;grid-template-columns:repeat(2,44px);max-width:100%;width:106px;gap:6px 8px;padding:3px;transform:none}
+ .g-bank-gems{display:grid;grid-template-columns:repeat(3,44px);max-width:100%;width:158px;gap:6px 8px;padding:3px;transform:none}
  .g-bank-gem{width:44px;height:44px}
  .g-take{flex-shrink:0}
 }
 @media(max-height:360px) and (orientation:landscape){
  .game-gems .game-surface{overflow-y:auto}
- .g-table{min-height:253px}
+ .g-table{min-height:293px}
  .g-playfield{grid-template-columns:60px minmax(0,1fr) 158px}
  .g-bank-gems{grid-template-columns:repeat(3,44px);width:158px}
 }
@@ -117,6 +118,8 @@
  .g-market{grid-template-rows:repeat(3,minmax(0,1fr))}
  .g-market-row{display:grid}
 }
+.g-bank-hint{font-size:11px;line-height:1.4;max-width:100%;flex-shrink:0;color:#e0e5cf}
+.g-bank-hint>span{display:block}
 @media(max-height:500px) and (orientation:landscape){
  .g-card-inspector{width:min(420px,calc(100vw - 24px));display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;padding:22px 14px 14px;overflow:visible}
  .g-card-inspector>.development-card{height:min(220px,calc(100dvh - 64px));grid-row:1/3}

@@ -23,5 +23,16 @@ try{for(const locale of ['zh','en']){
    await page.screenshot({path:`${out}/${kind}-${rank}-${locale}-${width}.png`});
   }
  }
- assert.deepEqual(errors,[]);await page.close();console.log(`PASS ${engine}/${locale}: visible played rank, normal/level/two/jokers, eight sizes and rotation`);
+ await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=guandan&scenario=spectator-lead`);
+ const waiting=locale==='zh'?'等待 Blair':'Waiting for Blair';
+ await expect(page.locator('.table-prompt')).toHaveText(waiting);
+ await expect(page.locator('.classic-selection')).toHaveText(waiting);
+ await expect(page.locator('.classic-seat.current')).toContainText('Blair');
+ await expect(page.locator('.classic-hand .classic-card')).toHaveCount(0);
+ for(const[width,height]of sizes){
+  await page.setViewportSize({width,height});
+  const box=await page.locator('.table-prompt').boundingBox();assert(box&&box.x>=0&&box.y>=0&&box.x+box.width<=width+1&&box.y+box.height<=height+1);
+  await page.screenshot({path:`${out}/spectator-${locale}-${width}.png`});
+ }
+ assert.deepEqual(errors,[]);await page.close();console.log(`PASS ${engine}/${locale}: visible played rank, normal/level/two/jokers, spectator current player, eight sizes and rotation`);
 }}finally{await browser.close();}

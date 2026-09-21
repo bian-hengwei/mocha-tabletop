@@ -1,6 +1,6 @@
 import { t } from '../i18n';
 function tx<T>(value: T): T | string { return typeof value === 'string' ? t(value) : value; }
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useId, useState, type CSSProperties } from 'react';
 import { Check, Crown, Layers3, LockKeyhole, ShoppingBag, X } from 'lucide-react';
 import type { Action, Command, GameView } from '../core/types';
 import { GEM_COLORS } from '../core/games/gems';
@@ -34,6 +34,7 @@ export function GemsTable({ view, selfID, command, open }: Props) {
     const [picked, setPicked] = useState<number[]>([]), [card, setCard] = useState<any>(null), [merchantID, setMerchantID] = useState<string | null>(null);
     const merchant = b.players.find((p: any) => p.id === merchantID);
     const distinct = view.actions.find(a => a.id === 'take_distinct'), pair = view.actions.find(a => a.id === 'take_pair');
+    const bankHintID = useId();
     const isPair = picked.length === 2 && picked[0] === picked[1];
     const selectedAction = isPair ? pair : distinct;
     const selectionValid = !!selectedAction && (isPair || picked.length === selectedAction.min && new Set(picked).size === picked.length);
@@ -77,7 +78,7 @@ export function GemsTable({ view, selfID, command, open }: Props) {
                     open(a, [n.id]);
             }}><Crown /><b>{t("3")}</b><GemCost values={n.cost}/></button>))}</aside>
    <div className="g-market"><nav className="g-tier-tabs" aria-label={t("市场")} >{[1,2,3].map(level=><button key={level} aria-pressed={tier===level} onClick={()=>setTier(level)}><Layers3 size={15}/>{level}</button>)}</nav>{tx([3, 2, 1].map(t => <div className={`g-market-row ${tier===t?"g-tier-active":""}`} key={t}><button className={`g-deck level-${t}`} aria-label={tx(`预留 ${t} 级盲牌`)} disabled={!reserve?.choices.some(c => c.id === `deck:${t}`)} onClick={() => reserve?.choices.some(c => c.id === `deck:${t}`) && open(reserve, [`deck:${t}`])}><Layers3 /><span>{tx('•'.repeat(t))}</span><small>{tx(b.decks[t - 1])}</small></button>{tx(b.market.filter((c: any) => c.tier === t).map((c: any) => <DevelopmentCard key={c.id} card={c} onClick={() => setCard(c)}/>))}</div>))}</div>
-   <aside className="g-bank">{tx(distinct && <small className="g-bank-hint">{t("选") + " "}{tx(distinct.min)}{" " + t("种宝石")}{tx(pair ? ' · 同色连点取 2' : '')}</small>)}<div className="g-bank-gems">{tx(b.bank.map((n: number, i: number) => { const count = picked.filter(x => x === i).length; return <button key={i} className={`g-bank-gem ${count ? 'selected' : ''} ${n === 0 ? 'empty' : ''}`} aria-pressed={count > 0} aria-label={`${t(GEM_NAMES[i])} ${n} ${t("枚筹码")}${count ? ` · ${t("已选")} ${count}` : ""}`} disabled={i === 5 || !distinct?.choices.some(c => c.id === GEM_COLORS[i])} onClick={() => choose(i)}><GemArt color={i}/><b>{tx(n)}</b>{tx(count > 0 && <span className="gem-picked">{tx(count)}</span>)}</button>; }))}</div><div className="g-take"><button className="compact primary" disabled={!selectionValid} onClick={() => {
+   <aside className="g-bank">{distinct && <small id={bankHintID} className="g-bank-hint"><span>{t(`取 ${distinct.min} 色，各 1 枚`)}</span>{pair && <span>{t('或同色连点取 2（库存 ≥4）')}</span>}</small>}<div className="g-bank-gems">{tx(b.bank.map((n: number, i: number) => { const count = picked.filter(x => x === i).length; return <button key={i} className={`g-bank-gem ${count ? 'selected' : ''} ${n === 0 ? 'empty' : ''}`} aria-pressed={count > 0} aria-describedby={distinct ? bankHintID : undefined} aria-label={`${t(GEM_NAMES[i])} ${n} ${t("枚筹码")}${count ? ` · ${t("已选")} ${count}` : ""}`} disabled={i === 5 || !distinct?.choices.some(c => c.id === GEM_COLORS[i])} onClick={() => choose(i)}><GemArt color={i}/><b>{tx(n)}</b>{tx(count > 0 && <span className="gem-picked">{tx(count)}</span>)}</button>; }))}</div><div className="g-take"><button className="compact primary" aria-describedby={distinct ? bankHintID : undefined} disabled={!selectionValid} onClick={() => {
             if (selectedAction) {
                 command({ action: selectedAction.id, values: isPair ? [GEM_COLORS[picked[0]]] : picked.map(i => GEM_COLORS[i]) });
                 setPicked([]);

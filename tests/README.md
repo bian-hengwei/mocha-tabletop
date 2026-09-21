@@ -25,13 +25,13 @@ npx playwright install chromium webkit
 | 命令 | 验证范围 |
 | --- | --- |
 | `node tests/ui/gems-inspector.integration.mjs` | 晶石牌详情区分筹码不足、预留满位、自己的预留、他人预留、已购牌、等待及支付阶段；中英八尺寸与旋转，支持 WebKit |
-| `node tests/ui/gems-bank.integration.mjs` | 晶石筹码区中英八尺寸：六色完整可见、44px 触控、三色/同色两枚选择、取消与旋转；支持 WebKit |
+| `node tests/ui/gems-bank.integration.mjs` | 晶石筹码区中英八尺寸：可见取色数量/同色库存条件、不足三色、满手后归还、六色完整可见、44px 触控、选择/取消与旋转；支持 WebKit |
 | `node tests/ui/classic-assets.integration.mjs` | 90 张本地牌面/底板/背面与三张封面解码，大小王颜色映射；支持 WebKit |
 | `node tests/ui/classic-orientation.integration.mjs` | 六种新玩法，中英文九种尺寸、手牌滚动到末张、44px 触控与旋转保留选择；支持 WebKit |
 | `node tests/ui/table-layout.integration.mjs` | 麻将四方座位/牌河、换座方位盘、对手仅背面、斗地主出牌方向与叫分/不出标记；中英八尺寸，支持 WebKit |
 | `node tests/ui/classic-dense.integration.mjs` | 密集牌河与副露、血流锁牌、记录弹窗焦点与旋转；支持 WebKit |
 | `node tests/ui/classic-cloud.integration.mjs` | 四个独立浏览器上下文，全部麻将模式、访客只读规则、刷新重连和两款扑克云端出牌；可对实际部署运行 |
-| `node tests/ui/poker-caption.integration.mjs` | 上一手扑克的牌型与点数，掼蛋级牌、2、大小王映射及单张数量文案；中英八尺寸，支持 WebKit |
+| `node tests/ui/poker-caption.integration.mjs` | 上一手扑克的牌型与点数，掼蛋级牌、2、大小王映射及单张数量文案、出完手牌后等待具体玩家；中英八尺寸，支持 WebKit |
 | `node tests/ui/poker-declaration.integration.mjs` | 掼蛋同花顺默认解释与手动宣告普通顺子；支持 WebKit |
 | `node tests/ui/classic-games.integration.mjs` | 六种新玩法，中英文四尺寸、点选/取消/换座、刷新恢复、扑克完整一轮与跨轮进贡；支持 WebKit |
 | `node tests/ui/mahjong-experience.integration.mjs` | 麻将双击/双触、键盘与慢速取消、定缺及自动过牌；中英七尺寸，支持 WebKit |
