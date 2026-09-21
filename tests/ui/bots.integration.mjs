@@ -40,6 +40,7 @@ try{
     }
     assert(await host.locator('.bot-seat-controls select').evaluateAll(selects=>selects.every(el=>{const style=getComputedStyle(el),canvas=document.createElement('canvas'),context=canvas.getContext('2d');context.font=style.font;return context.measureText(el.selectedOptions[0].text).width<=el.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight)+1;})),`${kind}/${locale}/${width} full bot difficulty label`);
     await host.screenshot({path:`${out}/${kind}-${locale}-${width}x${height}-lobby.png`});
+    assert(await host.locator('.lobby-start-status').evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return r.top>=0&&r.bottom<=innerHeight&&el.contains(hit);}),`${kind}/${locale}/${width}: start explanation remains visible beside the action`);
     await host.getByRole('button',{name:label('开局','Start'),exact:true}).scrollIntoViewIfNeeded();
     const box=await host.getByRole('button',{name:label('开局','Start'),exact:true}).boundingBox();assert(box.y+box.height<=height+1,'start reachable');
    }
@@ -73,4 +74,10 @@ try{
   await Promise.all(contexts.map(c=>c.close()));
  }
  assert.deepEqual(errors,[]);console.log(`PASS ${engine}: eight bot games, two languages, seven sizes, mixed rooms, per-seat difficulty/readiness, host reload, rotations, one human with all remaining seats as bots and cleanup. Screenshots require separate visual review.`);
+}catch(error){
+ let index=0;for(const context of browser.contexts())for(const page of context.pages()){
+  console.error('Visible error notices:',await page.locator('.toast').allTextContents());
+  await page.screenshot({path:`${out}/failure-${index++}.png`});
+ }
+ throw error;
 }finally{await browser.close();}
