@@ -19,7 +19,7 @@ try{for(const locale of ['zh','en']){
   if(locale==='en')assert(!/[\u3400-\u9fff]/u.test(await dialog.innerText()));
   await page.screenshot({path:`${out}/${locale}-${width}.png`});
   // Previewing a different discard never changes the real hand or actual selection.
-  await page.locator('.mahjong-assist-discard select').selectOption('0');await expect(page.locator('.mahjong-wait')).toHaveCount(1);await expect(page.locator('.mahjong-wait strong')).toHaveText(locale==='zh'?'9条':'9 Bamboo');
+  await page.locator('.mahjong-assist-discard select').selectOption('0');await expect(page.locator('.mahjong-wait')).toHaveCount(1);await expect(page.locator('.mahjong-wait strong')).toHaveText(locale==='zh'?'9条':'9 Bamboo');await expect(page.locator('.mahjong-assist-summary')).toHaveText(locale==='zh'?'听 1 种 · 未见 3 张':'1 tile type · 3 unseen');
   await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0);await expect(helper()).toBeFocused();
   await expect(page.locator('.classic-hand button')).toHaveCount(14);await expect(page.locator('.classic-hand button[aria-pressed="true"]')).toHaveCount(1);
  }
