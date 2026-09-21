@@ -115,6 +115,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 网络延迟回归：`TEST_GAMES=century TEST_ACTION_DELAY_MS=600 TEST_SKIP_OFFLINE=1 BASE_URL=http://127.0.0.1:5174 node tests/ui/production.integration.mjs`。对真实 Worker 的回包延迟 600ms，验证提交中阻止后续操作，并在回包后继续升级/结束回合；也支持 WebKit。
 
 - `tests/ui/gems-viewport.integration.mjs`：晶石商会中英八尺寸无纵向滚动、全部市场层级、费用完整、牌面查看、宝石银行可见翻页、选择时布局稳定、实际拿取及库存入口；支持 WebKit。
+- `tests/ui/gems-results.integration.mjs`：晶石商会真实 App 的四人终局分数、已购牌/贵族数量及同分胜者，双语八尺寸、结束时清除选择、结算收起/重开、刷新和新局恢复；使用本地模拟 WebSocket，支持 WebKit。
 - `tests/ui/uno-sushi-viewport.integration.mjs`：寿司与七彩接龙中英七尺寸，公共区及手牌无纵向滚动、28 张手牌与溢出滑动提示、最大人数密集盘面逐张可达、选色、报单、私人质疑核验、筷子选牌/取消；支持 WebKit。 另检查真实 App 的五人寿司总分、逐轮与布丁明细、结算收起/重开及旋转。
 
 - `tests/ui/social-viewport.integration.mjs`：双语八尺寸、狼人三模式座位分页和阿瓦隆十席同屏、规则入口、身份隐藏、法官选择、直接表决与任务提交及按钮文字边界；支持 WebKit。
