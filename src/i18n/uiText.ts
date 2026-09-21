@@ -237,6 +237,7 @@ export const uiText: Record<string,string> = {
   "可用商人": "Available merchants",
   "使用这位商人 →": "Use this merchant →",
   "已用商人": "Used merchants",
+  "你的已用商人": "Your used merchants",
   "张 · 休整后收回": " cards · Rest to recover them",
   "的商队": "'s caravan",
   "本桌规则与牌组说明": "Rules and card selection",

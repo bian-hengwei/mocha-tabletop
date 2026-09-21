@@ -34,6 +34,7 @@ try{
   await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=century&players=max&scenario=table-dense`);await tabs.waitFor();await fits();
   const hand=page.locator('.ng-century-hand-panel .ng-market');await hand.evaluate(n=>n.scrollLeft=n.scrollWidth);await fits();
   await tabs.getByRole('button',{name:caption('已用商人','Used merchants'),exact:true}).click();await fits();
+  await page.screenshot({path:`${out}/used-${language}-${width}.png`});
   await tabs.getByRole('button',{name:caption('商队','Caravans'),exact:true}).click();await fits();
   const rivals=page.locator('.ng-century-page:not([hidden])>.ng-panel');assert.equal(await rivals.count(),4);await rivals.last().evaluate(n=>n.scrollIntoView({inline:'end',block:'nearest'}));await fits();
   await page.screenshot({path:`${out}/five-players-${language}-${width}.png`});
