@@ -11,7 +11,7 @@ try{for(const language of ['zh','en']){
  const confirm=async()=>page.locator('.action-sheet footer button').click();
  const word=async index=>findWordPage(page,page.locator('.wg-word').filter({has:page.locator('.wg-cell-index').filter({hasText:new RegExp('^'+index+'$')})}));
  const countCards=async selector=>(await collectWordPages(page,selector)).length;
- const begin=async(kind)=>{await page.goto(baseURL);await page.locator('.cover-'+kind).click();await page.locator('.create-body footer .text-button').click();await page.locator('.wg-table').waitFor();assert.equal(await page.locator('.action-dock').count(),0);};
+ const begin=async(kind)=>{await page.goto(baseURL);await page.locator('.cover-'+kind).click();await page.getByRole('button',{name:locale==='zh'?'同屏试玩':'Pass & play',exact:true}).click();await page.locator('.wg-table').waitFor();assert.equal(await page.locator('.action-dock').count(),0);};
  await begin('codenames');const red=await page.locator('.wg-team.wg-active.wg-red').count()>0,cap=red?0:1,op=red?2:3,identity=red?'red':'blue';await seat(cap);
  assert.equal(await countCards('.wg-word.wg-assassin'),0,'captain key starts hidden');await page.locator('.wg-key-toggle').click();assert.equal(await countCards('.wg-word.wg-assassin'),1,'revealing key exposes exactly one assassin to captain');const targets=await collectWordPages(page,'.wg-word.wg-'+identity+' .wg-cell-index');assert.equal(targets.length,9);
  const words=await collectWordPages(page,'.wg-word>strong');assert(words.every(w=>language==='en'?!/[\u3400-\u9fff]/.test(w):/[\u3400-\u9fff]/.test(w)),'word bank follows selected language');

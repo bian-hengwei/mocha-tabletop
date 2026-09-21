@@ -15,7 +15,7 @@ try{
   await context.addInitScript(locale=>{localStorage.setItem('mocha-locale',locale);localStorage.setItem('mocha-profile',JSON.stringify({id:'word-privacy-browser',name:'Alexandria测试玩家',avatar:'🦊'}));localStorage.removeItem('mocha-practice-v1');},locale);
   const page=await context.newPage();page.setDefaultTimeout(8000);page.on('pageerror',error=>errors.push(error.message));page.on('dialog',dialog=>dialog.accept());
   const seat=index=>page.locator('.practice-switch select').selectOption('practice-'+index);
-  const begin=async kind=>{await page.goto(base);await page.locator('.cover-'+kind).click();await page.locator('.create-body footer .text-button').click();await page.locator('.wg-table').waitFor();};
+  const begin=async kind=>{await page.goto(base);await page.locator('.cover-'+kind).click();await page.getByRole('button',{name:locale==='zh'?'同屏试玩':'Pass & play',exact:true}).click();await page.locator('.wg-table').waitFor();};
   const confirm=()=>page.locator('.action-sheet footer button').click();
   const capture=async(name,{voting=false}={})=>{
    for(const [width,height]of sizes){
