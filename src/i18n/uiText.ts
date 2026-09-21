@@ -6,6 +6,8 @@ export const uiText: Record<string,string> = {
   '筹码不足，暂时无法购买；预留位置已满': 'Not enough gems to buy this card yet. All reserve slots are full.',
   '预留位置已满': 'All reserve slots are full.',
 
+  "本局结果": "Result",
+  "所有玩家的结果": "Results for every player",
   "得分": "Scores",
   "最终得分": "Final scores",
   "所有玩家的最终得分": "Final scores for every player",

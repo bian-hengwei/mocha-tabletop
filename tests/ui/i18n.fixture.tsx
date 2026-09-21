@@ -18,6 +18,13 @@ import {ActionSheet,ActionDock} from '../../src/ui/Boards';
 const params=new URLSearchParams(location.search),kind=(params.get('kind')||'gems') as GameKind;
 const players=Array.from({length:params.get("players")==="max"?GAMES[kind].max:kind==='uno'&&params.get("players")==="10"?10:params.get("scenario")==="challenge"?3:GAMES[kind].min},(_,i)=>({id:`english-player-${i}`,name:['Alex','Blair','Casey','Drew','Eli','Frank','Grace','Hayden','Indigo','Jules'][i]||`Player ${i+1}`,avatar:['🦊','🐼','🐱','🐻'][i%4]}));
 function initialGame(){
+ if((kind==='doudizhu'||kind==='guandan')&&params.get('scenario')==='played-single'){
+  const state=modules[kind].create(players,11);state.phase='play';state.current=0;if(kind==='doudizhu')state.landlord=0;state.level=Number(params.get('level')||2);
+  const rank=Number(params.get('rank')||12);
+  state.hands[0]=[{id:'caption-played',rank,suit:rank>=16?4:0},{id:'caption-retained',rank:3,suit:2}];
+  return modules[kind].apply(state,players[0].id,{action:'play',values:['caption-played']});
+ }
+
  if(kind==='gems'&&params.get('scenario')==='inspection'){
   const state=gems.create(players,11);
   state.merchants[0].reserved.push(...state.market[0].splice(0,3));

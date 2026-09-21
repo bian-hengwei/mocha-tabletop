@@ -31,6 +31,7 @@ npx playwright install chromium webkit
 | `node tests/ui/table-layout.integration.mjs` | 麻将四方座位/牌河、换座方位盘、对手仅背面、斗地主出牌方向与叫分/不出标记；中英八尺寸，支持 WebKit |
 | `node tests/ui/classic-dense.integration.mjs` | 密集牌河与副露、血流锁牌、记录弹窗焦点与旋转；支持 WebKit |
 | `node tests/ui/classic-cloud.integration.mjs` | 四个独立浏览器上下文，全部麻将模式、访客只读规则、刷新重连和两款扑克云端出牌；可对实际部署运行 |
+| `node tests/ui/poker-caption.integration.mjs` | 上一手扑克的牌型与点数，掼蛋级牌、2、大小王映射及单张数量文案；中英八尺寸，支持 WebKit |
 | `node tests/ui/poker-declaration.integration.mjs` | 掼蛋同花顺默认解释与手动宣告普通顺子；支持 WebKit |
 | `node tests/ui/classic-games.integration.mjs` | 六种新玩法，中英文四尺寸、点选/取消/换座、刷新恢复、扑克完整一轮与跨轮进贡；支持 WebKit |
 | `node tests/ui/mahjong-experience.integration.mjs` | 麻将双击/双触、键盘与慢速取消、定缺及自动过牌；中英七尺寸，支持 WebKit |
@@ -56,7 +57,7 @@ npx playwright install chromium webkit
 | `node tests/ui/dialogs.integration.mjs` | 宝石、卡牌与秘密身份弹窗的焦点保护、Escape 和恢复 |
 | `node tests/ui/i18n.integration.mjs` | 九款牌桌正文/无障碍标签英文检查、词库独立切换、确认出牌、私密 +4 核验与手机/短横屏 |
 | `node tests/ui/uno-selection.integration.mjs` | 接龙选牌高亮/抬升/取消、确认出牌、万能选色、换座清理、质疑开关与双语三尺寸 |
-| `node tests/ui/new-game-results.integration.mjs` | 寿司/商旅/接龙最终全员积分、寿司逐轮及布丁分、同分胜者标记、中英八尺寸、长昵称、文字不越出卡片及旋转；使用固定传输 fixture，支持 WebKit |
+| `node tests/ui/new-game-results.integration.mjs` | 寿司/商旅/接龙最终全员积分、喵喵危机全员幸存/出局状态、寿司逐轮及布丁分、同分胜者标记、中英八尺寸、长昵称、文字不越出卡片及旋转；使用固定传输 fixture，支持 WebKit |
 | `node tests/ui/new-games.integration.mjs` | 寿司、香料、七彩接龙实际回合操作 |
 | `node tests/ui/word-games.integration.mjs` | 两款词语游戏中英文终局与切换语言保留词面 |
 | `node tests/ui/offline.integration.mjs` | 生产预览 5176 的缓存、断网重载及十二款试玩 |

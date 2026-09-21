@@ -1,3 +1,4 @@
+import {NewGameResults} from './NewGameResults';
 import {useCardDoubleTap} from './useCardDoubleTap';
 import { useDialog } from './useDialog';
 import { t } from '../i18n';
@@ -86,10 +87,9 @@ export function BombsTable({ view, selfID, command }: Props) {
         if (a)
             run(a.id, [single ? first.id : first.kind]);
     };
+    if (view.finished) return <NewGameResults view={view} selfID={selfID}/>;
     let focus: ReactNode = null;
-    if (view.finished)
-        focus = <div className="bt-focus"><span className="bt-eyebrow">{t("最后的幸存者")}</span><h2>{tx(view.instruction)}</h2><PawPrint className="bt-focus-icon"/></div>;
-    else if (target)
+    if (target)
         focus = <div className="bt-focus"><span className="bt-eyebrow">{t("选择目标")}</span><h2>{t("点一位朋友的头像")}</h2><button className="bt-quiet" onClick={() => run('cancel')}>{t("取消出牌")}</button></div>;
     else if (request)
         focus = <div className="bt-focus"><span className="bt-eyebrow">{t("三张组合 · 指定牌名")}</span><div className="bt-request">{tx(request.choices.map(c => <button key={c.id} onClick={() => run('request', [c.id])}><KindIcon kind={c.id as BombKind} size={15}/><span>{tx(c.title)}</span></button>))}</div><button className="bt-quiet" onClick={() => run('cancel')}>{t("取消出牌")}</button></div>;

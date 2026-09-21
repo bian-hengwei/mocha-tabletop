@@ -30,3 +30,6 @@
 }
 
 .ng-final-details .ng-final-pudding{grid-column:1/-1;flex-direction:row;gap:4px}
+
+.ng-final-status{margin:0;font-size:14px;line-height:1.4;color:#c0c6b1}
+.ng-final-player.winner .ng-final-status{color:#f1e5bd}

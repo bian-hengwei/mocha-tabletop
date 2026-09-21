@@ -6,7 +6,7 @@ import '../../src/ui/style.css';
 // Substitute only transport. Fixed final totals exercise the real filtered
 // views, App result overlay, and scoreboard, without replaying a random game.
 const params=new URLSearchParams(location.search);
-const kind=params.get('kind')==='uno'?'uno':params.get('kind')==='century'?'century':'sushi';
+const kind=params.get('kind')==='bombs'?'bombs':params.get('kind')==='uno'?'uno':params.get('kind')==='century'?'century':'sushi';
 const count=kind==='uno'?10:5;
 const room:RoomInfo={code:'ABC234',kind,mode:'cloud',hostID:'result-0',started:true,revision:1,matchID:'result-fixture',pending:[],players:Array.from({length:count},(_,i)=>({
  id:`result-${i}`,name:params.has('long')?(i%2?`长昵称玩家甲乙丙丁${i}`:`Long name player ${i}`):i===0?'Host':i===1?'Guest':`Mocha ${i-1}`,avatar:i<2?'🦊':'🤖',connected:true,ready:true,...(i>=2?{bot:{difficulty:'normal' as const}}:{}),
@@ -15,7 +15,10 @@ const self=room.players[params.has('guest')?1:0];
 localStorage.clear();localStorage.setItem('mocha-profile',JSON.stringify(self));localStorage.setItem('mocha-locale',params.get('locale')||'zh');
 const match=createMatch(kind,room.players),game=match.game;
 game.finished=true;game.winners=[room.players[2].id];
-if(kind==='sushi'){
+if(kind==='bombs'){
+ game.alive=[room.players[2].id];game.current=room.players[2].id;game.phase={kind:'turn'};
+ for(const p of room.players)if(p.id!==game.current)game.hands[p.id]=[];
+}else if(kind==='sushi'){
  // Rounds total 22/17/22/30/25. Pudding adds 0/+3/+3/-6/0.
  // The two 25-point seats are separated by pudding count, not seat order.
  game.round=3;game.step=7;game.scores=[22,20,25,24,25];game.puddings=[2,3,3,1,2];

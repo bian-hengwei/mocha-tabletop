@@ -15,6 +15,7 @@ function initial(){let s=bombs.create(players,9);s.hands.p0=['defuse','attack','
  if(scenario==='future')s.phase={kind:'future',cards:s.deck.slice(0,3)};
  if(scenario==='bomb')s.phase={kind:'bomb',card:card('bomb')};
  if(scenario==='insert')s.phase={kind:'insert',card:card('bomb')};
+ if(scenario==='spectator'){s.alive=s.alive.filter(id=>id!=='p0');s.current='p4';s.hands.p0=[];}
  if(scenario==='finished'){s.alive=['p0'];s.hands.p1=[];}
  return s;
 }
