@@ -2,18 +2,21 @@ import {useState} from 'react';
 import {Crown,Layers,X} from 'lucide-react';
 import type {GameView} from '../core/types';
 import {pokerTitle,rankName,type PokerCard} from '../core/games/poker';
-import {t} from '../i18n';
+import {t,useLocale} from '../i18n';
 import {PokerArt} from './ClassicCardArt';
 import {useDialog} from './useDialog';
 import './guandan-results.css';
 interface ResultPlayer {id:string;name:string;avatar:string;rank:number;team:number;score:number;count:number;hand:PokerCard[]}
 type Props={view:GameView;selfID:string;onNext?:()=>void;onReplay?:()=>void;replayLabel?:string};
 export function GuandanResults({view,selfID,onNext,onReplay,replayLabel='再来一局'}:Props){
+ const locale=useLocale();
  const [handsOpen,setHandsOpen]=useState(false),dialog=useDialog<HTMLElement>(handsOpen,()=>setHandsOpen(false));
  const board=view.board as {players:ResultPlayer[];levels:number[];winners:string[];round:number};
+ const winnerNames=board.players.filter(player=>board.winners.includes(player.id)).map(player=>player.name).join(locale==='en'?', ':'、');
+ const winnerLabel=winnerNames?`${t('胜者')}${locale==='en'?': ':'：'}${winnerNames}`:t(view.instruction);
  const players=[...board.players].sort((a,b)=>(a.rank||5)-(b.rank||5));
  return <section className="classic-results gd-results" aria-label={t(view.finished?'本局结束':'本轮结算')}>
-  <header className="gd-result-heading"><h2>{view.finished&&<Crown size={20} aria-hidden="true"/>}{t(view.finished?'本局结束':'本轮结算')}</h2><p>{view.finished?t(view.instruction):`${t('轮次')} ${board.round}`}</p></header>
+  <header className="gd-result-heading"><h2>{view.finished&&<Crown size={20} aria-hidden="true"/>}{t(view.finished?'本局结束':'本轮结算')}</h2><p>{view.finished?winnerLabel:`${t('轮次')} ${board.round}`}</p></header>
   <div className="gd-result-levels" aria-label={t('两队级数')}>{board.levels.map((level,i)=><div key={i}><span>{t('队伍')} {i+1}</span><b>{rankName(level===2?15:level)}</b><small>{t('级牌')}</small></div>)}</div>
   <div className="gd-result-standings"><table aria-label={t('得分明细')}><thead><tr><th scope="col">{t('名次')}</th><th scope="col">{t('玩家名')}</th><th scope="col">{t('队伍')}</th><th scope="col">{t('本轮得分')}</th><th scope="col">{t('手牌')}</th></tr></thead><tbody>{players.map(p=><tr key={p.id} className={`${p.id===selfID?'gd-result-self ':''}${view.finished&&board.winners.includes(p.id)?'gd-result-winner':''}`}><td>{p.rank||'—'}</td><th scope="row"><span aria-hidden="true">{p.avatar}</span>{p.name}{p.id===selfID&&<small className="gd-result-you"> · {t('我')}</small>}{view.finished&&board.winners.includes(p.id)&&<Crown size={14} aria-label={t('胜者')}/>}</th><td>{p.team+1}</td><td>{p.score}</td><td>{p.count}</td></tr>)}</tbody></table></div>
   <footer className="gd-result-actions"><button className="compact" onClick={()=>setHandsOpen(true)}><Layers size={16}/>{t('查看剩余手牌')}</button>{view.finished?(onReplay?<button className="compact primary" onClick={onReplay}>{t(replayLabel)}</button>:<p>{t('等待房主再开一局')}</p>):onNext?<button className="compact primary" onClick={onNext}>{t('开始下一轮')}</button>:<p>{t('等待开始下一轮')}</p>}</footer>
