@@ -17,7 +17,8 @@ async function fullHandWithoutHigherPlay(locale){
  const context=await browser.newContext({viewport:{width:320,height:568}});
  const page=await context.newPage();
  const errors=[];page.on('pageerror',error=>errors.push(error.message));
- await page.goto(base);
+ // Prepare storage outside App to avoid racing its initial empty-session persistence.
+ await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=guandan&scenario=declare`);
  // Seed 68 gives the next player a full hand that cannot beat the opening joker.
  // Only prepare the deal; the opening play, seat switch and pass use the real UI.
  await page.evaluate(async locale=>{
@@ -27,7 +28,7 @@ async function fullHandWithoutHigherPlay(locale){
   localStorage.setItem('mocha-locale',locale);
   localStorage.setItem('mocha-practice-v1',JSON.stringify({at:Date.now(),practice:{id:'no-higher-play',kind:'guandan',players,game:guandan.create(players,68),viewer:players[0].id}}));
  },locale);
- await page.reload();
+ await page.goto(base);
  await page.locator('.classic-hand .classic-card').first().click();
  await page.locator('.classic-controls .primary').click();
  await page.getByRole('combobox',{name:locale==='zh'?'切换试玩座位':'Switch practice seat'}).selectOption('practice-1');
