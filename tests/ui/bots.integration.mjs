@@ -62,7 +62,7 @@ try{
    await host.getByRole('combobox',{name:label('更换游戏','Change game'),exact:true}).selectOption(kind);
    for(let i=1;i<max;i++){
     await host.getByRole('button',{name:label('添加玩家','Add player'),exact:true}).click();
-    if(kind==='doudizhu'&&i===1)for(const [width,height]of sizes){await host.setViewportSize({width,height});await host.screenshot({path:`${out}/add-seat-${locale}-${width}x${height}.png`});await expect(host.getByRole('button',{name:label('困难人机','Hard bot'),exact:true})).toBeVisible();}
+    if(kind==='doudizhu'&&i===1)for(const [width,height]of sizes){await host.setViewportSize({width,height});await host.screenshot({path:`${out}/add-seat-${locale}-${width}x${height}.png`});const hard=host.getByRole('button',{name:label('困难人机','Hard bot'),exact:true});await expect(hard).toBeVisible();assert(await hard.evaluate(el=>{const r=el.getBoundingClientRect();return r.x>=0&&r.y>=0&&r.right<=innerWidth&&r.bottom<=innerHeight&&el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}),'All difficulty choices remain reachable without scrolling');}
     await host.getByRole('button',{name:label('困难人机','Hard bot'),exact:true}).click();await expect(host.locator('.bot-seat-controls')).toHaveCount(i);
    }
    await expect(host.locator('.bot-roster-summary')).toHaveText(label(`1 人 · ${max-1} 机`,`1 human · ${max-1} bots`));await expect(host.getByRole('button',{name:label('开局','Start'),exact:true})).toBeEnabled();

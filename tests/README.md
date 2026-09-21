@@ -95,7 +95,7 @@ TEST_BROWSER=webkit BASE_URL=https://mocha-tabletop-web.pages.dev node tests/ui/
 
 避免占用已有服务，可运行 `npm run worker:dev -- --port 8794 --var ALLOWED_ORIGINS:http://127.0.0.1:5184 --persist-to .wrangler/classic-test` 与 `MOCHA_DEV_API=http://127.0.0.1:8794 npm run dev -- --port 5184 --strictPort`。测试分别设置 `BASE_URL` / `UI_BASE_URL` / `TEST_FRONTEND=http://127.0.0.1:5184`、`TEST_API_BASE=http://127.0.0.1:8794`。新脚本也支持默认开发端口。
 
-所有云端测试都会真实创建测试房间。服务保留每个来源十分钟内最多 15 次建房的限制；批量本地回归需分批执行，或停止仅供测试的 Worker 后换用新的 `--persist-to` 测试目录。不要关闭生产限流。
+所有云端测试都会真实创建测试房间。服务保留每个来源十分钟内合计最多 150 次建连、发现等请求（其中建房最多 15 次）的限制；WebSocket 刷新重连也会计数。连续多轮或双引擎验收应等待窗口恢复；批量本地回归需分批执行，或停止仅供测试的 Worker 后换用新的 `--persist-to` 测试目录。不要关闭生产限流。
 
 语言选择器刻意使用目标语言的原生名称（中文 / English），不计为未翻译文案。首次昵称填写弹窗也提供语言切换。浏览器回归使用独立上下文，避免影响日常牌局。
 
@@ -131,3 +131,5 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `TEST_FRONTEND=http://127.0.0.1:5207 node tests/network/bots.integration.mjs`：云端/局域网混合与单真人寿司完整三轮、权限视图、掉线恢复、房主重建、局域网转云端及清理。WebKit 可用 `TEST_BROWSER=webkit TEST_ROOM_MODES=cloud` 单独验证云端；这不计为局域网验证。
 
 - `BASE_URL=http://127.0.0.1:5207 node tests/ui/bots-boundary.integration.mjs`：真实 App 的人机轮间继续、重试和访客权限，中英七尺寸；另验三款经典游戏终局、剩余牌横向区域、收起结算与胡牌记录。使用固定传输 fixture，可用 `TEST_BROWSER=webkit`；不代替真实联机终局实玩。
+
+- `tests/ui/setup-dialog.integration.mjs`：八款人机游戏的建房方式可访问选择状态、双语七尺寸长规则滚动后关闭按钮可达、旋转与嵌套弹窗焦点恢复；支持 WebKit。

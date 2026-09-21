@@ -6,6 +6,7 @@ import {t,useLocale} from '../i18n';
 import './bots.css';
 
 const difficultyLabels:Record<BotDifficulty,string>={easy:'简单',normal:'普通',hard:'困难'};
+const difficultyHints:Record<BotDifficulty,string>={easy:'更多随机选择，适合轻松练习',normal:'权衡当前局面，适合日常对局',hard:'更重视组合与后续机会'};
 export const botDifficultyLabel=(difficulty:BotDifficulty)=>t(difficultyLabels[difficulty]);
 function DifficultyOptions(){return <>{BOT_DIFFICULTIES.map(d=><option key={d} value={d}>{botDifficultyLabel(d)}</option>)}</>;}
 
@@ -14,9 +15,9 @@ export function BotSeatControls({player,onDifficulty,onRemove}:{player:RoomPlaye
  return <div className="bot-seat-controls"><select aria-label={`${player.name} · ${t('人机难度')}`} value={player.bot!.difficulty} onChange={e=>onDifficulty(player.id,e.target.value as BotDifficulty)}><DifficultyOptions/></select><button className="icon" aria-label={`${t('移除人机')} ${player.name}`} onClick={()=>onRemove(player.id)}><Trash2 size={16}/></button></div>;
 }
 
-export function AddSeatChoices({onInvite,onAdd}:{onInvite:()=>void;onAdd:(difficulty:BotDifficulty)=>void}){
- useLocale();
- return <div className="add-seat-choices"><button onClick={onInvite}><Share2 size={21}/><span>{t('邀请朋友')}</span></button>{BOT_DIFFICULTIES.map(d=><button key={d} onClick={()=>onAdd(d)}><Bot size={21}/><span>{t(`${difficultyLabels[d]}人机`)}</span></button>)}</div>;
+export function AddSeatChoices({count,capacity,onInvite,onAdd}:{count:number;capacity:number;onInvite:()=>void;onAdd:(difficulty:BotDifficulty)=>void}){
+ const locale=useLocale();
+ return <><p className="add-seat-summary">{locale==='zh'?`已入座 ${count} / ${capacity}`:`Seated ${count} / ${capacity}`}</p><div className="add-seat-choices"><button onClick={onInvite}><Share2 size={21}/><span>{t('邀请朋友')}</span></button>{BOT_DIFFICULTIES.map(d=><button key={d} aria-label={t(`${difficultyLabels[d]}人机`)} aria-describedby={`bot-hint-${d}`} onClick={()=>onAdd(d)}><Bot size={21}/><span><b>{t(`${difficultyLabels[d]}人机`)}</b><small id={`bot-hint-${d}`}>{t(difficultyHints[d])}</small></span></button>)}</div></>;
 }
 
 export function BotRosterSummary({players}:{players:RoomPlayer[]}){

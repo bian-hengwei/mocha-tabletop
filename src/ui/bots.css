@@ -6,6 +6,15 @@
 .add-seat-choices button{display:flex;align-items:center;gap:14px;min-height:54px;text-align:left;border:1px solid #c5b47b44;border-radius:10px;padding:12px 16px;font-size:15px;background:#d4bf8009}
 .add-seat-choices button:hover{background:#d4bf8020}
 .add-seat-choices button:first-child{margin-bottom:5px}
+.add-seat-summary{margin-bottom:10px}
+.add-seat-choices button b{display:block;font-weight:600}
+.add-seat-choices button small{display:block;color:#b8c8bc;line-height:1.4;margin-top:4px;font-size:12px}
+@media(max-height:450px) and (min-width:500px){
+ .app-modal:has(.add-seat-choices){width:min(640px,100%)}
+ .add-seat-choices{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .add-seat-choices button{padding:10px;gap:10px}
+ .add-seat-choices button:first-child{margin-bottom:0}
+}
 .bot-roster-summary{display:inline-block;font-size:12px;color:#d3c59e;line-height:1.5}
 .bot-match-status{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:5px 0;font-size:12px;flex-shrink:0}
 .bot-match-status[role=alert]{color:#f2c99f}
