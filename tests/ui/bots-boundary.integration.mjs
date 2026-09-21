@@ -13,6 +13,17 @@ try{for(const locale of ['zh','en'])for(const state of ['round','retry']){
  await button.click();await expect(page.locator('.bot-match-status')).toHaveCount(0);assert.equal(await page.evaluate(state=>window.botBoundaryEvents[state==='round'?'continues':'retries'],state),1);
  await page.goto(`${base}/tests/ui/bots-boundary.fixture.html?locale=${locale}&state=${state}&guest=1`);await expect(button).toHaveCount(0);if(state==='retry')await expect(page.getByRole('alert')).toBeVisible();await page.close();
 }
+for(const locale of ['zh','en']){
+ const page=await browser.newPage();await page.goto(`${base}/tests/ui/bots-boundary.fixture.html?locale=${locale}&state=round&kind=uno`);
+ const button=page.getByRole('button',{name:locale==='zh'?'开始下一轮':'Start the next round',exact:true});
+ await expect(button).toBeVisible();await expect(page.locator('.bot-match-status')).toHaveCount(0);
+ for(const[width,height]of[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900]]){
+  await page.setViewportSize({width,height});const box=await button.boundingBox();assert(box&&box.y>=0&&box.y+box.height<=height,'UNO host continuation reachable after a bot wins');
+  await page.screenshot({path:`${out}/round-uno-${locale}-${width}x${height}.png`});
+ }
+ await button.click();assert.equal(await page.evaluate(()=>window.botBoundaryEvents.humanActions),1);assert.equal(await page.evaluate(()=>window.botBoundaryEvents.round),2);
+ await page.goto(`${base}/tests/ui/bots-boundary.fixture.html?locale=${locale}&state=round&kind=uno&guest=1`);await expect(button).toHaveCount(0);await page.close();
+}
 for(const locale of ['zh','en'])for(const kind of ['doudizhu','guandan','mahjong']){
  const page=await browser.newPage();await page.goto(`${base}/tests/ui/bots-boundary.fixture.html?locale=${locale}&state=finished&kind=${kind}`);await expect(page.locator('.end-banner')).toBeVisible();await page.getByRole('button',{name:locale==='zh'?'收起结算':'Dismiss result',exact:true}).click();
  for(const[width,height]of[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900]]){
