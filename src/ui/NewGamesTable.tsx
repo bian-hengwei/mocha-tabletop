@@ -1,6 +1,6 @@
 import { t } from '../i18n';
 function tx<T>(value: T): T | string { return typeof value === 'string' ? t(value) : value; }
-import { useEffect, useState, type CSSProperties, type MouseEvent, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent } from 'react';
 import type { Action, Command, GameView } from '../core/types';
 import { SUSHI_INFO, sushiPlateScore, type SushiCard } from '../core/games/sushi';
 import { SPICES, SPICE_SYMBOLS, spiceCardTitle, spiceText, type SpiceCard, type SpiceOrder } from '../core/games/century';
@@ -58,6 +58,13 @@ function UnoTable(props: Props) {
  const {view,selfID,open,command}=props,b=view.board,play=view.actions.find(a=>a.id==='play'),challenge=b.privateChallenge?.challenger===selfID?b.privateChallenge:null;
  const [selectedID,setSelectedID]=useState<string|null>(null),[selectedColor,setSelectedColor]=useState<string|null>(null);
  const handIDs=(b.hand as UnoCard[]).map(c=>c.id).join('|');
+ const handRef=useRef<HTMLDivElement>(null),[handOverflows,setHandOverflows]=useState(false);
+ useLayoutEffect(()=>{
+  const hand=handRef.current;if(!hand)return;
+  const measure=()=>setHandOverflows(hand.scrollWidth>hand.clientWidth+1);
+  measure();const observer=new ResizeObserver(measure);observer.observe(hand);
+  return ()=>observer.disconnect();
+ },[handIDs]);
  useEffect(()=>{setSelectedID(null);setSelectedColor(null);},[selfID,b.roundNumber,b.round,b.phase,b.current,b.drawn,b.top?.id,handIDs]);
  const taps=useCardDoubleTap([selfID,b.roundNumber,b.phase,b.current,b.drawn,b.top?.id,handIDs].join(':'));
  const actionFor=(c:UnoCard)=>c.color==='wild'?view.actions.find(a=>a.id===`wild:${c.id}`):play?.choices.some(choice=>choice.id===c.id)?play:undefined;
@@ -80,7 +87,7 @@ function UnoTable(props: Props) {
   <section className="ng-uno-center ng-panel"><div><h3>{t('当前弃牌')}</h3><UnoFace card={b.top}/></div><div className="ng-uno-status"><span className="ng-color-badge" style={{background:unoColors[b.color]}}>{t(UNO_LABEL[b.color])}</span><strong>{t(b.direction===1?'顺时针 →':'← 逆时针')}</strong><small>{t('抽牌堆')} {t(`${b.deckCount} 张`)}</small><Controls {...props} omit={['play','confirmChallenge','draw','pass']}/></div></section>
 
   </div>
-  <section className="ng-panel ng-uno-hand-panel"><h3>{t('你的手牌')}<small>{t(`${b.hand.length} 张`)}</small></h3><div className="ng-hand ng-uno-hand" tabIndex={0} aria-label={t('手牌可左右滑动')}>{(b.hand as UnoCard[]).map(c=><UnoFace card={c} key={c.id} drawn={b.drawn===c.id} selected={selectedID===c.id&&!!selectedAction} onPointerDown={taps.onPointerDown} onClick={actionFor(c)?e=>selectCard(c,e):undefined}/>)}</div>
+  <section className="ng-panel ng-uno-hand-panel"><h3>{t('你的手牌')}<small>{t(`${b.hand.length} 张`)}</small>{handOverflows&&<small className="ng-uno-scroll-hint"><span aria-hidden="true">↔ </span>{t('手牌可左右滑动')}</small>}</h3><div ref={handRef} className="ng-hand ng-uno-hand" tabIndex={0} aria-label={t('手牌可左右滑动')}>{(b.hand as UnoCard[]).map(c=><UnoFace card={c} key={c.id} drawn={b.drawn===c.id} selected={selectedID===c.id&&!!selectedAction} onPointerDown={taps.onPointerDown} onClick={actionFor(c)?e=>selectCard(c,e):undefined}/>)}</div>
   {b.phase==='play'&&b.current===selfID&&<div className="ng-uno-playbar"><div className="ng-uno-selection" aria-live="polite">{selectedCard&&selectedAction?<><strong>{t(unoTitle(selectedCard))}</strong>{selectedCard.color==='wild'&&<div className="ng-uno-colors" role="group" aria-label={t('选择出牌颜色')}>{selectedAction.choices.map(c=><button key={c.id} type="button" aria-pressed={selectedColor===c.id} className={selectedColor===c.id?'selected':''} style={{'--uno-color':unoColors[c.id]} as CSSProperties} onClick={()=>setSelectedColor(c.id)}>{t(c.title)}</button>)}</div>}</>:null}</div><div className="ng-uno-play-actions">{playableCount>0&&<button type="button" className="ng-action ng-uno-play" disabled={!valid} onClick={submit}>{t('出牌')}</button>}{view.actions.filter(a=>['draw','pass'].includes(a.id)).map(a=><button type="button" className={`ng-action ${playableCount?'ng-uno-secondary':'ng-uno-only-action'}`} key={a.id} onClick={()=>{setSelectedID(null);setSelectedColor(null);command({action:a.id,values:[]});}}>{t(a.title)}</button>)}</div></div>}
   </section>
 

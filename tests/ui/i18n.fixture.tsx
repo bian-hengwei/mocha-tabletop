@@ -70,7 +70,7 @@ function initialGame(){
 
  if(kind==='uno'&&['selection','long-hand'].includes(params.get('scenario')||'')){
   const state=uno.create(players,11,{unoChallenge:params.get('challenge')!=='off'});state.current=0;state.phase='play';state.color='red';state.drawn=null;
-  state.hands[0]=[{id:'test-red-seven',color:'red',value:7},{id:'test-red-nine',color:'red',value:9},{id:'test-blue-eight',color:'blue',value:8},{id:'test-wild',color:'wild',value:'wild'},{id:'test-plus-four',color:'wild',value:'wild4'}];state.discard=[{id:'test-red-one',color:'red',value:1}];if(params.get('scenario')==='long-hand')state.hands[0].push(...state.deck.splice(0,23));return state;
+  state.hands[0]=[{id:'test-red-seven',color:'red',value:7},{id:'test-red-nine',color:'red',value:9},{id:'test-blue-eight',color:'blue',value:8},{id:'test-wild',color:'wild',value:'wild'},{id:'test-plus-four',color:'wild',value:'wild4'}];state.discard=[{id:'test-red-one',color:'red',value:1}];if(params.get('scenario')==='long-hand')state.hands[0].push(...state.deck.splice(0,23));if(params.get('waiting')==='1')state.current=1;return state;
  }
 
  if(kind==='uno'&&params.get('scenario')==='challenge'){

@@ -36,7 +36,7 @@ npx playwright install chromium webkit
 | `node tests/ui/classic-games.integration.mjs` | 六种新玩法，中英文四尺寸、点选/取消/换座、刷新恢复、扑克完整一轮与跨轮进贡；支持 WebKit |
 | `node tests/ui/mahjong-experience.integration.mjs` | 麻将双击/双触、键盘与慢速取消、定缺及自动过牌；中英七尺寸，支持 WebKit |
 | `node tests/ui/hand-experience.integration.mjs` | 寿司单张双击/双触、筷子顺序与取消锁定；商旅固定操作区；猫牌换选/组合与双击；中英八尺寸，支持 WebKit |
-| `node tests/ui/uno-experience.integration.mjs` | UNO 双击/双触、万能牌选色、28 张单行手牌、10 人座位、八尺寸与旋转，支持 WebKit |
+| `node tests/ui/uno-experience.integration.mjs` | UNO 双击/双触、万能牌选色、28 张单行手牌、等待回合的溢出滑动提示、10 人座位、八尺寸与旋转，支持 WebKit |
 | `node tests/ui/mahjong-actions.integration.mjs` | 麻将确定性场景：自摸、血流继续、暗杠、抢杠、胡优先、碰与流局；支持 WebKit |
 | `node tests/network/message-text.integration.mjs` | 真实 Worker 的结构化姓名、投票公开时机、私密狼队计划与断线重连；使用 TEST_API_BASE |
 | `node tests/network/classic-games.integration.mjs` | 六种玩法的真实 Worker WebSocket 指令、私密视图、幂等与重连 |
