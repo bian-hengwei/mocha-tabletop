@@ -35,3 +35,7 @@ Bot seats have no login credential and use a reserved ID namespace. Adding a bot
 规则范围与来源继续以 [规则版本说明](RECOGNIZABLE-RULES.md) 和 [经典游戏说明](CLASSIC-GAMES.md) 为准。人机不会改变寿司三轮、掼蛋升级过 A、七彩接龙累计 500 分等终局目标；轮间结算由真人确认下一轮；轮到人机确认时，由房主继续。
 
 Rule versions and sources remain documented in [RECOGNIZABLE-RULES.md](RECOGNIZABLE-RULES.md) and [CLASSIC-GAMES.md](CLASSIC-GAMES.md). Bots preserve full match goals, including three Sushi rounds, Guan Dan through Ace and Color Dash to 500 points. Humans confirm between-round score screens; when a bot owns the continuation, the host continues on its behalf.
+
+每一步人机操作前都有短暂停顿：麻将 1.4 秒，其他游戏 0.9 秒。麻将间隔留出完整出牌动画及短暂看牌时间；单机、云端和局域网共用节奏。更新牌局后重新等待，后台恢复不会一次性补跑多个回合。真人操作不增加人工延迟。
+
+Each bot action waits briefly: 1.4 seconds in Mahjong and 0.9 seconds in other games. Mahjong leaves room for the full discard animation and a short reading pause. Solo, cloud and LAN share this pace; each new game state starts a fresh wait, without batching missed turns after resuming. Human actions have no added delay.

@@ -47,7 +47,7 @@ describe('authoritative spectator seats',()=>{
   expect(sockets[1].snapshot.view.spectating).toBe(true);expect(sockets[1].snapshot.view.actions).toEqual([]);expect(sockets[1].snapshot.view.board.hand).toEqual([]);
   await message(sockets[0],{type:'action',command:{action:'take_distinct',values:['white','blue','green']},actionRevision:server.data.match.actorRevisions[host.id]});
   const revision=server.data.match.revision;await server.webSocketClose(sockets[1]);expect(sockets[0].snapshot.paused).toBe(false);
-  await vi.advanceTimersByTimeAsync(700);await server.alarm();expect(server.data.match.revision).toBe(revision+1);
+  await vi.advanceTimersByTimeAsync(900);await server.alarm();expect(server.data.match.revision).toBe(revision+1);
  });
  it('defaults old stored rooms to allowing observers, without using a player seat',async()=>{const ws=new ServerSocket();sockets.push(ws);await message(ws,hello);expect(ws.snapshot.room.allowSpectators).toBe(true);expect(ws.snapshot.room.spectators).toHaveLength(1);expect(ws.snapshot.room.players).toHaveLength(2);await message(ws,{type:'ready',ready:true});expect(ws.messages.at(-1).error).toBe('观众不能操作牌局');});
  it('rejects full spectator capacity atomically and does not let an observer take a full player seat',async()=>{server.data.info.spectators=Array.from({length:20},(_,i)=>({...observer,id:`observer${i+1}`,connected:false}));const ws=new ServerSocket();sockets.push(ws);const before=structuredClone(server.data);await message(ws,hello);expect(ws.messages.at(-1).error).toBe('观战席已满');expect(server.data).toEqual(before);server.data.info.spectators=[];await message(ws,hello);server.data.info.players.push({...guest,id:'player02'},{...guest,id:'player03'});const roster=structuredClone(server.data.info);await message(ws,{type:'setSeat',spectator:false});expect(ws.messages.at(-1).error).toBe('房间已满');expect(server.data.info).toEqual(roster);});
@@ -175,11 +175,11 @@ describe('room-owned bot seats and durable turns',()=>{
   await server.webSocketClose(sockets[1]);await message(sockets[0],{type:'removePlayer',playerID:guest.id});
   await message(sockets[0],{type:'addBot',difficulty:'normal'});await message(sockets[0],{type:'start'});
   await message(sockets[0],{type:'action',command:{action:'take_distinct',values:['white','blue','green']},actionRevision:server.data.match.actorRevisions[host.id]});
-  const due=server.data.botDue,revision=server.data.match.revision;expect(due).toBe(Date.now()+700);
+  const due=server.data.botDue,revision=server.data.match.revision;expect(due).toBe(Date.now()+900);
   server.data.expires=Date.now()+3600000;
   await vi.advanceTimersByTimeAsync(100);await message(sockets[0],{type:'ping'});
   expect(server.data.expires).toBe(Date.now()+6*3600000);expect(server.data.botDue).toBe(due);expect(alarm).toBe(due);
-  await vi.advanceTimersByTimeAsync(600);await server.alarm();expect(server.data.match.revision).toBe(revision+1);
+  await vi.advanceTimersByTimeAsync(800);await server.alarm();expect(server.data.match.revision).toBe(revision+1);
   await server.alarm();expect(server.data.match.revision).toBe(revision+1);
  });
  it('lets only the lobby host configure bots and resets human readiness',async()=>{
@@ -210,19 +210,19 @@ describe('room-owned bot seats and durable turns',()=>{
  it('schedules one bot action, survives reload, and never repeats an early alarm',async()=>{
   await server.webSocketClose(sockets[1]);await message(sockets[0],{type:'removePlayer',playerID:guest.id});await message(sockets[0],{type:'addBot',difficulty:'normal'});await message(sockets[0],{type:'start'});
   await message(sockets[0],{type:'action',command:{action:'take_distinct',values:['white','blue','green']},actionRevision:server.data.match.actorRevisions[host.id]});
-  expect(server.data.botDue).toBe(Date.now()+700);const revision=server.data.match.revision;
+  expect(server.data.botDue).toBe(Date.now()+900);const revision=server.data.match.revision;
   // Same serialized state in a new DO instance, with the authenticated socket restored.
   const restored=Object.create(GameRoom.prototype);restored.data=JSON.parse(JSON.stringify(server.data));restored.ctx=server.ctx;restored.env=server.env;server=restored;
   await server.alarm();expect(server.data.match.revision).toBe(revision);
-  await vi.advanceTimersByTimeAsync(700);await server.alarm();expect(server.data.match.revision).toBe(revision+1);expect(server.data.info.botError).toBeUndefined();
+  await vi.advanceTimersByTimeAsync(900);await server.alarm();expect(server.data.match.revision).toBe(revision+1);expect(server.data.info.botError).toBeUndefined();
   await server.alarm();expect(server.data.match.revision).toBe(revision+1);expect(server.data.botDue).toBeUndefined();expect(sockets[0].snapshot.paused).toBe(false);
  });
  it('pauses a pending bot on human disconnect, resumes the same match, and cancels on end',async()=>{
   await server.webSocketClose(sockets[1]);await message(sockets[0],{type:'removePlayer',playerID:guest.id});await message(sockets[0],{type:'addBot',difficulty:'easy'});await message(sockets[0],{type:'start'});
   await message(sockets[0],{type:'action',command:{action:'take_distinct',values:['white','blue','green']},actionRevision:server.data.match.actorRevisions[host.id]});
   const match=structuredClone(server.data.match),matchID=server.data.info.matchID;await server.webSocketClose(sockets[0]);await vi.advanceTimersByTimeAsync(1000);await server.alarm();expect(server.data.match).toEqual(match);
-  const ws=new ServerSocket();sockets.push(ws);await message(ws,{type:'hello',profile:host,token:'a'.repeat(48)});expect(ws.snapshot.room.matchID).toBe(matchID);expect(server.data.botDue).toBe(Date.now()+700);
-  await message(ws,{type:'endGame'});await vi.advanceTimersByTimeAsync(700);await server.alarm();expect(server.data.match).toBeUndefined();expect(server.data.botDue).toBeUndefined();
+  const ws=new ServerSocket();sockets.push(ws);await message(ws,{type:'hello',profile:host,token:'a'.repeat(48)});expect(ws.snapshot.room.matchID).toBe(matchID);expect(server.data.botDue).toBe(Date.now()+900);
+  await message(ws,{type:'endGame'});await vi.advanceTimersByTimeAsync(900);await server.alarm();expect(server.data.match).toBeUndefined();expect(server.data.botDue).toBeUndefined();
  });
  it('does not require direct peer connections or signal credentials for bot seats',async()=>{
   await message(sockets[0],{type:'selectGame',kind:'doudizhu'});server.data.info.mode='lan';await message(sockets[0],{type:'addBot',difficulty:'normal'});await message(sockets[1],{type:'ready',ready:true});
@@ -243,10 +243,24 @@ describe('bot continuation and retry authorization',()=>{
   for(const [index,player] of [host,guest].entries())await message(sockets[index],{type:'action',command:{action:'take_distinct',values:['white','blue','green']},actionRevision:server.data.match.actorRevisions[player.id]});
   const before=structuredClone(server.data.match),revision=before.revision;
   const botModule=await import('../../src/core/roomBots');const spy=vi.spyOn(botModule,'stepBot').mockImplementationOnce(()=>{throw new Error('simulated policy failure');});
-  await vi.advanceTimersByTimeAsync(700);await server.alarm();spy.mockRestore();
+  await vi.advanceTimersByTimeAsync(900);await server.alarm();spy.mockRestore();
   expect(server.data.match).toEqual(before);expect(server.data.info.botError).toBeTruthy();expect(server.data.botDue).toBeUndefined();
   await message(sockets[1],{type:'retryBot'});expect(sockets[1].messages.at(-1).error).toContain('房主');expect(server.data.info.botError).toBeTruthy();expect(server.data.match.revision).toBe(revision);
-  const msg={type:'retryBot',requestID:'retry-once'};await message(sockets[0],msg);const due=server.data.botDue;expect(due).toBe(Date.now()+700);expect(server.data.info.botError).toBeUndefined();await message(sockets[0],msg);expect(server.data.botDue).toBe(due);
-  await vi.advanceTimersByTimeAsync(700);await server.alarm();expect(server.data.match.revision).toBe(revision+1);await server.alarm();expect(server.data.match.revision).toBe(revision+1);
+  const msg={type:'retryBot',requestID:'retry-once'};await message(sockets[0],msg);const due=server.data.botDue;expect(due).toBe(Date.now()+900);expect(server.data.info.botError).toBeUndefined();await message(sockets[0],msg);expect(server.data.botDue).toBe(due);
+  await vi.advanceTimersByTimeAsync(900);await server.alarm();expect(server.data.match.revision).toBe(revision+1);await server.alarm();expect(server.data.match.revision).toBe(revision+1);
  });
+});
+
+it('leaves a full Mahjong animation gap and never catches up several overdue bot actions',async()=>{
+ await server.webSocketClose(sockets[1]);await message(sockets[0],{type:'removePlayer',playerID:guest.id});
+ await message(sockets[0],{type:'selectGame',kind:'mahjong',options:{mahjongMode:'sichuan'}});
+ for(let i=0;i<3;i++)await message(sockets[0],{type:'addBot',difficulty:'easy'});
+ await message(sockets[0],{type:'start'});
+ const revision=server.data.match.revision;expect(server.data.botDue).toBe(Date.now()+1400);
+ await vi.advanceTimersByTimeAsync(1150);await server.alarm();expect(server.data.match.revision).toBe(revision);
+ await vi.advanceTimersByTimeAsync(10000);await server.alarm();expect(server.data.match.revision).toBe(revision+1);
+ expect(server.data.botDue).toBe(Date.now()+1400);
+ await server.alarm();expect(server.data.match.revision).toBe(revision+1);
+ await vi.advanceTimersByTimeAsync(1399);await server.alarm();expect(server.data.match.revision).toBe(revision+1);
+ await vi.advanceTimersByTimeAsync(1);await server.alarm();expect(server.data.match.revision).toBe(revision+2);
 });

@@ -1,4 +1,4 @@
-import {BOT_TURN_DELAY,nextBotSeat,stepBot,continueBotRound} from '../core/roomBots';
+import {botTurnDelay,nextBotSeat,stepBot,continueBotRound} from '../core/roomBots';
 import type {BotDifficulty} from '../core/bots/types';
 import {applyMatch,createMatch,validProfile,viewRoomMatch,optionsKey,validateMatchForRoom,type ClientState,type MatchState,type RoomInfo,type RoomCandidate,type RoomMode} from '../core/room';
 import type {Command,GameKind,Player,GameOptions} from '../core/types';
@@ -21,7 +21,7 @@ interface Peer {pc:RTCPeerConnection;dc?:RTCDataChannel;proven:boolean;nonce:str
 /** One client per tab. Cloud sockets hibernate; LAN game traffic never enters the signaling socket. */
 export class RoomClient {
  state:ClientState=initial();private listeners=new Set<(state:ClientState)=>void>();
- private botTimer?:ReturnType<typeof setTimeout>;private localBotError?:string;
+ private botTimer?:ReturnType<typeof setTimeout>;private botMatch?:MatchState;private localBotError?:string;
  private ws?:WebSocket;private session?:Session;private stopped=true;private reconnects=0;private reconnectTimer?:ReturnType<typeof setTimeout>;private handshakeTimer?:ReturnType<typeof setTimeout>;
  private socketHeartbeat?:ReturnType<typeof setInterval>;private lastSocketMessage=0;private lastSocketTick=0;private socketProbe?:ReturnType<typeof setTimeout>;
  private networkToken?:string;
@@ -180,7 +180,7 @@ export class RoomClient {
   this.starting=false;this.ensurePeers();this.localStatus();if(host)this.broadcastLocal();
  }
  private reset(){this.stopped=true;this.reconnects=0;this.starting=false;++this.connectGeneration;clearTimeout(this.reconnectTimer);clearTimeout(this.handshakeTimer);clearInterval(this.socketHeartbeat);clearTimeout(this.socketProbe);this.socketProbe=undefined;this.ws?.close();this.ws=undefined;this.session=undefined;this.dropPeers();this.localMatch=undefined;this.state=initial();}
- private dropPeers(){clearTimeout(this.botTimer);this.botTimer=undefined;this.localBotError=undefined;for(const timer of this.peerRetry.values())clearTimeout(timer);this.peerRetry.clear();this.peerAttempts.clear();clearInterval(this.heartbeat);this.heartbeat=undefined;for(const peer of this.peers.values()){clearTimeout(peer.pairingTimer);peer.dc?.close();peer.pc.close();}this.peers.clear();}
+ private dropPeers(){clearTimeout(this.botTimer);this.botTimer=undefined;this.botMatch=undefined;this.localBotError=undefined;for(const timer of this.peerRetry.values())clearTimeout(timer);this.peerRetry.clear();this.peerAttempts.clear();clearInterval(this.heartbeat);this.heartbeat=undefined;for(const peer of this.peers.values()){clearTimeout(peer.pairingTimer);peer.dc?.close();peer.pc.close();}this.peers.clear();}
  private removeLocal(){if(this.state.room)for(const storage of availableStorage())try{storage.removeItem('mocha-host-'+this.state.room.code);}catch{}}
  private persistLocal(){const r=this.state.room;if(r&&this.localMatch){const raw=JSON.stringify({kind:r.kind,options:r.options,matchID:r.matchID,expiresAt:r.expiresAt,players:r.players.map(p=>p.id).join(','),match:this.localMatch});let saved=false;for(const storage of availableStorage())try{storage.setItem('mocha-host-'+r.code,raw);saved=true;}catch{}if(!saved)this.fail('本地牌局存档失败，请保持房主页打开或切换云端');}}
  private ensurePeers(){
@@ -250,14 +250,16 @@ export class RoomClient {
  }
  private scheduleLocalBot(){
   const r=this.state.room;
-  if(!r||r.mode!=='lan'||!this.isHost||this.state.paused||this.localBotError||!this.localMatch||!nextBotSeat(r,this.localMatch)){clearTimeout(this.botTimer);this.botTimer=undefined;return;}
-  if(this.botTimer)return;
+  if(!r||r.mode!=='lan'||!this.isHost||this.state.paused||this.localBotError||!this.localMatch||!nextBotSeat(r,this.localMatch)){clearTimeout(this.botTimer);this.botTimer=undefined;this.botMatch=undefined;return;}
+  if(this.botTimer&&this.botMatch===this.localMatch)return;
+  clearTimeout(this.botTimer);
+  const scheduled=this.localMatch;this.botMatch=scheduled;
   this.botTimer=setTimeout(()=>{
-   this.botTimer=undefined;const room=this.state.room;
-   if(!room||room.mode!=='lan'||!this.isHost||this.state.paused||!this.localMatch)return;
+   this.botTimer=undefined;this.botMatch=undefined;const room=this.state.room;
+   if(!room||room.mode!=='lan'||!this.isHost||this.state.paused||this.localMatch!==scheduled)return;
    try{this.localMatch=stepBot(room,this.localMatch);this.persistLocal();}
    catch{this.localBotError='人机暂时无法行动，请重试';}
    this.broadcastLocal();
-  },BOT_TURN_DELAY);
+  },botTurnDelay(r.kind));
  }
 }
