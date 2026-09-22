@@ -53,6 +53,9 @@
   ],
   "classic": [
     {
+      "script": "tests/ui/bot-pacing.integration.mjs"
+    },
+    {
       "script": "tests/ui/mahjong-actions.integration.mjs"
     },
     {

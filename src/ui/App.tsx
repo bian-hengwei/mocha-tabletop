@@ -1,7 +1,7 @@
 import {RoomAudience, JoinRequests} from './RoomAudience';
 import {supportsBots} from '../core/bots';
 import type {BotDifficulty} from '../core/bots/types';
-import {BOT_TURN_DELAY} from '../core/roomBots';
+import {botTurnDelay} from '../core/roomBots';
 import {type Practice, readPractice, writePractice, createPractice, restartPractice, practiceView, applyPractice, hasPracticeBotTurn, stepPracticeBot, practiceBotRoundWaiting, continuePracticeRound} from '../local/practice';
 import {LocalPlayOptions} from './LocalPlayOptions';
 import {AddSeatChoices,BotSeatControls,BotRosterSummary,botDifficultyLabel} from './BotControls';
@@ -104,7 +104,7 @@ export function App() {
             if (!current || current.id !== practice.id || current.revision !== practice.revision) return;
             try { updatePractice(stepPracticeBot(current)); }
             catch { updatePractice({...current, botError:true}); }
-        }, BOT_TURN_DELAY);
+        }, botTurnDelay(practice.kind));
         return () => clearTimeout(timer);
     }, [practice]);
     useEffect(() => { setAction(null); }, [view?.kind, view?.phase, selfID, matchKey]);

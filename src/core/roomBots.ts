@@ -1,7 +1,9 @@
 import {applyMatch,roomLimits,viewMatch,type MatchState,type RoomInfo,type RoomPlayer} from './room';
 import {supportsBots,validBotDifficulty,chooseBotCommand} from './bots';
 
-export const BOT_TURN_DELAY=700;
+// Leave time for the 1.15s Mahjong discard flight to land before the next bot.
+// Every scheduler waits again after each authoritative transition (no catch-up batch).
+export function botTurnDelay(kind:RoomInfo['kind']):number{return kind==='mahjong'?1400:900;}
 export type BotControl = {type:'addBot';difficulty:unknown}|{type:'setBotDifficulty';playerID:unknown;difficulty:unknown}|{type:'removeBot';playerID:unknown};
 
 /** Room-owned seats have no credential and can never authenticate as a human. */
