@@ -1,0 +1,15 @@
+import {useState} from 'react';
+import {createRoot} from 'react-dom/client';
+import {pokerModule,pokerDeck,type PokerKind} from '../../src/core/games/poker';
+import {ClassicTable} from '../../src/ui/ClassicTable';
+import {RuleOptions} from '../../src/ui/RuleOptions';
+import {t,useLocale,setLocale} from '../../src/i18n';
+import type {GameOptions,Command} from '../../src/core/types';
+import '../../src/ui/style.css';
+const params=new URLSearchParams(location.search),kind=(params.get('kind')||'guandan') as PokerKind,module=pokerModule(kind);
+const players=Array.from({length:kind==='guandan'?4:3},(_,i)=>({id:`player00${i}`,name:params.has('long')?['AlexandriaLong名字','Benjamin非常长昵称','CharlotteLong名字','Dominic超长昵称'][i]:['Alex','Blair','Casey','Drew'][i],avatar:['🦊','🐼','🐱','🐻'][i]}));
+function initial(){let s=module.create(players,68,{pokerCounter:params.get('counter')!=='off'});if(kind==='doudizhu')s=module.apply(s,players[0].id,{action:'bid',values:['3']});if(params.has('dense')){
+ const deck=pokerDeck(kind==='guandan'?2:1);s.tablePlays=players.map((_,i)=>({player:i,serial:i+1,cards:deck.slice(i*12,i*12+12),combo:{type:'飞机带单',power:6+i,size:12,bomb:0}}));s.last={player:players.length-1,cards:s.tablePlays.at(-1)!.cards,combo:s.tablePlays.at(-1)!.combo!};s.playSerial=4;
+ }return s;}
+function Fixture(){const locale=useLocale(),[s,setS]=useState(initial),[seat,setSeat]=useState(0),[options,setOptions]=useState<GameOptions>({pokerCounter:true});const command=(c:Command)=>setS(module.apply(s,players[seat].id,c)),view={...module.view(s,players[seat].id,params.has('spectator')),spectating:params.has('spectator')};return <main className={`app in-game game-${kind}`}><header className="topbar"><b>{t(kind==='guandan'?'掼蛋':'斗地主')}</b><select aria-label="Seat" value={seat} onChange={e=>setSeat(Number(e.target.value))}>{players.map((p,i)=><option key={p.id} value={i}>{p.name}</option>)}</select><button aria-label="Toggle language" onClick={()=>setLocale(locale==='zh'?'en':'zh')}>{locale==='zh'?'English':'中文'}</button></header><div className="game-surface">{params.has('options')?<RuleOptions kind={kind} options={options} onChange={setOptions}/>:<ClassicTable view={view} selfID={params.has('spectator')?'':players[seat].id} command={command} open={()=>{}}/>}</div></main>;}
+createRoot(document.getElementById('root')!).render(<Fixture/>);

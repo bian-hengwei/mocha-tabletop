@@ -13,7 +13,7 @@ try{for(const locale of ['zh','en']){
  await page.addInitScript(locale=>localStorage.setItem('mocha-locale',locale),locale);
  for(const[kind,rank,level,zh,en]of cases){
   await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=${kind}&scenario=played-single&rank=${rank}&level=${level}`);
-  const caption=page.locator('.played-caption');await expect(caption).toHaveText(`Alex ${locale==='zh'?'单张':'Single'} · ${locale==='zh'?zh:en}`);
+  const caption=page.locator('.played-caption');await expect(caption.locator('span').first()).toHaveText(`${locale==='zh'?'单张':'Single'} · ${locale==='zh'?zh:en}`);await expect(caption.locator('.played-owner')).toHaveText('Alex');
   await expect(page.locator('.classic-seat.self small').first()).toContainText(locale==='zh'?'1 张':'1 card');
   for(const[width,height]of sizes){
    await page.setViewportSize({width,height});

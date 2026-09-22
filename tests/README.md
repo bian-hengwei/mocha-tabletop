@@ -201,3 +201,6 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 - `tests/mahjong-modes.test.ts`：十模式的牌组、换牌、独立番表样例、鬼牌、吃碰优先、漏胡、包牌、旧存档兼容及完整对局守恒。
 - `BASE_URL=http://127.0.0.1:5188 node tests/ui/mahjong-modes.integration.mjs`：十模式真实开局、中英教程、换牌/定缺/出牌/恢复、七尺寸密集牌桌和长昵称、弹窗旋转和焦点；支持 `TEST_BROWSER=webkit`。
+
+- `tests/ui/poker-experience.integration.mjs`：两款扑克、中英八尺寸、四座密集留牌、重叠手牌、记牌器、观战、鼠标拖选/取消；Chromium 额外用真实触摸事件验证横滑与长按滑选。支持 WebKit 的布局/鼠标路径。
+- `tests/ui/poker-cloud.integration.mjs`：真实 Worker 的房主记牌器开关、访客只读、准备重置、出牌留存、刷新重连、新轮清理及重开关闭；支持 WebKit。

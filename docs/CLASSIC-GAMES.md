@@ -55,8 +55,18 @@
 
 Mahjong seats and discard rivers are positioned relative to the viewer: self at the bottom, next seat at the right, opposite above, previous seat at the left. Tile faces in the three opponents' rivers point toward their owners while names and counts remain upright. The central wind indicator rotates its labels with the selected seat; its number is the remaining wall count. Opponent racks contain only backs derived from public hand counts. The table shows recent discards; each river opens its complete public history. Portrait phones show a two-row hand, while landscape and larger screens use one row. The drawn tile sits at the end with a separate gap. Pung, kong, win and pass actions sit above the right side of the hand. Legal discards that leave winning waits carry a Ready badge; selecting one shows its waits directly above the hand. Existing waits appear automatically, with optional enlarged details.
 
-Dou Dizhu places bottom cards above the table, the viewer below and opponents at either side. The latest play moves toward the player who made it. Bid and pass labels use public authoritative state. Selection remains explicit: tap to select or deselect, then confirm; changing seat or turn clears stale selection. The shared Guan Dan rule handling is unchanged.
+Dou Dizhu places bottom cards above the table, the viewer below and opponents at either side. Each seat keeps its latest public play or pass. Replies replace only that seat; after everyone passes, the completed trick stays visible until the next lead. A new deal resets it. Old saves fall back to their last public play. Bid and pass labels use public authoritative state. Selection remains explicit: tap to select or deselect, then confirm; changing seat or turn clears stale selection. The shared Guan Dan rule handling is unchanged.
 
 Layout references: Tencent's publisher listings for [Mahjong](https://apps.apple.com/cn/app/%E6%AC%A2%E4%B9%90%E9%BA%BB%E5%B0%86/id689180123) and [Dou Dizhu](https://apps.apple.com/cn/app/%E8%85%BE%E8%AE%AF%E6%AC%A2%E4%B9%90%E6%96%97%E5%9C%B0%E4%B8%BB/id446324234), reviewed September 20, 2026. These informed conventional table positioning only. Mocha retains its own jade-and-brass interface and the licensed card assets documented in `public/art/classic/SOURCES.json`.
 
 Mahjong interaction and table-layout reference: [Tencent Happy Mahjong screenshots](https://game.xiaomi.com/viewpoint/1270322523_1686536294223_149), reviewed September 21, 2026. The reference informs spatial grouping and direct tile interaction; artwork and rules remain those documented above.
+
+## 扑克牌桌交互
+
+斗地主和掼蛋的公开出牌按座位保留，后续玩家不会覆盖其他人的牌；该玩家再次出牌或不出时更新自己的记录。全员不出后仍显示上一轮，新一轮领出时统一清理，重新发牌时重置。记录保存在权威状态中，重连后恢复；旧存档只能恢复原本保存的最后一手。新出牌从对应座位方向出现，刷新、换座不重播旧牌，减少动态效果时不做位移动画。
+
+手牌横向叠放，点数和花色始终露出；小屏可横滑查看。轻点切换单张，长按 260 毫秒后滑动可批量选择，鼠标直接拖动；从已选牌开始则批量取消。正常横滑不会进入选牌模式。选牌抬起后仍需点击出牌确认，换座或状态变化清除失效选择，旋转保留选择。
+
+房主可在开桌选项或准备室开启记牌器，默认关闭；修改选项会清除准备状态。计数为整副牌减去自己的手牌和公开打出的牌，不读取对手手牌，也不重复扣除地主底牌。观战者只扣除公开出牌；关闭时不下发计数。计数可收起，短横屏默认收起。
+
+Both poker tables retain seat-local public plays through a completed trick until the next lead. Hands overlap with visible rank/suit corners. Swipe to browse, hold then drag to select, or drag with a mouse; starting on a selected card deselects the swept cards. Plays require explicit confirmation. The optional host-controlled counter shows unplayed cards outside the viewer's hand; spectators receive public-only counts. It defaults off and option changes invalidate readiness.
