@@ -204,3 +204,5 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 - `tests/ui/poker-experience.integration.mjs`：两款扑克、中英八尺寸、四座密集留牌、重叠手牌、记牌器、观战、鼠标拖选/取消；Chromium 额外用真实触摸事件验证横滑与长按滑选。支持 WebKit 的布局/鼠标路径。
 - `tests/ui/poker-cloud.integration.mjs`：真实 Worker 的房主记牌器开关、访客只读、准备重置、出牌留存、刷新重连、新轮清理及重开关闭；支持 WebKit。
+
+- `tests/ui/poker-motion.integration.mjs`：双语八尺寸的叫分/等待手牌不透明、飞牌路径与落牌截图、快速连续出牌、换座/旋转/减少动态效果的取消恢复；支持 Chromium/WebKit。

@@ -71,6 +71,9 @@
       "script": "tests/ui/poker-experience.integration.mjs"
     },
     {
+      "script": "tests/ui/poker-motion.integration.mjs"
+    },
+    {
       "script": "tests/ui/poker-cloud.integration.mjs"
     },
     {
