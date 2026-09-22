@@ -6,7 +6,7 @@ import {ActionSheet} from '../../src/ui/Boards';
 import {t,useLocale} from '../../src/i18n';
 import type {Action,Command} from '../../src/core/types';
 import '../../src/ui/style.css';
-const params=new URLSearchParams(location.search),scenario=params.get('scenario')||'hu',players=['Alex','Blair','Casey','Drew'].map((name,i)=>({id:`fixture-${i}`,name,avatar:'🐶'}));
+const params=new URLSearchParams(location.search),scenario=params.get('scenario')||'hu',players=['Alex','Blair','Casey','Drew'].map((name,i)=>({id:`fixture-${i}`,name:params.has('long')?name+' Long Mahjong Player':name,avatar:'🐶'}));
 const tiles=(values:number[],prefix='t'):Tile[]=>values.map((value,i)=>({id:`${prefix}${i}`,value}));
 const waiting=[0,1,2,3,4,5,9,10,11,12,13,14,6];
 function initial(){const mode=(params.get('mode')||'guangdong') as MahjongMode,s=mahjong.create(players,11,{mahjongMode:mode});s.phase='discard';if(mode==='sichuan'||mode==='bloodflow')s.missing={0:2,1:2,2:2,3:2};

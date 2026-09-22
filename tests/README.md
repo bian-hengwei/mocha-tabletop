@@ -119,3 +119,6 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `tests/ui/century-viewport.integration.mjs`：商旅双语八尺寸，市场/订单/商队/已用商人切换、费用完整、末张牌横向可达、付款、弹窗旋转，以及五人密集手牌；支持 WebKit。
 - `tests/ui/game-viewport.integration.mjs`：按注册表遍历十二款游戏，最大人数、中英八尺寸，检查页面和所有桌面容器没有纵向滚动或内容裁剪；配合各游戏的状态/操作测试及实际截图验收，不能单独代表完整游戏流程。
 - `tests/ui/bombs-viewport.integration.mjs`：喵喵危机中英八尺寸、最大五人，初始/选牌/响应/目标/索要/交牌/预知/拆弹/插入/结束十种状态，所有容器纵向溢出与裁切检查，实际操作及预知私密换座；支持 WebKit。
+
+- `tests/mahjong-modes.test.ts`：十模式的牌组、换牌、独立番表样例、鬼牌、吃碰优先、漏胡、包牌、旧存档兼容及完整对局守恒。
+- `BASE_URL=http://127.0.0.1:5188 node tests/ui/mahjong-modes.integration.mjs`：十模式真实开局、中英教程、换牌/定缺/出牌/恢复、七尺寸密集牌桌和长昵称、弹窗旋转和焦点；支持 `TEST_BROWSER=webkit`。
