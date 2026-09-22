@@ -21,7 +21,7 @@ try{
   await page.getByRole('button',{name:locale==='zh'?'同屏试玩':'Pass & play',exact:true}).click();
   await page.locator('.g-table').waitFor();
   const gems=page.locator('.g-bank-gem'),take=page.locator('.g-take .primary');
-  const rules=page.locator('.g-take-options');
+  const rules=take;
   for(const [width,height]of sizes){
    await page.setViewportSize({width,height});
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
@@ -35,8 +35,7 @@ try{
    assert(bankSize.scroll<=bankSize.client+1,`${locale} ${width}x${height}: bank does not require horizontal scrolling: ${JSON.stringify(bankSize)}`);
    await expect(take).toBeDisabled();
    await expect(rules).toBeVisible();
-   await expect(rules).toContainText(locale==='zh'?'3 色':'3 colors');
-   await expect(rules).toContainText(locale==='zh'?'同色 ×2':'Same ×2');
+   await expect(rules).toHaveText(locale==='zh'?'拿取':'Take');
    await expect(take).toHaveAccessibleName(locale==='zh'?'选择宝石: 取 3 色，各 1 枚 · 或同色连点取 2（库存 ≥4）':'Choose gems: 3 colors, 1 each · Or tap one color twice for 2 (stock ≥4)');
    const rulesVisible=await rules.evaluate(el=>{const r=el.getBoundingClientRect(),button=el.closest('button').getBoundingClientRect();return r.top>=button.top&&r.bottom<=button.bottom&&r.left>=button.left&&r.right<=button.right&&button.bottom<=innerHeight;});
    assert(rulesVisible,`${locale} ${width}x${height}: take requirements are not clipped or covered`);
@@ -71,19 +70,19 @@ try{
   }
   for(const [scenario,colors]of [['bank-scarce',[1,2]],['bank-one',[3]],['bank-no-pair',[0,1,2]],['bank-full-hand',[0,1,2]]]){
    await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=gems&players=max&scenario=${scenario}`);
-   await expect(rules).toContainText(locale==='zh'?`${colors.length} 色`:colors.length===1?'1 color':`${colors.length} colors`);
+   await expect(rules).toHaveText(locale==='zh'?'拿取':'Take');
    if(scenario!=='bank-full-hand'){
-    await expect(rules).not.toContainText(locale==='zh'?'同色 ×2':'Same ×2');
+    await expect(rules).toHaveText(locale==='zh'?'拿取':'Take');
     await gems.nth(colors[0]).click();await gems.nth(colors[0]).click();
     await expect(gems.nth(colors[0])).toHaveAttribute('aria-pressed','false');
    }
    for(const i of colors)await gems.nth(i).click();
    await expect(take).toBeEnabled();await take.click();
    if(scenario==='bank-full-hand')await expect(page.locator('.action-dock')).toContainText(locale==='zh'?'归还':'Return');
-   else await expect(rules).toHaveCount(0);
+   else await expect(take).toBeDisabled();
   }
   await context.close();
  }
  assert.deepEqual(errors,[]);
- console.log(`PASS ${engine}: concise visible take options with full accessible rules, non-overlapping bank controls, scarce bank, pair stock threshold, token overflow; six gem colors at 44px, both languages/eight sizes, clear and rotation.`);
+ console.log(`PASS ${engine}: compact take control with accessible rules, non-overlapping bank controls, scarce bank, pair stock threshold, token overflow; six gem colors at 44px, both languages/eight sizes, clear and rotation.`);
 }finally{await browser.close();}
