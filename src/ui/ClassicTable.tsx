@@ -5,17 +5,22 @@ import type {Action,Command,GameView} from '../core/types';
 import {combinationKey,legalPokerCombinations,pokerTitle,rankName,type PokerCard} from '../core/games/poker';
 import {MAHJONG_MODES,tileTitle,type Tile} from '../core/games/mahjong';
 import {MahjongArt,PokerArt} from './ClassicCardArt';
+import {MahjongTable} from './MahjongTable';
 import {useDialog} from './useDialog';
 import {useCardDoubleTap} from './useCardDoubleTap';
 import './classic-table.css';
 import './table-layout.css';
+import './mahjong-table.css';
 type Props={view:GameView;selfID:string;command:(c:Command)=>void;open:(a:Action,selected?:string[])=>void};
 function Face({card,mahjong,mini=false}:{card:PokerCard|Tile;mahjong:boolean;mini?:boolean}){
  const label=t(mahjong?tileTitle(card as Tile):pokerTitle(card as PokerCard));
  return <span className={`classic-face ${mahjong?'tile-face':'poker-face'} ${mini?'mini':''}`} role="img" aria-label={label} title={label}>{mahjong?<MahjongArt value={(card as Tile).value}/>:<PokerArt rank={(card as PokerCard).rank} suit={(card as PokerCard).suit}/>}</span>;
 }
 function Back({mahjong=false}:{mahjong?:boolean}){return <span className={`classic-face mini card-back ${mahjong?'tile-face':'poker-face'}`} aria-hidden="true">{mahjong?<MahjongArt back/>:<PokerArt back/>}</span>;}
-export function ClassicTable({view,selfID,command,open}:Props){
+export function ClassicTable(props:Props){
+ return props.view.kind==='mahjong'?<MahjongTable {...props}/>:<PokerTable {...props}/>;
+}
+function PokerTable({view,selfID,command,open}:Props){
  const [historyOpen,setHistoryOpen]=useState(false),historyRef=useDialog<HTMLElement>(historyOpen,()=>setHistoryOpen(false));
  const b=view.board,isMahjong=view.kind==='mahjong',hand=b.hand as (PokerCard|Tile)[],[selected,setSelected]=useState<string[]>([]),[declaration,setDeclaration]=useState('');
  const selectAction=view.actions.find(a=>['play','discard','exchange','return'].includes(a.id));

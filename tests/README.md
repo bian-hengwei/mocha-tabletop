@@ -27,11 +27,11 @@ npx playwright install chromium webkit
 | `node tests/ui/classic-assets.integration.mjs` | 90 张本地牌面/底板/背面与三张封面解码，大小王颜色映射；支持 WebKit |
 | `node tests/ui/classic-orientation.integration.mjs` | 六种新玩法，中英文九种尺寸、手牌滚动到末张、44px 触控与旋转保留选择；支持 WebKit |
 | `node tests/ui/table-layout.integration.mjs` | 麻将四方座位/牌河、换座方位盘、对手仅背面、斗地主出牌方向与叫分/不出标记；中英八尺寸，支持 WebKit |
-| `node tests/ui/classic-dense.integration.mjs` | 密集牌河与副露、血流锁牌、记录弹窗焦点与旋转；支持 WebKit |
+| `node tests/ui/classic-dense.integration.mjs` | 密集牌河与副露、完整弃牌查询、血流锁牌、记录弹窗焦点与旋转；支持 WebKit |
 | `node tests/ui/classic-cloud.integration.mjs` | 四个独立浏览器上下文，全部麻将模式、访客只读规则、刷新重连和两款扑克云端出牌；可对实际部署运行 |
 | `node tests/ui/poker-declaration.integration.mjs` | 掼蛋同花顺默认解释与手动宣告普通顺子；支持 WebKit |
 | `node tests/ui/classic-games.integration.mjs` | 六种新玩法，中英文四尺寸、点选/取消/换座、刷新恢复、扑克完整一轮与跨轮进贡；支持 WebKit |
-| `node tests/ui/mahjong-experience.integration.mjs` | 麻将双击/双触、键盘与慢速取消、定缺及自动过牌；中英七尺寸，支持 WebKit |
+| `node tests/ui/mahjong-experience.integration.mjs` | 麻将再次点选出牌、桌面/Escape 取消、新摸牌排序、出牌动画、完整牌河弹窗、换牌/定缺与自动过；中英七尺寸，支持 WebKit |
 | `node tests/ui/hand-experience.integration.mjs` | 寿司单张双击/双触、筷子顺序与取消锁定；商旅固定操作区；猫牌换选/组合与双击；中英八尺寸，支持 WebKit |
 | `node tests/ui/uno-experience.integration.mjs` | UNO 双击/双触、万能牌选色、28 张单行手牌、10 人座位、八尺寸与旋转，支持 WebKit |
 | `node tests/ui/mahjong-actions.integration.mjs` | 麻将确定性场景：自摸、血流继续、暗杠、抢杠、胡优先、碰与流局；支持 WebKit |
@@ -119,3 +119,5 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `tests/ui/century-viewport.integration.mjs`：商旅双语八尺寸，市场/订单/商队/已用商人切换、费用完整、末张牌横向可达、付款、弹窗旋转，以及五人密集手牌；支持 WebKit。
 - `tests/ui/game-viewport.integration.mjs`：按注册表遍历十二款游戏，最大人数、中英八尺寸，检查页面和所有桌面容器没有纵向滚动或内容裁剪；配合各游戏的状态/操作测试及实际截图验收，不能单独代表完整游戏流程。
 - `tests/ui/bombs-viewport.integration.mjs`：喵喵危机中英八尺寸、最大五人，初始/选牌/响应/目标/索要/交牌/预知/拆弹/插入/结束十种状态，所有容器纵向溢出与裁切检查，实际操作及预知私密换座；支持 WebKit。
+
+麻将独立界面回归可用 `TEST_GAMES=mahjong SKIP_FULL=1 node tests/ui/classic-games.integration.mjs` 覆盖四种模式的真实 App 开局、换牌定缺、出牌与恢复；`TEST_GAMES=mahjong node tests/ui/classic-orientation.integration.mjs` 覆盖真实 App 中英九尺寸。

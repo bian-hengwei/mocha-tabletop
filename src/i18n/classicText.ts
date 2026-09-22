@@ -1,4 +1,5 @@
 export const classicText:Record<string,string>={
+ '新摸牌':'Drawn tile','查看牌河':'View discards','本局还没有胡牌':'No wins yet','上一家':'Previous seat','下一家':'Next seat',
  '行动中':'Playing','座位方位':'Seat directions',
  '叫分抢地主，农民联手，先出完牌获胜':'Bid for landlord, team up as farmers, shed your cards first',
  '双副牌对家合作，从 2 升级到 A':'Two-deck partnership, climbing from 2 to A',
