@@ -1,0 +1,159 @@
+{
+  "app": [
+    {
+      "script": "tests/ui/app-usability.integration.mjs"
+    },
+    {
+      "script": "tests/ui/player-names.integration.mjs"
+    },
+    {
+      "script": "tests/ui/action-sheet.integration.mjs"
+    },
+    {
+      "script": "tests/ui/pwa-update.integration.mjs"
+    },
+    {
+      "script": "tests/ui/history-names.integration.mjs"
+    },
+    {
+      "script": "tests/ui/profile-input.integration.mjs"
+    },
+    {
+      "script": "tests/ui/dialog-boundaries.integration.mjs"
+    },
+    {
+      "script": "tests/ui/storage-boundaries.integration.mjs"
+    },
+    {
+      "script": "tests/ui/local-play.integration.mjs"
+    },
+    {
+      "script": "tests/ui/language.integration.mjs"
+    },
+    {
+      "script": "tests/ui/i18n.integration.mjs"
+    },
+    {
+      "script": "tests/ui/game-viewport.integration.mjs"
+    },
+    {
+      "script": "tests/network/message-text.integration.mjs"
+    },
+    {
+      "script": "tests/ui/lobby-layout.integration.mjs"
+    },
+    {
+      "script": "tests/ui/production.integration.mjs",
+      "env": {
+        "TEST_GAMES": "century",
+        "TEST_ACTION_DELAY_MS": "600",
+        "TEST_SKIP_OFFLINE": "1"
+      }
+    }
+  ],
+  "classic": [
+    {
+      "script": "tests/ui/mahjong-actions.integration.mjs"
+    },
+    {
+      "script": "tests/ui/mahjong-experience.integration.mjs"
+    },
+    {
+      "script": "tests/ui/mahjong-assistance.integration.mjs"
+    },
+    {
+      "script": "tests/ui/poker-declaration.integration.mjs"
+    },
+    {
+      "script": "tests/ui/poker-feedback.integration.mjs"
+    },
+    {
+      "script": "tests/ui/guandan-results.integration.mjs"
+    },
+    {
+      "script": "tests/ui/classic-assets.integration.mjs"
+    },
+    {
+      "script": "tests/ui/classic-orientation.integration.mjs"
+    },
+    {
+      "script": "tests/ui/classic-dense.integration.mjs"
+    },
+    {
+      "script": "tests/ui/table-layout.integration.mjs"
+    },
+    {
+      "script": "tests/network/uno-mahjong-assistance.integration.mjs"
+    },
+    {
+      "script": "tests/ui/spectators.integration.mjs"
+    }
+  ],
+  "cards": [
+    {
+      "script": "tests/ui/uno-experience.integration.mjs"
+    },
+    {
+      "script": "tests/ui/uno-penalty.integration.mjs"
+    },
+    {
+      "script": "tests/ui/hand-experience.integration.mjs"
+    },
+    {
+      "script": "tests/ui/proactive-new-games.integration.mjs"
+    },
+    {
+      "script": "tests/ui/century-viewport.integration.mjs"
+    },
+    {
+      "script": "tests/ui/century-results.integration.mjs"
+    },
+    {
+      "script": "tests/ui/gems-viewport.integration.mjs"
+    },
+    {
+      "script": "tests/ui/gems-results.integration.mjs"
+    },
+    {
+      "script": "tests/ui/bombs-viewport.integration.mjs"
+    },
+    {
+      "script": "tests/ui/uno-sushi-viewport.integration.mjs"
+    }
+  ],
+  "social": [
+    {
+      "script": "tests/ui/identity-portraits.integration.mjs"
+    },
+    {
+      "script": "tests/ui/illustrated-games.integration.mjs"
+    },
+    {
+      "script": "tests/ui/word-privacy.integration.mjs"
+    },
+    {
+      "script": "tests/ui/werewolf-lineups.integration.mjs"
+    },
+    {
+      "script": "tests/ui/word-viewport.integration.mjs"
+    },
+    {
+      "script": "tests/ui/word-round.integration.mjs"
+    },
+    {
+      "script": "tests/ui/social-viewport.integration.mjs"
+    },
+    {
+      "script": "tests/ui/social-app-viewport.integration.mjs"
+    },
+    {
+      "script": "tests/ui/word-usability.integration.mjs"
+    },
+    {
+      "script": "tests/network/spectators.integration.mjs"
+    },
+    {
+      "script": "tests/ui/spectators-live.integration.mjs"
+    }
+  ]
+}

@@ -43,7 +43,7 @@ describe('clear names and restored saves',()=>{
   expect(t('狼人')).toBe('Werewolf');expect(t('刺客')).toBe('Assassin');
   expect(t('加班 抽到了爆炸牌')).toBe('加班 drew Bomb');
   expect(t('攻击 抽到了闹闹牌')).toBe('攻击 drew Bomb');
-  for(const game of Object.values(GAMES))expect(t(game.tagline)).not.toMatch(/[\u3400-\u9fff]/u);
+  for(const game of Object.values(GAMES))expect(t(game.name)).not.toMatch(/[\u3400-\u9fff]/u);
  });
  it('derives actions and sections from card kind after loading a pre-rename save',()=>{
   const s=bombs.create(players(3),25);

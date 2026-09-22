@@ -111,6 +111,8 @@ try{
    if(key==='uno'){
     let played=false;
     for(let attempt=0;attempt<12&&!played;attempt++){
+     const penalty=(await Promise.all(pages.slice(0,count).map(async p=>{const button=p.getByRole('button',{name:/^接受 \+[24]，抽牌并跳过$/});return await button.count()?button:null;}))).find(Boolean);
+     if(penalty){await penalty.click();await expect(penalty).toHaveCount(0);continue;}
      const actor=(await Promise.all(pages.slice(0,count).map(async p=>await p.locator('.ng-uno-playbar').count()?p:null))).find(Boolean);assert(actor,'UNO actor');
      const hand=actor.locator('.ng-uno-hand .ng-uno-card'),normal=actor.locator('.ng-uno-hand .ng-uno-card:not(:disabled):not(.ng-wild-card)'),wild=actor.locator('.ng-uno-hand .ng-wild-card:not(:disabled)');
      const before=await hand.count();

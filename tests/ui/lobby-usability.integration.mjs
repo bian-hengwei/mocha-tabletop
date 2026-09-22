@@ -15,8 +15,18 @@ try {
  await guest.locator('.lobby').waitFor();assert(await guest.getByRole('combobox',{name:'比赛长度'}).isDisabled());assert(await guest.getByRole('switch',{name:'+4 质疑规则'}).isDisabled());await host.waitForFunction(()=>document.querySelector('.lobby-start-status')?.textContent.includes('等待所有玩家准备'));
  await guest.getByRole('button',{name:'准备好了',exact:true}).click();await host.waitForFunction(()=>document.querySelector('.lobby-start-status')?.textContent.includes('所有人已准备'));
  await host.getByRole('combobox',{name:'比赛长度'}).selectOption('single');await guest.getByRole('button',{name:'准备好了',exact:true}).waitFor();await expect(guest.getByRole('combobox',{name:'比赛长度'})).toHaveValue('single');assert.match(await host.locator('.lobby-start-status').innerText(),/重新准备/);
- await host.locator('.language-toggle').click();assert.match(await host.locator('.lobby-start-status').innerText(),/rule changes reset readiness/);
+ await host.locator('.language-toggle').click();assert.match(await host.locator('.lobby-start-status').innerText(),/rule or bot changes reset readiness/);
  for(const p of pages)assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
- await host.getByRole('button',{name:'Table menu',exact:true}).click();await host.getByRole('button',{name:'Leave table',exact:true}).click();await guest.locator('.game-cover').first().waitFor();assert.deepEqual(errors,[]);
+ host.removeAllListeners('dialog');
+ for(const locale of ['en','zh']){
+  if(locale==='zh')await host.locator('.language-toggle').click();
+  await host.getByRole('button',{name:locale==='zh'?'牌桌菜单':'Table menu',exact:true}).click();
+  let warning='';host.once('dialog',async dialog=>{warning=dialog.message();await dialog.dismiss();});
+  await host.getByRole('button',{name:locale==='zh'?'离开牌桌':'Leave table',exact:true}).click();
+  assert.equal(warning,locale==='zh'?'离开将关闭这张牌桌，确定？':'Leaving as host closes this table. Continue?');
+  await expect(host.locator('.room-code')).toHaveText(code);await expect(guest.locator('.room-code')).toHaveText(code);
+  await host.keyboard.press('Escape');
+ }
+ host.once('dialog',dialog=>dialog.accept());await host.getByRole('button',{name:'牌桌菜单',exact:true}).click();await host.getByRole('button',{name:'离开牌桌',exact:true}).click();await guest.locator('.game-cover').first().waitFor();await host.locator('.game-cover').first().waitFor();assert.deepEqual(errors,[]);
  console.log('PASS lobby start explanations, synchronized guest rule visibility, readiness reset and mobile fit');
 }finally{await browser.close();}

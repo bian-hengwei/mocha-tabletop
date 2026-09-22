@@ -138,6 +138,7 @@
 .ng-uno-overview>.ng-rules{padding:4px 0}
 .ng-uno>.ng-uno-hand-panel{flex:none;width:100%;margin:0;padding:9px 10px;background:#132e29f5}
 .ng-uno-hand-panel>h3{margin:0;gap:7px}
+.ng-uno-hand-panel .ng-uno-scroll-hint{margin-left:auto;text-align:right;font-size:10px;line-height:1.3}
 .ng-uno-gesture{margin-left:auto;text-align:right;max-width:65%;font-size:10px!important}
 .ng-uno .ng-uno-hand{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:9px;padding:18px 4px 10px;scrollbar-width:thin;scrollbar-color:#bca67966 transparent;overscroll-behavior-x:contain;touch-action:pan-x pinch-zoom}
 .ng-uno .ng-uno-hand>.ng-uno-card{flex:0 0 88px;width:88px;height:132px;aspect-ratio:auto;touch-action:manipulation}
@@ -185,9 +186,9 @@
  .ng-uno-overview .ng-uno-status{gap:5px}.ng-uno-overview .ng-uno-status>strong{font-size:12px}.ng-uno-overview .ng-color-badge{padding:5px 12px}
 }
 @media(max-height:500px) and (orientation:landscape){
- .game-uno.in-game .topbar{height:42px;min-height:42px;padding:3px 0;flex-wrap:nowrap}
+ .game-uno.in-game .topbar{height:46px;min-height:46px;padding:0;flex-wrap:nowrap}
  .ng-uno-overview{grid-template-rows:max-content max-content max-content;align-items:start}
- .ng-uno-overview>.ng-uno-center>div:first-child{width:48px}.ng-uno-overview .ng-uno-center .ng-uno-card>strong{font-size:24px}
+ .ng-uno-overview>.ng-uno-center>div:first-child{width:44px}.ng-uno-overview .ng-uno-center .ng-uno-card>strong{font-size:24px}
  .ng-uno-overview>.ng-rules{grid-column:1;grid-row:2}.ng-uno-overview>.ng-heading~.ng-rules{grid-row:3}
  .ng-uno-overview>.ng-uno-center{grid-row:1/3}.ng-uno-overview>.ng-heading~.ng-uno-center{grid-row:2/4}
 }
@@ -262,7 +263,7 @@
 }
 /* Short landscape needs a full-height market beside the private caravan. */
 @media(max-height:360px) and (orientation:landscape){
- .game-century.in-game .topbar{height:42px;min-height:42px;padding:3px 0;flex-wrap:nowrap}
+ .game-century.in-game .topbar{height:46px;min-height:46px;padding:0;flex-wrap:nowrap}
  .ng-table.ng-century{display:grid;grid-template-columns:minmax(0,1fr) 210px;align-items:stretch}
  .ng-century-overview{min-width:0;height:100%}
  .ng-century-hand-dock{min-height:0;overflow:hidden}
@@ -278,6 +279,14 @@
 }
 /* One public area at a time; hand and mandatory actions stay on the table. */
 .ng-century [hidden]{display:none!important}
+.ng-century-empty-hand{width:100%;align-self:center;margin:0;padding:10px;color:var(--ng-muted);font-size:12px;line-height:1.6;text-align:center}
+.ng-order-inspector{width:min(420px,100%);max-height:calc(100dvh - 24px);display:flex;flex-direction:column;overflow:hidden;border:1px solid #cabb8c66;border-radius:16px;background:#172e26;color:#eee4cc;box-shadow:0 16px 60px #0008}
+.ng-order-inspector header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #cabb8c33;flex:none}
+.ng-order-inspector header>.icon{width:44px;height:44px;min-width:44px;min-height:44px}
+.ng-order-inspector h2{margin:0 0 5px;font-size:16px}.ng-order-inspector header strong{font-size:23px}.ng-order-inspector header small{margin-left:12px;color:#e1c77f}
+.ng-order-details{min-height:0;overflow:auto;padding:8px 16px}.ng-order-details table{width:100%;border-collapse:collapse;font-size:13px;text-align:center}.ng-order-details th,.ng-order-details td{padding:9px 4px;border-bottom:1px solid #cabb8c22}.ng-order-details thead{font-size:11px;color:#bdc7b8}.ng-order-details th:first-child{text-align:left}.ng-order-details th span{display:flex;align-items:center;gap:6px}.ng-order-details .missing{color:#f2bb91;font-weight:700}.ng-order-details p{font-size:12px;line-height:1.5;color:#cbd1bf}
+.ng-order-inspector footer{padding:10px 16px;display:flex;justify-content:flex-end;border-top:1px solid #cabb8c33;flex:none}.ng-order-inspector footer button{min-height:44px}
+@media(max-height:430px){.ng-order-inspector header{padding:7px 12px}.ng-order-inspector h2{font-size:14px;margin-bottom:2px}.ng-order-inspector header strong{font-size:20px}.ng-order-details{padding:3px 12px}.ng-order-details th,.ng-order-details td{padding:5px 4px}.ng-order-details p{margin:5px 0;font-size:11px;line-height:1.35}.ng-order-inspector footer{padding:5px 12px}}
 .ng-century-tabs{display:flex;flex:none;gap:4px;margin-bottom:6px}
 .ng-century-tabs button{flex:1;min-width:0;min-height:44px;border:1px solid #cabb8c44;border-radius:8px;color:#dacdad;background:#142b23;padding:4px;font-size:11px}
 .ng-century-tabs button[aria-pressed=true]{background:#d9c996;color:#293d2d;border-color:#f5de9e}
@@ -346,3 +355,9 @@
  .ng-century-overview .ng-avatar{font-size:20px}
  .ng-century .ng-pocket{padding:4px 7px}
 }
+
+.ng-uno-turn-label{margin-left:auto;flex-shrink:0;padding:2px 7px;border:1px solid #c8ba7866;border-radius:8px;color:#eee0b0;background:#b8a66b1c;font-size:11px;line-height:16px;font-weight:500;white-space:nowrap}
+.ng-hand-scroll-cue{display:inline-block;margin-left:8px;white-space:nowrap;color:#c8c7aa}
+
+.ng-century .ng-century-hand-panel>.ng-century-hand-heading{gap:2px 5px}
+.ng-century .ng-century-scroll-cue{font-size:10px;line-height:14px;font-weight:400;color:#c8c7aa;letter-spacing:normal;white-space:nowrap}

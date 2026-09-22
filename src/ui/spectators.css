@@ -1,0 +1,26 @@
+.audience-trigger{position:relative;display:flex;gap:5px;align-items:center;justify-content:center;min-width:44px;min-height:44px;border:1px solid #c8b58a55;border-radius:10px;color:#dccba4;flex-shrink:0}
+.audience-trigger i{position:absolute;right:3px;top:3px;width:7px;height:7px;border-radius:50%;background:#e6ad6b}
+.lobby-audience{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:8px 0}
+.lobby-audience button,.room-audience button{min-height:44px}
+.room-audience{display:flex;flex-direction:column;gap:12px;min-width:0}
+.room-audience h3,.room-audience p{margin:0}
+.spectator-setting{display:flex!important;flex-direction:row!important;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
+.spectator-setting>span{display:flex;align-items:center;gap:8px}
+.spectator-setting input[type=checkbox]{width:44px;height:44px;flex:0 0 44px;accent-color:#84bda4;margin:0}
+.spectator-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.spectator-list li{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 10px;background:#ffffff06;border-radius:9px}
+.spectator-list b{flex:1;overflow-wrap:anywhere;min-width:0}
+.spectator-list small{color:#b8b5a9;flex-shrink:0}
+.spectating-label{color:#dccba4}
+.spectator-surface .classic-table{grid-template-rows:auto minmax(0,1fr)}
+.spectator-surface .ng-table:is(.ng-sushi,.ng-uno){grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.spectator-surface .ng-century{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr)}
+.spectator-surface .bt-table{grid-template-rows:auto minmax(0,1fr) auto}
+@media(max-width:430px){.top-tools:has(.audience-trigger){gap:3px}.audience-trigger{min-width:44px}.room-audience .join-requests>div{flex-wrap:wrap}}
+.spectator-surface .social-table-v2 .social-board>.seat-pagination{position:static;flex-shrink:0;align-self:center;bottom:auto}
+.spectator-surface .mahjong-table .classic-seat.seat-self{display:flex;left:50%;top:auto;bottom:16px;transform:translateX(-50%);max-width:170px;opacity:1}
+.spectator-surface .mahjong-table .classic-seat.seat-self b{max-width:105px}
+.spectator-surface .mahjong-table .mahjong-public{bottom:82px}
+.spectator-surface .rack-self{display:none}
+@media(max-height:500px){.spectator-surface .mahjong-table .mahjong-public{bottom:55px}.spectator-surface .rack-self{display:none}}
+@media(max-width:430px){.top-tools:has(.audience-trigger) .connection{flex-shrink:0}.top-tools:has(.audience-trigger) .connection span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}}

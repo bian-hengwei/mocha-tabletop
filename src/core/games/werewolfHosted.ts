@@ -62,13 +62,13 @@ export const werewolfHosted:GameModule<HostedWerewolfState>={
   const s:HostedWerewolfState={options:{...options,werewolfMode:mode,moderatorID},players:structuredClone(players),participants:structuredClone(participants),seed:seed>>>0,dealNumber:1,roles:Object.fromEntries(participants.map((p,i)=>[p.id,deck[i]])),alive:participants.map(p=>p.id),stage:'dealt',night:0,sheriff:null,guarded:null,previousGuard:null,knife:null,poisoned:null,saved:false,antidote:true,poison:true,checks:[],hunterID:null,badgeOwner:null,electionPending:true,electionExplosions:0,next:'day',winner:null,log:[mode==='judge'?'法官已发放身份，所有玩家只需查看自己的牌。':'身份已发放，现场自由主持。'],privateLog:[]};
   if(mode==='judge')beginNight(s);return s;
  },
- view(s,id){
-  if(!s.players.some(p=>p.id===id))throw new Error('不是本局玩家');
+ view(s,id,spectator=false){if(spectator)id='';
+  if(!spectator&&!s.players.some(p=>p.id===id))throw new Error('不是本局玩家');
   const judge=s.options.werewolfMode==='judge'&&s.options.moderatorID===id,role=s.roles[id],name=judge?'法官':roleNames[role];
-  const ownKnowledge=[{id:'role',title:name,detail:judge?'你负责主持，不参与阵营胜负':isWolfRole(role)?'狼人阵营':'好人阵营'}];
+  const ownKnowledge=spectator?[]:[{id:'role',title:name,detail:judge?'你负责主持，不参与阵营胜负':isWolfRole(role)?'狼人阵营':'好人阵营'}];
   const board:Record<string,any>={preset:s.options.werewolfPreset||'auto',winRule:s.options.werewolfWin||'sides',mode:s.options.werewolfMode,moderatorID:s.options.moderatorID,isModerator:judge,stage:judge?s.stage:'dealt',dealNumber:s.dealNumber,ownRole:name,ownRoleKey:judge?'moderator':role,ownKnowledge,night:judge?s.night:undefined,players:s.participants.map(p=>({...p,alive:s.alive.includes(p.id),revealedIdiot:s.idiotRevealed===p.id,sheriff:s.sheriff===p.id,...(judge||p.id===id||p.id===s.idiotRevealed?{role:roleNames[s.roles[p.id]],roleKey:s.roles[p.id]}:{})})),sheriff:s.sheriff,winner:s.winner};
   if(judge)board.moderatorOnly={night:s.night,prompt:stagePrompt(s),knife:s.knife,guarded:s.guarded,previousGuard:s.previousGuard,potions:{antidote:s.antidote,poison:s.poison},checks:structuredClone(s.checks),pendingDeaths:pendingDeaths(s),hunterID:s.hunterID,badgeOwner:s.badgeOwner,log:[...s.privateLog],logText:structuredClone(s.privateLogText||{})};
-  return {kind:'werewolf',phase:judge?`第 ${s.night} ${['guard','wolves','witch','seer'].includes(s.stage)?'夜':'天'} · ${stagePrompt(s)}`:s.options.werewolfMode==='deal'?'身份牌已发放':s.winner??'听法官主持',instruction:judge?'仅法官操作':s.options.werewolfMode==='deal'?'看好自己的身份牌':'收好身份牌，听法官主持',finished:!!s.winner,actions:actions(s,id),sections:[{id:'identity',title:'你的身份',private:true,items:ownKnowledge}],log:[...s.log],logText:structuredClone(s.logText||{}),board};
+  return {kind:'werewolf',phase:judge?`第 ${s.night} ${['guard','wolves','witch','seer'].includes(s.stage)?'夜':'天'} · ${stagePrompt(s)}`:s.options.werewolfMode==='deal'?'身份牌已发放':s.winner??'听法官主持',instruction:judge?'仅法官操作':s.options.werewolfMode==='deal'?'看好自己的身份牌':'收好身份牌，听法官主持',finished:!!s.winner,actions:spectator?[]:actions(s,id),sections:[{id:'identity',title:'你的身份',private:true,items:ownKnowledge}],log:[...s.log],logText:structuredClone(s.logText||{}),board};
  },
  apply(state,id,command){
   validateCommand(werewolfHosted.view(state,id),command);

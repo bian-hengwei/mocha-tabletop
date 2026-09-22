@@ -35,3 +35,11 @@ it('records Wolf King team results correctly for current views and legacy views 
   }
  }
 });
+
+it('labels bot results, preserves old human results, and deduplicates bot matches',()=>{
+ const bot:Player={id:'bot-test-01',name:'Mocha 1',avatar:'🤖',bot:{difficulty:'hard'}};
+ const record=makeRecord(view({players:[player,bot],winners:[player.id]}),'bot-match',player.id,player,'cloud')!;
+ expect(record.botCount).toBe(1);expect(record.playerCount).toBe(2);expect(saveRecord(record)).toBe(true);expect(readHistory()[0].botCount).toBe(1);expect(saveRecord(record)).toBe(false);
+ deleteRecord(record.id);expect(saveRecord(record)).toBe(false);
+ const legacy=makeRecord(view({players:[player],winners:[player.id]}),'human-match',player.id,player,'cloud')!;expect(legacy.botCount).toBeUndefined();saveRecord(legacy);expect(readHistory()[0]).toEqual(legacy);
+});
