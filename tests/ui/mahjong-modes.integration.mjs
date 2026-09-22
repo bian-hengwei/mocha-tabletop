@@ -5,7 +5,7 @@ const base=process.env.BASE_URL||'http://127.0.0.1:5174',safari=process.env.TEST
 const browser=await(safari?webkit.launch():chromium.launch());
 const out=`test-results/mahjong-modes-${safari?'webkit':'chromium'}`;await fs.mkdir(out,{recursive:true});
 const modes=['guangdong','laizi','sichuan','bloodflow','bloodflowAny','bloodflowThree','redBloodflow','redBattle','guangdongFan','guangdongGhost'];
-const sizes=[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900]];
+const sizes=[[320,568],[390,844],[430,932],[844,390],[568,320],[932,430],[768,1024],[1440,900]];
 try{for(const locale of ['zh','en']){
  const context=await browser.newContext({viewport:{width:390,height:844}});await context.addInitScript(locale=>{localStorage.setItem('mocha-locale',locale);localStorage.setItem('mocha-profile',JSON.stringify({id:'mahjong-mode-test',name:'长昵称 Long Mahjong Player',avatar:'🦊'}));},locale);
  const page=await context.newPage(),errors=[];page.setDefaultTimeout(10000);page.on('pageerror',e=>errors.push(e.message));const text=(zh,en)=>locale==='zh'?zh:en;
@@ -24,12 +24,14 @@ try{for(const locale of ['zh','en']){
   await page.reload();await page.locator('.mj-table').waitFor();await fit();if(locale==='en')assert(!/[\u3400-\u9fff]/u.test(await page.locator('.mj-edition').innerText()),'mode name translated');await page.evaluate(()=>localStorage.removeItem('mocha-practice-v1'));
  }
  // Dense table, long names, history dialog, rotation and every required viewport.
- await page.goto(`${base}/tests/ui/classic.fixture.html?scenario=dense&mode=redBloodflow&long=1&large=1`);
+ await page.goto(`${base}/tests/ui/classic.fixture.html?scenario=dense&mode=redBloodflow&long=1&large=1&statuses=1`);
  for(const [width,height]of sizes){await page.setViewportSize({width,height});await fit();await expect(page.locator('.mj-river .mj-face')).toHaveCount(48);await expect(page.locator('.mj-history')).toBeVisible();
   const overlaps=await page.locator('.mj-seat:not(.self)').evaluateAll(seats=>seats.flatMap(s=>{const a=s.querySelector('.mj-avatar').getBoundingClientRect(),b=s.querySelector('div').getBoundingClientRect();return a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1?[s.className]:[];}));assert.deepEqual(overlaps,[],'avatar and text do not overlap');assert(await page.locator('.mj-seat.seat-self small').evaluateAll(es=>es.every(e=>e.getBoundingClientRect().bottom<=e.closest('.mj-arena').getBoundingClientRect().bottom-10)),'self score clears the table rail');
+  const seatOverlaps=await page.locator('.mj-seat').evaluateAll(seats=>seats.flatMap((s,i)=>seats.slice(i+1).flatMap(other=>{const a=s.getBoundingClientRect(),b=other.getBoundingClientRect();return a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1?[[s.className,other.className]]:[];})));assert.deepEqual(seatOverlaps,[],`${locale} ${width}×${height}: seats occupy separate lanes`);
+  const seatTileOverlaps=await page.evaluate(()=>{const found=[];for(const s of document.querySelectorAll('.mj-seat'))for(const r of document.querySelectorAll('.mj-rack,.mj-melds')){const a=s.getBoundingClientRect(),b=r.getBoundingClientRect();if(a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1)found.push([s.className,r.className]);}return found;});assert.deepEqual(seatTileOverlaps,[],`${locale} ${width}×${height}: seats clear racks and melds`);
   await page.screenshot({path:`${out}/${locale}-dense-${width}.png`});await page.getByRole('button',{name:/胡牌记录|Win history/}).click();await expect(page.getByRole('dialog')).toBeVisible();await page.setViewportSize({width:height,height:width});await fit();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.getByRole('button',{name:/胡牌记录|Win history/})).toBeFocused();
  }
  await page.goto(base);await page.locator('.cover-mahjong').click();await page.locator('.setup-rules').click();
  for(const [width,height]of sizes){await page.setViewportSize({width,height});for(let tab=0;tab<3;tab++){await page.getByRole('tab').nth(tab).click();await fit();await expect(page.getByRole('tabpanel')).toBeVisible();}await page.screenshot({path:`${out}/${locale}-guide-${width}.png`});}
- assert.deepEqual(errors,[]);await context.close();console.log(`PASS ${locale}: all ten variants, tutorials, exchange, missing suit, discard, reload, dense table, dialog focus/rotation, seven viewports`);
+ assert.deepEqual(errors,[]);await context.close();console.log(`PASS ${locale}: all ten variants, tutorials, exchange, missing suit, discard, reload, dense table, dialog focus/rotation, eight viewports`);
 }}finally{await browser.close();}

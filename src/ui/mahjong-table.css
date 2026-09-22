@@ -135,3 +135,31 @@
 .mj-table .mj-seat small{overflow-wrap:anywhere;max-width:100%}
 
 .mj-table:not(.mj-spectating) .mj-seat.seat-self{bottom:14px}
+
+/* Reserve the lower corner for the local seat, including long score labels. */
+@media(max-height:500px) and (orientation:landscape){
+ .mj-table .mj-seat:is(.seat-left,.seat-right){top:12px;transform:none}
+ .mj-table:not(.mj-spectating) .mj-seat.seat-self{width:75px;max-width:75px}
+ .mj-table .mj-seat:is(.seat-left,.seat-right) .mj-avatar{width:24px;height:24px;font-size:18px}
+ .mj-table .mj-seat:is(.seat-left,.seat-right) small{font-size:8px;line-height:1.25}
+ .mj-table .mj-seat:is(.seat-left,.seat-right) b{line-height:12px}
+}
+@media(max-width:740px) and (max-height:500px) and (orientation:landscape){
+ .mj-table .mj-seat:is(.seat-left,.seat-right){top:10px;width:94px;max-width:94px;flex-direction:row;gap:2px;text-align:left;align-items:flex-start}
+ .mj-table .mj-seat:is(.seat-left,.seat-right)>div{flex:1;min-width:0}
+ .mj-table .mj-seat:is(.seat-left,.seat-right) .mj-avatar{width:16px;height:18px;font-size:13px}
+ .mj-table .mj-seat:is(.seat-left,.seat-right) small:first-of-type{white-space:normal}
+ .mj-table:not(.mj-spectating) .mj-seat.seat-self{width:90px;max-width:90px}
+ .mj-table:not(.mj-spectating) .mj-seat.seat-self b{display:none}
+ .mj-table .mj-melds.meld-across{right:20%}
+ .mj-table .mj-rack.mj-rack-left{left:108px}.mj-table .mj-rack.mj-rack-right{right:108px}
+ .mj-table .mj-melds.meld-left{left:124px}.mj-table .mj-melds.meld-right{right:124px}
+ .mj-public{left:145px;right:145px}
+}
+@media(max-height:650px) and (orientation:portrait){
+ .mj-table .mj-seat:is(.seat-left,.seat-right){top:20%;gap:3px}
+ .mj-table .mj-seat:is(.seat-left,.seat-right) .mj-avatar{width:26px;height:26px;font-size:19px}
+ .mj-table .mj-seat:is(.seat-left,.seat-right) small{font-size:8px;line-height:1.25}
+ .mj-table .mj-seat:is(.seat-left,.seat-right) b{line-height:12px}
+ .mj-table .mj-rack:is(.mj-rack-left,.mj-rack-right){top:40%}
+}
