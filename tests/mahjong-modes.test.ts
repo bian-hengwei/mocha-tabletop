@@ -91,7 +91,7 @@ describe('claims, passed wins and settlement',()=>{
  });
  it('transfers a kong income to simultaneous discard winners and removes refundable entries',()=>{
   let s=setup('bloodflow');s.afterKong=true;s.turn=8;s.scores=[6,-2,-2,-2];s.kongPayments=[1,2,3].map(from=>({from,to:0,points:2,turn:8}));s.hands[0]=tiles([6],'a');s.hands[1]=tiles(waiting,'b');s.hands[2]=tiles(waiting,'c');
-  s=act(s,0,'discard',['a0']);s=act(s,1,'hu');s=act(s,2,'hu');s=pass(s);expect(s.scores).toEqual([-10,6,6,-2]);expect(s.kongPayments).toEqual([]);
+  s=act(s,0,'discard',['a0']);s=act(s,1,'hu');s=act(s,2,'hu');s=pass(s);expect(s.scores).toEqual([-10,6,6,-2]);expect(s.wins.map(w=>w.gained)).toEqual([8,8]);expect(s.history).toContain('b · 呼叫转移 · +6');expect(s.kongPayments).toEqual([]);
  });
  it.each(modes)('reaches terminal %s states with physical conservation and zero-sum scores',mode=>{for(let seed=1;seed<=4;seed++){let s=mahjong.create(players,seed,{mahjongMode:mode}),steps=0;while(!s.finished&&steps++<650){conservation(s);const i=players.findIndex((_,i)=>actions(s,i).length);expect(i).toBeGreaterThanOrEqual(0);const legal=actions(s,i);const a=legal.find(a=>a.id==='hu')??legal.find(a=>a.id.startsWith('concealed:'))??legal.find(a=>a.id==='kong')??legal.find(a=>a.id==='pong')??legal[0];let values=a.choices.slice(0,a.min).map(c=>c.id);if(a.id==='exchange'&&MAHJONG_RULES[mode].exchange==='sameThree')values=[0,1,2].map(suit=>s.hands[i].filter(t=>Math.floor(t.value/9)===suit)).find(g=>g.length>=3)!.slice(0,3).map(t=>t.id);s=act(s,i,a.id,values);if(steps%25===0)s=JSON.parse(JSON.stringify(s));}expect(s.finished).toBe(true);conservation(s);}},30000);
 });

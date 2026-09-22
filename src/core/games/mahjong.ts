@@ -135,7 +135,7 @@ function resolve(s:MahjongState){const pending=s.pending!,others=[0,1,2,3].filte
  for(const i of others)if(!pending.responses[i]){const legal=actions(s,s.players[i].id);if(legal.length===1&&legal[0].id==='pass')pending.responses[i]={action:'pass'};}
  if(others.some(i=>!pending.responses[i]))return;
  const winners=others.filter(i=>pending.responses[i].action==='hu');
- if(winners.length){for(const i of winners)win(s,i,pending.from,pending.tile,false);if(s.afterKong&&isSichuan(s)&&pending.rob===undefined){const payments=s.kongPayments.filter(p=>p.to===pending.from&&p.turn===s.turn),income=payments.reduce((n,p)=>n+p.points,0);if(income)for(const i of winners)pay(s,pending.from,i,income);s.kongPayments=s.kongPayments.filter(p=>!payments.includes(p));}
+ if(winners.length){for(const i of winners)win(s,i,pending.from,pending.tile,false);if(s.afterKong&&isSichuan(s)&&pending.rob===undefined){const payments=s.kongPayments.filter(p=>p.to===pending.from&&p.turn===s.turn),income=payments.reduce((n,p)=>n+p.points,0);if(income)for(const i of winners){pay(s,pending.from,i,income);const record=s.wins[s.wins.length-winners.length+winners.indexOf(i)];record.gained=(record.gained??0)+income;s.history.push(`${s.players[i].name} · 呼叫转移 · +${income}`);}s.kongPayments=s.kongPayments.filter(p=>!payments.includes(p));}
   if(pending.rob!==undefined){s.hands[pending.from]=s.hands[pending.from].filter(t=>t.id!==pending.tile.id);s.discards[pending.from].push(pending.tile);}
   if(!isSichuan(s)||isBattle(s)&&s.won.length>=3){finish(s);return;}s.afterKong=false;draw(s,next(s,pending.from));return;
  }
