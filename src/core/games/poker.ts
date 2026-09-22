@@ -2,7 +2,10 @@ import { action, assertPlayers, seeded, shuffle, validateCommand, type Action, t
 export type PokerKind = 'doudizhu' | 'guandan';
 export interface PokerCard { id: string; rank: number; suit: number }
 export interface Combination { type: string; power: number; size: number; bomb: number }
+export interface PokerTablePlay { player:number; cards:PokerCard[]; combo:Combination|null; serial:number }
 export interface PokerState {
+ /** Optional for pre-table-history saves; absent fields migrate on the next action. */
+ tablePlays?:PokerTablePlay[]; playSerial?:number; counterEnabled?:boolean;
  kind: PokerKind; players: Player[]; hands: PokerCard[][]; bottom: PokerCard[]; played: PokerCard[];
  current: number; phase: 'bid'|'play'|'roundEnd'|'tribute'; rng: number; round: number;
  bid: number; bidder: number; bids: (number|null)[]; landlord: number; multiplier: number; plays: number[];
@@ -94,7 +97,19 @@ export function pokerHint(s:PokerState):string[] {
  const legal=candidates.flatMap(cards=>ddz(cards).filter(c=>beats(c,target)).map(combo=>({cards,combo}))).sort((a,b)=>a.combo.bomb-b.combo.bomb||a.combo.power-b.combo.power||b.cards.length-a.cards.length);
  return legal[0]?.cards.map(c=>c.id)||[];
 }
-function deal(s:PokerState){const deck=shuffle(pokerDeck(s.kind==='guandan'?2:1),seeded(s.rng++));s.hands=s.players.map(()=>deck.splice(0,s.kind==='guandan'?27:17));s.bottom=deck;s.played=[];s.last=null;s.passed=[];s.order=[];s.plays=s.players.map(()=>0);s.bid=0;s.bidder=-1;s.bids=s.players.map(()=>null);s.multiplier=1;s.phase=s.kind==='guandan'?'play':'bid';s.landlord=-1;}
+/** Only public plays, never an opponent hand, are retained at each seat. A new lead clears the previous trick. */
+function tablePlays(s:PokerState):PokerTablePlay[]{return s.tablePlays?.length?s.tablePlays:s.last?[{...s.last,serial:s.playSerial||0}]:[];}
+function recordTablePlay(s:PokerState,player:number,cards:PokerCard[],combo:Combination|null){
+ s.tablePlays=tablePlays(s).filter(p=>p.player!==player);
+ s.playSerial=(s.playSerial||0)+1;s.tablePlays.push({player,cards,combo,serial:s.playSerial});
+}
+/** Remaining cards outside this viewer's hand. Bottom cards are already part of the landlord's hand. */
+export function unplayedRanks(s:PokerState,me:number){
+ const known=new Set([...s.played,...(s.hands[me]||[])].map(c=>c.id));
+ const remaining=pokerDeck(s.kind==='guandan'?2:1).filter(c=>!known.has(c.id));
+ return Array.from({length:15},(_,i)=>({rank:17-i,count:remaining.filter(c=>c.rank===17-i).length}));
+}
+function deal(s:PokerState){const deck=shuffle(pokerDeck(s.kind==='guandan'?2:1),seeded(s.rng++));s.hands=s.players.map(()=>deck.splice(0,s.kind==='guandan'?27:17));s.bottom=deck;s.played=[];s.tablePlays=[];s.playSerial=0;s.last=null;s.passed=[];s.order=[];s.plays=s.players.map(()=>0);s.bid=0;s.bidder=-1;s.bids=s.players.map(()=>null);s.multiplier=1;s.phase=s.kind==='guandan'?'play':'bid';s.landlord=-1;}
 function next(s:PokerState,from:number){for(let step=1;step<=s.players.length;step++){const i=(from+step)%s.players.length;if(s.hands[i].length)return i;}return from;}
 function endDdz(s:PokerState,me:number){const landlordWin=me===s.landlord;const spring=landlordWin?s.plays.every((n,i)=>i===s.landlord||n===0):s.plays[s.landlord]===1;if(spring){s.multiplier*=2;s.history.push('春天 ×2');}const base=s.bid*s.multiplier;s.scores=s.players.map((_,i)=>(i===s.landlord?2:-1)*base*(landlordWin?1:-1));s.winners=s.players.filter((_,i)=>landlordWin?i===s.landlord:i!==s.landlord).map(p=>p.id);s.finished=true;}
 function endGd(s:PokerState){const team=s.order[0]%2,partner=(s.order[0]+2)%4,pos=s.order.indexOf(partner),advance=pos===1?3:pos===2?2:1;
@@ -114,15 +129,15 @@ function actions(s:PokerState,id:string):Action[]{if(s.finished||id!==s.players[
  return[action('play','出牌',s.hands[s.current].map(c=>({id:c.id,title:pokerTitle(c)})),1,s.hands[s.current].length),...(s.last?[action('pass','不出')]:[])];
 }
 export function pokerModule(kind:PokerKind):GameModule<PokerState>{return{
- create(players,seed){assertPlayers(players,kind==='guandan'?4:3,kind==='guandan'?4:3);const s:PokerState={kind,players:structuredClone(players),hands:[],bottom:[],played:[],current:0,phase:'bid',rng:seed,round:1,bid:0,bidder:-1,bids:[],landlord:-1,multiplier:1,plays:[],last:null,passed:[],order:[],previousOrder:[],levels:[2,2],level:2,scores:players.map(()=>0),returns:[],lead:0,finished:false,winners:[],history:[]};deal(s);return s;},
- view(s,id,spectator=false){if(spectator)id='';const me=s.players.findIndex(p=>p.id===id);if(me<0&&!spectator)return{kind,phase:'',instruction:'仅本局玩家可查看',finished:s.finished,actions:[],sections:[],log:[],board:{}};return structuredClone({kind,phase:s.finished?'本局结束':({bid:'叫地主',play:'出牌阶段',roundEnd:'本轮结算',tribute:'进贡还贡'}[s.phase]),instruction:s.finished?(s.winners.length?`胜者：${s.players.filter(p=>s.winners.includes(p.id)).map(p=>p.name).join('、')}`:'本局和局'):me===s.current?'轮到你了':'等待其他玩家操作',finished:s.finished,actions:spectator?[]:actions(s,id),sections:[],log:s.history.slice(-40),board:{hand:[...(s.hands[me]||[])].sort((a,b)=>pokerPower(b.rank,kind,s.level)-pokerPower(a.rank,kind,s.level)||a.suit-b.suit),current:s.players[s.current].id,phase:s.phase,round:s.round,level:s.level,levels:s.levels,bid:s.bid,multiplier:s.multiplier,bids:s.bids,passed:s.passed,bottom:s.landlord<0?[]:s.bottom,last:s.last,order:s.order,winners:s.winners,hint:me===s.current&&s.phase==='play'&&!s.finished?pokerHint(s):[],players:s.players.map((p,i)=>({...p,count:s.hands[i].length,score:s.scores[i],team:kind==='guandan'?i%2:null,landlord:i===s.landlord,rank:s.order.indexOf(i)+1,...(s.finished||s.phase==='roundEnd'?{hand:s.hands[i]}:{})}))}});},
+ create(players,seed,options){assertPlayers(players,kind==='guandan'?4:3,kind==='guandan'?4:3);const s:PokerState={kind,counterEnabled:options?.pokerCounter===true,players:structuredClone(players),hands:[],bottom:[],played:[],current:0,phase:'bid',rng:seed,round:1,bid:0,bidder:-1,bids:[],landlord:-1,multiplier:1,plays:[],last:null,passed:[],order:[],previousOrder:[],levels:[2,2],level:2,scores:players.map(()=>0),returns:[],lead:0,finished:false,winners:[],history:[]};deal(s);return s;},
+ view(s,id,spectator=false){if(spectator)id='';const me=s.players.findIndex(p=>p.id===id);if(me<0&&!spectator)return{kind,phase:'',instruction:'仅本局玩家可查看',finished:s.finished,actions:[],sections:[],log:[],board:{}};return structuredClone({kind,phase:s.finished?'本局结束':({bid:'叫地主',play:'出牌阶段',roundEnd:'本轮结算',tribute:'进贡还贡'}[s.phase]),instruction:s.finished?(s.winners.length?`胜者：${s.players.filter(p=>s.winners.includes(p.id)).map(p=>p.name).join('、')}`:'本局和局'):me===s.current?'轮到你了':'等待其他玩家操作',finished:s.finished,actions:spectator?[]:actions(s,id),sections:[],log:s.history.slice(-40),board:{hand:[...(s.hands[me]||[])].sort((a,b)=>pokerPower(b.rank,kind,s.level)-pokerPower(a.rank,kind,s.level)||a.suit-b.suit),current:s.players[s.current].id,phase:s.phase,round:s.round,level:s.level,levels:s.levels,bid:s.bid,multiplier:s.multiplier,bids:s.bids,passed:s.passed,bottom:s.landlord<0?[]:s.bottom,last:s.last,tablePlays:tablePlays(s),counter:s.counterEnabled?unplayedRanks(s,me):null,order:s.order,winners:s.winners,hint:me===s.current&&s.phase==='play'&&!s.finished?pokerHint(s):[],players:s.players.map((p,i)=>({...p,count:s.hands[i].length,score:s.scores[i],team:kind==='guandan'?i%2:null,landlord:i===s.landlord,rank:s.order.indexOf(i)+1,...(s.finished||s.phase==='roundEnd'?{hand:s.hands[i]}:{})}))}});},
  apply(state,id,cmd){validateCommand(this.view(state,id),cmd);const s=structuredClone(state),me=s.current;
  if(cmd.action==='bid'){const bid=Number(cmd.values[0]);s.bids[me]=bid;if(bid>s.bid){s.bid=bid;s.bidder=me;}if(bid===3||s.bids.every(b=>b!==null)){if(s.bidder<0){s.current=(s.current+1)%3;deal(s);s.history.push('无人叫分，重新发牌');}else{s.landlord=s.bidder;s.current=s.bidder;s.hands[s.bidder].push(...s.bottom);s.phase='play';}}else s.current=(me+1)%3;return s;}
  if(cmd.action==='nextRound'){s.round++;deal(s);setupTribute(s);return s;}
  if(cmd.action==='return'){const pair=s.returns.shift()!,card=s.hands[me].find(c=>c.id===cmd.values[0])!;s.hands[me]=s.hands[me].filter(c=>c.id!==card.id);s.hands[pair.to].push(card);s.history.push(`${s.players[me].name} → ${s.players[pair.to].name} · ${pokerTitle(card)}`);if(s.returns.length)s.current=s.returns[0].from;else{s.current=s.lead;s.phase='play';}return s;}
- if(cmd.action==='pass'){s.passed.push(me);const waiting=s.hands.map((h,i)=>h.length&&i!==s.last!.player&&!s.passed.includes(i)).some(Boolean);if(!waiting){const leader=s.last!.player,partner=(leader+2)%4;s.current=s.hands[leader].length?leader:kind==='guandan'&&s.hands[partner].length?partner:next(s,leader);s.last=null;s.passed=[];}else s.current=next(s,me);return s;}
+ if(cmd.action==='pass'){recordTablePlay(s,me,[],null);s.passed.push(me);const waiting=s.hands.map((h,i)=>h.length&&i!==s.last!.player&&!s.passed.includes(i)).some(Boolean);if(!waiting){const leader=s.last!.player,partner=(leader+2)%4;s.current=s.hands[leader].length?leader:kind==='guandan'&&s.hands[partner].length?partner:next(s,leader);s.last=null;s.passed=[];}else s.current=next(s,me);return s;}
  const cards=cmd.values.map(cid=>s.hands[me].find(c=>c.id===cid)!),options=legalPokerCombinations(cards,kind,s.level,s.last?.combo),combo=cmd.text===undefined?options[0]:options.find(c=>combinationKey(c)===cmd.text);
- if(!combo)throw Error('牌型无效或无法压过上一手');s.hands[me]=s.hands[me].filter(c=>!cmd.values.includes(c.id));s.played.push(...cards);s.last={player:me,cards,combo};s.passed=[];s.plays[me]++;if(combo.bomb&&kind==='doudizhu')s.multiplier*=2;s.history.push(`${s.players[me].name} · ${combo.type}`);
+ if(!combo)throw Error('牌型无效或无法压过上一手');if(!s.last)s.tablePlays=[];recordTablePlay(s,me,cards,combo);s.hands[me]=s.hands[me].filter(c=>!cmd.values.includes(c.id));s.played.push(...cards);s.last={player:me,cards,combo};s.passed=[];s.plays[me]++;if(combo.bomb&&kind==='doudizhu')s.multiplier*=2;s.history.push(`${s.players[me].name} · ${combo.type}`);
  if(!s.hands[me].length){s.order.push(me);if(kind==='doudizhu'){endDdz(s,me);return s;}if(s.order.length===2&&s.order[0]%2===s.order[1]%2||s.order.length===3){s.order.push(...[0,1,2,3].filter(i=>!s.order.includes(i)));endGd(s);return s;}}
  s.current=next(s,me);s.history=s.history.slice(-60);return s;
  }};}

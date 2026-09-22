@@ -1,0 +1,26 @@
+import {chromium,webkit,expect} from '@playwright/test';
+import assert from 'node:assert/strict';
+const base=process.env.BASE_URL||'http://127.0.0.1:5174',browser=await(process.env.TEST_BROWSER==='webkit'?webkit:chromium).launch();
+const contexts=[],pages=[],errors=[];
+async function ready(count){for(const p of pages.slice(1,count)){const b=p.getByRole('button',{name:'准备好了',exact:true});if(await b.count())await b.click();}await expect(pages[0].getByRole('button',{name:'开局',exact:true})).toBeEnabled();}
+async function leave(){const host=pages[0];await host.getByRole('button',{name:'牌桌菜单',exact:true}).click();await host.getByRole('button',{name:'离开牌桌',exact:true}).click();for(const p of pages){await p.locator('.cover-guandan').waitFor();const dismiss=p.getByRole('button',{name:'关闭提示',exact:true});if(await dismiss.count())await dismiss.click();}}
+try{
+ for(let i=0;i<4;i++){const context=await browser.newContext({viewport:{width:390,height:844}});contexts.push(context);await context.addInitScript(({i,id})=>{localStorage.setItem('mocha-profile',JSON.stringify({id,name:`Poker ${i}`,avatar:'🐶'}));localStorage.setItem('mocha-locale','zh');},{i,id:crypto.randomUUID()});const page=await context.newPage();page.setDefaultTimeout(15000);page.on('dialog',d=>d.accept());page.on('pageerror',e=>errors.push(e.message));pages.push(page);await page.goto(base);}
+ for(const kind of ['guandan','doudizhu']){
+  const host=pages[0],count=kind==='guandan'?4:3;
+  await host.locator('.cover-'+kind).click();await host.getByRole('switch',{name:'记牌器',exact:true}).check();await host.getByRole('button',{name:/云端联机/}).click();await host.getByRole('button',{name:'创建牌桌',exact:true}).click();await host.locator('.room-code').waitFor();const code=(await host.locator('.room-code').innerText()).trim();
+  for(let i=1;i<count;i++){const p=pages[i];await p.getByRole('button',{name:'加入牌桌',exact:true}).click();await p.getByRole('textbox',{name:'房间码',exact:true}).fill(code);await p.getByRole('button',{name:'入桌',exact:true}).click();await host.getByRole('button',{name:`同意Poker ${i}`,exact:true}).click();await expect(p.getByRole('switch',{name:'记牌器',exact:true})).toBeDisabled();await expect(p.getByRole('switch',{name:'记牌器',exact:true})).toBeChecked();}
+  await ready(count);await host.getByRole('switch',{name:'记牌器',exact:true}).click();await expect(host.getByRole('switch',{name:'记牌器',exact:true})).not.toBeChecked();for(const p of pages.slice(1,count))await expect(p.getByRole('button',{name:'准备好了',exact:true})).toBeVisible();await host.getByRole('switch',{name:'记牌器',exact:true}).click();await expect(host.getByRole('switch',{name:'记牌器',exact:true})).toBeChecked();await ready(count);await host.getByRole('button',{name:'开局',exact:true}).click();
+  for(const p of pages.slice(0,count))await expect(p.locator('.poker-counter')).toBeVisible();if(kind==='doudizhu')await host.getByRole('button',{name:'叫分 3',exact:true}).click();
+  await host.getByRole('button',{name:'提示',exact:true}).click();await host.locator('.classic-controls .primary').click();
+  for(const p of pages.slice(0,count))await expect(p.locator('.poker-seat-play')).toHaveCount(1);
+  for(const p of pages.slice(1,count))await p.getByRole('button',{name:'不出',exact:true}).click();
+  for(const p of pages.slice(0,count)){await expect(p.locator('.poker-seat-play')).toHaveCount(count);await expect(p.locator('.previous-trick')).toHaveCount(count);}
+  const before=await pages[1].locator('.poker-seat-play').evaluateAll(xs=>xs.map(e=>({player:e.dataset.player,serial:e.dataset.serial,text:e.textContent,cards:[...e.querySelectorAll('.classic-face')].map(c=>c.getAttribute('aria-label'))})));
+  const counters=await pages[1].locator('.counter-ranks').textContent();await pages[1].reload();await expect(pages[1].locator('.poker-seat-play')).toHaveCount(count);assert.deepEqual(await pages[1].locator('.poker-seat-play').evaluateAll(xs=>xs.map(e=>({player:e.dataset.player,serial:e.dataset.serial,text:e.textContent,cards:[...e.querySelectorAll('.classic-face')].map(c=>c.getAttribute('aria-label'))}))),before);await expect(pages[1].locator('.counter-ranks')).toHaveText(counters);
+  await host.getByRole('button',{name:'提示',exact:true}).click();await host.locator('.classic-controls .primary').click();for(const p of pages.slice(0,count))await expect(p.locator('.poker-seat-play')).toHaveCount(1);
+  await host.getByRole('button',{name:'牌桌菜单',exact:true}).click();await host.getByRole('button',{name:'结束本局，返回准备',exact:true}).click();await host.getByRole('switch',{name:'记牌器',exact:true}).click();await expect(host.getByRole('switch',{name:'记牌器',exact:true})).not.toBeChecked();await ready(count);await host.getByRole('button',{name:'开局',exact:true}).click();for(const p of pages.slice(0,count)){await p.locator('.poker-table').waitFor();await expect(p.locator('.poker-counter')).toHaveCount(0);await expect(p.locator('.poker-seat-play')).toHaveCount(0);}
+  await leave();console.log('PASS',kind,'host counter option, readiness reset, guest read-only, synchronized retained plays, reconnect, next trick and restart off');
+ }
+ assert.deepEqual(errors,[]);
+}finally{if(pages[0]&&!pages[0].isClosed()&&await pages[0].locator('.room-code,.poker-table').count()){try{await leave();}catch(e){console.error('Cleanup failed',e.message);}}await Promise.all(contexts.map(c=>c.close()));await browser.close();}

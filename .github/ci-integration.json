@@ -68,6 +68,12 @@
       "script": "tests/ui/poker-feedback.integration.mjs"
     },
     {
+      "script": "tests/ui/poker-experience.integration.mjs"
+    },
+    {
+      "script": "tests/ui/poker-cloud.integration.mjs"
+    },
+    {
       "script": "tests/ui/guandan-results.integration.mjs"
     },
     {

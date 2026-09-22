@@ -23,13 +23,14 @@ export function validKind(kind:any):asserts kind is GameKind {if(!Object.hasOwn(
 export function normalizeGameOptions(kind:GameKind,input:unknown,hostID:string):GameOptions|undefined {
  if(input!==undefined&&(input===null||typeof input!=='object'||Array.isArray(input)))throw new Error('游戏选项无效');
  const options=(input||{}) as Record<string,unknown>;
- if(Object.keys(options).some(key=>!['mahjongMode','werewolfMode','moderatorID','language','unoMode','unoChallenge','werewolfPreset','werewolfWin'].includes(key)))throw new Error('未知游戏选项');
+ if(Object.keys(options).some(key=>!['mahjongMode','werewolfMode','moderatorID','language','unoMode','unoChallenge','pokerCounter','werewolfPreset','werewolfWin'].includes(key)))throw new Error('未知游戏选项');
  if(options.language!==undefined&&!['zh','en'].includes(options.language as string))throw new Error('游戏语言无效');
  if(options.mahjongMode!==undefined&&(kind!=='mahjong'||!isMahjongMode(options.mahjongMode)))throw new Error('Mahjong mode is invalid');
  const language=options.language===undefined?{}:{language:options.language as 'zh'|'en'};
  if(options.unoMode!==undefined&&(kind!=='uno'||!['single','match'].includes(options.unoMode as string)))throw new Error('七彩接龙模式无效');
  if(options.unoChallenge!==undefined&&(kind!=='uno'||typeof options.unoChallenge!=='boolean'))throw new Error('七彩接龙质疑设置无效');
- if(kind!=='werewolf'){if(options.werewolfMode!==undefined||options.moderatorID!==undefined||options.werewolfPreset!==undefined||options.werewolfWin!==undefined)throw new Error('此游戏不支持主持模式选项');const result={...language,...(options.mahjongMode?{mahjongMode:options.mahjongMode as GameOptions['mahjongMode']}:{}),...(options.unoMode?{unoMode:options.unoMode as 'single'|'match'}:{}),...(options.unoChallenge===false?{unoChallenge:false}:{})};return Object.keys(result).length?result:undefined;}
+ if(options.pokerCounter!==undefined&&(!['doudizhu','guandan'].includes(kind)||typeof options.pokerCounter!=='boolean'))throw new Error('记牌器设置无效');
+ if(kind!=='werewolf'){if(options.werewolfMode!==undefined||options.moderatorID!==undefined||options.werewolfPreset!==undefined||options.werewolfWin!==undefined)throw new Error('此游戏不支持主持模式选项');const result={...language,...(options.pokerCounter===true?{pokerCounter:true}:{}),...(options.mahjongMode?{mahjongMode:options.mahjongMode as GameOptions['mahjongMode']}:{}),...(options.unoMode?{unoMode:options.unoMode as 'single'|'match'}:{}),...(options.unoChallenge===false?{unoChallenge:false}:{})};return Object.keys(result).length?result:undefined;}
  if(options.werewolfPreset!==undefined&&!WEREWOLF_PRESETS.some(p=>p.id===options.werewolfPreset))throw new Error('月夜议会配置无效');
  if(options.werewolfWin!==undefined&&!['sides','parity'].includes(options.werewolfWin as string))throw new Error('月夜议会胜负条件无效');
  const rules={...(options.werewolfPreset&&options.werewolfPreset!=='auto'?{werewolfPreset:options.werewolfPreset as GameOptions['werewolfPreset']}:{}),...(options.werewolfWin==='parity'?{werewolfWin:'parity' as const}:{})};
@@ -61,7 +62,7 @@ export function validateMatchForRoom(value:unknown,room:RoomInfo):MatchState {
  if(room.kind==='uno'&&match.game.mode!==undefined&&match.game.mode!==(room.options?.unoMode||'match'))throw new Error('七彩接龙存档模式与房间不一致');
  if(room.kind==='uno'&&(match.game.challengeEnabled??true)!==(room.options?.unoChallenge??true))throw new Error('七彩接龙存档质疑设置与房间不一致');
  if(room.kind==='mahjong'&&match.game.mode!==(room.options?.mahjongMode||'guangdong'))throw new Error('Mahjong checkpoint mode mismatch');
- if(room.kind==='doudizhu'||room.kind==='guandan'){if(match.game.kind!==room.kind)throw new Error('Poker checkpoint kind mismatch');}
+ if(room.kind==='doudizhu'||room.kind==='guandan'){if(match.game.kind!==room.kind)throw new Error('Poker checkpoint kind mismatch');if((match.game.counterEnabled??false)!==(room.options?.pokerCounter??false))throw new Error('记牌器设置无效');}
  if(room.kind==='werewolf'){
   const expected=normalizeGameOptions(room.kind,room.options,room.hostID)!;
   const gameOptions={...(match.game.options||{}),...(match.game.options?.language===undefined&&expected.language?{language:expected.language}:{})};

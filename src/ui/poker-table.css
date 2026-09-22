@@ -1,0 +1,176 @@
+/* Poker uses one public display per seat. Sizes below reserve independent lanes for every player. */
+.poker-table{--gold:#f0cf86;gap:8px;height:100%;min-height:0;padding:6px 2px;color:#faf1db}
+.poker-table .classic-arena{min-height:220px;border-radius:28px;background:radial-gradient(ellipse at 50% 40%,#327962 0,#1c5748 60%,#123e35 100%);border:1px solid #c9b17580;box-shadow:inset 0 0 0 5px #102e294d,inset 0 0 0 7px #d4c09920,0 8px 24px #06150f30}
+.poker-table .classic-arena::before{inset:14px;border-radius:20px;border-color:#deca8b30}
+.poker-table .classic-seat{background:linear-gradient(145deg,#143f35ef,#14372eef);border:1px solid #d9ce9c35;border-radius:14px;box-shadow:0 4px 10px #082a2430;padding:7px;max-width:160px}
+.poker-table .classic-seat.current{border-color:#f4ce80;box-shadow:0 0 0 2px #ebc87922,0 4px 14px #082a2444}
+.poker-table .classic-seat.seat-left{left:16px;top:22%!important}
+.poker-table .classic-seat.seat-right{right:16px;top:22%!important}
+.poker-table .classic-seat.seat-across{top:12px!important;left:50%;transform:translateX(-50%)}
+.poker-table .classic-seat.seat-self{left:16px;bottom:12px;top:auto!important;transform:none;opacity:1;max-width:160px}
+.poker-table .classic-seat.seat-self>div{display:grid;grid-template-columns:1fr;gap:0}
+.poker-table .classic-seat.seat-self small:last-child{display:block;grid-column:auto;text-align:left}
+.poker-table .classic-felt{position:absolute;inset:0!important;display:block;pointer-events:none}
+.poker-table .classic-felt>*{pointer-events:auto}
+.poker-table .classic-table-mark{top:47%;opacity:.5;font-size:15px;letter-spacing:5px}
+.poker-table .classic-table-mark>span:first-child{font-size:32px}
+.poker-table .classic-bottom{top:12px;left:50%;position:absolute;transform:translateX(-50%);padding:4px 9px;border-radius:10px;background:#123d3266;border:1px solid #d7ca9a22}
+.poker-table .classic-bottom .mini{width:23px}
+.poker-table .classic-team-levels{position:absolute;top:12px;right:16px;max-width:110px;margin:0;font-size:9px;gap:4px}
+.poker-table .classic-team-levels>b{font-size:17px}
+.poker-table .classic-team-levels small{display:none}
+.poker-table .poker-seat-play{position:absolute;display:flex;flex-direction:column;gap:3px;width:32%;max-width:32%;min-width:0;min-height:0;margin:0;transform:none;text-align:left}
+.poker-table .poker-seat-play.play-left{left:18px;top:calc(22% + 73px);--deal-x:-22px;--deal-y:0px}
+.poker-table .poker-seat-play.play-right{right:18px;top:calc(22% + 73px);text-align:right;--deal-x:22px;--deal-y:0px}
+.poker-table .poker-seat-play.play-across{left:36%;top:83px;width:28%;max-width:28%;text-align:center;--deal-x:0px;--deal-y:-18px}
+.poker-table .poker-seat-play.play-self{bottom:12px;left:34%;width:40%;max-width:40%;text-align:center;--deal-x:0px;--deal-y:18px}
+.poker-table .played-caption{margin:0;display:flex;justify-content:inherit;gap:4px;font-size:10px;line-height:1.25;min-width:0}
+.poker-table .played-caption>span{margin:0;padding:2px 6px;max-width:100%;border-radius:6px;font-size:10px;background:#102f28bb;color:#ead69e;overflow-wrap:anywhere}
+.poker-table .played-caption .played-owner{display:none}
+.poker-table .play-right .played-caption{justify-content:flex-end}
+.poker-table :is(.play-self,.play-across) .played-caption{justify-content:center}
+.poker-table .played-scroll{padding:2px 1px 4px;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;max-width:100%;border-radius:5px}
+.poker-table .classic-cards.played{width:max-content;min-width:100%;justify-content:flex-start;gap:0;padding-right:1px}
+.poker-table .played .classic-face.mini{width:42px;min-width:42px;flex-shrink:0;margin-right:-14px;filter:drop-shadow(1px 2px 1px #06261b55)}
+.poker-table .played .classic-face.mini:last-child{margin-right:0}
+.poker-table .play-right .classic-cards.played{justify-content:flex-end}
+.poker-table :is(.play-across,.play-self) .classic-cards.played{justify-content:center}
+.poker-table .previous-trick .played-caption>span{background:#1a3b33;color:#bfd0bc}
+.poker-table .latest-play .played-caption>span{color:#ffe4a6;border-color:#dfbe74aa}
+.poker-table .table-prompt{position:absolute;left:25%;right:25%;top:50%;max-width:none;margin:0;text-align:center;font-size:12px;line-height:1.5}
+.poker-table .classic-hand-panel{background:linear-gradient(170deg,#234b3af5,#162e25fa);border:1px solid #d1b77944;border-radius:18px;box-shadow:0 -3px 18px #081f1522}
+.poker-table .classic-controls button.compact{border-radius:12px;min-height:44px;min-width:44px;background:linear-gradient(#355c48,#264a39);border:1px solid #c0c99c55;color:#f6edd8;box-shadow:0 3px 0 #0e291c;font-weight:600}
+.poker-table .classic-controls button.primary{background:linear-gradient(#f7da94,#dfb468);border-color:#f6dfa4;color:#3b2b13;box-shadow:0 3px 0 #947442}
+.poker-table .classic-controls button:disabled{opacity:.45;box-shadow:none}
+.poker-table .classic-controls button:not(:disabled):active{transform:translateY(2px);box-shadow:none}
+.poker-table .classic-card.selected{filter:drop-shadow(0 0 4px #f7cf74);outline-color:#ffe2a3}
+.poker-table .classic-selection{color:#d8dec8}
+.poker-counter{flex-shrink:0;display:flex;align-items:center;gap:8px;min-width:0;border:1px solid #c1b87c40;border-radius:12px;background:#112f27bb;padding:0 7px}
+.counter-toggle{display:flex;align-items:center;justify-content:center;gap:5px;min-width:44px;min-height:44px;padding:0 3px;border:0;background:none;color:#ead39c;font-size:11px;flex-shrink:0}
+.counter-ranks{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));flex:1;min-width:0;gap:1px;padding:4px 0}
+.counter-ranks>div{display:grid;text-align:center;gap:2px;min-width:0;font-size:11px;line-height:1.2;border-left:1px solid #d5d9b619;color:#ecede0}
+.counter-ranks b{font-size:12px;color:#f3d591;font-variant-numeric:tabular-nums}
+.counter-ranks .exhausted{opacity:.35}.counter-ranks .red-joker>span{color:#ffa899}
+.poker-table .poker-seat-play.new-play{animation:poker-deal-in .32s cubic-bezier(.2, .75, .25, 1) both}
+@keyframes poker-deal-in{from{opacity:0;translate:var(--deal-x,0) var(--deal-y,14px);scale:.92}to{opacity:1;translate:0 0;scale:1}}
+@media(max-width:740px){
+ .poker-table{gap:5px;padding:3px 0}
+ .poker-table .classic-arena{min-height:200px;border-radius:22px}
+ .poker-table .classic-seat{padding:5px;gap:4px;max-width:110px}
+ .poker-table .classic-seat.seat-left{left:8px;top:28%!important}
+ .poker-table .classic-seat.seat-right{right:8px;top:28%!important}
+ .poker-table .classic-seat.seat-across{top:8px!important;max-width:124px}
+ .poker-table .classic-seat.seat-self{left:8px;bottom:8px;max-width:102px}
+ .poker-table .classic-seat b{font-size:10px;max-width:74px}
+ .poker-table .classic-avatar{width:26px;height:26px;font-size:19px}
+ .poker-table .classic-seat small{font-size:9px}.poker-table .classic-seat small strong{font-size:10px}
+ .poker-table .classic-team-levels{top:11px;right:9px;max-width:55px;font-size:8px}
+ .poker-table .classic-team-levels>b{font-size:14px}.poker-table .classic-team-levels>i{height:12px}
+ .poker-table .poker-seat-play.play-left{left:10px;top:calc(28% + 66px);width:43%;max-width:43%}
+ .poker-table .poker-seat-play.play-right{right:10px;top:calc(28% + 66px);width:43%;max-width:43%}
+ .poker-table .poker-seat-play.play-across{top:76px;left:33%;width:34%;max-width:34%}
+ .poker-table .poker-seat-play.play-self{left:36%;bottom:8px;width:55%;max-width:55%}
+ .poker-table .played .classic-face.mini{width:33px;min-width:33px;margin-right:-9px}
+ .poker-table .played-caption>span{font-size:9px;padding:2px 4px}
+ .poker-table .table-prompt{left:16%;right:16%;font-size:11px;top:60%}
+ .counter-toggle>span{display:none}.poker-counter{gap:2px;padding:0 4px}.counter-ranks{gap:0}.counter-ranks>div{font-size:9px}.counter-ranks b{font-size:11px}
+}
+@media(max-width:740px) and (max-height:650px) and (orientation:portrait){
+ .poker-table .classic-arena{min-height:196px}
+ .poker-table.game-table-guandan .classic-seat:not(.seat-self){top:8px!important;width:calc((100% - 32px)/3);max-width:none;padding:4px;gap:3px}
+ .poker-table.game-table-guandan .classic-seat:not(.seat-self) .classic-avatar{display:none}
+ .poker-table.game-table-guandan .classic-team-levels{display:none}
+ .poker-table.game-table-guandan .poker-seat-play.play-left,.poker-table.game-table-guandan .poker-seat-play.play-right{top:78px;width:30%;max-width:30%}
+ .poker-table.game-table-guandan .poker-seat-play.play-across{top:78px;left:35%;width:30%;max-width:30%}
+ .poker-table .classic-seat.seat-left,.poker-table .classic-seat.seat-right{top:47px!important}
+ .poker-table .poker-seat-play.play-left,.poker-table .poker-seat-play.play-right{top:115px}
+ .poker-table .played .classic-face.mini{width:29px;min-width:29px;margin-right:-7px}
+ .poker-table .classic-seat.seat-self{bottom:5px}
+ .poker-table .poker-seat-play.play-self{bottom:5px}
+ .poker-table .classic-bottom{top:5px;min-height:0;padding:2px 7px}.poker-table .classic-bottom .mini{width:18px}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .poker-table{gap:4px;padding:2px 0}
+ .poker-table .classic-arena{min-height:134px;border-radius:20px}
+ .poker-table .classic-seat.seat-left,.poker-table .classic-seat.seat-right{top:8px!important;max-width:130px}
+ .poker-table .classic-seat.seat-across{top:6px!important;max-width:130px}
+ .poker-table .classic-seat.seat-self{bottom:5px;max-width:130px}
+ .poker-table .classic-seat.seat-self>div{grid-template-columns:auto auto;gap:3px}
+ .poker-table .classic-seat.seat-self small:last-child{grid-column:1/-1}
+ .poker-table .poker-seat-play.play-left,.poker-table .poker-seat-play.play-right{top:62px;width:30%;max-width:30%}
+ .poker-table .poker-seat-play.play-across{top:62px;left:36%;width:28%;max-width:28%}
+ .poker-table .poker-seat-play.play-self{left:36%;bottom:5px;width:28%;max-width:28%}
+ .poker-table.game-table-guandan .poker-seat-play.play-self{left:70%;width:28%;max-width:28%}
+ .poker-table .played .classic-face.mini{width:27px;min-width:27px;margin-right:-7px}
+ .poker-table .played-caption>span{font-size:9px;padding:1px 4px}
+ .poker-table .classic-bottom{top:6px;min-height:0;padding:2px 5px}.poker-table .classic-bottom .mini{width:18px}
+ .poker-table .classic-team-levels{display:none}
+ .poker-table .table-prompt{top:55%;left:28%;right:28%}
+ .poker-table .classic-hand-panel{border-radius:12px}
+ .poker-counter{position:absolute;right:10px;top:3px;z-index:5;background:#12352df5;max-width:calc(100% - 20px)}
+ .poker-counter.expanded{width:min(500px,calc(100% - 20px))}
+ .poker-table{position:relative}.poker-table:has(.poker-counter) .classic-edition{padding-right:55px}
+ .poker-counter .counter-toggle{min-height:24px;height:24px}.poker-counter.expanded .counter-toggle{min-height:44px}
+}
+@media(prefers-reduced-motion:reduce){.poker-table .poker-seat-play.new-play{animation:none}.poker-table .classic-card,.poker-table .classic-controls button{transition:none}}
+/* A short landscape table gives all four players their own column. */
+@media(max-height:500px) and (orientation:landscape){
+ .poker-table.game-table-guandan .classic-seat{width:calc(25% - 18px);max-width:none;top:8px!important;bottom:auto;transform:none}
+ .poker-table.game-table-guandan .classic-seat.seat-left{left:8px}
+ .poker-table.game-table-guandan .classic-seat.seat-across{left:calc(25% + 4px)}
+ .poker-table.game-table-guandan .classic-seat.seat-right{left:50%;right:auto}
+ .poker-table.game-table-guandan .classic-seat.seat-self{left:calc(75% - 4px)}
+ .poker-table.game-table-guandan .classic-seat.seat-self>div{display:grid;grid-template-columns:1fr;gap:0}
+ .poker-table.game-table-guandan .poker-seat-play{top:76px;bottom:auto;width:22%;max-width:22%;text-align:center}
+ .poker-table.game-table-guandan .poker-seat-play.play-left{left:1.5%}
+ .poker-table.game-table-guandan .poker-seat-play.play-across{left:26.5%}
+ .poker-table.game-table-guandan .poker-seat-play.play-right{left:51.5%;right:auto}
+ .poker-table.game-table-guandan .poker-seat-play.play-self{left:76.5%;width:22%;max-width:22%}
+ .poker-table.game-table-guandan .played-caption{justify-content:center}
+ .poker-table.game-table-guandan .classic-cards.played{justify-content:center}
+}
+.poker-table .classic-seat.seat-self{margin-bottom:7px}
+/* One-row hands in small viewports reserve room for the public plays. */
+@media(max-height:650px) and (orientation:portrait),(max-height:500px) and (orientation:landscape){
+ .poker-table .classic-hand{grid-template-columns:repeat(var(--hand-total),minmax(44px,1fr));grid-template-rows:1fr;min-width:calc(var(--hand-total)*48px - 4px)}
+ .poker-table:has(.seat-across) .classic-arena{min-height:196px}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .poker-table:has(.seat-across) .classic-arena{min-height:132px}
+ .poker-table .poker-counter{top:-9px;right:2px}
+ .poker-counter .counter-toggle{min-height:44px;height:44px}
+ .poker-table:has(.poker-counter) .classic-edition{padding-right:65px}
+ .poker-counter.expanded{box-shadow:0 5px 22px #061c18aa}
+}
+.poker-table .classic-hand{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.poker-table .drag-selecting{outline:2px solid #edce88;outline-offset:-2px;background:#ead3920d;cursor:crosshair}
+@media(max-height:500px) and (orientation:landscape){
+ .poker-table{gap:2px;padding-block:1px}
+ .poker-table .classic-edition{min-height:18px;height:18px}
+ .poker-table.game-table-guandan .poker-seat-play{top:66px}
+ .poker-table .hand-scroll-cue{font-size:8px}
+}
+@media(max-width:380px){.poker-table .hand-scroll-cue{font-size:8px;gap:2px}.poker-table .hand-scroll-cue svg{display:none}.poker-table .hand-score{display:none}}
+@media(max-width:380px) and (max-height:650px) and (orientation:portrait){
+ .poker-table.game-table-doudizhu .played .classic-face.mini{width:24px;min-width:24px;margin-right:-5px}
+ .poker-table.game-table-doudizhu .played-scroll{padding-top:0;padding-bottom:2px}
+}
+@media(max-height:500px) and (orientation:landscape){.poker-table.game-table-doudizhu .classic-seat.seat-self{display:none}}
+/* Upright overlapping cards keep every rank and suit visible, like a held hand. */
+.poker-table .classic-hand{--poker-step:36px;--poker-width:72px;display:grid;grid-template-columns:repeat(calc(var(--hand-total) - 1),var(--poker-step)) var(--poker-width);grid-template-rows:1fr;gap:0;justify-items:start;align-items:end;width:max-content;min-width:calc((var(--hand-total) - 1)*var(--poker-step) + var(--poker-width));padding-right:3px}
+.poker-table .classic-hand:empty{min-width:0;width:100%}
+.poker-table .classic-card{width:var(--poker-width);min-width:var(--poker-width);max-width:var(--poker-width);height:calc(var(--poker-width)*1.4);border-radius:5px;box-shadow:-2px 1px 4px #091c2355;isolation:auto}
+.poker-table .classic-card.selected{transform:translateY(-9px);z-index:auto;outline:2px solid #ffe4a0;filter:drop-shadow(-2px 0 3px #e5c988);box-shadow:0 -3px 0 #edcc87}
+.poker-table .classic-card:focus-visible{z-index:2}
+.poker-table .card-selected-mark{right:auto;left:0;border-radius:5px 0 5px 0;width:15px;height:15px;top:-8px;font-size:10px}
+.poker-table .classic-hand-scroll{padding-top:14px;padding-bottom:8px}
+@media(max-width:740px){.poker-table .classic-hand{--poker-step:28px;--poker-width:62px}}
+@media(max-height:650px) and (orientation:portrait){.poker-table .classic-hand{--poker-step:26px;--poker-width:44px}.poker-table .classic-hand-scroll{padding-top:12px;padding-bottom:5px}}
+@media(max-height:500px) and (orientation:landscape){.poker-table .classic-hand{--poker-step:28px;--poker-width:44px}.poker-table .classic-hand-scroll{padding-top:12px;padding-bottom:4px}}
+/* The button owns its exposed strip; the face can paint underneath the next card.
+   This keeps keyboard and pointer targets aligned with the rank users can see. */
+.poker-table .classic-card{width:var(--poker-step);min-width:var(--poker-step);max-width:var(--poker-step);box-shadow:none}
+.poker-table .classic-card:last-child{width:var(--poker-width);min-width:var(--poker-width);max-width:var(--poker-width)}
+.poker-table .classic-card .classic-face{width:var(--poker-width);height:100%;max-width:none;box-shadow:-2px 1px 4px #091c2355}
+.poker-table .classic-card.wild-card::after{width:calc(var(--poker-width) - 2px)}
+@media(max-height:350px) and (orientation:landscape){.poker-table .classic-hand-panel{padding-block:2px}}
