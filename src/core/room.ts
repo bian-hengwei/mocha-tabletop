@@ -1,3 +1,4 @@
+import {isMahjongMode} from './mahjongModes';
 import type { Command, GameKind, GameView, Player, GameOptions } from './types';
 import { AVATARS, GAMES } from './types';
 import { modules } from './registry';
@@ -24,7 +25,7 @@ export function normalizeGameOptions(kind:GameKind,input:unknown,hostID:string):
  const options=(input||{}) as Record<string,unknown>;
  if(Object.keys(options).some(key=>!['mahjongMode','werewolfMode','moderatorID','language','unoMode','unoChallenge','werewolfPreset','werewolfWin'].includes(key)))throw new Error('未知游戏选项');
  if(options.language!==undefined&&!['zh','en'].includes(options.language as string))throw new Error('游戏语言无效');
- if(options.mahjongMode!==undefined&&(kind!=='mahjong'||!['guangdong','sichuan','bloodflow','laizi'].includes(options.mahjongMode as string)))throw new Error('Mahjong mode is invalid');
+ if(options.mahjongMode!==undefined&&(kind!=='mahjong'||!isMahjongMode(options.mahjongMode)))throw new Error('Mahjong mode is invalid');
  const language=options.language===undefined?{}:{language:options.language as 'zh'|'en'};
  if(options.unoMode!==undefined&&(kind!=='uno'||!['single','match'].includes(options.unoMode as string)))throw new Error('七彩接龙模式无效');
  if(options.unoChallenge!==undefined&&(kind!=='uno'||typeof options.unoChallenge!=='boolean'))throw new Error('七彩接龙质疑设置无效');

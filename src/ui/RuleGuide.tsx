@@ -1,9 +1,12 @@
+import {MahjongRuleGuide} from './MahjongRuleGuide';
+import type {MahjongMode} from '../core/mahjongModes';
 import {useId,useState} from 'react';
 import type {GameKind} from '../core/types';
 import {useLocale,t} from '../i18n';
 import {guides} from '../i18n/guides';
 export type Guide={edition:string;quick:string[];sections:{title:string;text:string[]}[]};
-export function RuleGuide({kind}:{kind:GameKind}){
+export function RuleGuide({kind,mahjongMode,legacy=false}:{kind:GameKind;mahjongMode?:MahjongMode;legacy?:boolean}){return kind==='mahjong'?<MahjongRuleGuide mode={mahjongMode} legacy={legacy}/>:<GeneralRuleGuide kind={kind}/>;}
+function GeneralRuleGuide({kind}:{kind:GameKind}){
  const locale=useLocale(),[full,setFull]=useState(false),id=useId(),guide=guides[kind][locale];
  return <div className="rule-guide"><div className="rule-tabs" role="tablist" aria-label={t('规则与教程')} onKeyDown={event=>{
   if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;

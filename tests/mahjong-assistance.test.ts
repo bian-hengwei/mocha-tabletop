@@ -36,11 +36,12 @@ describe('private Mahjong assistance',()=>{
  });
  it('estimates table multipliers for pure seven pairs and agrees with actual settlement',()=>{
   const s=setup();s.hands[0]=tiles([0,0,2,2,4,4,6,6,7,7,8,8,1]);const wait=assist(s)!.waits.find(w=>w.value===1)!;
-  expect(wait.discardMultiplier).toBe(8);expect(wait.selfDrawMultiplier).toBe(16);
+  expect(wait.discardMultiplier).toBe(1);expect(wait.selfDrawMultiplier).toBe(2);
   s.hands[0].push({id:'drawn',value:1});s.drawn='drawn';s.current=0;s.afterKong=true;
-  expect(assist(s)!.currentWin).toEqual({multiplier:32,selfDraw:true});
-  const won=mahjong.apply(s,'a',{action:'hu',values:[]});expect(won.wins.at(-1)!.points).toBe(32);
+  expect(assist(s)!.currentWin).toEqual({multiplier:4,selfDraw:true});
+  const won=mahjong.apply(s,'a',{action:'hu',values:[]});expect(won.wins.at(-1)!.points).toBe(4);
  });
+ it('distinguishes red self-draw concealed triplets from discard-win scoring',()=>{const s=setup('redBloodflow');s.hands[0]=tiles([0,0,0,4,4,4,9,9,9,13,13,17,17]);const wait=assist(s)!.waits.find(w=>w.value===13)!;expect(wait.discardMultiplier).toBe(32);expect(wait.selfDrawMultiplier).toBe(128);});
  it('respects setup phases, missing suits, eliminated players and Blood Flow lock',()=>{
   const s=setup('sichuan');s.missing[0]=0;expect(assist(s)!.waits).toEqual([]);
   s.phase='exchange';expect(assist(s)).toBeNull();s.phase='que';expect(assist(s)).toBeNull();s.phase='discard';s.won=[0];expect(assist(s)).toBeNull();

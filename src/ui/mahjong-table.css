@@ -118,3 +118,48 @@
 .mj-ready-mark{position:absolute;top:-8px;right:0;min-width:18px;border-radius:5px;padding:2px 3px;background:#ead39c;color:#294633;font-size:9px;font-weight:800;line-height:12px;box-shadow:0 1px 3px #082d2366}
 @media(max-height:500px) and (orientation:landscape){.mj-table .mj-hand-toolbar{min-height:44px}.mahjong-ready-tiles{padding-bottom:0}.mahjong-ready-tile .mahjong-art{width:23px;height:30px}}
 @media(max-width:740px) and (orientation:portrait){.mj-table .mj-hand{row-gap:20px}.mj-table .mj-hand-scroll{padding-top:20px}}
+
+/* Woven blue-green cloth, a walnut rail and brass details share the existing table geometry. */
+.app.in-game.game-mahjong{background:radial-gradient(ellipse at 50% 20%,#44403b,#262c2c 55%,#181f21)}
+.mj-arena{background:repeating-linear-gradient(0deg,#ffffff03 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,#101f2510 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 40%,#496e70,#30545a 75%);border-color:#bda078;box-shadow:inset 0 0 0 5px #685344,inset 0 0 0 6px #c2a374,inset 0 0 0 9px #253c42,inset 0 5px 35px #132d3955}
+.mj-arena:before{inset:12px;border-color:#decda42b}
+.mj-avatar{background:linear-gradient(135deg,#6b776e,#3d5254);border-color:#e8d2ac88;box-shadow:0 3px 6px #11282e44}
+.mj-hand-panel{background:linear-gradient(165deg,#39464a,#27353c);border-color:#c7af8438}
+.mj-table .mj-compass{background:linear-gradient(145deg,#35484c,#233138);border-color:#d0b487;color:#e2ceb0}
+.mj-mode-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mj-edition{gap:8px;color:#dfd6c7}.mj-history{margin-left:auto;flex-shrink:0}
+.mj-wild-indicator{display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:10px}.mj-wild-indicator .mj-face{width:18px;height:24px}
+.mahjong-win-patterns{display:block;font-size:11px;line-height:1.6;color:#dfcaaa;margin-top:5px}
+
+.mj-table .mj-edition{position:relative;inset:auto;width:100%;height:30px;padding:0 6px;flex-shrink:0}.mj-table .mj-history{height:44px;min-width:44px;margin-top:0;background:none}.mj-mode-name{font-size:11px;flex:1}.mj-wild-indicator{flex-shrink:0}
+
+.mj-table .mj-seat small{overflow-wrap:anywhere;max-width:100%}
+
+.mj-table:not(.mj-spectating) .mj-seat.seat-self{bottom:14px}
+
+/* Reserve the lower corner for the local seat, including long score labels. */
+@media(max-height:500px) and (orientation:landscape){
+ .mj-table .mj-seat:is(.seat-left,.seat-right){top:12px;transform:none}
+ .mj-table:not(.mj-spectating) .mj-seat.seat-self{width:75px;max-width:75px}
+ .mj-table .mj-seat:is(.seat-left,.seat-right) .mj-avatar{width:24px;height:24px;font-size:18px}
+ .mj-table .mj-seat:is(.seat-left,.seat-right) small{font-size:8px;line-height:1.25}
+ .mj-table .mj-seat:is(.seat-left,.seat-right) b{line-height:12px}
+}
+@media(max-width:740px) and (max-height:500px) and (orientation:landscape){
+ .mj-table .mj-seat:is(.seat-left,.seat-right){top:10px;width:94px;max-width:94px;flex-direction:row;gap:2px;text-align:left;align-items:flex-start}
+ .mj-table .mj-seat:is(.seat-left,.seat-right)>div{flex:1;min-width:0}
+ .mj-table .mj-seat:is(.seat-left,.seat-right) .mj-avatar{width:16px;height:18px;font-size:13px}
+ .mj-table .mj-seat:is(.seat-left,.seat-right) small:first-of-type{white-space:normal}
+ .mj-table:not(.mj-spectating) .mj-seat.seat-self{width:90px;max-width:90px}
+ .mj-table:not(.mj-spectating) .mj-seat.seat-self b{display:none}
+ .mj-table .mj-melds.meld-across{right:20%}
+ .mj-table .mj-rack.mj-rack-left{left:108px}.mj-table .mj-rack.mj-rack-right{right:108px}
+ .mj-table .mj-melds.meld-left{left:124px}.mj-table .mj-melds.meld-right{right:124px}
+ .mj-public{left:145px;right:145px}
+}
+@media(max-height:650px) and (orientation:portrait){
+ .mj-table .mj-seat:is(.seat-left,.seat-right){top:20%;gap:3px}
+ .mj-table .mj-seat:is(.seat-left,.seat-right) .mj-avatar{width:26px;height:26px;font-size:19px}
+ .mj-table .mj-seat:is(.seat-left,.seat-right) small{font-size:8px;line-height:1.25}
+ .mj-table .mj-seat:is(.seat-left,.seat-right) b{line-height:12px}
+ .mj-table .mj-rack:is(.mj-rack-left,.mj-rack-right){top:40%}
+}

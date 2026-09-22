@@ -523,6 +523,7 @@ function mahjongBot(view: GameView, selfID: string, difficulty: BotDifficulty, r
   const meldCount = self?.melds.length ?? 0;
   const exchange = pokerAction(view, 'exchange');
   if (exchange) {
+    if (exchange.min === 0) return { action: exchange.id, values: [] };
     const values = chooseExchange(board, difficulty, rng);
     return values.length === exchange.min ? { action: exchange.id, values } : undefined;
   }

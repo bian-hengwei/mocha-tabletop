@@ -198,3 +198,6 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 连接生命周期回归使用 `TEST_FRONTEND` 指向运行中的 Vite，并需要对应本地 Worker。`lifecycle.integration.mjs` 在 Chromium 中通过 CDP 暂停真实页面执行，在 WebKit 中通过 Playwright clock 暂停页面定时器；这验证浏览器挂起路径，不等同于手机系统切后台/锁屏的真机验收。关闭双方标签页后以无 sessionStorage 的新标签页自动恢复，比较原玩家、matchID、操作版本和私人视图，再通过界面继续出牌。截图写入 `test-results/lifecycle-*`。
 
 麻将独立界面回归：`TEST_GAMES=mahjong SKIP_FULL=1 node tests/ui/classic-games.integration.mjs` 验证四种模式的真实 App 开局、换牌定缺、出牌与恢复；`TEST_GAMES=mahjong node tests/ui/classic-orientation.integration.mjs` 检查中英九尺寸。
+
+- `tests/mahjong-modes.test.ts`：十模式的牌组、换牌、独立番表样例、鬼牌、吃碰优先、漏胡、包牌、旧存档兼容及完整对局守恒。
+- `BASE_URL=http://127.0.0.1:5188 node tests/ui/mahjong-modes.integration.mjs`：十模式真实开局、中英教程、换牌/定缺/出牌/恢复、七尺寸密集牌桌和长昵称、弹窗旋转和焦点；支持 `TEST_BROWSER=webkit`。

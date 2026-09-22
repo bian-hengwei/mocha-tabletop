@@ -12,7 +12,7 @@ const players: Player[] = Array.from({ length: 4 }, (_, index) => ({
 }));
 
 const difficulties: BotDifficulty[] = ['easy', 'normal', 'hard'];
-const modes: MahjongMode[] = ['guangdong', 'sichuan', 'bloodflow', 'laizi'];
+const modes: MahjongMode[] = ['guangdong', 'sichuan', 'bloodflow', 'laizi', 'bloodflowAny', 'bloodflowThree', 'redBloodflow', 'redBattle', 'guangdongFan', 'guangdongGhost'];
 const cards = (ranks: number[], suits?: number[]): PokerCard[] =>
   ranks.map((rank, index) => ({ id: `fixed-${index}`, rank, suit: suits?.[index] ?? index % 4 }));
 
@@ -54,6 +54,8 @@ function assertMahjongConservation(state: MahjongState) {
     ...state.wall,
     ...state.melds.flat().flatMap(meld => meld.tiles),
     ...state.discards.flat(),
+    ...(state.winningTiles??[]),
+    ...(state.indicator?[state.indicator]:[]),
   ];
   expect(all).toHaveLength(mahjongTiles(state.mode).length);
   expect(new Set(all.map(tile => tile.id))).toHaveLength(all.length);
