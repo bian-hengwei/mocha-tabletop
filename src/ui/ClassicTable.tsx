@@ -15,6 +15,8 @@ import {MahjongTable} from './MahjongTable';
 import './mahjong-table.css';
 import './poker-table.css';
 import {usePokerDragSelection} from './usePokerDragSelection';
+import {PokerPlayMotion,usePokerPlayMotion,pokerFlightKey} from './PokerPlayMotion';
+const EMPTY_PLAYS:PokerTablePlay[]=[];
 type Props={view:GameView;selfID:string;command:(c:Command)=>void;open:(a:Action,selected?:string[])=>void;onReplay?:()=>void;replayLabel?:string};
 function Face({card,mahjong,mini=false}:{card:PokerCard|Tile;mahjong:boolean;mini?:boolean}){
  const label=t(mahjong?tileTitle(card as Tile):pokerTitle(card as PokerCard));
@@ -37,10 +39,8 @@ function PokerTable({view,selfID,command,open,onReplay,replayLabel}:Props){
   const observer=new ResizeObserver(update);observer.observe(rail);observer.observe(handNode);update();
   return()=>observer.disconnect();
  },[view.kind,b.phase,view.finished]);
- const publicSerial=Math.max(0,...((b.tablePlays||[]) as PokerTablePlay[]).map(p=>p.serial));
- const previousPublic=useRef({selfID,round:b.round,serial:publicSerial,newSerials:new Set<number>()});
- if(previousPublic.current.selfID!==selfID||previousPublic.current.round!==b.round||publicSerial<previousPublic.current.serial){previousPublic.current={selfID,round:b.round,serial:publicSerial,newSerials:new Set()};}
- else if(publicSerial>previousPublic.current.serial){const previous=previousPublic.current.serial;previousPublic.current={selfID,round:b.round,serial:publicSerial,newSerials:new Set(((b.tablePlays||[]) as PokerTablePlay[]).filter(p=>p.serial>previous).map(p=>p.serial))};}
+ const arenaRef=useRef<HTMLDivElement>(null);
+ const motion=usePokerPlayMotion(arenaRef,(b.tablePlays||EMPTY_PLAYS) as PokerTablePlay[],b.round,selfID);
  const signature=hand.map(c=>c.id).join('|');
  useEffect(()=>setSelected([]),[selfID,b.current,b.phase,b.turn,b.round,signature]);
  const dragging=usePokerDragSelection(handScrollRef,selected,setSelected,selectAction?.choices.map(c=>c.id)||[],selectAction?.max||0,[selfID,b.current,b.phase,b.round,signature].join(':'));
@@ -73,11 +73,11 @@ function PokerTable({view,selfID,command,open,onReplay,replayLabel}:Props){
  if(view.kind==='guandan'&&!playing)return <GuandanResults key={`${b.round}:${view.finished}`} view={view} selfID={selfID} onNext={view.actions.some(a=>a.id==='nextRound')?()=>command({action:'nextRound',values:[]}):undefined} onReplay={onReplay} replayLabel={replayLabel}/>;
  return <div className={`classic-table ${isMahjong?'mahjong-table':'poker-table'} game-table-${view.kind} ${view.finished||b.phase==='roundEnd'?'is-finished':''}`}>
   <header className="classic-edition"><span><i/>{t(isMahjong?MAHJONG_MODES[b.mode as keyof typeof MAHJONG_MODES]:view.kind==='guandan'?'双副牌 · 对家合作':'经典叫分 · 三人局')}</span><strong>{isMahjong?`${t('余牌')} ${b.wallCount}`:view.kind==='guandan'?`${t('级牌')} ${rankName(b.level===2?15:b.level)} · ${t('轮次')} ${b.round}`:`${t('底分')} ${b.bid} · ×${b.multiplier}`}</strong></header>
-  {!isEnd&&<><div className="classic-arena">
-   <div className="classic-seats">{b.players.map((p:any,i:number)=><section key={p.id} className={`classic-seat seat-${position(i)} ${playing&&p.id===b.current?'current':''} ${p.id===selfID?'self':''}`}><span className="classic-avatar">{p.avatar}</span><div><b title={p.name}>{p.name}{p.id===selfID?` · ${t('我')}`:''}</b><small><strong>{t(`${p.count} 张`)}</strong> · {p.score} {t('分')}</small><small>{p.landlord?t('地主'):view.kind==='doudizhu'&&b.phase!=='bid'?t('农民'):view.kind==='guandan'?`${t('队伍')} ${p.team+1}`:isMahjong?t(['东','南','西','北'][i]):''}{isMahjong&&p.missing!==undefined?` · ${t('缺')} ${t(['万','筒','条'][p.missing])}`:''}{p.won?` · ${t('已胡牌')}`:''}{p.rank>0?` · ${t('名次')} ${p.rank}`:''}</small></div>{playing&&p.id===b.current&&<span className="seat-turn-label">{t('行动中')}</span>}<span className="seat-turn-light" aria-hidden="true"/>{!isMahjong&&b.phase==='bid'&&b.bids[i]!==null&&<span className="seat-call">{b.bids[i]===0?t('不叫'):`${t('叫分')} ${b.bids[i]}`}</span>}</section>)}</div>
+  {!isEnd&&<><div className="classic-arena" ref={arenaRef}>
+   <div className="classic-seats">{b.players.map((p:any,i:number)=><section key={p.id} data-player={p.id} className={`classic-seat seat-${position(i)} ${playing&&p.id===b.current?'current':''} ${p.id===selfID?'self':''}`}><span className="classic-avatar">{p.avatar}</span><div><b title={p.name}>{p.name}{p.id===selfID?` · ${t('我')}`:''}</b><small><strong>{t(`${p.count} 张`)}</strong> · {p.score} {t('分')}</small><small>{p.landlord?t('地主'):view.kind==='doudizhu'&&b.phase!=='bid'?t('农民'):view.kind==='guandan'?`${t('队伍')} ${p.team+1}`:isMahjong?t(['东','南','西','北'][i]):''}{isMahjong&&p.missing!==undefined?` · ${t('缺')} ${t(['万','筒','条'][p.missing])}`:''}{p.won?` · ${t('已胡牌')}`:''}{p.rank>0?` · ${t('名次')} ${p.rank}`:''}</small></div>{playing&&p.id===b.current&&<span className="seat-turn-label">{t('行动中')}</span>}<span className="seat-turn-light" aria-hidden="true"/>{!isMahjong&&b.phase==='bid'&&b.bids[i]!==null&&<span className="seat-call">{b.bids[i]===0?t('不叫'):`${t('叫分')} ${b.bids[i]}`}</span>}</section>)}</div>
    {!isMahjong&&<section className="classic-felt" aria-label={t('出牌区')}>
     <div className="classic-table-mark"><span>♧</span>MOCHA<span>{view.kind==='guandan'?'PARTNERS CLUB':'CLASSIC CLUB'}</span></div>
-    {(b.tablePlays as PokerTablePlay[]||[]).map(play=><div key={`${b.round}:${play.player}:${play.serial}`} className={`poker-seat-play play-${position(play.player)} ${b.last?.player===play.player&&play.combo?'poker-play-area has-play latest-play':''} ${!b.last?'previous-trick':''} ${previousPublic.current.newSerials.has(play.serial)?'new-play':''}`} role="group" aria-label={b.players[play.player].name} data-player={b.players[play.player].id} data-serial={play.serial}>
+    {(b.tablePlays as PokerTablePlay[]||[]).map(play=><div key={`${b.round}:${play.player}:${play.serial}`} className={`poker-seat-play play-${position(play.player)} ${b.last?.player===play.player&&play.combo?'poker-play-area has-play latest-play':''} ${!b.last?'previous-trick':''} ${motion.flights.some(f=>f.key===pokerFlightKey(b.round,play))?'in-flight':''}`} role="group" aria-label={b.players[play.player].name} data-player={b.players[play.player].id} data-serial={play.serial}>
      <p className="played-caption"><span>{play.combo?combinationLabel(play.combo):t('不出')}</span><span className="played-owner">{b.players[play.player].name}</span></p>
      {play.cards.length>0&&<div className="played-scroll" tabIndex={0} aria-label={`${b.players[play.player].name} · ${t(b.last?'本轮出牌':'上一轮出牌')}`}><div className="classic-cards played">{play.cards.map(card=><Face key={card.id} card={card} mahjong={false} mini/>)}</div></div>}
     </div>)}
@@ -89,6 +89,7 @@ function PokerTable({view,selfID,command,open,onReplay,replayLabel}:Props){
     <div className="mahjong-center"><div className="mahjong-compass" aria-label={t('座位方位')}><span>{wind(2)}</span><span>{wind(3)}</span><b>{b.wallCount}</b><span>{wind(1)}</span><span>{wind(0)}</span></div>{b.pending?<div className="mahjong-latest"><small>{b.players[b.pending.from].name}</small><Face card={b.pending.tile} mahjong/><b>{t(b.pending.rob?'抢杠响应':'最新打出')}</b></div>:<span className="mahjong-center-mark">MOCHA<br/>MAHJONG</span>}</div>
     <div className="mahjong-rivers">{b.players.map((p:any,i:number)=><section key={p.id} className={`river-seat river-${position(i)} ${b.pending?.from===i?'latest-river':''}`}><header><b title={p.name}>{t(['东','南','西','北'][i])}</b><span>{t('牌河')} {p.discards.length}</span></header><div className="mahjong-melds">{p.melds.map((m:any,j:number)=><div key={j} aria-label={t(m.type==='concealed'?'暗杠':'副露')}>{m.tiles.length?m.tiles.map((tile:Tile)=><Face key={tile.id} card={tile} mahjong mini/>):[0,1,2,3].map(k=><Back key={k} mahjong/>)}</div>)}</div><div className="classic-cards river" tabIndex={p.discards.length?0:undefined} aria-label={`${p.name} · ${t('牌河')}`}>{p.discards.map((tile:Tile)=><Face key={tile.id} card={tile} mahjong mini/>)}</div></section>)}</div>
    </section>}
+   <PokerPlayMotion {...motion}/>
   </div>
   {b.counter&&<section className={`poker-counter ${counterOpen?'expanded':''}`} aria-label={t('记牌器')}><button type="button" className="counter-toggle" aria-expanded={counterOpen} aria-label={t(counterOpen?'收起记牌器':'展开记牌器')} onClick={()=>setCounterOpen(!counterOpen)}><Layers size={15}/><span>{t('记牌器')}</span>{counterOpen?<ChevronUp size={14}/>:<ChevronDown size={14}/>}</button>{counterOpen&&<div className="counter-ranks" aria-label={t('显示除自己手牌外尚未打出的牌数')}>{(b.counter as {rank:number;count:number}[]).map(({rank,count})=><div key={rank} className={`${!count?'exhausted':''} ${rank===17?'red-joker':''}`} aria-label={`${t(rankName(rank))}: ${count}`}><span>{rank>=16?t(rank===17?'大':'小'):rankName(rank)}</span><b>{count}</b></div>)}</div>}</section>}
   {!view.spectating&&<><section className="classic-hand-panel">

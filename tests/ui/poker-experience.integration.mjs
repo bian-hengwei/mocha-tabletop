@@ -54,8 +54,8 @@ try{
   const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion});await page.goto(`${base}/tests/ui/poker.fixture.html`);
   await page.getByRole('button',{name:'提示',exact:true}).click();await page.locator('.classic-controls .primary').click();
   await expect(page.locator('.poker-seat-play')).toHaveCount(1);
-  assert.equal(await page.locator('.poker-seat-play').evaluate(e=>getComputedStyle(e).animationName),reducedMotion==='reduce'?'none':'poker-deal-in');
-  await page.getByLabel('Seat',{exact:true}).selectOption('1');assert.equal(await page.locator('.poker-seat-play').evaluate(e=>getComputedStyle(e).animationName),'none');
+  if(reducedMotion==='reduce')await expect(page.locator('.poker-flight')).toHaveCount(0);else await expect(page.locator('.poker-flight')).toHaveCount(1);
+  await page.getByLabel('Seat',{exact:true}).selectOption('1');await expect(page.locator('.poker-flight')).toHaveCount(0);await expect(page.locator('.poker-seat-play .played-scroll')).toBeVisible();
   await page.close();
  }
  console.log('PASS mouse drag selection and deselection');
