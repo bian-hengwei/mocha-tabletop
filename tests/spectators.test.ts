@@ -6,6 +6,22 @@ const watcher={id:'spectator-0',name:'Watcher',avatar:'🐼',connected:true};
 const roster=(n:number):Player[]=>Array.from({length:n},(_,i)=>({id:`player-${i}`,name:`Player ${i}`,avatar:'🦊'}));
 function setup(kind:GameKind,options?:GameOptions){const players=roster(GAMES[kind].min+(options?.werewolfMode==='judge'?1:0)),match=createMatch(kind,players,options),room:RoomInfo={code:'ABC234',kind,hostID:players[0].id,mode:'cloud',players:players.map(p=>({...p,ready:true,connected:true})),spectators:[watcher],pending:[],started:true,revision:1,options};return{match,room,view:()=>viewRoomMatch(match,room,watcher.id).view};}
 describe('public spectator projection',()=>{
+ it('keeps Mahjong assistance private even when spectator projection receives a seated ID',()=>{
+  const {match,view}=setup('mahjong'),s=match.game;
+  expect(modules.mahjong.view(s,s.players[0].id).board.assistance).not.toBeNull();
+  for(const v of [view(),modules.mahjong.view(s,s.players[0].id,true)]){
+   expect(v.board.assistance).toBeNull();expect(v.board.hand).toEqual([]);expect(v.actions).toEqual([]);
+   for(const tile of s.hands.flat())expect(JSON.stringify(v)).not.toContain(`"${tile.id}"`);
+  }
+ });
+ it('shows public UNO penalty amounts without giving spectators a confirmation action',()=>{
+  for(const count of [2,4] as const){const {match,view}=setup('uno'),s=match.game;s.phase='penalty';s.current=1;s.pendingPenalty={count,actor:0};
+   expect(modules.uno.view(s,s.players[1].id).actions.map(a=>a.id)).toEqual(['acceptPenalty']);
+   for(const v of [view(),modules.uno.view(s,s.players[1].id,true)]){
+    expect(v.board.pendingPenalty).toEqual({count});expect(v.actions).toEqual([]);expect(v.board.hand).toEqual([]);expect(v.board.privateChallenge).toBeUndefined();
+   }
+  }
+ });
  for(const kind of Object.keys(GAMES) as GameKind[])it(`${kind}: authenticated observer, no seat, no actions, detached public state`,()=>{
   const {match,room,view}=setup(kind),before=structuredClone(match),v=view();expect(v.spectating).toBe(true);expect(v.actions).toEqual([]);expect(v.sections.some(s=>s.private)).toBe(false);expect(v.board.players).toHaveLength(room.players.length);
   expect(v.board.hand||[]).toEqual([]);expect(v.board.ownRole).toBeUndefined();expect(v.board.ownKnowledge||[]).toEqual([]);

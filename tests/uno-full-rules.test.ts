@@ -33,9 +33,35 @@ describe('500-point match and checkpoints',()=>{
 describe('optional +4 challenge switch',()=>{
  it('defaults to enabled for fresh games and checkpoints without the field',()=>{const s=uno.create(players,8);expect(uno.view(s,players[0].id).board.challengeEnabled).toBe(true);delete s.challengeEnabled;expect(uno.view(s,players[0].id).board.challengeEnabled).toBe(true);});
  it('when disabled, prevents a matching-color bluff and leaves the rejected state untouched',()=>{const s=setup();s.challengeEnabled=false;const before=JSON.stringify(s);expect(uno.view(s,players[0].id).actions.some(a=>a.id==='wild:w4')).toBe(false);expect(()=>play4(s)).toThrow();expect(JSON.stringify(s)).toBe(before);});
- it('when disabled, a legal +4 automatically draws four and skips with no private window',()=>{let s=setup(true);s.challengeEnabled=false;s=play4(s);expect(s.hands[1]).toHaveLength(5);expect(s.current).toBe(2);expect(s.phase).toBe('play');expect(s.pendingWild4).toBeUndefined();for(const p of players){const v=uno.view(s,p.id);expect(v.board.challengeEnabled).toBe(false);expect(v.board.privateChallenge).toBeUndefined();expect(v.actions.some(a=>a.id==='accept4'||a.id==='challenge4')).toBe(false);}expect(()=>act(s,1,'challenge4')).toThrow();});
- it('keeps the manual last-card call after an automatically resolved +4',()=>{let s=setup(true);s.challengeEnabled=false;s.hands[0]=[card('w4','wild','wild4'),card('last','blue',7)];s=play4(s);expect(s.hands[1]).toHaveLength(5);expect(s.phase).toBe('unoCall');s=act(s,0,'callUno');expect(s.phase).toBe('play');expect(s.current).toBe(2);});
- it('counts automatic final-card penalties before round scoring',()=>{let s=setup(true);s.challengeEnabled=false;s.hands[0]=[card('w4','wild','wild4')];s=play4(s);expect(s.phase).toBe('roundEnd');expect(s.hands[1]).toHaveLength(5);expect(s.scores[0]).toBe(s.hands.flat().reduce((n,c)=>n+(typeof c.value==='number'?c.value:c.color==='wild'?50:20),0));});
+ it('when disabled, a legal +4 waits for confirmation without a private challenge',()=>{let s=setup(true);s.challengeEnabled=false;s=play4(s);expect(s.hands[1]).toHaveLength(1);expect(s.current).toBe(1);expect(s.phase).toBe('penalty');expect(s.pendingWild4).toBeUndefined();expect(uno.view(s,players[1].id).actions.map(a=>a.id)).toEqual(['acceptPenalty']);expect(()=>act(s,1,'challenge4')).toThrow();s=act(s,1,'acceptPenalty');expect(s.hands[1]).toHaveLength(5);expect(s.current).toBe(2);expect(s.phase).toBe('play');});
+ it('keeps the manual last-card call before accepting a +4',()=>{let s=setup(true);s.challengeEnabled=false;s.hands[0]=[card('w4','wild','wild4'),card('last','blue',7)];s=play4(s);expect(s.hands[1]).toHaveLength(1);expect(s.phase).toBe('unoCall');s=act(s,0,'callUno');expect(s.phase).toBe('penalty');expect(s.current).toBe(1);s=act(s,1,'acceptPenalty');expect(s.hands[1]).toHaveLength(5);expect(s.current).toBe(2);});
+ it('counts confirmed final-card penalties before round scoring',()=>{let s=setup(true);s.challengeEnabled=false;s.hands[0]=[card('w4','wild','wild4')];s=play4(s);expect(s.phase).toBe('penalty');expect(s.roundWinner).toBeUndefined();s=act(s,1,'acceptPenalty');expect(s.phase).toBe('roundEnd');expect(s.hands[1]).toHaveLength(5);expect(s.scores[0]).toBe(s.hands.flat().reduce((n,c)=>n+(typeof c.value==='number'?c.value:c.color==='wild'?50:20),0));});
  it('persists false, canonicalizes the default, and rejects invalid or unrelated settings',()=>{expect(normalizeGameOptions('uno',{unoChallenge:false},players[0].id)).toEqual({unoChallenge:false});expect(normalizeGameOptions('uno',{unoChallenge:true},players[0].id)).toBeUndefined();for(const value of ['false',0,null])expect(()=>normalizeGameOptions('uno',{unoChallenge:value},players[0].id)).toThrow('质疑');expect(()=>normalizeGameOptions('gems',{unoChallenge:false},players[0].id)).toThrow('质疑');});
  it('restores disabled-challenge checkpoints and rejects a changed engine setting',()=>{const match=createMatch('uno',players,{unoChallenge:false}),room:RoomInfo={code:'ABC234',kind:'uno',mode:'lan',options:{unoChallenge:false},hostID:players[0].id,players:players.map(p=>({...p,ready:true,connected:true})),pending:[],started:true,revision:1};expect(validateMatchForRoom(JSON.parse(JSON.stringify(match)),room).game.challengeEnabled).toBe(false);expect(()=>validateMatchForRoom({...match,game:{...match.game,challengeEnabled:true}},room)).toThrow('质疑设置');expect(()=>validateMatchForRoom({...match,game:{...match.game,challengeEnabled:undefined}},room)).toThrow('质疑设置');});
+});
+
+describe('manual draw penalties',()=>{
+ it.each([false,true])('waits regardless of whether the target holds a draw card (%s)',hasDrawCard=>{
+  let s=setup();s.hands[0]=[card('plus','red','draw2'),card('keep','blue',3),card('keep2','green',2)];
+  s.hands[1]=[card('target',hasDrawCard?'wild':'blue',hasDrawCard?'wild4':3)];const before=structuredClone(s);
+  s=act(s,0,'play',['plus']);expect(s.current).toBe(1);expect(s.hands[1]).toHaveLength(1);expect(s.deck).toEqual(before.deck);
+  expect(uno.view(s,players[1].id).actions.map(a=>a.id)).toEqual(['acceptPenalty']);expect(uno.view(s,players[2].id).actions).toEqual([]);
+  const unchanged=JSON.stringify(s);expect(()=>act(s,2,'acceptPenalty')).toThrow();expect(()=>act(s,1,'draw')).toThrow();expect(JSON.stringify(s)).toBe(unchanged);
+  s=act(JSON.parse(JSON.stringify(s)),1,'acceptPenalty');expect(s.hands[1]).toHaveLength(3);expect(s.current).toBe(2);expect(()=>act(s,1,'acceptPenalty')).toThrow();
+ });
+ it('resumes a +2 after a missed UNO call is caught',()=>{
+  let s=setup();s.hands[0]=[card('plus','red','draw2'),card('last','blue',3)];s=act(s,0,'play',['plus']);s=act(s,0,'skipUno');s=act(s,2,'catchUno');
+  expect(s.phase).toBe('penalty');expect(s.hands[0]).toHaveLength(3);expect(s.hands[1]).toHaveLength(1);s=act(s,1,'acceptPenalty');expect(s.current).toBe(2);
+ });
+ it('pauses an opening +2 with seven cards each, then continues without scoring a winner',()=>{
+  let s:UnoState|undefined;for(let seed=0;seed<100;seed++){const candidate=uno.create(players,seed);if(candidate.discard[0].value==='draw2'){s=candidate;break;}}
+  expect(s).toBeDefined();expect(s!.phase).toBe('penalty');expect(s!.hands.map(h=>h.length)).toEqual([7,7,7]);const target=s!.current;
+  const next=act(s!,target,'acceptPenalty');expect(next.hands[target]).toHaveLength(9);expect(next.current).toBe((target+1)%3);expect(next.scores).toEqual([0,0,0]);
+ });
+ it('deduplicates a confirmed penalty after a checkpoint',()=>{
+  let s=setup(true);s.challengeEnabled=false;s=play4(s);let match=createMatch('uno',players,{unoChallenge:false});match.game=s;
+  const revision=viewMatch(match,'uno',players[1].id).actionRevision;
+  match=applyMatch(JSON.parse(JSON.stringify(match)),'uno',players,players[1].id,{action:'acceptPenalty',values:[]},'accept-1',revision);
+  expect(applyMatch(match,'uno',players,players[1].id,{action:'acceptPenalty',values:[]},'accept-1',revision)).toBe(match);expect(match.game.hands[1]).toHaveLength(5);
+ });
 });

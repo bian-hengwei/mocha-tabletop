@@ -80,6 +80,12 @@ function initialGame(){
   return state;
  }
  if(kind==='guandan'&&params.get('scenario')==='declare'){const state=modules.guandan.create(players,11);state.hands[0]=[5,6,7,8,9,3].map((rank,i)=>({id:`declare-${i}`,rank,suit:0}));return state;}
+ if(kind==='uno'&&params.get('scenario')==='penalty'){
+  let state=uno.create(players,11,{unoChallenge:false});state.current=0;state.phase='play';state.color='red';state.drawn=null;delete state.pendingPenalty;
+  const four=params.get('penalty')==='4';state.hands[0]=[{id:'penalty',color:four?'wild':'red',value:four?'wild4':'draw2'},{id:'keep',color:'blue',value:7},{id:'keep2',color:'green',value:8}];
+  state.hands[1]=[{id:'target',color:'yellow',value:5}];state.discard=[{id:'top',color:'red',value:1}];
+  return uno.apply(state,players[0].id,{action:four?'wild:penalty':'play',values:four?['blue']:['penalty']});
+ }
  if(kind==='uno'&&params.get('scenario')==='call'){let state=uno.create(players,11);state.current=0;state.phase='play';state.color='red';state.drawn=null;state.hands[0]=[{id:'call-red',color:'red',value:2},{id:'last-blue',color:'blue',value:7}];state.discard=[{id:'top-red',color:'red',value:1}];return uno.apply(state,players[0].id,{action:'play',values:['call-red']});}
  if(kind==='uno'&&params.get('scenario')==='no-match'){
   const state=uno.create(players,11);state.current=0;state.phase='play';state.color='red';state.drawn=null;
