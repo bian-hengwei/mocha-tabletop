@@ -55,6 +55,7 @@ export const uiText: Record<string,string> = {
   "已出局": "Eliminated",
   "贵族来访": "Nobles",
   "异色": "Different colors",
+  "同色": "Same",
   "同色 ×2": "Same color ×2",
   "拿取": "Take",
   "同分时，已购发展牌较少者获胜；仍相同则共享胜利。": "On equal scores, the player with fewer development cards wins; if still tied, share victory.",
@@ -347,6 +348,8 @@ export const uiText: Record<string,string> = {
   "+4 可以被质疑。出牌者当时若持有原颜色牌，质疑成功，出牌者抽 4 张；否则质疑者抽 6 张并跳过。只有质疑者能核验出牌时的手牌。接受 +4 则抽 4 张并跳过。": "You may challenge +4. If the player held the previous color, the challenge succeeds and they draw 4. Otherwise, the challenger draws 6 and skips. Only the challenger sees the hand held at the time. Accepting +4 means drawing 4 and skipping."
 };
 export const uiPatterns: [RegExp,string,number[]?][] = [
+ [/^1 色$/, '1 color'],
+ [/^(\d+) 色$/, '$1 colors'],
  [/^1 种颜色$/, '1 color'],
  [/^(\d+) 种颜色$/, '$1 colors'],
  [/^(.+) 已出牌$/, '$1 played'],

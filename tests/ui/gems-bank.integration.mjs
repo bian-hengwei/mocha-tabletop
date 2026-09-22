@@ -35,10 +35,15 @@ try{
    assert(bankSize.scroll<=bankSize.client+1,`${locale} ${width}x${height}: bank does not require horizontal scrolling: ${JSON.stringify(bankSize)}`);
    await expect(take).toBeDisabled();
    await expect(rules).toBeVisible();
-   await expect(rules).toContainText(locale==='zh'?'取 3 色，各 1 枚':'3 colors, 1 each');
-   await expect(rules).toContainText(locale==='zh'?'或同色连点取 2（库存 ≥4）':'Or tap one color twice for 2 (stock ≥4)');
+   await expect(rules).toContainText(locale==='zh'?'3 色':'3 colors');
+   await expect(rules).toContainText(locale==='zh'?'同色 ×2':'Same ×2');
+   await expect(take).toHaveAccessibleName(locale==='zh'?'选择宝石: 取 3 色，各 1 枚 · 或同色连点取 2（库存 ≥4）':'Choose gems: 3 colors, 1 each · Or tap one color twice for 2 (stock ≥4)');
    const rulesVisible=await rules.evaluate(el=>{const r=el.getBoundingClientRect(),button=el.closest('button').getBoundingClientRect();return r.top>=button.top&&r.bottom<=button.bottom&&r.left>=button.left&&r.right<=button.right&&button.bottom<=innerHeight;});
    assert(rulesVisible,`${locale} ${width}x${height}: take requirements are not clipped or covered`);
+   const regions=await page.locator('.g-market,.g-bank,.g-bank-actions').evaluateAll(([market,bank,actions])=>Object.fromEntries([['market',market],['bank',bank],['actions',actions]].map(([name,el])=>{const r=el.getBoundingClientRect();return[name,{left:r.left,right:r.right,top:r.top,bottom:r.bottom}];})));
+   const marketClear=regions.market.right<=regions.bank.left+1||regions.bank.right<=regions.market.left+1||regions.market.bottom<=regions.bank.top+1||regions.bank.bottom<=regions.market.top+1;
+   assert(marketClear,`${locale} ${width}x${height}: market and gem bank overlap: ${JSON.stringify(regions)}`);
+   assert(regions.actions.left>=regions.bank.left-1&&regions.actions.right<=regions.bank.right+1&&regions.actions.top>=regions.bank.top-1&&regions.actions.bottom<=regions.bank.bottom+1,`${locale} ${width}x${height}: gem actions escape their bank: ${JSON.stringify(regions)}`);
    for(const i of [0,2]){await gems.nth(i).click();await expect(take).toBeDisabled();}
    await page.screenshot({path:`${out}/${locale}-${width}x${height}-incomplete.png`});
    await gems.nth(4).click();
@@ -66,9 +71,9 @@ try{
   }
   for(const [scenario,colors]of [['bank-scarce',[1,2]],['bank-one',[3]],['bank-no-pair',[0,1,2]],['bank-full-hand',[0,1,2]]]){
    await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=gems&players=max&scenario=${scenario}`);
-   await expect(rules).toContainText(locale==='zh'?`取 ${colors.length} 色，各 1 枚`:colors.length===1?'1 color, 1 token':`${colors.length} colors, 1 each`);
+   await expect(rules).toContainText(locale==='zh'?`${colors.length} 色`:colors.length===1?'1 color':`${colors.length} colors`);
    if(scenario!=='bank-full-hand'){
-    await expect(rules).not.toContainText('≥4');
+    await expect(rules).not.toContainText(locale==='zh'?'同色 ×2':'Same ×2');
     await gems.nth(colors[0]).click();await gems.nth(colors[0]).click();
     await expect(gems.nth(colors[0])).toHaveAttribute('aria-pressed','false');
    }
@@ -80,5 +85,5 @@ try{
   await context.close();
  }
  assert.deepEqual(errors,[]);
- console.log(`PASS ${engine}: visible take requirements, incomplete choices, scarce bank, pair stock threshold, token overflow; six gem colors at 44px, both languages/eight sizes, clear and rotation.`);
+ console.log(`PASS ${engine}: concise visible take options with full accessible rules, non-overlapping bank controls, scarce bank, pair stock threshold, token overflow; six gem colors at 44px, both languages/eight sizes, clear and rotation.`);
 }finally{await browser.close();}
