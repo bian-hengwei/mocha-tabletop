@@ -41,7 +41,7 @@
 
 四川/血流牌墙空时，未清缺门者向每位已清缺门在局者支付 16；清缺未听者向每个听牌者付其最高基础胡分；未听者退还收到的杠分。血战已胡离场者不参与查叫/查花猪。广东/赖子流局只保留既有杠分。所有转账零和；最高正积分者胜，同分共享，零分全桌和局。
 
-听牌助手由规则引擎仅为本人生成：13 张等效手牌显示当前听牌；可出牌时试算每种合法弃牌后的听牌。显示每种牌的未见数量（4 减去本人手牌、本人副露及公开牌，按实体 ID 去重），零张仍显示。对手暗手、暗杠与牌墙内容不参与统计，未见数不等于牌墙剩余数。普通胡牌和自摸倍数复用本桌计分，未来杠后/抢杠与杠分不计入预测；当前可胡时显示实际可结算倍数。红中赖子标注红中仅自摸，定缺、血战离场和血流锁牌限制沿用合法动作。
+听牌提示由规则引擎仅为本人生成：13 张等效手牌显示当前听牌；可出牌时试算每种合法弃牌后的听牌。显示每种牌的未见数量（4 减去本人手牌、本人副露及公开牌，按实体 ID 去重），零张仍显示。对手暗手、暗杠与牌墙内容不参与统计，未见数不等于牌墙剩余数。普通胡牌和自摸倍数复用本桌计分，未来杠后/抢杠与杠分不计入预测。红中赖子标注红中仅自摸，定缺、血战离场和血流锁牌限制沿用合法动作。手牌上直接标出可听的合法弃牌；选牌时自动显示该牌对应的听牌，13 张等效手牌的已有听牌自动展示。点击听牌标记可查看大图和倍数，不再使用独立试算下拉框。
 
 不包含买马、根、龙七对等扩展番、海底特殊番、过手胡限制或胡后杠等地方扩展。腾讯参考限于玩法组织、换三张/定缺及便捷手机操作的产品方向，不声称复刻腾讯某房间的完整规则，也不使用其素材。
 
@@ -72,7 +72,7 @@
 
 ## Table presentation
 
-Mahjong seats and discard rivers are positioned relative to the viewer: self at the bottom, next seat at the right, opposite above, previous seat at the left. Tile faces in the three opponents' rivers point toward their owners while names and counts remain upright. The central wind indicator rotates its labels with the selected seat; its number is the remaining wall count. Opponent racks contain only backs derived from public hand counts. The table shows recent discards; each river opens its complete public history. Portrait phones show a two-row hand, while landscape and larger screens use one row. The drawn tile sits at the end with a separate gap. Pung, kong, win and pass actions sit above the right side of the hand.
+Mahjong seats and discard rivers are positioned relative to the viewer: self at the bottom, next seat at the right, opposite above, previous seat at the left. Tile faces in the three opponents' rivers point toward their owners while names and counts remain upright. The central wind indicator rotates its labels with the selected seat; its number is the remaining wall count. Opponent racks contain only backs derived from public hand counts. The table shows recent discards; each river opens its complete public history. Portrait phones show a two-row hand, while landscape and larger screens use one row. The drawn tile sits at the end with a separate gap. Pung, kong, win and pass actions sit above the right side of the hand. Legal discards that leave winning waits carry a Ready badge; selecting one shows its waits directly above the hand. Existing waits appear automatically, with optional enlarged details.
 
 Dou Dizhu places bottom cards above the table, the viewer below and opponents at either side. The latest play moves toward the player who made it. Bid and pass labels use public authoritative state. Selection remains explicit: tap to select or deselect, then confirm; changing seat or turn clears stale selection. The shared Guan Dan rule handling is unchanged.
 
