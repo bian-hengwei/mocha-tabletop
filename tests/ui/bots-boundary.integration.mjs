@@ -34,7 +34,7 @@ for(const locale of ['zh','en'])for(const kind of ['doudizhu','guandan','mahjong
   for(const[width,height]of[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900]]){
    await page.setViewportSize({width,height});const box=await result.boundingBox();assert(box&&box.x>=0&&box.y>=0&&box.x+box.width<=width+1&&box.y+box.height<=height+1,`guandan/${locale}/${width}: dedicated result fits viewport`);
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'page overflow');
-   assert(await page.locator('.classic-arena,.classic-hand-panel,.seat-turn-label').count()===0,'no stale active-play interface at result');
+   assert(await page.locator('.classic-arena,.classic-hand-panel,.mj-arena:visible,.mj-hand-panel:visible,.seat-turn-label').count()===0,'no stale active-play interface at result');
    await page.screenshot({path:`${out}/finished-${kind}-${locale}-${width}x${height}.png`});
   }
   const hands=page.getByRole('button',{name:locale==='zh'?'查看剩余手牌':'View remaining cards',exact:true});await hands.click();
@@ -44,9 +44,9 @@ for(const locale of ['zh','en'])for(const kind of ['doudizhu','guandan','mahjong
  }
  await expect(page.locator('.end-banner')).toBeVisible();await page.getByRole('button',{name:locale==='zh'?'收起结算':'Dismiss result',exact:true}).click();
  for(const[width,height]of[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900]]){
-  await page.setViewportSize({width,height});const rows=await page.locator('.classic-result-player').all();assert.equal(rows.length,kind==='doudizhu'?3:4);
+  await page.setViewportSize({width,height});const rows=await page.locator(':is(.classic-result-player,.mj-result-player)').all();assert.equal(rows.length,kind==='doudizhu'?3:4);
   for(const row of rows){const box=await row.boundingBox();assert(box&&box.y>=0&&box.y+box.height<=height,`${kind}/${locale}/${width}: every player's final score and hand visible`);}
-  assert(await page.locator('.classic-arena,.classic-hand-panel,.seat-turn-label').count()===0,'no stale active-play interface at result');
+  assert(await page.locator('.classic-arena,.classic-hand-panel,.mj-arena:visible,.mj-hand-panel:visible,.seat-turn-label').count()===0,'no stale active-play interface at result');
   await page.screenshot({path:`${out}/finished-${kind}-${locale}-${width}x${height}.png`});
  }
  if(kind==='mahjong'){await page.getByRole('button',{name:locale==='zh'?'胡牌记录 (1)':'Win history (1)',exact:true}).click();await page.setViewportSize({width:390,height:844});await page.setViewportSize({width:844,height:390});await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toHaveCount(0);}

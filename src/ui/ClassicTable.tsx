@@ -11,13 +11,16 @@ import {useCardDoubleTap} from './useCardDoubleTap';
 import {GuandanResults} from './GuandanResults';
 import './classic-table.css';
 import './table-layout.css';
+import {MahjongTable} from './MahjongTable';
+import './mahjong-table.css';
 type Props={view:GameView;selfID:string;command:(c:Command)=>void;open:(a:Action,selected?:string[])=>void;onReplay?:()=>void;replayLabel?:string};
 function Face({card,mahjong,mini=false}:{card:PokerCard|Tile;mahjong:boolean;mini?:boolean}){
  const label=t(mahjong?tileTitle(card as Tile):pokerTitle(card as PokerCard));
  return <span className={`classic-face ${mahjong?'tile-face':'poker-face'} ${mini?'mini':''}`} role="img" aria-label={label} title={label}>{mahjong?<MahjongArt value={(card as Tile).value}/>:<PokerArt rank={(card as PokerCard).rank} suit={(card as PokerCard).suit}/>}</span>;
 }
 function Back({mahjong=false}:{mahjong?:boolean}){return <span className={`classic-face mini card-back ${mahjong?'tile-face':'poker-face'}`} aria-hidden="true">{mahjong?<MahjongArt back/>:<PokerArt back/>}</span>;}
-export function ClassicTable({view,selfID,command,open,onReplay,replayLabel}:Props){
+export function ClassicTable(props:Props){return props.view.kind==='mahjong'?<MahjongTable {...props}/>:<PokerTable {...props}/>;}
+function PokerTable({view,selfID,command,open,onReplay,replayLabel}:Props){
  const [declarationOpen,setDeclarationOpen]=useState(false),declarationRef=useDialog<HTMLElement>(declarationOpen,()=>setDeclarationOpen(false));
  const [historyOpen,setHistoryOpen]=useState(false),historyRef=useDialog<HTMLElement>(historyOpen,()=>setHistoryOpen(false));
  const b=view.board,isMahjong=view.kind==='mahjong',hand=b.hand as (PokerCard|Tile)[],[selected,setSelected]=useState<string[]>([]),[declaration,setDeclaration]=useState('');

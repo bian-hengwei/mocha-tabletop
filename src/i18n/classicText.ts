@@ -1,4 +1,5 @@
 export const classicText:Record<string,string>={
+ '新摸牌':'Drawn tile','查看牌河':'View discards','本局还没有胡牌':'No wins yet','上一家':'Previous seat','下一家':'Next seat',
  '听牌助手':'Tile helper','试算打出':'Preview discard','当前可自摸':'Self-draw available','当前可胡牌':'Win available','普通胡牌':'Discard win','仅自摸':'Self-draw only','打出此牌后未听牌':'No waits after this discard','当前未听牌':'No winning waits yet',
  '未见数 = 4 − 自己手牌及公开可见牌，可能在对手手中或牌墙内；0 张也保留显示。':'Unseen = 4 minus your own and publicly visible tiles. These may be in other hands or the wall; zero-count waits remain visible.',
  '倍数按本桌规则估算，按每位付款玩家计算；不含未来杠上花、抢杠及杠分。试算不会出牌。':'Multipliers follow this table’s rules, per paying player. Future kong bonuses and kong payments are excluded. Previewing does not discard a tile.',

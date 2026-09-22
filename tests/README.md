@@ -57,7 +57,7 @@ npx playwright install chromium webkit
 | `node tests/ui/classic-assets.integration.mjs` | 90 张本地牌面/底板/背面与三张封面解码，大小王颜色映射；支持 WebKit |
 | `node tests/ui/classic-orientation.integration.mjs` | 六种新玩法，中英文九种尺寸、手牌滚动到末张、44px 触控与旋转保留选择；支持 WebKit |
 | `node tests/ui/table-layout.integration.mjs` | 麻将四方座位/牌河、换座方位盘、对手仅背面、斗地主出牌方向与叫分/不出标记；中英八尺寸，支持 WebKit |
-| `node tests/ui/classic-dense.integration.mjs` | 密集牌河与副露、血流锁牌、记录弹窗焦点与旋转；支持 WebKit |
+| `node tests/ui/classic-dense.integration.mjs` | 密集牌河与副露、完整弃牌查询、血流锁牌、记录弹窗焦点与旋转；支持 WebKit |
 | `node tests/ui/classic-cloud.integration.mjs` | 四个独立浏览器上下文，全部麻将模式、访客只读规则、刷新重连和两款扑克云端出牌；可对实际部署运行 |
 | `node tests/ui/poker-declaration.integration.mjs` | 掼蛋同花顺默认解释与手动宣告普通顺子；27 张手牌领出/跟牌、双语八尺寸、牌型弹窗旋转与焦点、清空重选及实际出牌；支持 WebKit |
 | `node tests/ui/poker-feedback.integration.mjs` | 掼蛋级牌与斗地主跟牌：区分无效牌型和无法压过、改选后正常出牌；满手牌且无法压过时按钮文字完整、无需纵向滚动并实际不出；双语八尺寸与旋转，支持 WebKit |
@@ -65,7 +65,7 @@ npx playwright install chromium webkit
 | `node tests/ui/classic-games.integration.mjs` | 六种新玩法，中英文四尺寸、点选/取消/换座、刷新恢复、扑克完整一轮与跨轮进贡；支持 WebKit |
 | `node tests/ui/mahjong-assistance.integration.mjs` | 听牌数量、未见牌、弃牌试算、双语七尺寸、焦点/旋转/换座；需 Vite |
 | `node tests/ui/uno-penalty.integration.mjs` | +2/+4 手动确认罚摸、双语七尺寸按钮可达性；需 Vite |
-| `node tests/ui/mahjong-experience.integration.mjs` | 麻将双击/双触、键盘与慢速取消、定缺及自动过牌；中英七尺寸，支持 WebKit |
+| `node tests/ui/mahjong-experience.integration.mjs` | 麻将再次点选出牌、桌面/Escape 取消、新摸牌排序、出牌动画、完整牌河弹窗、换牌与自动过；中英七尺寸，支持 WebKit |
 | `node tests/ui/hand-experience.integration.mjs` | 寿司单张双击/双触、筷子顺序与取消锁定；商旅固定操作区；猫牌换选/组合与双击；中英八尺寸，支持 WebKit |
 | `node tests/ui/uno-experience.integration.mjs` | UNO 双击/双触、万能牌选色、28 张单行手牌、等待回合的溢出滑动提示、10 人座位、八尺寸与旋转，支持 WebKit |
 | `node tests/ui/mahjong-actions.integration.mjs` | 麻将确定性场景：自摸、血流继续、暗杠、抢杠、胡优先、碰与流局；支持 WebKit |
@@ -196,3 +196,5 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `BASE_URL=http://127.0.0.1:5218 node tests/ui/local-play.integration.mjs`：真实 App 单机人数/难度选择、八款人机与四款交流游戏、双语八尺寸与旋转、刷新/语言/重开/战绩/退出；支持 `TEST_BROWSER=webkit`。对生产预览可加 `TEST_OFFLINE=1` 验证缓存后断网开局与恢复（Chromium）。终局界面使用显式 fixture，完整规则终局由单测覆盖。
 
 连接生命周期回归使用 `TEST_FRONTEND` 指向运行中的 Vite，并需要对应本地 Worker。`lifecycle.integration.mjs` 在 Chromium 中通过 CDP 暂停真实页面执行，在 WebKit 中通过 Playwright clock 暂停页面定时器；这验证浏览器挂起路径，不等同于手机系统切后台/锁屏的真机验收。关闭双方标签页后以无 sessionStorage 的新标签页自动恢复，比较原玩家、matchID、操作版本和私人视图，再通过界面继续出牌。截图写入 `test-results/lifecycle-*`。
+
+麻将独立界面回归：`TEST_GAMES=mahjong SKIP_FULL=1 node tests/ui/classic-games.integration.mjs` 验证四种模式的真实 App 开局、换牌定缺、出牌与恢复；`TEST_GAMES=mahjong node tests/ui/classic-orientation.integration.mjs` 检查中英九尺寸。
