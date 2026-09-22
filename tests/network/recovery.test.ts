@@ -12,7 +12,7 @@ class Socket {
 const room=(mode:'cloud'|'lan'='cloud',started=false):RoomInfo=>({code:'ABC234',hostID:profile.id,kind:'gems',mode,players:[profile,guest].map(p=>({...p,ready:true,connected:true})),pending:[],revision:1,started,matchID:started?'match-1':undefined,expiresAt:Date.now()+3600000});
 let clients:RoomClient[]=[];
 const client=()=>{const c=new RoomClient();clients.push(c);return c;};
-beforeEach(()=>{vi.useFakeTimers();Socket.all=[];vi.stubGlobal('localStorage',new MemoryStorage());vi.stubGlobal('sessionStorage',new MemoryStorage());vi.stubGlobal('location',{origin:'https://table.test',pathname:'/'});vi.stubGlobal('window',{addEventListener(){},removeEventListener(){}});vi.stubGlobal('document',{visibilityState:'visible',addEventListener(){},removeEventListener(){}});vi.stubGlobal('WebSocket',Socket);localStorage.setItem('mocha-network-token',token);});
+beforeEach(()=>{vi.useFakeTimers();Socket.all=[];vi.stubGlobal('localStorage',new MemoryStorage());vi.stubGlobal('sessionStorage',new MemoryStorage());vi.stubGlobal('location',{origin:'https://table.test',pathname:'/'});vi.stubGlobal('window',new EventTarget());vi.stubGlobal('document',Object.assign(new EventTarget(),{visibilityState:'visible'}));vi.stubGlobal('fetch',vi.fn(async()=>new Response('{}')));vi.stubGlobal('WebSocket',Socket);localStorage.setItem('mocha-network-token',token);});
 afterEach(()=>{clients.forEach(c=>c.destroy());clients=[];vi.useRealTimers();vi.unstubAllGlobals();});
 describe('same-device room recovery',()=>{
  it('persists a renewed server expiry and reconnects after the original deadline',async()=>{
@@ -73,7 +73,45 @@ describe('socket resilience',()=>{
  it('retains the room when the existence probe fails because the network is offline',async()=>{vi.stubGlobal('fetch',vi.fn(async()=>{throw new TypeError('offline');}));const c=client();await c.join(profile,'ABC234');Socket.all[0].close();await vi.advanceTimersByTimeAsync(1);expect(c.state.status).toBe('reconnecting');expect(c.getSavedSession()?.code).toBe('ABC234');});
  it('detects a half-open socket, pauses, reconnects, and resumes from an authoritative snapshot',async()=>{const c=client();await c.join(profile,'ABC234');Socket.all[0].open();Socket.all[0].receive({type:'snapshot',room:room('cloud',true),view:{title:'牌局'},actionRevision:4});await vi.advanceTimersByTimeAsync(60000);expect(Socket.all[0].readyState).toBe(3);expect(c.state.status).toBe('reconnecting');expect(c.state.paused).toBe(true);await vi.advanceTimersByTimeAsync(1000);expect(Socket.all).toHaveLength(2);Socket.all[1].open();Socket.all[1].receive({type:'snapshot',room:room('cloud',true),view:{title:'牌局'},actionRevision:5,paused:false});expect(c.state.status).toBe('playing');expect(c.state.paused).toBe(false);expect(c.state.actionRevision).toBe(5);});
  it('keeps a quiet healthy room connected through ping/pong',async()=>{const c=client();await c.join(profile,'ABC234');Socket.all[0].open();Socket.all[0].receive({type:'snapshot',room:room()});for(let i=0;i<8;i++){await vi.advanceTimersByTimeAsync(15000);Socket.all[0].receive({type:'pong'});}expect(Socket.all).toHaveLength(1);expect(Socket.all[0].sent.filter(m=>m.type==='ping')).toHaveLength(8);expect(c.state.status).toBe('lobby');});
- it('retains the saved room through an initial network outage and bounds retries',async()=>{const c=client();await c.join(profile,'ABC234');Socket.all[0].close();expect(c.state.status).toBe('reconnecting');expect(c.getSavedSession()?.code).toBe('ABC234');await vi.advanceTimersByTimeAsync(200000);expect(c.state.status).toBe('disconnected');expect(Socket.all).toHaveLength(7);expect(c.getSavedSession()?.code).toBe('ABC234');});
+ it('keeps retrying a long outage at a bounded rate and recovers without a lifecycle event',async()=>{
+  const c=client();await c.join(profile,'ABC234');Socket.all[0].close();expect(c.state.status).toBe('reconnecting');
+  await vi.advanceTimersByTimeAsync(200000);expect(c.state.status).toBe('disconnected');expect(Socket.all.length).toBeGreaterThan(7);expect(Socket.all.length).toBeLessThan(12);expect(c.getSavedSession()?.code).toBe('ABC234');
+  const count=Socket.all.length;await vi.advanceTimersByTimeAsync(40000);expect(Socket.all.length).toBe(count+1);
+  const next=Socket.all.at(-1)!;next.open();next.receive({type:'snapshot',room:room()});expect(c.state.status).toBe('lobby');c.leave();const stopped=Socket.all.length;await vi.advanceTimersByTimeAsync(60000);expect(Socket.all).toHaveLength(stopped);
+ });
+});
+
+describe('browser lifecycle recovery',()=>{
+ const visibility=(value:'visible'|'hidden')=>{Object.defineProperty(document,'visibilityState',{configurable:true,value});document.dispatchEvent(new Event('visibilitychange'));};
+ async function playing(){const c=client();await c.join(profile,'ABC234');const ws=Socket.all[0];ws.open();ws.receive({type:'snapshot',room:room('cloud',true),actionRevision:4});return {c,ws};}
+ it('does not close an open connection or send leave while hidden and resynchronizes on return',async()=>{
+  const {c,ws}=await playing();visibility('hidden');await vi.advanceTimersByTimeAsync(180000);
+  expect(Socket.all).toHaveLength(1);expect(ws.readyState).toBe(Socket.OPEN);expect(c.state.paused).toBe(false);expect(ws.sent.some(m=>m.type==='leave')).toBe(false);
+  visibility('visible');expect(ws.sent.at(-1)).toEqual({type:'ping',sync:true});ws.receive({type:'snapshot',room:room('cloud',true),actionRevision:5});await vi.advanceTimersByTimeAsync(5000);expect(Socket.all).toHaveLength(1);expect(c.state.actionRevision).toBe(5);
+ });
+ it.each(['online','pageshow'])('probes an open but broken transport on %s and retries even when close never fires',async event=>{
+  const {c,ws}=await playing();ws.close=()=>{ws.readyState=2;};window.dispatchEvent(new Event(event));
+  expect(ws.sent.at(-1)).toEqual({type:'ping',sync:true});await vi.advanceTimersByTimeAsync(5000);expect(c.state.paused).toBe(true);
+  await vi.advanceTimersByTimeAsync(1000);expect(Socket.all).toHaveLength(2);const next=Socket.all[1];next.open();next.receive({type:'snapshot',room:room('cloud',true),actionRevision:5});
+  ws.onclose?.({code:1006});ws.receive({type:'snapshot',room:room(),actionRevision:1});expect(c.state.actionRevision).toBe(5);expect(c.state.paused).toBe(false);
+ });
+ it('gives a delayed timer a fresh probe window after the browser freezes',async()=>{
+  const {c,ws}=await playing();vi.setSystemTime(Date.now()+180000);await vi.advanceTimersByTimeAsync(15000);
+  expect(ws.readyState).toBe(Socket.OPEN);expect(ws.sent.at(-1)).toEqual({type:'ping',sync:true});ws.receive({type:'pong'});await vi.advanceTimersByTimeAsync(5000);expect(c.state.paused).toBe(false);
+ });
+ it('coalesces wake events and cancels all lifecycle work after destroy',async()=>{
+  const {c,ws}=await playing();window.dispatchEvent(new Event('pageshow'));window.dispatchEvent(new Event('online'));visibility('visible');expect(ws.sent.filter(m=>m.sync)).toHaveLength(1);
+  c.destroy();window.dispatchEvent(new Event('pageshow'));visibility('visible');await vi.advanceTimersByTimeAsync(60000);expect(Socket.all).toHaveLength(1);expect(vi.getTimerCount()).toBe(0);
+ });
+ it('reopens an admitted session whose cached expiry missed another player’s renewal',async()=>{
+  const {c}=await playing(),expiry=c.getSavedSession()!.expiresAt;c.destroy();sessionStorage.clear();vi.setSystemTime(expiry+1);
+  const reopened=client();expect(reopened.getSavedSession()?.code).toBe('ABC234');await reopened.connect();const ws=Socket.all.at(-1)!;ws.open();ws.receive({type:'snapshot',room:room('cloud',true),actionRevision:4});expect(reopened.state.status).toBe('playing');expect(reopened.getSavedSession()!.expiresAt).toBeGreaterThan(Date.now());
+ });
+ it('clears a stale admitted session only after authoritative expiry, with a bounded local retention window',async()=>{
+  const {c}=await playing(),expiry=c.getSavedSession()!.expiresAt;c.destroy();sessionStorage.clear();vi.setSystemTime(expiry+1);
+  vi.stubGlobal('fetch',vi.fn(async()=>new Response('{}',{status:404})));const reopened=client();await reopened.connect();Socket.all.at(-1)!.close();await vi.advanceTimersByTimeAsync(1);expect(reopened.getSavedSession()).toBeUndefined();expect(reopened.state.status).toBe('idle');
+  localStorage.setItem('mocha-room-session',JSON.stringify({profile,token,code:'ABC234',expiresAt:expiry,pendingApproval:false}));vi.setSystemTime(expiry+6*3600000);expect(client().getSavedSession()).toBeUndefined();
+ });
 });
 
 describe('pending game commands',()=>{

@@ -43,7 +43,7 @@ class Socket {static OPEN=1;readyState=1;sent:unknown[]=[];send(raw:string){this
 interface RoomClientHarness {
  state:ClientState;stopped:boolean;connectGeneration:number;ws:Socket;
  session:{profile:Player;code:string;token:string};
- offer(id:string):Promise<void>;signal(id:string,data:unknown):Promise<void>;reset():void;destroy():void;
+ offer(id:string):Promise<void>;signal(id:string,data:unknown):Promise<void>;ensurePeers():void;reset():void;destroy():void;
 }
 
 function setup(profile=host){
@@ -53,9 +53,23 @@ function setup(profile=host){
  return {client,socket};
 }
 
-afterEach(()=>{vi.unstubAllGlobals();Peer.all=[];Channel.all=[];});
+afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();Peer.all=[];Channel.all=[];});
 
 describe('LAN signaling lifecycle',()=>{
+ it('keeps a proven DataChannel through peer silence and foreground return',async()=>{
+  vi.useFakeTimers();vi.stubGlobal('window',new EventTarget());vi.stubGlobal('document',Object.assign(new EventTarget(),{visibilityState:'visible'}));vi.stubGlobal('WebSocket',Socket);vi.stubGlobal('RTCPeerConnection',Peer);
+  const {client}=setup();void client.offer(guest.id);const peer=Peer.all[0],channel=Channel.all[0];peer.connectionState='connected';channel.readyState='open';channel.onopen?.();channel.receive({type:'proof',nonce:channel.sent[0].nonce});
+  client.ensurePeers();await vi.advanceTimersByTimeAsync(120000);expect(client.state.transport).toBe('lan');expect(Peer.all).toHaveLength(1);
+  document.dispatchEvent(new Event('visibilitychange'));expect(client.state.transport).toBe('lan');expect(client.state.paused).toBe(false);expect(Peer.all).toHaveLength(1);expect(channel.sent.at(-1)?.type).toBe('probe');client.destroy();expect(vi.getTimerCount()).toBe(0);
+ });
+
+ it('lets a reopened guest request new pairing without replacing an offer already in flight',async()=>{
+  vi.stubGlobal('window',new EventTarget());vi.stubGlobal('document',new EventTarget());vi.stubGlobal('WebSocket',Socket);vi.stubGlobal('RTCPeerConnection',Peer);
+  const {client}=setup();void client.offer(guest.id);await client.signal(guest.id,{type:'reconnect'});expect(Peer.all).toHaveLength(1);
+  const channel=Channel.all[0];channel.readyState='open';channel.onopen?.();channel.receive({type:'proof',nonce:channel.sent[0].nonce});
+  const resume=client.signal(guest.id,{type:'reconnect'});expect(Peer.all).toHaveLength(2);Peer.all[1].offer.resolve({type:'offer',sdp:'resume'});await resume;client.destroy();
+ });
+
  it('does not send an old offer through a replacement socket',async()=>{
   vi.stubGlobal('window',{addEventListener(){},removeEventListener(){}});vi.stubGlobal('document',{addEventListener(){},removeEventListener(){}});vi.stubGlobal('WebSocket',Socket);vi.stubGlobal('RTCPeerConnection',Peer);
   const {client}=setup();const pending=client.offer(guest.id);const oldPeer=Peer.all[0];

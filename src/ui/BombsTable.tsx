@@ -136,14 +136,14 @@ export function BombsTable({ view, selfID, command }: Props) {
                     run('target', [p.id]);
             }}><span className="bt-avatar">{tx(p.alive ? p.avatar : <Skull size={21}/>)}</span><span><b>{p.name}{tx(p.id === selfID && <small>{t("我")}</small>)}</b><em>{tx(p.alive ? <><span className="bt-tiny-back"/>{tx(p.count)}</> : '已出局')}</em></span>{tx(p.id === b.current && p.alive && <span className="bt-seat-turn"/>)}</button>))}</div>
     <div className="bt-arena"><div className="bt-piles"><button className={`bt-deck ${draw ? 'available' : ''}`} aria-label={tx(`抽牌，剩余 ${b.deckCount} 张`)} disabled={!draw} onClick={() => run('draw')}><span className="bt-deck-corners">{t("✦")}</span><CatArt kind="bomb"/><b>{tx(draw ? '抽一张' : '抽牌堆')}</b><small>{tx(b.deckCount)}</small></button><div className="bt-discard" aria-label={t("弃牌堆")}>{tx(b.discard[0] ? <><BombsIllustratedCard card={b.discard[0]} small/><small className="bt-pile-caption">{t('弃牌堆')}</small></> : <span className="bt-empty"><PawPrint size={25}/><small>{t("弃牌")}</small></span>)}</div></div>{tx(focus)}</div>
-    <div className="bt-hand-zone"><div className="bt-hand-label"><span>{t("我的手牌") + " "}<b>{tx(hand.length)}</b></span>{tx(handInteractive && selected.length > 0 ? <button onClick={() => setSelected([])}><X size={12}/>{t("清空选择")}</button> : null)}</div>
+    {!view.spectating&&<div className="bt-hand-zone"><div className="bt-hand-label"><span>{t("我的手牌") + " "}<b>{tx(hand.length)}</b></span>{tx(handInteractive && selected.length > 0 ? <button onClick={() => setSelected([])}><X size={12}/>{t("清空选择")}</button> : null)}</div>
         <div className={`bt-hand ${hand.length > 8 ? 'bt-long-hand' : ''}`} aria-label={t("我的手牌，可左右滑动")}>
             {tx(sorted.map((c, i) => <div className="bt-hand-slot" key={c.id} style={{ '--fan': `${Math.max(-5, Math.min(5, (i - (hand.length - 1) / 2) * 1.2))}deg`, '--lift': `${Math.abs(i - (hand.length - 1) / 2) * .35}px` } as CSSProperties}>
                 <BombsIllustratedCard card={c} selected={handInteractive && selected.includes(c.id)} onPointerDown={handInteractive ? taps.onPointerDown : undefined} onClick={handInteractive ? event=>selectCard(c,event) : undefined}/>
             </div>))}
             {tx(!hand.length && <span className="bt-empty-hand">{tx(b.players.find((p: any) => p.id === selfID)?.alive ? '无手牌' : '已出局')}</span>)}
         </div>
-    </div>
+    </div>}
     {tx(explosionPrompt && <div className="bt-confirm-shade"><section ref={confirmationDialog} tabIndex={-1} role="dialog" aria-modal="true" aria-label={t("确认放弃拆弹")}><Bomb size={28}/><h2>{t("这局就到这里？")}</h2><p>{t("放弃拆弹后，你会立即出局。")}</p><div className="bt-action-row"><button className="bt-secondary" onClick={() => setExplosionPrompt(false)}>{t("再想想")}</button><button className="bt-primary" onClick={() => { setExplosionPrompt(false); run('explode'); }}>{t("确认出局")}</button></div></section></div>)}
   </div>;
 }

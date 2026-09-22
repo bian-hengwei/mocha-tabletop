@@ -17,7 +17,7 @@ npm run check
 
 ## GitHub CI
 
-每个 PR 和 main 推送都运行 `npm run check`，以及四组并行的 Chromium/联机回归。分组清单位于 [ci-integration.json](../.github/ci-integration.json)，工作流位于 [ci.yml](../.github/workflows/ci.yml)。四组按清单运行全部集成脚本及其参数：
+每个 PR 和 main 推送都运行 `npm run check`，以及四组并行的 Chromium/联机回归。分组清单位于 [ci-integration.json](../.github/ci-integration.json)，工作流位于 [ci.yml](../.github/workflows/ci.yml)。四组的完整脚本及参数以分组清单为准：
 
 | 分组 | 范围 |
 | --- | --- |
@@ -109,7 +109,8 @@ npx playwright install chromium webkit
 | `node tests/network/cloud.integration.mjs` | 云端加入、权限与房间指令 |
 | `node tests/network/discovery.integration.mjs` | 房间发现 |
 | `node tests/network/lan-fallback.integration.mjs` | 直连失败后的明确提示与手动云端回退，支持 Chromium/WebKit |
-| `node tests/network/lan.integration.mjs` | WebRTC 直连与断线行为 |
+| `node tests/network/lan.integration.mjs` | WebRTC 直连、Chromium 页面挂起 30 秒、断线重配、双方实际关页恢复、信令中断与云端切换 |
+| `node tests/network/lifecycle.integration.mjs` | 真实 Worker 与 App：页面挂起 95 秒、前台同步、断网重连、浏览器后退、双方关页重开及继续原回合；中英文手机/桌面，支持 Chromium/WebKit |
 | `node tests/network/client-terminal.integration.mjs` | 客户端退出及终止状态 |
 | `node tests/network/werewolf-options.integration.mjs` | 月夜议会模式切换和联机流程 |
 | `node tests/network/werewolf-capacity.integration.mjs` | 月夜议会人数与法官席位 |
@@ -157,6 +158,19 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `tests/ui/social-viewport.integration.mjs`：双语八尺寸、狼人三模式座位分页和阿瓦隆十席同屏、规则入口、身份隐藏、法官选择、直接表决与任务提交及按钮文字边界；支持 WebKit。
 - `tests/ui/social-app-viewport.integration.mjs`：真实 App 在中英八尺寸下的默认及最大人数、阿瓦隆全席同屏、表决/任务按钮文字边界、终局公开身份、结算关闭与重开；支持 WebKit。
 
+- `tests/ui/century-viewport.integration.mjs`：商旅双语八尺寸，市场/订单/商队/已用商人切换、费用完整、末张牌横向可达、付款、弹窗旋转，以及五人密集手牌；支持 WebKit。
+- `tests/ui/game-viewport.integration.mjs`：按注册表遍历十二款游戏，最大人数、中英八尺寸，检查页面和所有桌面容器没有纵向滚动或内容裁剪；配合各游戏的状态/操作测试及实际截图验收，不能单独代表完整游戏流程。
+- `tests/ui/bombs-viewport.integration.mjs`：喵喵危机中英八尺寸、最大五人，初始/选牌/响应/目标/索要/交牌/预知/拆弹/插入/结束十种状态，所有容器纵向溢出与裁切检查，实际操作及预知私密换座；支持 WebKit。
+
+
+## 观战回归
+
+- `npx vitest run tests/spectators.test.ts tests/network/server-recovery.test.ts`：十二款公开投影、身份/手牌/密钥/私人核验过滤、终局公开信息、观战容量、席位切换、审批、权限、关闭及恢复。
+- `TEST_API_BASE=http://127.0.0.1:8799 node tests/network/spectators.integration.mjs`：真实云端加入、跨开局审批、链接/房间号观战、操作拒绝、断线不暂停、重连与关闭后凭据撤销。
+- `BASE_URL=http://127.0.0.1:5199 node tests/ui/spectators-live.integration.mjs`：真实 App 的云端及 WebRTC 观战流程、房主开关、准备室切换、对局中批准、公开库存、刷新和离开；默认测试两种模式，可用 `TEST_MODES=cloud` 或 `lan` 选测。
+- `BASE_URL=http://127.0.0.1:5199 node tests/ui/spectators.integration.mjs`：模拟已认证快照，在真实 App 中检查十二款观战桌面、中英七尺寸、二十位观众名单、弹窗旋转和焦点恢复；可用 `TEST_GAMES=mahjong,werewolf` 选测。此项不替代真实联机验证。
+
+以上浏览器测试使用 Chromium，截图写入忽略的 `test-results/`。两个端口必须指向同一份代码，并按上方独立副本说明配置 Worker 来源与 Vite 代理。
 - `tests/ui/century-viewport.integration.mjs`：商旅双语八尺寸，市场/订单/商队/已用商人切换、费用完整、末张牌横向可达、付款、五人密集手牌与空手牌说明；订单详情显示香料名称及所需/持有/差额，覆盖可交单、材料不足、等待回合、旋转、Escape 与焦点恢复；支持 WebKit。
 - `tests/ui/game-viewport.integration.mjs`：按注册表遍历十二款游戏，最大人数、中英八尺寸，检查页面和所有桌面容器没有纵向滚动或内容裁剪；晶石短横屏另检查各区无遮挡、44px 筹码、选择/清空和库存开关。配合各游戏的状态/操作测试及实际截图验收，不能单独代表完整游戏流程。
 - `tests/ui/bombs-viewport.integration.mjs`：喵喵危机中英八尺寸、最大五人，初始/选牌/响应/目标/索要/交牌/预知/拆弹/插入/结束十种状态，所有容器纵向溢出与裁切检查；出牌自动确认、直接否决/反制及其余玩家重新响应；预知时手牌不响应选择、私密换座隐藏及查看结束后恢复选牌；支持 WebKit。
@@ -180,3 +194,5 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 - `npx vitest run tests/practice.test.ts tests/storage.test.ts`：八款人机游戏的全部合法人数与三档难度、合法推进、完整寿司三轮、单人视图/操作边界、旧试玩存档、保存/重开与战绩。
 - `BASE_URL=http://127.0.0.1:5218 node tests/ui/local-play.integration.mjs`：真实 App 单机人数/难度选择、八款人机与四款交流游戏、双语八尺寸与旋转、刷新/语言/重开/战绩/退出；支持 `TEST_BROWSER=webkit`。对生产预览可加 `TEST_OFFLINE=1` 验证缓存后断网开局与恢复（Chromium）。终局界面使用显式 fixture，完整规则终局由单测覆盖。
+
+连接生命周期回归使用 `TEST_FRONTEND` 指向运行中的 Vite，并需要对应本地 Worker。`lifecycle.integration.mjs` 在 Chromium 中通过 CDP 暂停真实页面执行，在 WebKit 中通过 Playwright clock 暂停页面定时器；这验证浏览器挂起路径，不等同于手机系统切后台/锁屏的真机验收。关闭双方标签页后以无 sessionStorage 的新标签页自动恢复，比较原玩家、matchID、操作版本和私人视图，再通过界面继续出牌。截图写入 `test-results/lifecycle-*`。
