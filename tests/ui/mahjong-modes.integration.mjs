@@ -24,9 +24,9 @@ try{for(const locale of ['zh','en']){
   await page.reload();await page.locator('.mj-table').waitFor();await fit();if(locale==='en')assert(!/[\u3400-\u9fff]/u.test(await page.locator('.mj-edition').innerText()),'mode name translated');await page.evaluate(()=>localStorage.removeItem('mocha-practice-v1'));
  }
  // Dense table, long names, history dialog, rotation and every required viewport.
- await page.goto(`${base}/tests/ui/classic.fixture.html?scenario=dense&mode=redBloodflow&long=1`);
+ await page.goto(`${base}/tests/ui/classic.fixture.html?scenario=dense&mode=redBloodflow&long=1&large=1`);
  for(const [width,height]of sizes){await page.setViewportSize({width,height});await fit();await expect(page.locator('.mj-river .mj-face')).toHaveCount(48);await expect(page.locator('.mj-history')).toBeVisible();
-  const overlaps=await page.locator('.mj-seat:not(.self)').evaluateAll(seats=>seats.flatMap(s=>{const a=s.querySelector('.mj-avatar').getBoundingClientRect(),b=s.querySelector('div').getBoundingClientRect();return a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1?[s.className]:[];}));assert.deepEqual(overlaps,[],'avatar and text do not overlap');
+  const overlaps=await page.locator('.mj-seat:not(.self)').evaluateAll(seats=>seats.flatMap(s=>{const a=s.querySelector('.mj-avatar').getBoundingClientRect(),b=s.querySelector('div').getBoundingClientRect();return a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1?[s.className]:[];}));assert.deepEqual(overlaps,[],'avatar and text do not overlap');assert(await page.locator('.mj-seat.seat-self small').evaluate(e=>e.getBoundingClientRect().bottom<=e.closest('.mj-arena').getBoundingClientRect().bottom-10),'self score clears the table rail');
   await page.screenshot({path:`${out}/${locale}-dense-${width}.png`});await page.getByRole('button',{name:/胡牌记录|Win history/}).click();await expect(page.getByRole('dialog')).toBeVisible();await page.setViewportSize({width:height,height:width});await fit();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.getByRole('button',{name:/胡牌记录|Win history/})).toBeFocused();
  }
  await page.goto(base);await page.locator('.cover-mahjong').click();await page.locator('.setup-rules').click();

@@ -37,13 +37,13 @@ export function mahjongVariantGuide(mode:MahjongMode,locale:'zh'|'en'):Guide{
  ]));
  sections.push(section('吃碰杠与胡牌','Claims and winning',[
   gd?'可以吃上家的牌，也可以碰、明杠、暗杠和补杠。胡牌优先，其次碰杠，最后吃。':'可以碰、明杠、暗杠和补杠，不吃牌；手里的顺子仍可用于胡牌。胡牌优先于碰杠。',
-  gd?'胡牌为四组顺子或刻子加一对将，或十三幺；此鸡平胡版本不采用七对。':'支持四组顺子或刻子加一对将、七对；四张相同可作两对。'+(!sichuan?'无赖子的十三幺也可以胡。':''),
+  gd?'胡牌为四组顺子或刻子加一对将，或十三幺；此鸡平胡版本不采用七对。':'支持四组顺子或刻子加一对将、七对；四张相同可作两对。'+(mode==='guangdong'?'十三幺也可以胡。':''),
   '允许一炮多响。补杠先等抢杠胡，没人胡才成杠并补摸；暗杠不被抢。暗杠牌面仅自己可见，终局才公开。',
   gd?'漏胡：放过某个牌值后，在自己下一次摸牌、吃、碰、杠前不能再胡同一牌值。':'过手胡：放过一次可胡的牌后，到自己下次摸牌前，只有基础胡分更高的点炮胡才可再胡。',
   flow?'第一次胡牌后保留 13 张等价手牌并锁定听口，不再碰杠；胡到的自摸牌单独收起，直接轮到下家。后续可以继续胡；不能胡的新摸牌可直接打出。':r.family==='battle'?'胡牌后退出本局，后续摸打和付款跳过该玩家；三家胡牌或牌墙摸完时结算。':'一轮胡牌响应结束后结算本局，其他玩家不再继续摸打。'
  ],[
   gd?'Chow from the previous player, pung, exposed/concealed/added kong. Wins take priority, then pung/kong, then chow.':'Pung and exposed/concealed/added kongs are allowed; chow is not. Runs in your concealed hand still count toward a win. Wins take priority over melds.',
-  gd?'Four sets and a pair, or thirteen orphans. This chicken-and-flat ruleset does not use seven pairs.':'Four sets and a pair, or seven pairs; a quad may count as two pairs.'+(!sichuan?' Natural thirteen orphans also wins.':''),
+  gd?'Four sets and a pair, or thirteen orphans. This chicken-and-flat ruleset does not use seven pairs.':'Four sets and a pair, or seven pairs; a quad may count as two pairs.'+(mode==='guangdong'?' Thirteen orphans also wins.':''),
   'Multiple discard winners are allowed. An added kong waits for robbing decisions before it completes and draws a replacement. Concealed kongs cannot be robbed and their faces remain private until the deal ends.',
   gd?'After passing a winning value, you cannot win on that value again until you draw, chow, pung or kong.':'After passing a win, only a discard win with a higher base value is allowed until your next draw.',
   flow?'Your first win locks the equivalent 13-tile waiting hand; no further melds. A self-drawn winning tile is set aside, and play goes directly to the next seat. You may win again on later tiles; a non-winning drawn tile can be discarded.':r.family==='battle'?'Winners leave the deal and no longer draw, discard or pay. End after three winners or wall exhaustion.':'The deal ends after the winning response window resolves.'
