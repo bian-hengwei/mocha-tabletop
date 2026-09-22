@@ -28,8 +28,8 @@ function* shapes(hand:Tile[],melds:Meld[],wildValue:number,limit:number):Generat
 }
 const cache=new Map<string,HandScore>();
 /** Evaluate complete, coherent decompositions and choose the highest scoring one. Never combine incompatible shapes. */
-export function scoreMahjongHand(mode:MahjongMode,hand:Tile[],melds:Meld[],wildValue:number,discardValue?:number,seat=0):HandScore{
- const key=JSON.stringify([mode,countsOf(hand),melds.map(m=>[m.type,m.tiles.map(t=>t.value)]),wildValue,discardValue,seat]);const saved=cache.get(key);if(saved)return structuredClone(saved);
+export function scoreMahjongHand(mode:MahjongMode,hand:Tile[],melds:Meld[],wildValue:number,discardValue?:number,seat=0,winningValue=hand.at(-1)?.value):HandScore{
+ const key=JSON.stringify([mode,countsOf(hand),melds.map(m=>[m.type,m.tiles.map(t=>t.value)]),wildValue,discardValue,seat,winningValue]);const saved=cache.get(key);if(saved)return structuredClone(saved);
  const rules=MAHJONG_RULES[mode],red=mode==='redBloodflow',all=[...hand,...melds.flatMap(m=>m.tiles)],natural=all.filter(t=>t.value!==wildValue),physical=countsOf(all),wildCount=all.length-natural.length;
  let best:HandScore={points:0,patterns:[]};
  for(const shape of shapes(hand,melds,wildValue,rules.missing?27:34)){
@@ -53,7 +53,7 @@ export function scoreMahjongHand(mode:MahjongMode,hand:Tile[],melds:Meld[],wildV
    if(values.every(terminal)&&values.every(v=>v<27))candidate('清幺九',64);
    if(shape.orphans)candidate('十三幺',64);
    if(triplets&&values.every(terminal))candidate('混幺九',32);
-   if(pure&&!melds.length&&!wildCount&&[0,8].every(n=>physical[Math.floor(values[0]/9)*9+n]>=3)&&Array.from({length:7},(_,i)=>i+1).every(n=>physical[Math.floor(values[0]/9)*9+n]>=1))candidate('九莲宝灯',64);
+   if(pure&&!melds.length&&!wildCount&&Array.from({length:9},(_,n)=>n).every(n=>{const v=Math.floor(values[0]/9)*9+n;return physical[v]-(v===winningValue?1:0)===(n===0||n===8?3:1);}))candidate('九莲宝灯',64);
    const top=candidates.sort((a,b)=>b.multiplier-a.multiplier)[0];add(top.name,top.multiplier);
    if(top.multiplier<8){if(shape.sets.some(g=>!g.run&&g.value===27+seat))add('门风',2);if(shape.sets.some(g=>!g.run&&g.value===27))add('圈风',2);if(dragons)add('三元刻',2**dragons);}
    if(rules.ghost&&!wildCount)add('硬胡',2);
@@ -65,9 +65,9 @@ export function scoreMahjongHand(mode:MahjongMode,hand:Tile[],melds:Meld[],wildV
    let concealed=shape.sets.filter(g=>!g.run&&g.concealed).length;
    if(discardValue!==undefined&&shape.pair!==discardValue&&!sequences.some(v=>discardValue>=v&&discardValue<=v+2)&&shape.sets.some(g=>!g.run&&g.concealed&&g.value===discardValue))concealed--;
    const evenTriplets=triplets&&values.every(v=>v<27&&[1,3,5,7].includes(v%9));
-   const redHook=melds.length===4&&hand.some(t=>t.value===33);
+   const redHook=melds.length===4&&hand.filter(t=>t.value===33).length-(winningValue===33?1:0)===1;
    const twinDragons=pure&&!shape.seven&&shape.pair%9===4&&[0,6].every(n=>sequences.filter(v=>v%9===n).length===2);
-   const nineGates=pure&&!melds.length&&!wildCount&&[0,8].every(n=>physical[Math.floor(values[0]/9)*9+n]>=3)&&Array.from({length:7},(_,i)=>i+1).every(n=>physical[Math.floor(values[0]/9)*9+n]>=1);
+   const nineGates=pure&&!melds.length&&!wildCount&&Array.from({length:9},(_,n)=>n).every(n=>{const v=Math.floor(values[0]/9)*9+n;return physical[v]-(v===winningValue?1:0)===(n===0||n===8?3:1);});
    if(shape.seven&&!(red&&twinDragons))add('七对',4);
    else if(melds.length===4&&!(red&&redHook))add('金钩钓',4);
    else if(triplets&&!(red&&(redHook||evenTriplets||fourConsecutive||concealed===4)))add('碰碰胡',2);

@@ -1,98 +1,135 @@
-/* Mahjong has its own table materials and seat geometry; poker keeps its existing layout. */
-.app.game-mahjong.in-game{background:radial-gradient(ellipse at 50% 20%,#44403b 0,#262c2c 55%,#181f21)}
-.mahjong-table{--gold:#e5c89d;--felt:#365a60;gap:10px;padding-top:10px}
-.mahjong-table .classic-edition{padding:0 8px;color:#dfd6c7;font-size:12px;letter-spacing:.03em}
-.mahjong-table .classic-edition i{background:#dfbe8c;box-shadow:none}
-.mahjong-table .classic-arena{border:8px solid #655246;border-radius:32px;background:radial-gradient(ellipse at 50% 40%,#496e70,#30545a 75%);box-shadow:0 0 0 1px #b69b75,0 6px 0 #302c2a,0 12px 24px #0004,inset 0 0 0 2px #c2a374,inset 0 0 0 5px #253c42,inset 0 4px 30px #132d3966}
-.mahjong-table .classic-arena:before{inset:7px;border:1px solid #d9c2933d;border-radius:17px;background:repeating-linear-gradient(0deg,#ffffff05 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,#101f2520 0 1px,transparent 1px 3px)}
-.mahjong-table .classic-arena:after{content:'';position:absolute;inset:22px;border:1px solid #d8d7bb16;border-radius:50%;pointer-events:none;z-index:-1}
-.mahjong-table .classic-seat{border:1px solid #cbb39140;border-radius:12px;background:linear-gradient(135deg,#283b42f5,#213139f0);box-shadow:0 3px 8px #12232c44;gap:5px}
-.mahjong-table .classic-seat.current{border-color:#f1d29b;box-shadow:0 0 0 2px #e5bf7529,0 4px 12px #11243155}
-.mahjong-table .classic-avatar{background:linear-gradient(135deg,#a3937b,#60655e);border-color:#e8d2ac88;box-shadow:inset 0 0 0 3px #28363b66;border-radius:11px}
-.mahjong-table .classic-seat small{color:#d1dbda}
-.mahjong-table .classic-seat small strong{color:#f1dfbf}
-.mahjong-table .seat-turn-label{position:static;transform:none;align-self:center;max-width:100%;white-space:normal;background:#e5c79a;color:#293d43;font-size:9px;line-height:1.3;padding:2px 6px;border-radius:5px;grid-column:1/-1}
-.mahjong-table .seat-turn-light{display:none}
-.mahjong-table .classic-seat.seat-across{display:grid;grid-template-columns:34px minmax(0,1fr);min-width:135px;top:10px;max-width:190px;padding:6px 8px}
-.mahjong-table .seat-across .classic-avatar{width:32px;height:32px;font-size:23px}
-.mahjong-table .seat-across .seat-turn-label{position:absolute;left:calc(100% + 6px);top:50%;transform:translateY(-50%);max-width:76px;min-width:48px;text-align:center}
-.mahjong-table .classic-seat.seat-left,.mahjong-table .classic-seat.seat-right{top:40%;width:78px;max-width:78px;left:10px;padding:7px 4px;text-align:center}
-.mahjong-table .classic-seat.seat-right{left:auto;right:10px}
-.mahjong-table .rack-across{top:79px;left:29%;right:29%;gap:2px}
-.mahjong-table .rack-left{left:96px}.mahjong-table .rack-right{right:96px}
-.mahjong-table .mahjong-public{inset:110px 123px 18px}
-.mahjong-table .river-seat{background:#17384226;border:1px solid #d3dace15;padding:5px;border-radius:8px}
-.mahjong-table .river-seat>header,.mahjong-table .river-seat>header>span{color:#c5d7d4}
-.mahjong-table .river:empty{background:none}
-.mahjong-table .mahjong-compass{background:linear-gradient(145deg,#35484c,#233138);border-color:#d0b487;box-shadow:0 4px 9px #13292c77,inset 0 0 0 4px #ffffff08;color:#e2ceb0;width:66px;height:66px}
-.mahjong-table .mahjong-compass>b{font:24px Georgia,serif;color:#f7e5c7}
-.mahjong-table .mahjong-latest>small{color:#e1e7e1}
-.mahjong-table .classic-hand-panel{border-radius:15px;border-color:#c7af8438;background:linear-gradient(165deg,#39464a,#27353c);box-shadow:inset 0 1px #ffffff12,0 5px 16px #0b141f33}
-.mahjong-table .classic-controls button.compact{border-color:#b6c1bf44;color:#eee9df;background:#ffffff08}
-.mahjong-table .classic-controls button.primary{background:linear-gradient(#ead6b5,#ccb087);color:#233a42;border-color:#f3dfbb;box-shadow:0 2px 0 #8b7358}
-.mahjong-table .classic-selection{color:#cad7d5}.mahjong-table .classic-selection.actionable{color:#f0d7ad}
-.mahjong-table .hand-score,.mahjong-table .hand-gesture,.mahjong-table .hand-gesture small{color:#c9d5d4}
-.mahjong-table .classic-hand-scroll::-webkit-scrollbar-track{background:#243239}
-.mahjong-table .classic-hand-scroll::-webkit-scrollbar-thumb{background:#a49177}
+/* Mahjong has its own geometry: rotated tiles reserve their complete painted bounds. */
+.app.in-game.game-mahjong .game-surface{overflow:hidden}
+.classic-table.mj-table{height:100%;min-height:0;width:100%;max-width:1240px;padding:4px 0 6px;gap:0;display:flex;flex-direction:column;color:#edf3e9;container-type:inline-size}
+.mj-edition{height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;color:#c7d8ce;font-size:12px;padding:0 6px}
+.mj-history{display:flex;align-items:center;justify-content:center;gap:7px;min-width:44px;min-height:44px;border:0;background:none;color:#dfd1ab;font-size:12px}
+.mj-arena{position:relative;flex:1;min-height:0;isolation:isolate;border:1px solid #8fbaa444;border-radius:24px 24px 0 0;background:radial-gradient(ellipse at 50% 46%,#367563,#235a4d 64%,#194638);box-shadow:inset 0 0 0 5px #133d342a;overflow:hidden}
+.mj-arena:before{content:'';position:absolute;inset:9px;border:1px solid #c8dec71a;border-radius:17px;pointer-events:none}
+.mj-table .mj-face{display:block;width:100%;height:100%;aspect-ratio:3/4;border-radius:3px;filter:drop-shadow(0 2px 1px #03271a55)}
+.mj-table .mj-seat{position:absolute;z-index:2;display:flex;flex-direction:column;align-items:center;gap:4px;background:transparent;box-shadow:none;border:0;padding:0;max-width:90px;width:74px;text-align:center;pointer-events:none;border-radius:0}
+.mj-table .mj-seat.seat-across{left:50%;top:12px;transform:translateX(-50%);width:200px;max-width:220px;flex-direction:row;text-align:left}
+.mj-table .mj-seat.seat-left{left:12px;top:39%}.mj-table .mj-seat.seat-right{right:12px;top:39%}.mj-table .mj-seat.seat-self{bottom:10px;left:12px;top:auto;opacity:1;flex-direction:row;text-align:left;width:180px;max-width:180px}
+.mj-avatar{display:grid;place-items:center;width:40px;height:40px;flex-shrink:0;background:#163d34;border:1px solid #c4dec559;border-radius:13px;font-size:25px;box-shadow:0 3px 6px #11382944}
+.mj-seat.current .mj-avatar{outline:2px solid #e5c783;outline-offset:3px}.mj-table .mj-seat b{font-size:11px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mj-table .mj-seat small{display:block;font-size:10px;color:#c8ddcd;line-height:1.4}.mj-table .mj-seat>div{min-width:0;display:block}.mj-seat i{width:6px;height:6px;background:#ffe1a1;border-radius:50%;position:absolute;top:-5px;right:8px}
+.mj-rack{position:absolute;display:flex;gap:1px;pointer-events:none}.mj-rack .mj-face{flex:none;width:16px;height:23px}.mj-rack.mj-rack-across{top:66px;left:50%;transform:translateX(-50%)}
+.mj-rack.mj-rack-left,.mj-rack.mj-rack-right{top:50%;flex-direction:column;transform:translateY(-50%);gap:1px}.mj-rack.mj-rack-left{left:100px}.mj-rack.mj-rack-right{right:100px}.mj-rack.mj-rack-left .mj-face,.mj-rack.mj-rack-right .mj-face{width:23px;height:12px}.mj-rack.mj-rack-left .mahjong-art,.mj-rack.mj-rack-right .mahjong-art{transform:none}
+.mj-public{position:absolute;inset:103px 142px 50px;--river-tile:clamp(20px,3.1cqw,32px);--river-long:calc(var(--river-tile)*4/3);display:grid;grid-template-columns:1fr 2fr 1fr;grid-template-rows:1fr 1.2fr 1fr;gap:4px}
+.mj-river{min-height:0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.mj-river.river-across{grid-area:1/2}.mj-river.river-self{grid-area:3/2}.mj-river.river-left{grid-area:2/1}.mj-river.river-right{grid-area:2/3}
+.mj-table .mj-river-grid{display:grid;grid-template-columns:repeat(6,var(--river-tile));grid-auto-rows:var(--river-long);gap:2px;flex:none;padding:0;margin:0;overflow:visible;min-height:0;align-content:center;align-items:center;justify-content:center}
+.mj-river-cell{width:var(--river-tile);height:var(--river-long);display:block;position:relative}
+.mj-river-cell.is-latest:after{content:'';position:absolute;top:-7px;left:calc(50% - 3px);border-left:3px solid transparent;border-right:3px solid transparent;border-top:5px solid #ffe0a1}
+.mj-table .river-across .mj-river-cell .mj-face{transform:rotate(180deg)}
+.mj-table :is(.river-left,.river-right) .mj-river-grid{grid-template-columns:repeat(2,var(--river-long));grid-template-rows:repeat(6,var(--river-tile));grid-auto-flow:column}
+.mj-table :is(.river-left,.river-right) .mj-river-cell{width:var(--river-long);height:var(--river-tile)}
+.mj-table :is(.river-left,.river-right) .mj-river-cell .mj-face{width:var(--river-tile);height:var(--river-long);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(90deg)}
+.mj-table .river-right .mj-river-cell .mj-face{transform:translate(-50%,-50%) rotate(-90deg)}
+.mj-river-count{min-height:24px;padding:4px 8px;font-size:10px;color:#c9ded0;border:0;background:none;border-radius:8px;white-space:nowrap}
+.mj-river-count:hover{background:#153f37}.mj-center{grid-area:2/2;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;min-height:0;pointer-events:none}
+.mj-table .mj-compass{width:76px;height:76px;display:grid;grid-template-columns:18px 1fr 18px;grid-template-rows:18px 1fr 18px;border-radius:17px;border:1px solid #a1c1a84d;background:#153f38cc;transform:none;color:#9fbfaf;box-shadow:0 4px 12px #103a3222;font-size:10px;flex-shrink:0}
+.mj-compass span{display:grid;place-items:center}.mj-compass .wind-across{grid-area:1/2}.mj-compass .wind-left{grid-area:2/1}.mj-compass .wind-right{grid-area:2/3}.mj-compass .wind-self{grid-area:3/2}.mj-compass .active{color:#ffdf98;font-weight:800;background:#e1c68b12;border-radius:6px}.mj-compass b{grid-area:2/2;text-align:center;font-size:21px;line-height:1;color:#e9ddbb;align-self:center}.mj-compass b small{display:block;font-size:8px;font-weight:400;margin-top:4px}
+.mj-pending{display:flex;flex-direction:column;align-items:center;gap:4px;max-width:100%;font-size:10px;text-align:center;color:#f1d9a3}.mj-pending .mj-face{width:33px;height:44px}
+.mj-table .mj-melds{position:absolute;display:flex;gap:8px;flex-wrap:nowrap;max-height:none;overflow:visible;min-height:0;pointer-events:none}.mj-melds>div{display:flex;gap:1px}.mj-melds .mj-face{width:21px;height:28px}.mj-melds.meld-self{left:50%;bottom:12px;transform:translateX(-50%)}.mj-melds.meld-across{left:50%;top:90px;transform:translateX(-50%)}.mj-melds.meld-left{left:126px;top:50%;transform:translate(-50%,-50%) rotate(90deg)}.mj-melds.meld-right{right:126px;top:50%;transform:translate(50%,-50%) rotate(-90deg)}
+.mj-hand-panel{flex-shrink:0;background:linear-gradient(#204e40,#183d32);border:1px solid #91b29833;border-top:1px solid #b8d8bb24;border-radius:0 0 20px 20px;padding:8px 14px 12px;min-width:0}
+.mj-hand-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:46px}.mj-table .mj-status{font-size:12px;line-height:1.4;color:#deeadc;padding:0;min-height:0;flex:1;min-width:0}.mj-table .mj-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;margin:0;max-width:75%}
+.mj-actions .mj-action{min-height:44px;min-width:52px;padding:7px 14px;line-height:1.15;background:linear-gradient(#e7d5aa,#ceb27c);border:1px solid #edd8a88c;border-radius:14px;color:#294535;font-size:15px;font-weight:650;box-shadow:0 3px 0 #0b332559}.mj-actions .mj-win{background:linear-gradient(#f4daa0,#e5b66c);color:#583912}.mj-actions .mj-pass{background:#163d33;color:#d2e0d3;border-color:#a6c1a63b;font-weight:400;font-size:12px}.mj-actions button:disabled{opacity:.4}.mj-actions .mj-suit{display:flex;align-items:center;gap:5px;font-size:12px;padding:4px 10px}.mj-suit .mahjong-art{width:25px;height:34px}
+.mj-table .mj-hand-scroll{padding:14px 4px 5px;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#779d80 #153b30;overscroll-behavior-x:contain}
+.mj-table .mj-hand{display:flex;align-items:flex-end;justify-content:center;gap:2px;min-width:max-content;width:100%;padding:0;margin:0}
+.mj-table .mj-tile{position:relative;flex:0 0 clamp(44px,5.5cqw,66px);width:clamp(44px,5.5cqw,66px);min-width:44px;max-width:none;height:auto;aspect-ratio:3/4;min-height:0;padding:0;border:0;border-radius:5px;background:none;box-shadow:none;cursor:pointer;transition:transform .16s,filter .16s;touch-action:pan-x}
+.mj-table .mj-tile.drawn{margin-left:14px;box-shadow:none}.mj-table .mj-tile.selected{transform:translateY(-10px);outline:2px solid #d9efd6;outline-offset:0;filter:drop-shadow(0 5px 5px #041e2355)}.mj-table .mj-tile:disabled{opacity:1;filter:brightness(.83) saturate(.75);cursor:default}.mj-table .mj-tile:focus-visible{outline:3px solid #afdaef;outline-offset:1px}.mj-tile.mj-wild:after{content:'◆';position:absolute;right:3px;top:2px;color:#9a2e26;font-size:9px}.mj-table .mj-tile .mj-face{width:100%;height:100%}
+.mj-flight{position:absolute;z-index:5;pointer-events:none;left:50%;top:50%;display:flex;flex-direction:column;align-items:center;gap:4px;transform:translate(-50%,-50%);animation:mj-discard 1.15s both;--from-x:0px;--from-y:130px;--to-x:0px;--to-y:100px;filter:drop-shadow(0 10px 12px #052e2766)}
+.mj-flight .mj-face{width:63px;height:84px}.mj-flight small,.mj-flight>b{background:#123c34f2;border:1px solid #bfd4b533;border-radius:8px;padding:3px 10px;font-size:12px;color:#fff1cf;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mj-flight.from-across{--from-y:-130px;--to-y:-100px}.mj-flight.from-left{--from-x:-140px;--from-y:0px;--to-x:-90px;--to-y:0px}.mj-flight.from-right{--from-x:140px;--from-y:0px;--to-x:90px;--to-y:0px}
+@keyframes mj-discard{0%{opacity:0;transform:translate(calc(-50% + var(--from-x)),calc(-50% + var(--from-y))) scale(.45)}22%,68%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(calc(-50% + var(--to-x)),calc(-50% + var(--to-y))) scale(.36)}}
+.mj-river-cell.is-landing{animation:mj-land 1.15s both}@keyframes mj-land{0%,80%{opacity:0}100%{opacity:1}}
+.mj-table .mj-results{min-height:0;flex:1;background:#183e32;border:1px solid #a7b98b30;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px;overflow:hidden;margin:0}.mj-results>header{display:flex;align-items:center;justify-content:space-between;font-size:12px;gap:12px}.mj-results h3{margin:0;font-size:15px}.mj-result-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-height:0;overflow:auto}.mj-result-player{min-width:0;background:#ffffff05;border-radius:12px;padding:8px}.mj-result-player p{display:flex;align-items:center;gap:5px;margin:0 0 8px;font-size:12px}.mj-result-player b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mj-result-player strong{margin-left:auto;white-space:nowrap;color:#ebd29c}.mj-reveal{display:flex;gap:1px;overflow-x:auto;padding-bottom:4px}.mj-reveal .mj-face{width:28px;height:37px;flex-shrink:0}.mj-finished .mj-arena{display:none}.mj-finished .mj-hand-panel{display:none}
+.mj-dialog.panel{display:flex;flex-direction:column;gap:12px;width:min(480px,calc(100vw - 24px));max-height:calc(100dvh - 24px);background:#1d4135;color:#edf1df;padding:16px}.mj-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0}.mj-dialog h2{font-size:17px;margin:0;min-width:0}.mj-dialog .icon{width:44px;height:44px;flex-shrink:0}.mj-dialog-content{min-height:0;overflow:auto}.mj-win-row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px}.mj-win-row .mj-face{width:36px;height:48px}.mj-all-discards{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}.mj-all-discards .mj-face{width:100%;height:auto;aspect-ratio:3/4}.mj-dialog footer{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;font-size:12px}
 @media(max-width:740px){
- .mahjong-table{gap:8px;padding-top:5px}
- .mahjong-table .classic-edition{padding:0 3px;font-size:10px}
- .mahjong-table .classic-arena{border-width:5px;border-radius:24px}
- .mahjong-table .classic-seat.seat-across{top:9px;min-width:120px;max-width:154px;padding:5px 7px;grid-template-columns:29px minmax(0,1fr)}
- .mahjong-table .seat-across .classic-avatar{width:27px;height:27px;font-size:19px}
- .mahjong-table .seat-across .seat-turn-label{left:calc(100% + 5px);min-width:36px;max-width:43px;font-size:8px;padding:3px}
- .mahjong-table .classic-seat.seat-left,.mahjong-table .classic-seat.seat-right{width:53px;max-width:53px;left:6px;top:38%;padding:5px 2px;gap:4px}
- .mahjong-table .classic-seat.seat-right{left:auto;right:6px}
- .mahjong-table .classic-seat small{font-size:8px;line-height:1.45}
- .mahjong-table .classic-seat b{font-size:10px;max-width:47px}
- .mahjong-table .classic-seat.seat-across b{max-width:92px}
- .mahjong-table .seat-turn-label{font-size:8px;padding:2px 4px}
- .mahjong-table .rack-across{top:76px;left:25%;right:25%;gap:1px}
- .mahjong-table .opponent-rack .classic-face.mini{width:13px}
- .mahjong-table .rack-left{left:64px}.mahjong-table .rack-right{right:64px}
- .mahjong-table .mahjong-public{inset:102px 82px 12px}
- .mahjong-table .river-seat{padding:2px;border-radius:5px}
- .mahjong-table .river-across,.mahjong-table .river-self{left:0;width:100%;height:30%}
- .mahjong-table .river-left,.mahjong-table .river-right{top:31%;width:28%;height:38%}
- .mahjong-table .mahjong-center{left:29%;width:42%;top:33%;height:33%}
- .mahjong-table .mahjong-compass{width:41px;height:41px;font-size:7px}
- .mahjong-table .mahjong-compass>b{font-size:17px}
+ .mj-edition{height:31px;font-size:11px}.mj-arena{border-radius:18px 18px 0 0}.mj-table .mj-seat{width:45px;max-width:45px;gap:5px}.mj-table .mj-seat.seat-left{left:5px;top:40%}.mj-table .mj-seat.seat-right{right:5px;top:40%}.mj-table .mj-seat.seat-across{top:13px;width:150px}.mj-table .mj-seat.seat-self{left:9px;bottom:9px;width:90px;max-width:90px}.mj-table .mj-seat.seat-self .mj-avatar{display:none}.mj-avatar{width:31px;height:34px;font-size:22px;border-radius:10px}.mj-table .mj-seat b{font-size:10px}.mj-table .mj-seat small{font-size:9px}.mj-rack.mj-rack-across{top:64px}.mj-rack.mj-rack-across .mj-face{width:12px;height:17px}.mj-rack.mj-rack-left{left:53px}.mj-rack.mj-rack-right{right:53px}.mj-rack.mj-rack-left .mj-face,.mj-rack.mj-rack-right .mj-face{width:12px;height:11px}
+ .mj-public{inset:112px 69px 58px;--river-tile:clamp(18px,4.65cqw,23px);grid-template-columns:1fr 1.4fr 1fr;grid-template-rows:1fr 1.7fr 1fr;gap:5px}
+ .mj-table .mj-river-grid{gap:1px}.mj-table :is(.river-left,.river-right) .mj-river-grid{grid-template-columns:repeat(2,var(--river-long));grid-template-rows:repeat(6,var(--river-tile));max-width:none}
+ .mj-river-count{font-size:9px;padding:4px 0;min-height:24px}.mj-river-count span{display:none}.mj-table .mj-compass{width:58px;height:58px;grid-template-columns:14px 1fr 14px;grid-template-rows:14px 1fr 14px;border-radius:13px;font-size:9px}.mj-compass b{font-size:17px}.mj-compass b small{font-size:7px;margin-top:2px}.mj-pending{font-size:9px}.mj-pending .mj-face{width:27px;height:36px}
+ .mj-table .mj-melds{gap:4px}.mj-melds .mj-face{width:15px;height:20px}.mj-melds.meld-across{top:86px}.mj-melds.meld-left{left:69px}.mj-melds.meld-right{right:69px}.mj-melds.meld-self{bottom:14px;left:auto;right:8px;transform:none}
+ .mj-hand-panel{padding:5px 8px 8px;border-radius:0 0 15px 15px}.mj-table .mj-status{font-size:11px}.mj-actions .mj-action{font-size:13px;padding:7px 10px;min-width:44px;border-radius:12px}.mj-table .mj-actions{gap:4px;max-width:77%}.mj-table .mj-hand{justify-content:flex-start}.mj-table .mj-tile{flex-basis:44px;width:44px}.mj-table .mj-tile.drawn{margin-left:12px}.mj-result-list{grid-template-columns:1fr}.mj-results>header{align-items:flex-start;flex-direction:column;gap:4px}
+}
+@media(max-height:650px) and (orientation:portrait){.mj-public{inset:89px 66px 40px;--river-tile:18px;grid-template-rows:1fr 1.5fr 1fr}.mj-rack.mj-rack-across{top:57px}.mj-melds.meld-across{top:74px}.mj-table .mj-seat.seat-across{top:8px}.mj-table .mj-compass{width:48px;height:48px;grid-template-columns:12px 1fr 12px;grid-template-rows:12px 1fr 12px}.mj-pending .mj-face{width:24px;height:32px}.mj-pending span{max-width:64px}.mj-center{gap:3px}.mj-edition{height:27px}.mj-flight .mj-face{width:51px;height:68px}}
+@media(max-height:500px) and (orientation:landscape){
+ .mj-edition{height:22px;font-size:10px}.mj-arena{border-radius:16px 16px 0 0}.mj-table .mj-seat.seat-across{top:4px;width:145px;flex-direction:row}.mj-table .mj-seat.seat-left{left:15px;top:36%;width:65px;max-width:65px}.mj-table .mj-seat.seat-right{right:15px;top:36%;width:65px;max-width:65px}.mj-table .mj-seat.seat-self{left:14px;bottom:7px;width:90px}.mj-avatar{width:27px;height:29px;font-size:19px}.mj-table .mj-seat b{font-size:10px}.mj-table .mj-seat small{font-size:9px}.mj-table .mj-seat.seat-self .mj-avatar{display:none}.mj-rack.mj-rack-across{top:41px}.mj-rack.mj-rack-across .mj-face{width:11px;height:15px}.mj-rack.mj-rack-left{left:93px}.mj-rack.mj-rack-right{right:93px}.mj-rack.mj-rack-left .mj-face,.mj-rack.mj-rack-right .mj-face{width:13px;height:8px}.mj-public{inset:62px 138px 8px;--river-tile:18px;grid-template-columns:1fr 1.8fr 1fr;grid-template-rows:1fr 12px 1fr;gap:0}.mj-table .mj-river-grid{grid-template-columns:repeat(6,var(--river-tile));gap:1px}.mj-table :is(.river-left,.river-right) .mj-river-grid{grid-template-columns:repeat(2,var(--river-long));grid-template-rows:repeat(6,var(--river-tile));max-width:none;overflow:visible}.mj-river.river-left{grid-area:1/1/4/2}.mj-river.river-right{grid-area:1/3/4/4}.mj-river-count{position:absolute;left:100%;font-size:8px;min-width:30px;min-height:44px;padding:3px}.river-left .mj-river-count{left:auto;right:100%}.mj-table .mj-compass{width:45px;height:45px;grid-template-columns:11px 1fr 11px;grid-template-rows:11px 1fr 11px;font-size:8px;border-radius:10px}.mj-compass b{font-size:15px}.mj-compass b small{font-size:6px}.mj-pending{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#184b3feb;padding:4px;border-radius:8px;min-width:65px}.mj-center:has(.mj-pending) .mj-compass{visibility:hidden}.mj-pending .mj-face{width:27px;height:36px}.mj-pending span{font-size:8px}.mj-melds.meld-across{top:43px;left:auto;right:20%;transform:none}.mj-melds.meld-self{bottom:5px;left:auto;right:13%;transform:none}.mj-melds.meld-left{left:120px}.mj-melds.meld-right{right:120px}.mj-melds .mj-face{width:14px;height:19px}.mj-hand-panel{padding:3px 10px 4px}.mj-hand-toolbar{min-height:44px}.mj-table .mj-status{font-size:10px}.mj-table .mj-hand-scroll{padding:11px 3px 3px}.mj-table .mj-tile{flex-basis:44px;width:44px;aspect-ratio:3/4;height:auto}.mj-table .mj-hand{justify-content:center}.mj-actions .mj-action{font-size:13px;padding:5px 13px}.mj-flight{--from-y:75px;--to-y:45px}.mj-flight.from-across{--from-y:-75px;--to-y:-45px}.mj-flight .mj-face{width:42px;height:56px}.mj-flight small,.mj-flight>b{font-size:10px}.mj-result-list{grid-template-columns:1fr 1fr}
+}
+@media(prefers-reduced-motion:reduce){.mj-table .mj-tile{transition:none}.mj-flight{animation:none}.mj-river-cell.is-landing{animation:none}}
+/* Keep the rack and exposed melds in separate lanes from the discard field. */
+.mj-table .mj-face .mahjong-art{display:block;width:100%;height:100%}
+.mj-table .mj-melds.meld-left{left:131px}.mj-table .mj-melds.meld-right{right:131px}
+.mj-table .mj-rack.mj-rack-left .mj-face,.mj-table .mj-rack.mj-rack-right .mj-face{position:relative}
+.mj-table .mj-rack.mj-rack-left .mahjong-art,.mj-table .mj-rack.mj-rack-right .mahjong-art{position:absolute;left:50%;top:50%;width:12px;height:23px;transform:translate(-50%,-50%) rotate(90deg)}
+.mj-table .mj-melds .mj-face{flex:none}
+.mj-table .mj-melds.meld-left .mj-face,.mj-table .mj-melds.meld-right .mj-face{width:21px;height:28px}
+@media(max-width:740px){
+ .mj-table .mj-melds.meld-left{left:78px}.mj-table .mj-melds.meld-right{right:78px}.mj-table .mj-melds.meld-left .mj-face,.mj-table .mj-melds.meld-right .mj-face{width:15px;height:20px}
+ .mj-public{left:94px;right:94px}.mj-river-cell:nth-last-child(n+7){display:none}.mj-table :is(.river-left,.river-right) .mj-river-grid{grid-template-rows:repeat(3,var(--river-tile))}
+ .mj-river-count span{display:inline}.mj-table .mj-rack.mj-rack-left .mahjong-art,.mj-table .mj-rack.mj-rack-right .mahjong-art{width:11px;height:12px}
+ .mj-table .mj-hand{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px 2px;width:100%;min-width:0;justify-items:center;padding:0 2px}.mj-table .mj-tile{width:100%;max-width:55px;min-width:0;flex:none}.mj-table .mj-tile.drawn{margin-left:0;transform:translateX(3px);width:calc(100% - 5px)}.mj-table .mj-tile.drawn.selected{transform:translate(3px,-10px)}.mj-table .mj-hand-scroll{padding-top:12px;overflow:visible}
+ .mj-table .mj-seat.seat-self{bottom:6px}.mj-table .mj-melds.meld-self{bottom:12px;right:6px;max-width:65%;overflow-x:auto;pointer-events:auto;padding-bottom:3px}
 }
 @media(max-height:650px) and (orientation:portrait){
- .mahjong-table .classic-arena{min-height:234px}
- .mahjong-table .mahjong-public{top:85px;bottom:8px}
- .mahjong-table .rack-across{top:64px}
- .mahjong-table .classic-seat.seat-across{top:5px}
- .mahjong-table .river-seat{border:0;background:none;padding:0}
- .mahjong-table .classic-seat.seat-left,.mahjong-table .classic-seat.seat-right{top:34%}
- .mahjong-table .mahjong-public{left:75px;right:75px}
- .mahjong-table .classic-hand-panel>header{flex-wrap:wrap;gap:2px}
- .mahjong-table .hand-gesture{display:flex;align-items:center;gap:7px;text-align:left}
+ .mj-public{top:91px;bottom:40px;left:90px;right:90px;--river-tile:16px;grid-template-rows:1fr 1.2fr 1fr;gap:2px}.mj-table :is(.river-left,.river-right) .mj-river-grid{grid-template-columns:repeat(2,var(--river-long));grid-template-rows:repeat(3,var(--river-tile))}.mj-river-count{font-size:8px;min-height:20px;padding:2px 0}.mj-table .mj-compass{width:40px;height:40px;grid-template-columns:10px 1fr 10px;grid-template-rows:10px 1fr 10px;font-size:7px}.mj-compass b{font-size:13px}.mj-compass b small{display:none}.mj-hand-panel{padding-bottom:5px}.mj-hand-toolbar{min-height:38px}.mj-table .mj-status{font-size:10px}.mj-table .mj-hand{gap:6px 1px}.mj-table .mj-tile{max-width:39px}.mj-table .mj-melds.meld-left{left:77px}.mj-table .mj-melds.meld-right{right:77px}.mj-table .mj-melds.meld-left .mj-face,.mj-table .mj-melds.meld-right .mj-face{width:12px;height:16px}.mj-pending{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#184b3f;padding:3px;border-radius:8px;min-width:55px}.mj-center:has(.mj-pending) .mj-compass{visibility:hidden}
 }
 @media(max-height:500px) and (orientation:landscape){
- .mahjong-table{gap:5px;padding-top:2px}
- .mahjong-table .classic-arena{min-height:149px;border-width:5px;border-radius:21px}
- .mahjong-table .classic-seat.seat-across{top:5px!important;min-width:130px;max-width:168px;grid-template-columns:25px minmax(0,1fr);padding:4px 6px!important}
- .mahjong-table .seat-across .classic-avatar{width:25px;height:25px;font-size:18px}
- .mahjong-table .classic-seat.seat-left,.mahjong-table .classic-seat.seat-right{top:35%!important;width:106px;max-width:106px;left:9px;display:grid;grid-template-columns:26px minmax(0,1fr);text-align:left;gap:2px 5px;padding:5px!important}
- .mahjong-table .classic-seat.seat-right{left:auto;right:9px}
- .mahjong-table .classic-seat b{max-width:66px;font-size:9px}
- .mahjong-table .classic-seat small{font-size:8px;line-height:1.25}
- .mahjong-table .seat-turn-label{font-size:8px}
- .mahjong-table .seat-across .seat-turn-label{min-width:48px;max-width:64px}
- .mahjong-table .rack-across{display:none}
- .mahjong-table .rack-left{left:123px}.mahjong-table .rack-right{right:123px}
- .mahjong-table .mahjong-public{inset:48px 145px 6px}
- .mahjong-table .river-across,.mahjong-table .river-self{left:27%;width:46%;height:40%}
- .mahjong-table .river-left,.mahjong-table .river-right{top:15%;width:26%;height:75%}
- .mahjong-table .river-seat{padding:0 2px}
- .mahjong-table .mahjong-center{left:38%;width:24%;top:40%;height:20%}
- .mahjong-table .mahjong-compass{width:30px;height:30px;font-size:6px;border-radius:8px}
- .mahjong-table .mahjong-compass>b{font-size:13px}
- .mahjong-table .classic-hand-panel>header{flex-wrap:nowrap}
- .mahjong-table .hand-gesture{display:block;text-align:right}
+ .mj-table .mj-melds.meld-left{left:119px}.mj-table .mj-melds.meld-right{right:119px}.mj-table .mj-melds.meld-left .mj-face,.mj-table .mj-melds.meld-right .mj-face{width:14px;height:19px}.mj-public{left:160px;right:160px;top:62px;bottom:8px;grid-template-rows:1fr 48px 1fr}.mj-river-cell:nth-last-child(n+7){display:none}.mj-table :is(.river-left,.river-right) .mj-river-grid{grid-template-rows:repeat(3,var(--river-tile))}.mj-table .mj-rack.mj-rack-left .mahjong-art,.mj-table .mj-rack.mj-rack-right .mahjong-art{width:8px;height:13px}.mj-table .mj-hand{display:flex;justify-content:center;gap:2px;min-width:max-content}.mj-table .mj-tile{width:44px;min-width:44px;max-width:44px}.mj-table .mj-tile.drawn{width:44px;margin-left:12px;transform:none}.mj-table .mj-tile.drawn.selected{transform:translateY(-10px)}.mj-table .mj-hand-scroll{overflow-x:auto;overflow-y:hidden}.mj-hand-toolbar{min-height:44px}.mj-table .mj-seat.seat-self{bottom:6px}.mj-table .mj-seat.seat-self small{display:inline;font-size:8px}.mj-table .mj-seat.seat-self div{display:flex;gap:3px;flex-wrap:wrap}.mj-table .mj-seat.seat-self small:nth-of-type(n+2){display:none}
 }
+@media(max-width:740px) and (orientation:portrait){
+ .mj-public{grid-template-columns:calc(var(--river-long)*2 + 1px) minmax(0,1fr) calc(var(--river-long)*2 + 1px);left:90px;right:90px}.mj-table .mj-melds.meld-left{left:73px}.mj-table .mj-melds.meld-right{right:73px}.mj-table .mj-river-grid{justify-content:center}
+}
+@media(max-height:650px) and (orientation:portrait){
+ .mj-public{left:78px;right:78px;--river-tile:16px;top:92px;bottom:35px;gap:2px}.mj-table .mj-melds.meld-left{left:65px}.mj-table .mj-melds.meld-right{right:65px}.mj-rack.mj-rack-left{left:48px}.mj-rack.mj-rack-right{right:48px}.mj-table .mj-seat.seat-left,.mj-table .mj-seat.seat-right{top:39%;width:40px;max-width:40px}.mj-table .mj-seat.seat-left{left:3px}.mj-table .mj-seat.seat-right{right:3px}.mj-table .mj-rack.mj-rack-left .mj-face,.mj-table .mj-rack.mj-rack-right .mj-face{height:9px}.mj-table .mj-rack.mj-rack-left .mahjong-art,.mj-table .mj-rack.mj-rack-right .mahjong-art{width:9px;height:12px}.mj-table .mj-compass{width:35px;height:35px;font-size:6px}.mj-compass b{font-size:12px}.mj-table .mj-hand-toolbar{min-height:40px}
+}
+@media(max-width:740px) and (orientation:portrait){.mj-table .mj-hand{padding-right:7px}.mj-table .mj-tile.drawn{width:100%;transform:translateX(6px)}.mj-table .mj-tile.drawn.selected{transform:translate(6px,-10px)}}
+@media(max-width:740px) and (max-height:500px) and (orientation:landscape){
+ .mj-table .mj-hand{gap:1px}.mj-table .mj-tile{width:36px;min-width:36px;max-width:36px;flex-basis:36px}.mj-table .mj-tile.drawn{width:36px;margin-left:8px}.mj-public{left:123px;right:123px;top:52px;bottom:6px;--river-tile:16px;grid-template-rows:1fr 36px 1fr}.mj-table .mj-seat.seat-left{left:7px;width:49px;max-width:49px}.mj-table .mj-seat.seat-right{right:7px;width:49px;max-width:49px}.mj-rack.mj-rack-left{left:66px}.mj-rack.mj-rack-right{right:66px}.mj-table .mj-melds.meld-left{left:92px}.mj-table .mj-melds.meld-right{right:92px}.mj-rack.mj-rack-across{top:34px}.mj-rack.mj-rack-across .mj-face{width:10px;height:13px}.mj-table .mj-seat.seat-across{top:3px}.mj-table .mj-melds.meld-across{top:32px;right:13%}.mj-table .mj-melds.meld-self{right:11%}.mj-table .mj-compass{width:35px;height:35px;font-size:6px;grid-template-columns:9px 1fr 9px;grid-template-rows:9px 1fr 9px}.mj-compass b small{display:none}
+}
+.mj-river{pointer-events:none}.mj-river-count{pointer-events:auto;z-index:1}
+.mj-table .mj-edition{position:absolute;right:8px;top:8px;width:44px;height:44px;padding:0;z-index:3}.mj-table .mj-history{border-radius:50%;background:#173e3333}.mj-table .mj-seat.self i{left:-6px;right:auto;top:5px}.mj-results>header{padding-right:45px}
+.app.game-mahjong:has(.mj-finished) .end-banner{position:static;transform:none;margin:6px 0 8px;max-width:100%;max-height:120px;padding:8px 12px;flex-direction:row;flex-wrap:wrap;justify-content:center;gap:8px;flex-shrink:0;box-shadow:none}.app.game-mahjong:has(.mj-finished) .end-banner>b,.app.game-mahjong:has(.mj-finished) .end-banner>svg{display:none}.app.game-mahjong:has(.mj-finished) .end-banner .dismiss-result{width:44px;height:44px}
+.mj-river-cell.is-awaiting{opacity:0}
+@media(max-height:500px) and (orientation:landscape){
+ .mj-table .mj-melds.meld-self{left:50%;right:auto;transform:translateX(-50%)}.mj-arena:has(.meld-self:not(:empty)) .mj-public{bottom:34px}
+}
+@media(max-width:740px) and (max-height:500px) and (orientation:landscape){.mj-arena:has(.meld-self:not(:empty)) .mj-public{--river-tile:14px;grid-template-rows:1fr 30px 1fr}}
+.mj-spectating .mj-rack-self{left:50%;bottom:15px;transform:translateX(-50%)}
+.mj-spectating .mj-melds.meld-self{bottom:43px}
+.mj-spectating .mj-public{bottom:80px}
+.mj-spectating .mj-hand-panel{display:none}
+.mj-reveal:focus-visible,.mj-melds:focus-visible{outline:2px solid #b5d9e8;outline-offset:2px}
+@media(max-height:500px) and (orientation:landscape){
+ .mj-table :is(.river-left,.river-right) .mj-river-count{position:static;left:auto;right:auto;min-height:24px;min-width:44px;padding:3px;font-size:10px}
+ .mj-table :is(.river-across,.river-self) .mj-river-count{left:calc(50% + var(--river-tile)*3 + 4px);min-width:44px;font-size:10px;padding:3px}
+}
+@media(max-width:740px) and (max-height:500px) and (orientation:landscape){.mj-table .river-self .mj-river-count{bottom:0}.mj-table .mj-seat:is(.seat-left,.seat-right){top:50%;transform:translateY(-50%)}}
+.mj-table .mj-seat b{display:block}.mj-table .mj-seat>div{max-width:100%}
+.mj-spectating .mj-seat.seat-self{bottom:48px}
+@media(max-width:740px) and (max-height:500px) and (orientation:landscape){
+ .mj-table .mj-seat:is(.seat-left,.seat-right){top:max(54px,calc(50% - 38px));transform:none;width:54px;max-width:54px;gap:3px}
+ .mj-table .mj-seat small{font-size:8px}.mj-table .mj-seat:is(.seat-left,.seat-right) small:first-of-type{white-space:nowrap}
+ .mj-table .mj-seat.seat-across{width:220px}
+ .mj-table .mj-seat.seat-across small{display:inline;white-space:nowrap}.mj-table .mj-seat.seat-across small+small{margin-left:4px}
+}
+.mj-hints{flex:1;min-width:0;display:flex;align-items:center;gap:6px}.mj-hints .mj-status:empty{display:none}.mj-hints .mj-status{flex:0 1 auto}
+.mj-table .mj-hand-toolbar{min-height:48px}.mj-table .mj-actions{flex-shrink:0}
+.mj-table .mj-tile.can-ready:not(.selected){box-shadow:0 0 0 1px #d8c88d,0 0 8px #f0d38044}
+.mj-ready-mark{position:absolute;top:-8px;right:0;min-width:18px;border-radius:5px;padding:2px 3px;background:#ead39c;color:#294633;font-size:9px;font-weight:800;line-height:12px;box-shadow:0 1px 3px #082d2366}
+@media(max-height:500px) and (orientation:landscape){.mj-table .mj-hand-toolbar{min-height:44px}.mahjong-ready-tiles{padding-bottom:0}.mahjong-ready-tile .mahjong-art{width:23px;height:30px}}
+@media(max-width:740px) and (orientation:portrait){.mj-table .mj-hand{row-gap:20px}.mj-table .mj-hand-scroll{padding-top:20px}}
 
-.mahjong-wild-indicator{display:inline-flex;align-items:center;gap:4px;margin-left:auto;font-size:11px}.mahjong-wild-indicator .classic-face{width:18px;height:24px}.mahjong-table .classic-edition{gap:8px}.mahjong-table .classic-edition>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mahjong-win-patterns{display:block;font-size:11px;line-height:1.6;color:var(--muted);margin-top:4px}
+/* Woven blue-green cloth, a walnut rail and brass details share the existing table geometry. */
+.app.in-game.game-mahjong{background:radial-gradient(ellipse at 50% 20%,#44403b,#262c2c 55%,#181f21)}
+.mj-arena{background:repeating-linear-gradient(0deg,#ffffff03 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,#101f2510 0 1px,transparent 1px 3px),radial-gradient(ellipse at 50% 40%,#496e70,#30545a 75%);border-color:#bda078;box-shadow:inset 0 0 0 5px #685344,inset 0 0 0 6px #c2a374,inset 0 0 0 9px #253c42,inset 0 5px 35px #132d3955}
+.mj-arena:before{inset:12px;border-color:#decda42b}
+.mj-avatar{background:linear-gradient(135deg,#6b776e,#3d5254);border-color:#e8d2ac88;box-shadow:0 3px 6px #11282e44}
+.mj-hand-panel{background:linear-gradient(165deg,#39464a,#27353c);border-color:#c7af8438}
+.mj-table .mj-compass{background:linear-gradient(145deg,#35484c,#233138);border-color:#d0b487;color:#e2ceb0}
+.mj-mode-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mj-edition{gap:8px;color:#dfd6c7}.mj-history{margin-left:auto;flex-shrink:0}
+.mj-wild-indicator{display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:10px}.mj-wild-indicator .mj-face{width:18px;height:24px}
+.mahjong-win-patterns{display:block;font-size:11px;line-height:1.6;color:#dfcaaa;margin-top:5px}
 
-.mahjong-table .mahjong-compass{grid-template-rows:1fr 1.6fr 1fr;line-height:1}.mahjong-table .mahjong-compass>b{line-height:1}
+.mj-table .mj-edition{position:relative;inset:auto;width:100%;height:30px;padding:0 6px;flex-shrink:0}.mj-table .mj-history{height:44px;min-width:44px;margin-top:0;background:none}.mj-mode-name{font-size:11px;flex:1}.mj-wild-indicator{flex-shrink:0}
+
+.mj-table .mj-seat small{overflow-wrap:anywhere;max-width:100%}

@@ -1,3 +1,4 @@
+import {NewGameResults} from './NewGameResults';
 import {useCardDoubleTap} from './useCardDoubleTap';
 import { useDialog } from './useDialog';
 import { t } from '../i18n';
@@ -16,7 +17,7 @@ type Props = {
 };
 const kinds: BombKind[] = ['defuse', 'attack', 'skip', 'favor', 'shuffle', 'future', 'nope', 'moonCat', 'cloudCat', 'leafCat', 'starCat', 'sunCat', 'bomb'];
 const titles = BOMB_TITLES;
-const details: Record<BombKind, string> = { bomb: '拆弹，或告别这张桌子', defuse: '抽到爆炸牌时使用', attack: '结束自己的回合，下家做 2 回合；若已被攻击，转交剩余回合再加 2', skip: '结束一个回合，不抽牌', favor: '选一位玩家，让对方交一张牌', shuffle: '打乱抽牌堆，继续出牌', future: '秘密看顶部三张，不改变顺序', nope: '取消效果；再次否决则恢复', moonCat: '两张随机拿牌 · 三张指定牌名', cloudCat: '两张随机拿牌 · 三张指定牌名', leafCat: '两张随机拿牌 · 三张指定牌名', starCat: '两张随机拿牌 · 三张指定牌名', sunCat: '两张随机拿牌 · 三张指定牌名' };
+const details: Record<BombKind, string> = { bomb: '拆弹，或告别这张桌子', defuse: '抽到爆炸牌时使用', attack: '结束自己的回合，下家做 2 回合；若已被攻击，转交剩余回合再加 2', skip: '结束一个回合，不抽牌', favor: '选一位玩家，让对方交一张牌', shuffle: '打乱抽牌堆，继续出牌', future: '秘密看顶部三张，不改变顺序', nope: '让一次出牌失效；再出否决可恢复效果', moonCat: '两张随机拿牌 · 三张指定牌名', cloudCat: '两张随机拿牌 · 三张指定牌名', leafCat: '两张随机拿牌 · 三张指定牌名', starCat: '两张随机拿牌 · 三张指定牌名', sunCat: '两张随机拿牌 · 三张指定牌名' };
 const accents: Record<BombKind, string> = { bomb: '#f07861', defuse: '#91c99c', attack: '#edab66', skip: '#7ababc', favor: '#e3adbb', shuffle: '#96b9cc', future: '#b4a0d8', nope: '#e39180', moonCat: '#a6acdb', cloudCat: '#b8d5de', leafCat: '#a5c695', starCat: '#dcc384', sunCat: '#eab87c' };
 function KindIcon({ kind, size = 18 }: {
     kind: BombKind;
@@ -66,12 +67,18 @@ export function BombsTable({ view, selfID, command }: Props) {
     const handIDs=hand.map(c=>c.id).join('|'),context=[selfID,b.phase,b.current,handIDs,b.discard[0]?.id].join(':');
     const taps=useCardDoubleTap(context);
     useEffect(() => { setSelected([]); setInsertion(0); setExplosionPrompt(false); }, [context]);
+    if(view.finished)return <NewGameResults view={view} selfID={selfID}/>;
     const cards = hand.filter(c => selected.includes(c.id)), first = cards[0];
     const single = cards.length === 1 ? view.actions.find(a => ['play', 'nope', 'give'].includes(a.id) && a.choices.some(c => c.id === first.id)) : undefined;
     const combo = cards.length >= 2 && cards.length <= 3 && cards.every(c => c.kind === first.kind) ? get(cards.length === 2 ? 'pair' : 'triple') : undefined;
     const validCombo = combo?.choices.some(c => c.id === first?.kind) ? combo : undefined;
     const sorted = [...hand].sort((a, c) => kinds.indexOf(a.kind) - kinds.indexOf(c.kind));
     const target = get('target'), request = get('request'), give = get('give'), response = b.response, draw = get('draw'), mine = b.current === selfID;
+    const handInteractive = b.phase !== 'future';
+    const nope = get('nope');
+    const lastResponseActor = response?.lastNopeBy || response?.actor;
+    const nopeCardID = single?.id === 'nope' ? first.id : nope?.choices[0]?.id;
+    const showNope = nopeCardID && (lastResponseActor !== selfID || single?.id === 'nope');
     const displayName = (id: string) => b.players.find((p: any) => p.id === id)?.name || t('玩家');
     const run = (action: string, values: string[] = []) => { command({ action, values }); setSelected([]); };
     const pick = (card: BombCard) => setSelected(old => old.includes(card.id) ? old.filter(id => id !== card.id) : give || get('nope') ? [card.id] : old.length >= 3 || old.some(id=>hand.find(c=>c.id===id)?.kind!==card.kind) ? [card.id] : [...old, card.id]);
@@ -94,7 +101,23 @@ export function BombsTable({ view, selfID, command }: Props) {
     else if (request)
         focus = <div className="bt-focus"><span className="bt-eyebrow">{t("三张组合 · 指定牌名")}</span><div className="bt-request">{tx(request.choices.map(c => <button key={c.id} onClick={() => run('request', [c.id])}><KindIcon kind={c.id as BombKind} size={15}/><span>{tx(c.title)}</span></button>))}</div><button className="bt-quiet" onClick={() => run('cancel')}>{t("取消出牌")}</button></div>;
     else if (response)
-        focus = <div className="bt-focus bt-response"><span className="bt-eyebrow">{displayName(response.actor)}{" " + t("出牌")}</span><h2>{tx(response.cards.length > 1 ? `${response.cards.length} 张同名组合` : titles[response.cards[0].kind as BombKind])}{tx(response.target && <small>{" " + t("→") + " "}{displayName(response.target)}</small>)}</h2>{tx(response.requested && <p>{t("索要 ·") + " "}{tx(titles[response.requested as BombKind])}</p>)}<div className="bt-response-status">{tx(b.players.filter((p: any) => p.alive).map((p: any) => <span key={p.id} className={response.passed.includes(p.id) ? 'confirmed' : ''} aria-label={tx(`${p.name}${response.passed.includes(p.id) ? '已确认' : '待响应'}`)}>{tx(p.avatar)}{tx(response.passed.includes(p.id) && <Check size={10}/>)}</span>))}<b>{tx(response.cancelled ? '效果已取消，可再次否决恢复' : '等待确认')}</b></div><div className="bt-action-row">{tx(single?.id === 'nope' && <button className="bt-primary" onClick={play}><Hand size={15}/>{tx(actionTitle)}</button>)}{tx(get('pass') && <button className="bt-secondary" onClick={() => run('pass')}>{tx(response.cancelled ? '保持取消，继续' : '不否决，继续')}<Check size={15}/></button>)}</div></div>;
+        focus = <div className="bt-focus bt-response">
+            <span className="bt-eyebrow">{t(`${displayName(response.actor)} 已出牌`)}</span>
+            <h2>{tx(response.cards.length > 1 ? `${response.cards.length} 张同名组合` : titles[response.cards[0].kind as BombKind])}{response.target && <small>{" → "}{displayName(response.target)}</small>}</h2>
+            {response.requested && <p>{t("索要 ·") + " "}{tx(titles[response.requested as BombKind])}</p>}
+            <div className="bt-response-status">
+                <small>{t('已响应')} {response.passed.length}/{b.players.filter((p: {alive:boolean})=>p.alive).length}</small>
+                {b.players.filter((p: any) => p.alive).map((p: any) => <span key={p.id} className={response.passed.includes(p.id) ? 'confirmed' : ''} aria-label={tx(`${p.name}${response.passed.includes(p.id) ? '已确认' : '待响应'}`)}>{p.avatar}{response.passed.includes(p.id) && <Check size={10}/>}</span>)}
+                <b>{t(response.cancelled ? '当前效果：已否决' : '当前效果：生效')}</b>
+            </div>
+            <div className="bt-action-row">
+                {showNope && <button className="bt-primary bt-nope-action" aria-label={t(response.cancelled ? '反制否决' : '打出否决')} onClick={() => run('nope', [nopeCardID])}>
+                    <span>{t(response.cancelled ? '反制否决' : '打出否决')}</span><small>{t('消耗 1 张否决牌')}</small>
+                </button>}
+                {get('pass') && <button className="bt-secondary" onClick={() => run('pass')}>{t('继续')}</button>}
+            </div>
+            {!get('pass') && <p className="bt-response-waiting">{t('等待其他玩家响应')}</p>}
+        </div>;
     else if (give)
         focus = <div className="bt-focus"><span className="bt-eyebrow">{t("交牌给") + " "}{displayName(b.give.actor)}</span><h2>{tx(first ? titles[first.kind] : '你决定交哪张')}</h2>{tx(single && <button className="bt-primary" onClick={play}>{t("交出这张")}<ArrowRight size={15}/></button>)}</div>;
     else if (b.phase === 'future')
@@ -107,13 +130,20 @@ export function BombsTable({ view, selfID, command }: Props) {
         focus = <div className="bt-focus"><span className="bt-eyebrow">{tx(cards.length > 1 ? `已选 ${cards.length} 张` : '选中的手牌')}</span><h2>{tx(cards.length > 1 && cards.every(c => c.kind === first.kind) ? `${titles[first.kind]} ×${cards.length}` : titles[first.kind])}</h2><p>{tx(cards.length > 1 && !cards.every(c => c.kind === first.kind) ? '组合需要同名牌' : details[first.kind])}</p><div className="bt-action-row">{tx(actionTitle && <button className="bt-primary" onClick={play}>{tx(actionTitle)}<ArrowRight size={15}/></button>)}<button className="bt-quiet" onClick={() => setSelected([])}>{t("收起")}</button></div></div>;
     else
         focus = <div className="bt-focus">{!mine&&<span className="bt-eyebrow">{t('轮到')}</span>}<h2>{mine ? t('你的回合') : displayName(b.current)}</h2><p>{tx(b.phase === 'give' ? `${displayName(b.give.target)} 正在挑选手牌` : b.phase === 'insert' ? '正在秘密放回爆炸牌' : '')}</p>{tx(b.turnsRemaining > 1 && <span className="bt-debt"><Zap size={14}/>{" " + t("还需结束") + " "}{tx(b.turnsRemaining)}{" " + t("个回合")}</span>)}</div>;
-    return <div className={`bt-table ${['request','future','bomb','insert'].includes(b.phase)?'bt-focused-phase ':''}bt-phase-${b.phase}`}>
+    return <div className={`bt-table ${['request','future','bomb','insert'].includes(b.phase)?'bt-focused-phase ':''}bt-phase-${b.phase}`} style={{'--bt-seat-count': b.players.length} as CSSProperties}>
     <div className="bt-seats">{tx(b.players.map((p: any) => <button key={p.id} type="button" className={`bt-seat ${p.id === b.current ? 'current' : ''} ${p.id === selfID ? 'self' : ''} ${!p.alive ? 'eliminated' : ''} ${target?.choices.some(c => c.id === p.id) ? 'targetable' : ''}`} aria-label={`${p.name}${p.id === selfID ? ` · ${t("我")}` : ""} · ${p.alive ? t(`${p.count} 张手牌`) : t("已出局")}${target?.choices.some(c => c.id === p.id) ? ` · ${t("可选为目标")}` : ""}`} onClick={() => {
                 if (target?.choices.some(c => c.id === p.id))
                     run('target', [p.id]);
             }}><span className="bt-avatar">{tx(p.alive ? p.avatar : <Skull size={21}/>)}</span><span><b>{p.name}{tx(p.id === selfID && <small>{t("我")}</small>)}</b><em>{tx(p.alive ? <><span className="bt-tiny-back"/>{tx(p.count)}</> : '已出局')}</em></span>{tx(p.id === b.current && p.alive && <span className="bt-seat-turn"/>)}</button>))}</div>
-    <div className="bt-arena"><div className="bt-piles"><button className={`bt-deck ${draw ? 'available' : ''}`} aria-label={tx(`抽牌，剩余 ${b.deckCount} 张`)} disabled={!draw} onClick={() => run('draw')}><span className="bt-deck-corners">{t("✦")}</span><CatArt kind="bomb"/><b>{tx(draw ? '抽一张' : '抽牌堆')}</b><small>{tx(b.deckCount)}</small></button><div className="bt-discard" aria-label={t("弃牌堆")}>{tx(b.discard[0] ? <BombsIllustratedCard card={b.discard[0]} small/> : <span className="bt-empty"><PawPrint size={25}/><small>{t("弃牌")}</small></span>)}</div></div>{tx(focus)}</div>
-    <div className="bt-hand-zone"><div className="bt-hand-label"><span>{t("我的手牌") + " "}<b>{tx(hand.length)}</b></span>{tx(selected.length > 0 ? <button onClick={() => setSelected([])}><X size={12}/>{t("清空选择")}</button> : null)}</div><div className={`bt-hand ${hand.length > 8 ? 'bt-long-hand' : ''}`} aria-label={t("我的手牌，可左右滑动")}>{tx(sorted.map((c, i) => <div className="bt-hand-slot" key={c.id} style={{ '--fan': `${Math.max(-5, Math.min(5, (i - (hand.length - 1) / 2) * 1.2))}deg`, '--lift': `${Math.abs(i - (hand.length - 1) / 2) * .35}px` } as CSSProperties}><BombsIllustratedCard card={c} selected={selected.includes(c.id)} onPointerDown={taps.onPointerDown} onClick={event=>selectCard(c,event)}/></div>))}{tx(!hand.length && <span className="bt-empty-hand">{tx(b.players.find((p: any) => p.id === selfID)?.alive ? '手里空了，也能继续抽牌' : '本局先看朋友们的表演')}</span>)}</div></div>
+    <div className="bt-arena"><div className="bt-piles"><button className={`bt-deck ${draw ? 'available' : ''}`} aria-label={tx(`抽牌，剩余 ${b.deckCount} 张`)} disabled={!draw} onClick={() => run('draw')}><span className="bt-deck-corners">{t("✦")}</span><CatArt kind="bomb"/><b>{tx(draw ? '抽一张' : '抽牌堆')}</b><small>{tx(b.deckCount)}</small></button><div className="bt-discard" aria-label={t("弃牌堆")}>{tx(b.discard[0] ? <><BombsIllustratedCard card={b.discard[0]} small/><small className="bt-pile-caption">{t('弃牌堆')}</small></> : <span className="bt-empty"><PawPrint size={25}/><small>{t("弃牌")}</small></span>)}</div></div>{tx(focus)}</div>
+    {!view.spectating&&<div className="bt-hand-zone"><div className="bt-hand-label"><span>{t("我的手牌") + " "}<b>{tx(hand.length)}</b></span>{tx(handInteractive && selected.length > 0 ? <button onClick={() => setSelected([])}><X size={12}/>{t("清空选择")}</button> : null)}</div>
+        <div className={`bt-hand ${hand.length > 8 ? 'bt-long-hand' : ''}`} aria-label={t("我的手牌，可左右滑动")}>
+            {tx(sorted.map((c, i) => <div className="bt-hand-slot" key={c.id} style={{ '--fan': `${Math.max(-5, Math.min(5, (i - (hand.length - 1) / 2) * 1.2))}deg`, '--lift': `${Math.abs(i - (hand.length - 1) / 2) * .35}px` } as CSSProperties}>
+                <BombsIllustratedCard card={c} selected={handInteractive && selected.includes(c.id)} onPointerDown={handInteractive ? taps.onPointerDown : undefined} onClick={handInteractive ? event=>selectCard(c,event) : undefined}/>
+            </div>))}
+            {tx(!hand.length && <span className="bt-empty-hand">{tx(b.players.find((p: any) => p.id === selfID)?.alive ? '无手牌' : '已出局')}</span>)}
+        </div>
+    </div>}
     {tx(explosionPrompt && <div className="bt-confirm-shade"><section ref={confirmationDialog} tabIndex={-1} role="dialog" aria-modal="true" aria-label={t("确认放弃拆弹")}><Bomb size={28}/><h2>{t("这局就到这里？")}</h2><p>{t("放弃拆弹后，你会立即出局。")}</p><div className="bt-action-row"><button className="bt-secondary" onClick={() => setExplosionPrompt(false)}>{t("再想想")}</button><button className="bt-primary" onClick={() => { setExplosionPrompt(false); run('explode'); }}>{t("确认出局")}</button></div></section></div>)}
   </div>;
 }

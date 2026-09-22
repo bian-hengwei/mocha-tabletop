@@ -10,11 +10,12 @@ const card=(kind:BombKind,id:string=kind):BombCard=>({kind,id,title:BOMB_TITLES[
 function initial(){let s=bombs.create(players,9);s.hands.p0=['defuse','attack','skip','favor','shuffle','future','nope','moonCat'].map(k=>card(k as BombKind));const combo=[card('moonCat','cat1'),card('moonCat','cat2'),card('moonCat','cat3')];s.hands.p0.push(...combo);s.deck=[card('bomb','deck-bomb'),...s.deck];
  if(scenario==='target')s.phase={kind:'target',cards:[card('favor')]};
  if(scenario==='request')s.phase={kind:'request',cards:combo,target:'p1'};
- if(scenario==='response')s.phase={kind:'response',effect:{actor:'p1',cards:[card('attack')],cancelled:false,passed:[]}};
+ if(scenario==='response'){s.hands.p1=[card('attack','blair-attack'),card('nope','blair-nope')];s.current='p1';s=bombs.apply(s,'p1',{action:'play',values:['blair-attack']});}
  if(scenario==='give')s.phase={kind:'give',actor:'p1',target:'p0'};
  if(scenario==='future')s.phase={kind:'future',cards:s.deck.slice(0,3)};
  if(scenario==='bomb')s.phase={kind:'bomb',card:card('bomb')};
  if(scenario==='insert')s.phase={kind:'insert',card:card('bomb')};
+ if(scenario==='spectator'){s.alive=s.alive.filter(id=>id!=='p0');s.current='p4';s.hands.p0=[];}
  if(scenario==='finished'){s.alive=['p0'];s.hands.p1=[];}
  return s;
 }

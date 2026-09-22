@@ -27,12 +27,12 @@ export function mahjongVariantGuide(mode:MahjongMode,locale:'zh'|'en'):Guide{
  if(r.ghost)sections.push(section('鬼牌怎么用','Using wild tiles',[
   mode==='guangdongGhost'?'开局从牌墙翻出一张指示牌；同花色下一点为鬼，9 回到 1。字牌按东、南、西、北、中、发、白循环。本局鬼牌会在牌桌顶部展示；指示牌留在桌上，不再参与摸打。':`红中作赖子，牌组里共有 ${r.redCount} 张红中。`,
   '鬼牌可以代替顺子、刻子或将需要的牌；不能用鬼牌凑吃碰杠，也不能胡别人打出的鬼。',
-  mode==='laizi'?'本模式允许把红中作为普通弃牌打出，别人不能认领。':'鬼牌不能换出或直接打出；做成胡牌时由系统判断它所代表的牌。',
+  mode==='laizi'?'本模式允许把红中作为普通弃牌打出，别人不能认领。':'鬼牌不能换出或直接打出。',
   ...(mode==='redBloodflow'?['采用六红中的任意换三张版本。新版发财选牌、红中单张开杠、无限换牌和复活道具属于其他玩法，不混入本模式。']:[])
  ],[
   mode==='guangdongGhost'?'Reveal one indicator from the wall. The next number in its suit is wild, with 9 wrapping to 1. Honors cycle East, South, West, North, Red, Green, White. The table shows the wild tile; the indicator stays out of play.':`Red Dragons are wild; this deck contains ${r.redCount}.`,
   'Wilds may complete runs, triplets or the pair, but cannot substitute in claimed melds. A discarded wild cannot be claimed to win.',
-  mode==='laizi'?'This variant allows discarding a Red Dragon as an unclaimable tile.':'Wilds cannot be exchanged or discarded. Their winning interpretation is chosen by the rules engine.',
+  mode==='laizi'?'This variant allows discarding a Red Dragon as an unclaimable tile.':'Wilds cannot be exchanged or discarded.',
   ...(mode==='redBloodflow'?['Uses the six-Dragon, any-three opening version. Newer Green Dragon selection, single-Dragon kongs, unlimited exchanges and revival items belong to other variants.']:[])
  ]));
  sections.push(section('吃碰杠与胡牌','Claims and winning',[
@@ -61,7 +61,7 @@ export function mahjongVariantGuide(mode:MahjongMode,locale:'zh'|'en'):Guide{
   '自摸 ×2、杠上花/杠上炮/抢杠 ×2、海底 ×2、天胡/地胡 ×32。此配置不设番数封顶。点炮者向每位胡者付款；自摸由其他仍在局者各付。',
   '直杠收放杠者 2 分；暗杠收各家 2 分；补杠收各家 1 分。抢杠成功不收杠分。杠上炮呼叫转移：这次杠收到的杠分再转付给胡牌者。',
   ...(mode==='redBloodflow'?['六红中额外番型：硬胡/连六/双同刻 ×2，三暗刻/一条龙/三连刻 ×4，全双刻/十二金钗 ×8，四连刻/四暗刻 ×16，一色双龙会/红中金钩钓 ×32，九莲宝灯 ×64。高级番不重复计算已包含的基础番，详细分解见胡牌记录。']:[]),
-  '牌墙用完：花猪向每位已清缺门的在局玩家付 16；清缺但未听的玩家向听牌者支付其最高基础胡分；所有未听者退还收到的杠分。已离场的血战玩家不参与；血流已胡者仍在局。'
+  '牌墙用完：花猪向每位已清缺门的在局玩家付 16；所有未听玩家（含花猪）向听牌者支付其最高基础胡分，并退还收到的杠分。已离场的血战玩家不参与；血流已胡者仍在局。'
  ]:[
   '推倒胡只判断成牌：基础 1 分，自摸 ×2；杠后胡或抢杠再 ×2。普通点炮由放炮者付款，自摸由其他三家各付。',
   '直杠由放杠者付 2；暗杠其他三家各付 2；补杠各付 1。牌墙空时保留杠分，不查叫。',
@@ -79,7 +79,7 @@ export function mahjongVariantGuide(mode:MahjongMode,locale:'zh'|'en'):Guide{
   'Self-draw ×2; kong replacement, kong discard or robbed kong ×2; last tile ×2; heavenly/earthly win ×32. This configuration has no fan cap. A discarder pays every winner; all active opponents pay on self-draw.',
   'Exposed kong: supplier pays 2. Concealed kong: each active opponent pays 2. Added kong: each pays 1. A robbed kong earns nothing. A winning discard after a kong transfers that kong’s income to the winner.',
   ...(mode==='redBloodflow'?['Six-Dragon bonuses: hard win/six-tile straight/twin triplets ×2; three concealed triplets/straight/consecutive triplets ×4; all-even triplets/three kongs ×8; four consecutive or concealed triplets ×16; twin dragons/Red Dragon single wait ×32; nine gates ×64. Included lower patterns are excluded; win history shows the breakdown.']:[]),
-  'At wall exhaustion, a missing-suit holder pays 16 to each cleared active player. Cleared non-ready players pay each ready player’s highest base value; all non-ready players refund kong income. Departed Blood Battle winners are exempt; Blood Flow winners remain active.'
+  'At wall exhaustion, a missing-suit holder pays 16 to each cleared active player. All non-ready players, including missing-suit holders, pay each ready player’s highest base value and refund kong income. Departed Blood Battle winners are exempt; Blood Flow winners remain active.'
  ]:[
   'Push Down uses a base of 1, doubled for self-draw and again for a kong-related win. A discarder pays; all three opponents pay on self-draw.',
   'Exposed kong: supplier pays 2; concealed kong: each opponent pays 2; added kong: each pays 1. Keep kong scores at wall exhaustion, without readiness penalties.',

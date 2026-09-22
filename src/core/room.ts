@@ -5,12 +5,15 @@ import { modules } from './registry';
 import { WEREWOLF_PRESETS, werewolfPreset, werewolfPresetLimits } from './werewolfPresets';
 export type RoomMode = 'cloud' | 'lan';
 export interface RoomPlayer extends Player { ready:boolean; connected:boolean }
-export interface RoomInfo {expiresAt?:number;matchID?:string;code:string;kind:GameKind;mode:RoomMode;hostID:string;options?:GameOptions;players:RoomPlayer[];pending:Player[];started:boolean;revision:number}
+export interface RoomSpectator extends Player {connected:boolean}
+export interface JoinRequest extends Player {spectator?:boolean}
+export const MAX_SPECTATORS=20;
+export interface RoomInfo {botError?:string;spectators?:RoomSpectator[];allowSpectators?:boolean;expiresAt?:number;matchID?:string;code:string;kind:GameKind;mode:RoomMode;hostID:string;options?:GameOptions;players:RoomPlayer[];pending:JoinRequest[];started:boolean;revision:number}
 export interface RoomCandidate {code:string;kind:GameKind;mode:RoomMode;hostName:string;count:number;max:number}
 export interface ClientState {status:'idle'|'connecting'|'lobby'|'playing'|'reconnecting'|'disconnected';mode?:RoomMode;room?:RoomInfo;selfID?:string;view?:GameView;error?:string;transport:'none'|'cloud'|'lan';paused:boolean;inviteURL?:string;actionRevision:number;actionPending?:boolean;waitingApproval?:boolean}
 export interface MatchState {schemaVersion?:2;options?:GameOptions;game:any;revision:number;actorRevisions:Record<string,number>;seen:Record<string,string[]>}
 export function validProfile(input:any):Player {
- if(!input || typeof input.id!=='string'|| !/^[a-zA-Z0-9_-]{8,80}$/.test(input.id)||Object.hasOwn(Object.prototype,input.id))throw new Error('玩家身份无效');
+ if(!input || typeof input.id!=='string'|| !/^[a-zA-Z0-9_-]{8,80}$/.test(input.id)||input.id.startsWith('bot_')||Object.hasOwn(Object.prototype,input.id))throw new Error('玩家身份无效');
  if(typeof input.name!=='string'||!input.name.trim()||input.name.trim().length>16)throw new Error('昵称限 1–16 个字');
  if(!AVATARS.includes(input.avatar))throw new Error('请选择一个头像');
  return {id:input.id,name:input.name.trim(),avatar:input.avatar};
@@ -52,6 +55,7 @@ export function validateMatchForRoom(value:unknown,room:RoomInfo):MatchState {
  if(optionsKey(room.kind,match.options,room.hostID)!==optionsKey(room.kind,room.options,room.hostID))throw new Error('牌局模式与房间不一致');
  const ids=room.players.map(p=>p.id),sameRoster=(list:any)=>Array.isArray(list)&&list.length===ids.length&&list.every((p:any,i:number)=>p?.id===ids[i]);
  if(!sameRoster(match.game.players))throw new Error('牌局玩家与房间不一致');
+ if(match.game.players.some((p:Player,i:number)=>JSON.stringify(p.bot??null)!==JSON.stringify(room.players[i].bot??null)))throw new Error('牌局人机设置与房间不一致');
  if(!match.actorRevisions||typeof match.actorRevisions!=='object'||Array.isArray(match.actorRevisions)||Object.keys(match.actorRevisions).length!==ids.length||ids.some(id=>!Number.isSafeInteger(match.actorRevisions[id])||match.actorRevisions[id]<1))throw new Error('操作版本无效');
  if(!match.seen||typeof match.seen!=='object'||Array.isArray(match.seen)||Object.entries(match.seen).some(([id,requests])=>!ids.includes(id)||!Array.isArray(requests)||requests.length>128||requests.some(request=>typeof request!=='string'||!request||request.length>100)))throw new Error('操作记录无效');
  if(room.kind==='uno'&&match.game.mode!==undefined&&match.game.mode!==(room.options?.unoMode||'match'))throw new Error('七彩接龙存档模式与房间不一致');
@@ -84,3 +88,11 @@ export function applyMatch(match:MatchState,kind:GameKind,players:Player[],actor
  return {...match,game,revision:match.revision+1,actorRevisions,seen:{...match.seen,[actor]:[...(match.seen[actor]||[]),requestID].slice(-128)}};
 }
 export function viewMatch(match:MatchState,kind:GameKind,id:string){return {view:modules[kind].view(match.game,id),actionRevision:match.actorRevisions[id]||0};}
+
+/** Only authenticated room members may reach this projection. Spectators never borrow a seat. */
+export function viewRoomMatch(match:MatchState,room:RoomInfo,id:string){
+ if(room.players.some(p=>p.id===id))return viewMatch(match,room.kind,id);
+ if(room.allowSpectators===false||!room.spectators?.some(p=>p.id===id))throw new Error('不在本局中');
+ const view=modules[room.kind].view(match.game,'',true);
+ return {view:{...view,spectating:true,instruction:view.finished?view.instruction:'观战中 · 仅显示公开信息',actions:[],sections:view.sections.filter(section=>!section.private)},actionRevision:0};
+}

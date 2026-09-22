@@ -36,7 +36,7 @@ References checked September 21, 2026. Published versions differ; do not silentl
 
 All modes support wins before pung/kong and simultaneous discard winners. Only the two Guangdong scoring tables allow chow, only from the previous seat, after higher-priority claims. Real tiles are required for all claimed melds. Added kongs wait for robbing wins; a robbed kong retains its original pung. Concealed kongs cannot be robbed and are private until the deal ends. No kong is offered without a replacement tile.
 
-General wins use four sets and a pair, or seven pairs; a natural quad can count as two pairs. Guangdong chicken-and-flat excludes seven pairs. Honor decks also support natural thirteen orphans. A missing suit must be cleared before winning or claiming. After passing a win, Sichuan tables block an equal/lower base-value discard win until the next draw; Guangdong scoring blocks the same passed tile value until drawing or claiming a meld.
+General wins use four sets and a pair, or seven pairs; a natural quad can count as two pairs. Guangdong chicken-and-flat excludes seven pairs. Honor decks support thirteen orphans; the single-wild Guangdong scoring option also permits wild substitution in this special hand. A missing suit must be cleared before winning or claiming. After passing a win, Sichuan tables block an equal/lower base-value discard win until the next draw; Guangdong scoring blocks the same passed tile value until drawing or claiming a meld.
 
 Blood Battle winners leave and stop paying. Blood Flow locks the equivalent thirteen-tile waiting hand on the first win: no further melds, only the new drawn tile can be discarded, and self-drawn wins go into a separate physical winning-tile area before the next player draws. Discard wins reference the shared river tile without duplicating it.
 
@@ -51,7 +51,7 @@ Blood Battle winners leave and stop paying. Blood Flow locks the equivalent thir
 | 清碰 / 混幺九 / 小三元 / 小四喜 | 32 |
 | 字一色 / 清幺九 / 大三元 / 大四喜 / 九莲宝灯 / 十三幺 | 64 |
 
-Take the highest base pattern. Ordinary patterns add seat wind, East round wind, dragon triplets and self-draw doubles, capped at eight. Special patterns do not add ordinary bonuses. Kong-replacement self-win, last-tile self-win, robbing a kong and triple discard wins have a minimum of eight; heavenly/human/earthly wins have a minimum of 64.
+Take the highest base pattern. Ordinary patterns add seat wind, East round wind, dragon triplets and self-draw doubles, capped at eight. Special patterns do not add ordinary bonuses. Nine gates requires the closed 1112345678999 hand before its winning tile. Kong-replacement self-win, last-tile self-win, robbing a kong and triple discard wins have a minimum of eight; heavenly/human/earthly wins have a minimum of 64.
 
 A discard supplier pays one share. Self-draw collects three shares, except a liable supplier pays all three. Robbing an added kong is also three shares from its declarer. Exposed-kong replacement wins are covered by the kong supplier. Supplying the fourth exposed set, or the last open set of Big Dragons/Big Winds, establishes self-draw liability; for the fourth-set rule a supplier only covers the first qualifying recipient. No immediate kong payments.
 
@@ -61,9 +61,9 @@ Take one base: plain one, all triplets two, seven pairs four, single-pair wait w
 
 Self-draw ×2, kong replacement/discard/rob ×2, last tile ×2, heavenly/earthly ×32. An exposed kong collects two from its supplier; concealed kongs collect two from each active opponent, added kongs one. A kong's income transfers to each winner on its immediate winning discard and is removed from the refundable ledger.
 
-Six-red Blood Flow also evaluates hard win / six-tile straight / twin triplets ×2; three concealed triplets / full straight / three consecutive triplets ×4; all-even triplets / three kongs ×8; four consecutive or concealed triplets ×16; twin dragons / Red Dragon single wait ×32; nine gates ×64. Higher patterns exclude their included lower patterns; history displays the actual decomposition. A Red Dragon single wait requires four exposed sets and a wild in the remaining pair.
+Six-red Blood Flow also evaluates hard win / six-tile straight / twin triplets ×2; three concealed triplets / full straight / three consecutive triplets ×4; all-even triplets / three kongs ×8; four consecutive or concealed triplets ×16; twin dragons / Red Dragon single wait ×32; nine gates ×64. Higher patterns exclude their included lower patterns; history displays the actual decomposition. A Red Dragon single wait requires four exposed sets and a lone wild before the winning tile arrives.
 
-At wall exhaustion, missing-suit holders pay 16 to each cleared active player. Cleared non-ready players pay each ready player's maximum base hand value. Non-ready players, including missing-suit holders, refund their recorded kong income. Departed Blood Battle winners are excluded. All payments are zero-sum.
+At wall exhaustion, missing-suit holders pay 16 to each cleared active player. All non-ready players, including missing-suit holders, pay each ready player's maximum base hand value. Non-ready players, including missing-suit holders, refund their recorded kong income. Departed Blood Battle winners are excluded. All payments are zero-sum.
 
 ## State compatibility and verification
 

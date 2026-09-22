@@ -1,11 +1,11 @@
 import type {Guide} from '../ui/RuleGuide';
 export const mahjongGeneral:Record<'zh'|'en',Guide>={
- zh:{edition:'先学会一局麻将，再选择喜欢的地方玩法',quick:[
+ zh:{edition:'通用流程；番型与计分请看模式规则',quick:[
   '认牌：万、筒、条各有 1–9，通常每种四张。东南西北、中发白是字牌；是否使用字牌，由玩法决定。',
   '目标：最常见的胡牌是「四组牌＋一对将」。一组可以是同花色连续三张（顺子），或三张相同的牌（刻子）。',
   '轮到你：先摸一张，再打出一张。庄家开局多一张，所以先出牌。没轮到你时，留意别人打出的牌。',
   '别人出牌：手里有两张相同牌可以碰；有三张相同牌可以杠。如果这张刚好补全胡牌，就选胡。允许吃牌的玩法，只能吃上家的牌。',
-  '在这张牌桌上：点一张再确认，或快速双击同一张出牌。没法碰、杠、胡时会自动过；有机会时由你决定。',
+  '在这张牌桌上：点一张选中，再点同一张出牌。没法碰、杠、胡时会自动过；有机会时由你决定。',
   '开局前看「模式规则」：是否换牌、定缺、使用鬼牌，以及胡牌后是否继续，都是各模式的区别。'
  ],sections:[
   {title:'一、牌与座位',text:['万、筒、条叫数牌，每门从 1 到 9；每个牌值通常有四张。字牌是东、南、西、北、红中、发财、白板。字牌不能组成顺子。花牌只出现在部分玩法中。','四位玩家各占一席。庄家起手 14 张，其他玩家 13 张；庄家先出一张，随后依次摸牌、出牌。本桌下家在你的右侧、上家在左侧、对家在上方；方位随观看座位改变。']},
@@ -15,14 +15,14 @@ export const mahjongGeneral:Record<'zh'|'en',Guide>={
   {title:'五、听牌、自摸和点炮',text:['只差一张即可胡叫听牌；可能只等一个牌值，也可能等多个。听牌本身不代表已经获胜，也不一定需要按一个按钮。','自己摸到最后需要的牌叫自摸；用别人打出的牌胡叫点炮胡，出牌者叫放炮。抢杠胡是在别人补杠时胡其第四张牌。','有多个玩家响应时，胡牌先于碰杠，碰杠先于吃。是否允许一炮多响、同时胡牌如何结算，见模式规则。选择过牌可能影响接下来能否胡同一张牌。']},
   {title:'六、换牌、定缺和鬼牌',text:['换牌是部分川麻的开局步骤：每位玩家先选牌，全部确认后一起交换。换多少张、能否混花色、换给谁，由具体模式决定。','定缺是选择一门数牌花色，本局必须清掉这门牌才能胡；不是说开局就把这门牌从牌库删除。','鬼牌又叫赖子，可以代替其他牌完成牌形。哪些牌是鬼、是否可以打出或碰杠、是否有额外倍数，不能套用到所有模式。']},
   {title:'七、计分与结束',text:['番型描述你的胡牌组合，番数或倍数决定分值。不同地方玩法的番型、起胡条件、封顶和杠分不同，不存在一张适用于所有麻将的统一计分表。','普通单局通常有人胡就结束；血战让胡牌者退出，余下玩家继续；血流可以多次胡，直到牌墙用尽。牌墙摸完叫流局，部分川麻还会查听牌、查缺门和退杠分。','本桌用积分结算，转账总和为零。每次胡牌和最终积分都可以查看；最后按积分比较本局成绩。']},
-  {title:'八、在本桌操作',text:['点选手牌会高亮，再点一次可取消；确认按钮只有选牌合法时才可用。快速双击或双触同一张可出的牌可直接出牌，换牌不会被双击误提交。','手牌、牌河和副露较多时可以左右滑动；胡牌记录可随时打开查看。换座会清空选牌，语言切换不会改变手牌。','无合法响应时系统自动过；需要决策时会等你选择。关闭网页后可恢复尚未结束的牌局，主动离开按界面提示处理。']}
+  {title:'八、在本桌操作',text:['点选手牌会高亮，再点同一张可出的牌就出牌；点桌面或按 Escape 取消选择。换牌可再点已选牌取消，全部选好后按确认换牌。','手牌、牌河和副露较多时可以左右滑动；胡牌记录可随时打开查看。换座会清空选牌，语言切换不会改变手牌。','无合法响应时系统自动过；需要决策时会等你选择。关闭网页后可恢复尚未结束的牌局，主动离开按界面提示处理。']}
  ]},
- en:{edition:'Learn the essentials, then choose your regional variant',quick:[
+ en:{edition:'General play; see Variant rules for patterns and scoring',quick:[
   'Meet the tiles: Characters, Dots and Bamboo each run from 1 to 9, usually with four copies. Winds and Dragons are honor tiles; the variant decides whether to use them.',
   'Your goal: a usual winning hand is four sets and a pair. A set is three consecutive tiles in one suit (a run), or three identical tiles (a triplet).',
   'On your turn, draw one tile and discard one. The dealer starts with an extra tile and discards first. Watch other players’ discards between turns.',
   'Claim a discard: two matching tiles let you pung; three let you kong. Choose Win if it completes your hand. Variants allowing chow let you claim a run only from the previous player.',
-  'At this table, select a tile and confirm, or double-tap it to discard. Passes are automatic only when you have no legal claim or win.',
+  'At this table, select a tile, then tap it again to discard. Passes are automatic only when you have no legal claim or win.',
   'Read Variant rules before starting. Exchanges, missing suits, wild tiles, scoring and what happens after a win depend on your chosen variant.'
  ],sections:[
   {title:'1. Tiles and seats',text:['Characters, Dots and Bamboo are numbered suits, each from 1 to 9, normally with four copies. Honors are East, South, West, North, Red Dragon, Green Dragon and White Dragon. Honors cannot form runs. Some variants also use flowers.','Four players occupy four seats. The dealer starts with 14 tiles and everyone else with 13. The dealer discards first, then players take turns drawing and discarding. Here, the next player is on your right, the previous player on your left, and your opposite above. Positions follow your viewing seat.']},
@@ -32,6 +32,6 @@ export const mahjongGeneral:Record<'zh'|'en',Guide>={
   {title:'5. Ready hands and wins',text:['A ready hand needs just one more tile to win; it may wait for one or several values. Being ready is not itself a win and does not always require a button.','Drawing the winning tile yourself is a self-draw. Winning on another player’s discard is a discard win. Robbing a kong wins on the fourth tile being added to a pung.','Wins have priority over pung/kong, which have priority over chow. Multiple wins, payment rules and restrictions after passing a win depend on the variant.']},
   {title:'6. Exchanges, missing suits and wild tiles',text:['Some Sichuan variants begin with an exchange. Everyone chooses privately, then the exchange resolves together. The variant determines the number, suit restrictions and recipient.','Choosing a missing suit commits you to clearing that numbered suit before winning. It does not remove those tiles from the deck.','Wild tiles can substitute for other values to complete a hand. Which tiles are wild, whether they can be discarded or claimed, and bonus scoring differ between variants.']},
   {title:'7. Scoring and ending a deal',text:['Hand patterns determine fan or multipliers. Regional variants have different patterns, minimum wins, caps and kong payments; there is no single scoring table for all Mahjong.','An ordinary deal usually ends on a win. Blood Battle removes winners while others continue. Blood Flow allows repeated wins until the wall runs out. Some Sichuan variants also settle missing-suit and readiness penalties and refund kong income.','This table uses zero-sum points. Review each win and final scores; final points determine the result.']},
-  {title:'8. Playing at this table',text:['Select a tile to highlight it; select again to cancel. Confirm is enabled only for legal selections. Double-click or double-tap a playable tile to discard; exchanges never submit on a double-tap.','Scroll long hands, rivers and melds horizontally. Open the win history at any time. Switching seats clears selections; changing language does not change your tiles.','Forced passes are automatic; real decisions wait for you. An unfinished session can be recovered after closing the page. Follow the on-screen choices when leaving deliberately.']}
+  {title:'8. Playing at this table',text:['Select a tile to highlight it; tap the selected playable tile again to discard. Tap the table or press Escape to cancel. During an exchange, tap selected tiles to deselect and use Confirm exchange when ready.','Scroll long hands, rivers and melds horizontally. Open the win history at any time. Switching seats clears selections; changing language does not change your tiles.','Forced passes are automatic; real decisions wait for you. An unfinished session can be recovered after closing the page. Follow the on-screen choices when leaving deliberately.']}
  ]}
 };

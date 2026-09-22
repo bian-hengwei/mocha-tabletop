@@ -24,7 +24,7 @@
 
 ## 麻将
 
-四人、单局，无花牌。十种模式、采用的番表、换牌与鬼牌选项、旧存档兼容和来源见 [麻将规则集](MAHJONG.md)。游戏内分为快速入门、完整通用规则和各模式规则。
+四人单局、十种模式。番型、换牌、鬼牌、版本来源与存档兼容见 [麻将规则集](MAHJONG.md)。
 
 ## 实现与验证
 
@@ -41,18 +41,22 @@
 
 ## 界面与牌面
 
-麻将支持选牌后确认，也支持快速双击或双触同一张可出手牌；慢速重复点选仍可取消，换牌、定缺与锁手限制继续由引擎控制。
+麻将点选手牌后抬起，再点同一张牌打出；点桌面或按 Escape 取消。换三张仍需选满同花色三张后确认；定缺直接选择花色。可用的碰、杠、胡和过位于手牌右上方，合法性继续由引擎控制。
 
-麻将使用蓝青织物桌面、木质桌边、象牙牌面与低饱和金色反馈。所有手牌、出牌、副露、暗牌背面和结算展示均使用本地 SVG；牌面来自明确 CC0 授权的完整素材，来源见 [素材说明](ASSETS.md)；英文界面保留麻将的传统图案，辅助名称与控件按语言切换。
+牌桌延续 Mocha 的墨绿桌面、象牙色牌面与低饱和金色反馈。所有手牌、出牌、副露、暗牌背面和结算展示均使用本地 SVG；牌面来自明确 CC0 授权的完整素材，来源见 [素材说明](ASSETS.md)；英文界面保留麻将的传统图案，辅助名称与控件按语言切换。
 
-竖屏把手牌分为两行，横屏使用独立操作列；宽横屏麻将可单行展示。手牌较多时采用有提示的横向滚动，保持完整点击区域，不以极窄重叠牌遮住花色和数值。点选后抬起并显示勾选标记，确认后才执行动作；旋转保留选择，换座和牌局阶段改变清空失效选择。牌河与副露在短横屏分别滚动，胡牌记录使用可关闭、可键盘访问的弹窗。
+麻将手机竖屏以两行完整展示手牌，横屏和宽屏使用单行；新摸牌保留原 ID，移到显示顺序最右端并留出间距。旋转保留选择，换座和回合改变清空选择。独立的麻将布局为旋转牌面预留真实占位，副露与牌河分开。小屏桌面展示各家最近六张弃牌，宽屏展示最近十二张；点击牌河数量查看完整记录，支持换家、Escape 和关闭后焦点恢复。胡牌记录使用同样的弹窗交互。
+
+出牌动画从公开牌河的新增牌计算，自动过牌后也能播放：由出牌方向移到中央展示，再落向对应牌河。不依赖仍在等待中的响应窗口，不延迟权威状态。初次加载和换座不重播旧牌；新局通过 match ID 重置。减少动态效果设置下保留静态牌面提示，不做位移动画。
 
 布局参考公开截图中的“手牌位于底部、对手沿桌边、当前出牌居中、操作与牌面分离”层次：[欢乐麻将界面](https://game.xiaomi.com/viewpoint/1270322523_1686536294223_149)、[欢乐斗地主界面](https://game.xiaomi.com/viewpoint/1359077112_1683765830867_100)。仅参考信息组织，不复用代码、插画、标识或资源。
 
 ## Table presentation
 
-Mahjong seats and discard rivers are positioned relative to the viewer: self at the bottom, next seat at the right, opposite above, previous seat at the left. Tile faces in the three opponents' rivers point toward their owners while names and counts remain upright. The central wind indicator rotates its labels with the selected seat; its number is the remaining wall count. Opponent racks contain only backs derived from public hand counts. Dense rivers and melds scroll within their assigned region, and the hand rack remains horizontally scrollable with touch-sized tiles in both orientations.
+Mahjong seats and discard rivers are positioned relative to the viewer: self at the bottom, next seat at the right, opposite above, previous seat at the left. Tile faces in the three opponents' rivers point toward their owners while names and counts remain upright. The central wind indicator rotates its labels with the selected seat; its number is the remaining wall count. Opponent racks contain only backs derived from public hand counts. The table shows recent discards; each river opens its complete public history. Portrait phones show a two-row hand, while landscape and larger screens use one row. The drawn tile sits at the end with a separate gap. Pung, kong, win and pass actions sit above the right side of the hand. Legal discards that leave winning waits carry a Ready badge; selecting one shows its waits directly above the hand. Existing waits appear automatically, with optional enlarged details.
 
 Dou Dizhu places bottom cards above the table, the viewer below and opponents at either side. The latest play moves toward the player who made it. Bid and pass labels use public authoritative state. Selection remains explicit: tap to select or deselect, then confirm; changing seat or turn clears stale selection. The shared Guan Dan rule handling is unchanged.
 
 Layout references: Tencent's publisher listings for [Mahjong](https://apps.apple.com/cn/app/%E6%AC%A2%E4%B9%90%E9%BA%BB%E5%B0%86/id689180123) and [Dou Dizhu](https://apps.apple.com/cn/app/%E8%85%BE%E8%AE%AF%E6%AC%A2%E4%B9%90%E6%96%97%E5%9C%B0%E4%B8%BB/id446324234), reviewed September 20, 2026. These informed conventional table positioning only. Mocha retains its own jade-and-brass interface and the licensed card assets documented in `public/art/classic/SOURCES.json`.
+
+Mahjong interaction and table-layout reference: [Tencent Happy Mahjong screenshots](https://game.xiaomi.com/viewpoint/1270322523_1686536294223_149), reviewed September 21, 2026. The reference informs spatial grouping and direct tile interaction; artwork and rules remain those documented above.

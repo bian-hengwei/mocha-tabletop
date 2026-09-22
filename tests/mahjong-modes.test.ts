@@ -59,6 +59,12 @@ describe('independent fan examples from the selected published tables',()=>{
   const melds=[0,3,9,12].map((v,i)=>({type:'pong' as const,tiles:tiles([v,v,v],'m'+i),from:1}));expect(score([7,7],'sichuan',melds).points).toBe(4);
  });
  it('stacks independent red bonuses but excludes their included lower patterns',()=>{const result=score([1,1,1,3,3,3,5,5,5,7,7,7,10,10],'redBloodflow',[],33);expect(result.points).toBe(256);expect(result.patterns.map(p=>p.name)).toEqual(['全双刻','四暗刻','硬胡']);});
+ it('requires the nine-sided pre-win nine-gates hand and a pre-win Red Dragon singleton',()=>{
+  expect(score([0,0,0,0,1,2,3,4,5,6,7,8,8,8]).points).toBe(16);
+  const melds=[0,10,12,22].map((v,i)=>({type:'pong' as const,tiles:tiles([v,v,v],'m'+i),from:1}));
+  expect(score([4,33],'redBloodflow',melds,33).points).toBe(4);
+  expect(score([33,4],'redBloodflow',melds,33).points).toBe(32);
+ });
  it('uses coherent wildcard decompositions and handles all six reds within a bounded time',()=>{const start=performance.now();const r=score([0,1,2,9,10,11,6,6,33,33,33,33,33,33],'redBloodflow',[],33);expect(r.points).toBeGreaterThan(0);expect(performance.now()-start).toBeLessThan(2000);expect(score([0,1,2,3,4,5,9,10,11,12,13,33,6,6],'laizi',[],33).points).toBe(1);});
 });
 
@@ -72,5 +78,20 @@ describe('claims, passed wins and settlement',()=>{
  it('records repeated flow self-wins without discarding the winning physical tile',()=>{let s=setup('redBloodflow');s.hands[0]=tiles([...waiting,33]);s.drawn='t13';s=act(s,0,'hu');expect(s.current).toBe(1);expect(s.hands[0]).toHaveLength(13);expect(s.winningTiles!.map(t=>t.id)).toEqual(['t13']);expect(actions(s,0)).toEqual([]);s.current=0;s.phase='discard';s.hands[0].push({id:'second',value:33});s.drawn='second';s.selfWon=false;s=act(s,0,'hu');expect(s.wins).toHaveLength(2);expect(s.winningTiles!.map(t=>t.id)).toEqual(['t13','second']);expect(s.discards[0]).toEqual([]);});
  it('applies Guangdong self-draw and kong minimum with supplier liability, without instant kong pay',()=>{let s=setup();s=act(s,0,'hu');expect(s.wins[0].points).toBe(4);expect(s.scores).toEqual([12,-4,-4,-4]);s=setup();s.afterKong=true;s.lastKongFrom=2;s=act(s,0,'hu');expect(s.wins[0].points).toBe(8);expect(s.scores).toEqual([24,0,-24,0]);s=setup();s.hands[0]=tiles([6,6,6,6,0,1,2,3,4,5,9,10,11,12]);s=act(s,0,'concealed:6',['6']);expect(s.scores).toEqual([0,0,0,0]);});
  it('robbing a Guangdong added kong makes the declarer pay for all three opponents',()=>{let s=setup();s.hands[0]=tiles([6,0,1,2,3,4,5,9,10,11,12]);s.melds[0]=[{type:'pong',tiles:tiles([6,6,6],'meld'),from:2}];s.hands[1]=tiles(waiting,'b');s=act(s,0,'added:6',['6']);s=act(s,1,'hu');s=pass(s);expect(s.scores).toEqual([-24,24,0,0]);expect(s.melds[0][0].type).toBe('pong');});
+ it('records fourth-open-set liability and charges its supplier on the later self-win',()=>{
+  let s=setup();s.hands[0]=tiles([6],'a');s.hands[1]=tiles([6,6,9,17],'b');s.melds[1]=[0,3,12].map((v,j)=>({type:'pong',tiles:tiles([v,v,v],'m'+j),from:2}));
+  s=act(s,0,'discard',['a0']);s=act(s,1,'pong');s=pass(s);expect(s.liability?.[1]).toBe(0);
+  s.hands[1]=tiles([9,9],'later');s.drawn='later1';s.phase='discard';s.pending=null;s.selfWon=false;s=act(s,1,'hu');expect(s.scores).toEqual([-24,24,0,0]);expect(s.wins[0].gained).toBe(24);
+ });
+ it('uses literal triple, heavenly, human and earthly Guangdong minimum payments',()=>{
+  let s=setup();s.hands[0]=tiles([6],'a');for(let i=1;i<4;i++)s.hands[i]=tiles(waiting,'p'+i);s=act(s,0,'discard',['a0']);for(let i=1;i<4;i++)s=act(s,i,'hu');expect(s.scores).toEqual([-24,8,8,8]);
+  s=setup();s.turn=1;s=act(s,0,'hu');expect(s.scores).toEqual([192,-64,-64,-64]);expect(s.history.at(-1)).toBe('本局结束');expect(s.history).toContain('a · 自摸 · +192');
+  s=setup();s.turn=1;s.hands[0]=tiles([6],'a');s.hands[1]=tiles(waiting,'b');s=act(s,0,'discard',['a0']);s=act(s,1,'hu');s=pass(s);expect(s.scores).toEqual([-64,64,0,0]);
+  s=setup();s.turn=2;s.current=1;s.hands[1]=tiles([...waiting,6],'b');s.drawn='b13';s.discards[0]=tiles([17],'out');s=act(s,1,'hu');expect(s.scores).toEqual([-64,192,-64,-64]);
+ });
+ it('transfers a kong income to simultaneous discard winners and removes refundable entries',()=>{
+  let s=setup('bloodflow');s.afterKong=true;s.turn=8;s.scores=[6,-2,-2,-2];s.kongPayments=[1,2,3].map(from=>({from,to:0,points:2,turn:8}));s.hands[0]=tiles([6],'a');s.hands[1]=tiles(waiting,'b');s.hands[2]=tiles(waiting,'c');
+  s=act(s,0,'discard',['a0']);s=act(s,1,'hu');s=act(s,2,'hu');s=pass(s);expect(s.scores).toEqual([-10,6,6,-2]);expect(s.kongPayments).toEqual([]);
+ });
  it.each(modes)('reaches terminal %s states with physical conservation and zero-sum scores',mode=>{for(let seed=1;seed<=4;seed++){let s=mahjong.create(players,seed,{mahjongMode:mode}),steps=0;while(!s.finished&&steps++<650){conservation(s);const i=players.findIndex((_,i)=>actions(s,i).length);expect(i).toBeGreaterThanOrEqual(0);const legal=actions(s,i);const a=legal.find(a=>a.id==='hu')??legal.find(a=>a.id.startsWith('concealed:'))??legal.find(a=>a.id==='kong')??legal.find(a=>a.id==='pong')??legal[0];let values=a.choices.slice(0,a.min).map(c=>c.id);if(a.id==='exchange'&&MAHJONG_RULES[mode].exchange==='sameThree')values=[0,1,2].map(suit=>s.hands[i].filter(t=>Math.floor(t.value/9)===suit)).find(g=>g.length>=3)!.slice(0,3).map(t=>t.id);s=act(s,i,a.id,values);if(steps%25===0)s=JSON.parse(JSON.stringify(s));}expect(s.finished).toBe(true);conservation(s);}},30000);
 });

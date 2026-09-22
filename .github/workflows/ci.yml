@@ -5,9 +5,14 @@ on:
   pull_request:
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
-  check:
+  quality:
+    name: Unit tests, types and build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -17,57 +22,77 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run check
-      - name: Install browser for UI smoke tests
+      - name: Share the tested build with integration groups
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: integration-dist
+          path: dist/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+  integration:
+    name: Integration (${{ matrix.group }})
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [app, classic, cards, social]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - name: Restore the tested build for Worker assets
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: integration-dist
+          path: dist/
+      - name: Install browser for integration tests
         run: npx playwright install --with-deps chromium
-      - name: Check game entry, layouts, privacy and usability
+      - name: Run integration group
         env:
           BASE_URL: http://127.0.0.1:5174
+          TEST_API_BASE: http://127.0.0.1:8787
+          CI_GROUP: ${{ matrix.group }}
         run: |
           npm run dev -- --port 5174 --strictPort > "$RUNNER_TEMP/mocha-vite.log" 2>&1 &
           server_pid=$!
           npx wrangler dev --local --port 8787 --persist-to "$RUNNER_TEMP/mocha-worker" > "$RUNNER_TEMP/mocha-worker.log" 2>&1 &
           worker_pid=$!
-          trap 'kill "$server_pid" "$worker_pid"' EXIT
+          trap 'kill "$server_pid" "$worker_pid" 2>/dev/null || true' EXIT
           for attempt in {1..30}; do
-            if curl -fsS "$BASE_URL" > /dev/null; then break; fi
+            if curl -fsS --max-time 2 "$BASE_URL" > /dev/null && curl -fsS --max-time 2 "$BASE_URL/api/health" > /dev/null; then break; fi
             sleep 1
           done
-          node tests/ui/app-usability.integration.mjs
-          node tests/ui/player-names.integration.mjs
-          node tests/ui/action-sheet.integration.mjs
-          node tests/ui/pwa-update.integration.mjs
-          node tests/ui/history-names.integration.mjs
-          node tests/ui/profile-input.integration.mjs
-          node tests/ui/dialog-boundaries.integration.mjs
-          node tests/ui/storage-boundaries.integration.mjs
-          node tests/ui/language.integration.mjs
-          node tests/ui/i18n.integration.mjs
-          node tests/ui/mahjong-actions.integration.mjs
-          node tests/ui/mahjong-experience.integration.mjs
-          node tests/ui/mahjong-modes.integration.mjs
-          node tests/ui/uno-experience.integration.mjs
-          node tests/ui/hand-experience.integration.mjs
-          node tests/ui/poker-declaration.integration.mjs
-          node tests/ui/identity-portraits.integration.mjs
-          node tests/ui/illustrated-games.integration.mjs
-          node tests/ui/word-privacy.integration.mjs
-          node tests/ui/classic-assets.integration.mjs
-          node tests/ui/classic-orientation.integration.mjs
-          node tests/ui/classic-dense.integration.mjs
-          node tests/ui/table-layout.integration.mjs
-          node tests/ui/werewolf-lineups.integration.mjs
-          node tests/ui/proactive-new-games.integration.mjs
-          node tests/ui/century-viewport.integration.mjs
-          node tests/ui/gems-viewport.integration.mjs
-          node tests/ui/bombs-viewport.integration.mjs
-          node tests/ui/uno-sushi-viewport.integration.mjs
-          node tests/ui/word-viewport.integration.mjs
-          node tests/ui/word-round.integration.mjs
-          node tests/ui/social-viewport.integration.mjs
-          node tests/ui/social-app-viewport.integration.mjs
-          node tests/ui/game-viewport.integration.mjs
-          node tests/ui/word-usability.integration.mjs
-          curl -fsS "$BASE_URL/api/health"
-          node tests/network/message-text.integration.mjs
-          node tests/ui/lobby-layout.integration.mjs
-          TEST_GAMES=century TEST_ACTION_DELAY_MS=600 TEST_SKIP_OFFLINE=1 node tests/ui/production.integration.mjs
+          curl -fsS --max-time 5 "$BASE_URL" > /dev/null
+          curl -fsS --max-time 5 "$BASE_URL/api/health"
+          node scripts/ci-integration.mjs "$CI_GROUP"
+      - name: Show service logs on failure
+        if: failure()
+        run: |
+          for log in "$RUNNER_TEMP/mocha-vite.log" "$RUNNER_TEMP/mocha-worker.log"; do
+            if [ -f "$log" ]; then
+              echo "::group::$log"
+              tail -n 100 "$log"
+              echo '::endgroup::'
+            fi
+          done
+  check:
+    name: check
+    if: ${{ always() }}
+    needs: [quality, integration]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every check to pass
+        env:
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          INTEGRATION_RESULT: ${{ needs.integration.result }}
+        run: |
+          test "$QUALITY_RESULT" = success
+          test "$INTEGRATION_RESULT" = success

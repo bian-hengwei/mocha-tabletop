@@ -1,9 +1,10 @@
 /** Complete engine and connection copy. Keys remain the engine's stable Chinese text. */
 export const gameText:Record<string,string>={
+ '确认罚摸':'Confirm draw penalty','接受 +2，抽牌并跳过':'Accept +2, draw and skip',
 '身份牌配置与房间不一致':'Saved role lineup does not match this table',
 '开枪':'Shoot','白痴翻牌，警徽流失。':'The Fool reveals and the leader badge is destroyed.',
  '七彩接龙质疑设置无效':'Invalid Color Dash challenge setting','七彩接龙存档质疑设置与房间不一致':'Color Dash checkpoint challenge setting does not match the room',
- '仅无当前颜色时可出；下一家自动抽 4 张并跳过':'Only playable without the current color. The next player automatically draws four and skips.',
+ '仅无当前颜色时可出；下一家确认后抽 4 张并跳过':'Only playable without the current color. The next player confirms, draws four and skips.',
  '单局模式 · 手动喊剩一张 · +4 自动验证':'Single round · Manual last-card call · +4 legality enforced',
  '累计 500 分 · 手动喊剩一张 · +4 自动验证':'First to 500 · Manual last-card call · +4 legality enforced',
 
@@ -69,6 +70,7 @@ export const gameText:Record<string,string>={
  '交出一张':'Give one card','偷瞄牌堆':'Sneak peek','顶部三张 · 仅你可见':'Top three cards · Only you can see them','牌堆顶':'Top of the deck',
  '抽到闹闹牌':'Bomb drawn','放弃安抚':'Skip Defuse','秘密放回':'Return secretly','选择闹闹牌位置':'Choose where to return Bomb','放回闹闹牌':'Return Bomb',
  '最上面':'Top','最底下':'Bottom','游戏结束':'Game over','牌堆为空':'The deck is empty','阶段无效':'Invalid game phase','恢复':'Restore','没有安抚牌':'No Defuse card','未知操作':'Unknown action',
+ '1 姜黄 → 1 藏红花':'1 Turmeric → 1 Saffron','1 藏红花 → 1 豆蔻':'1 Saffron → 1 Cardamom','1 豆蔻 → 1 肉桂':'1 Cardamom → 1 Cinnamon',
  '姜黄':'Turmeric','藏红花':'Saffron','豆蔻':'Cardamom','肉桂':'Cinnamon','无':'None','结束升级':'Finish upgrading','再交易一次':'Trade again','结束交易':'Finish trading',
  '任选 1 枚香料放到途经的商人上':'Leave one spice of your choice on each merchant you pass','使用商人':'Use a merchant','招募商人':'Recruit a merchant','完成订单':'Fulfill an order',
  '休整，收回所有商人':'Rest and recover all merchants','数字精选牌组 · 依基础规则交换、升级、招募、休整与交单':'Digital selection · Trade, upgrade, recruit, rest, and fulfill orders',
@@ -148,6 +150,8 @@ export const gameText:Record<string,string>={
 /** Anchored sentence templates. Translate captured text recursively before substitution. */
 const spiceUnit='(🟡|🔴|🟢|🟤) (姜黄|藏红花|豆蔻|肉桂) (\\d+)';
 export const gamePatterns:[RegExp,string,number[]?][]=[
+ [/^等待 (.+) 确认罚摸 ([24]) 张$/,'Waiting for $1 to confirm drawing $2 cards'],
+ [/^(.+) 接受 \+([24])，抽 ([24]) 张并跳过$/,'$1 accepts +$2, draws $3 and skips'],
  [/^(.+) · 开枪$/,'$1 · Shoot'],
  [/^(.+) 开枪带走了 (.+)。$/,'$1 shot $2.'],
  [/^(.+) 翻开白痴身份，免于放逐，失去投票权。$/,'$1 reveals as the Fool, survives exile and loses their vote.'],
@@ -171,7 +175,7 @@ export const gamePatterns:[RegExp,string,number[]?][]=[
  [/^(白钻|蓝宝石|祖母绿|红宝石|黑玛瑙|黄金) ×(\d+)$/,'$1 ×$2',[1]],
  [/^(白钻|蓝宝石|祖母绿|红宝石|黑玛瑙|黄金)、(白钻|蓝宝石|祖母绿|红宝石|黑玛瑙|黄金)、(白钻|蓝宝石|祖母绿|红宝石|黑玛瑙|黄金)$/,'$1, $2, $3',[1,2,3]],
  [/^(白钻|蓝宝石|祖母绿|红宝石|黑玛瑙|黄金)、(白钻|蓝宝石|祖母绿|红宝石|黑玛瑙|黄金)$/,'$1, $2',[1,2]],
- [/^(.+) · (闹闹牌|安抚|加班|跳过|借一张|洗牌|偷瞄三张|等等|月亮猫|云朵猫|叶子猫|星星猫|太阳猫)( · 已暂停)?$/,'$1 · $2$3',[2,3]],
+ [/^(.+) · (闹闹牌|安抚|加班|跳过|借一张|洗牌|偷瞄三张|等等|爆炸牌|拆弹|攻击|索取|预知三张|否决|月亮猫|云朵猫|叶子猫|星星猫|太阳猫)( · (?:已暂停|已被否决))?$/,'$1 · $2$3',[2,3]],
  [/^(\d+) · (闹闹牌|安抚|加班|跳过|借一张|洗牌|偷瞄三张|等等|月亮猫|云朵猫|叶子猫|星星猫|太阳猫)$/,'$1 · $2',[2]],
 
  [/^先归还 (\d+) 枚 · 共需归还 (\d+) 枚$/,'Return $1 now · $2 total to return'],
@@ -181,9 +185,9 @@ export const gamePatterns:[RegExp,string,number[]?][]=[
  [/^ → (.+)$/,' → $1'],
  [/^([^；]+) → 弃票$/,'$1 → Abstain'],
 
- [/^(.+) · (\d+) 张同名组合( · 已暂停)?$/,'$1 · $2 matching cards$3',[3]],
+ [/^(.+) · (\d+) 张同名组合( · (?:已暂停|已被否决))?$/,'$1 · $2 matching cards$3',[3]],
 
- [/^需要 (\d+)[–-](\d+) 位不同玩家$/,'Needs $1–$2 distinct players'],[/^需要 (\d+)[–-](\d+) 人$/,'Needs $1–$2 players'],
+ [/^需要 (\d+) 位不同玩家$/,'Needs $1 distinct players'],[/^需要 (\d+)[–-](\d+) 位不同玩家$/,'Needs $1–$2 distinct players'],[/^需要 (\d+)[–-](\d+) 人$/,'Needs $1–$2 players'],
  [/^选择 (\d+) 名队员$/,'Choose $1 team members'],[/^第 (\d+) 次任务 · (.+)$/,'Mission $1 · $2',[2]],
  [/^第 (\d+) 次任务(成功|失败)，(\d+) 张失败牌。$/,'Mission $1: $2 · $3 Fail cards',[2]],
  [/^刺客选择了 (.+)。$/,'The Assassin chose $1.'],[/^表决：(.+)$/,'Votes: $1',[1]],[/^([^；]+) (赞成|反对)$/,'$1: $2',[2]],
@@ -196,15 +200,21 @@ export const gamePatterns:[RegExp,string,number[]?][]=[
  [/^(.+) 抽到了闹闹牌$/,'$1 drew Bomb'],[/^(.+) 抽了一张牌$/,'$1 drew a card'],[/^(.+) 等等 · (取消|恢复)效果$/,'$1 played Nope · $2 effect',[2]],
  [/^(.+) 交给 (.+) 一张牌$/,'$1 gave $2 a card'],[/^(.+) 使用安抚牌$/,'$1 played Defuse'],[/^(.+) 已秘密放回闹闹牌$/,'$1 secretly returned Bomb'],
  [/^第 (\d+) 张$/,'Position $1'],[/^(.+) 获胜$/,'$1 wins'],
+ [/^升级 1 次$/,'Upgrade 1 step'],[/^再升级 1 次$/,'Up to 1 more upgrade'],
  [/^升级 (\d+) 次$/,'Upgrade $1 steps'],[/^再升级 (\d+) 次$/,'Up to $1 more upgrades'],[/^获得 (.+)$/,'Gain $1',[1]],
+ [/^归还 1 枚香料$/,'Return 1 spice'],
+ [/^归还 1 枚香料（还需 (\d+) 枚）$/,'Return 1 spice ($1 still to return)'],
  [/^支付给第 (\d+) 位商人$/,'Pay merchant $1'],[/^归还 (\d+) 枚香料$/,'Return $1 spices'],
  [/^归还 (\d+) 枚香料（还需 (\d+) 枚）$/,'Return $1 spices ($2 still to return)'],
+ [/^1 分$/,'1 point'],
  [/^支付 (\d+) 枚 · 附赠 (.+)$/,'Pay $1 spices · Bonus: $2',[2]],[/^(\d+) 分$/,'$1 points'],
  [/^(.+) 获胜 · (\d+) 分$/,'$1 wins · $2 points'],[/^(.+) 招募商人$/,'$1 recruited a merchant'],[/^(.+) 使用 (.+)$/,'$1 used $2',[2]],
  [/^(.+) 完成 (\d+) 分订单$/,'$1 fulfilled a $2-point order'],[/^(.+) 休整，收回商人$/,'$1 rested and recovered merchants'],
  [/^第 (\d+) 轮 · 最后一轮$/,'Round $1 · Final round'],[/^第 (\d+) 轮$/,'Round $1'],
+ [/^(白钻|蓝宝石|祖母绿|红宝石|黑玛瑙)(矿场|商路|工坊) · 1 分$/,'$1 $2 · 1 point',[1,2]],
  [/^(白钻|蓝宝石|祖母绿|红宝石|黑玛瑙)(矿场|商路|工坊) · (\d+) 分$/,'$1 $2 · $3 points',[1,2]],
  [/^([⚪🔵🟢🔴⚫🟡]+) (白钻|蓝宝石|祖母绿|红宝石|黑玛瑙|黄金) · (\d+)$/,'$1 $2 · $3',[2]],
+ [/^归还 1 枚$/,'Return 1 token'],
  [/^归还 (\d+) 枚$/,'Return $1 tokens'],[/^拿取 (\d+) 种宝石$/,'Take $1 different colors'],[/^盲抽 (\d+) 级$/,'Reserve a hidden level-$1 card'],
  [/^贵族 (\d+)$/,'Patron $1'],[/^贵族 (\d+) · 3 分$/,'Patron $1 · 3 points'],[/^支付 (.+)$/,'Pay $1',[1]],[/^(\d+) 级市场$/,'Level $1 market'],
  [/^胜者：(.+) · (\d+) 分$/,'Winner: $1 · $2 points'],[/^胜者：(.+)$/,'Winner: $1'],[/^(.+) 获得贵族 · \+3 分$/,'$1 welcomed a patron · +3 points'],
