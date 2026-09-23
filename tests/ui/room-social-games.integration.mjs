@@ -26,6 +26,7 @@ try{for(const [kind,count]of Object.entries(games).filter(([kind])=>!process.env
    if(locale==='en')await page.locator('.language-toggle').click();
    for(const [width,height]of sizes){await page.setViewportSize({width,height});await page.evaluate(()=>new Promise(requestAnimationFrame));await expect(page.locator('.social-chat-trigger')).toBeInViewport();await expect(page.locator('.profile-chip')).toBeInViewport();
     const seats=page.locator('main .social-avatar');await expect(seats).toHaveCount(count);for(let i=0;i<count;i++)await expect(seats.nth(i),`${kind}/${locale}/${width} seat ${i}`).toBeVisible();
+    if(kind==='doudizhu')assert(await page.locator('.classic-arena').evaluate(arena=>arena.scrollHeight<=arena.clientHeight+2),`${kind}/${locale}/${width} seat and turn label stay inside the arena`);
     if(kind==='mahjong'){
      const overlaps=await page.evaluate(()=>{
       const label=document.querySelector('.mj-seat.seat-self>div').getBoundingClientRect();
