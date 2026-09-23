@@ -56,6 +56,15 @@ function setup(profile=host){
 afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();Peer.all=[];Channel.all=[];});
 
 describe('LAN signaling lifecycle',()=>{
+ it('serves state sync requests only after the data channel proves its nonce',()=>{
+  vi.stubGlobal('window',new EventTarget());vi.stubGlobal('document',new EventTarget());vi.stubGlobal('WebSocket',Socket);vi.stubGlobal('RTCPeerConnection',Peer);
+  const {client}=setup();void client.offer(guest.id);const channel=Channel.all[0];channel.readyState='open';channel.onopen?.();
+  channel.receive({type:'sync'});expect(channel.sent.map(m=>m.type)).toEqual(['probe']);
+  channel.receive({type:'proof',nonce:channel.sent[0].nonce});expect(channel.sent.at(-1)?.type).toBe('lanSnapshot');
+  const sent=channel.sent.length;channel.receive({type:'sync'});expect(channel.sent).toHaveLength(sent+1);expect(channel.sent.at(-1)?.type).toBe('lanSnapshot');
+  client.destroy();
+ });
+
  it('keeps a proven DataChannel through peer silence and foreground return',async()=>{
   vi.useFakeTimers();vi.stubGlobal('window',new EventTarget());vi.stubGlobal('document',Object.assign(new EventTarget(),{visibilityState:'visible'}));vi.stubGlobal('WebSocket',Socket);vi.stubGlobal('RTCPeerConnection',Peer);
   const {client}=setup();void client.offer(guest.id);const peer=Peer.all[0],channel=Channel.all[0];peer.connectionState='connected';channel.readyState='open';channel.onopen?.();channel.receive({type:'proof',nonce:channel.sent[0].nonce});

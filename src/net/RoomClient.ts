@@ -255,10 +255,12 @@ export class RoomClient {
   dc.onclose=()=>{if(this.peers.get(id)!==p)return;p.proven=false;this.localStatus();if(this.isHost){this.broadcastLocal();this.retryPeer(id,p);}};
   dc.onmessage=e=>{if(this.peers.get(id)!==p)return;try{if(typeof e.data!=='string'||e.data.length>150000)throw new Error('局域网消息过大');const msg=JSON.parse(e.data);
     if(msg.type==='probe'){this.sendDC(p,{type:'proof',nonce:msg.nonce});return;}
-    if(msg.type==='proof'&&msg.nonce===p.nonce){p.proven=true;clearTimeout(p.pairingTimer);this.peerAttempts.delete(id);const retry=this.peerRetry.get(id);if(retry)clearTimeout(retry);this.peerRetry.delete(id);this.localStatus();if(this.isHost)this.broadcastLocal();return;}
+    if(msg.type==='proof'&&msg.nonce===p.nonce){p.proven=true;clearTimeout(p.pairingTimer);this.peerAttempts.delete(id);const retry=this.peerRetry.get(id);if(retry)clearTimeout(retry);this.peerRetry.delete(id);this.localStatus();if(this.isHost)this.broadcastLocal();else this.sendDC(p,{type:'sync'});return;}
     if(msg.type==='ping'){this.sendDC(p,{type:'pong'});return;}
     if(msg.type==='pong'){if(!p.proven)this.sendDC(p,{type:'probe',nonce:p.nonce});return;}
     if(!p.proven)return;
+    // The first host snapshot may arrive before this side's nonce proof.
+    if(msg.type==='sync'&&this.isHost){this.broadcastLocal();return;}
     if(msg.type==='action'&&this.isHost){try{this.applyLocal(id,msg);}catch(e){this.sendDC(p,{type:'error',error:e instanceof Error?e.message:'操作无效'});}return;}
     if(msg.type==='error'){this.fail(msg.error);return;}
     if(msg.type==='lanSnapshot'&&!this.isHost&&id===this.state.room?.hostID){if(msg.room.revision<this.state.room.revision)return;this.patch({room:msg.room,view:msg.view,actionRevision:msg.actionRevision||0,paused:!!msg.paused,transport:'lan',status:msg.room.started?'playing':'lobby',error:undefined});}

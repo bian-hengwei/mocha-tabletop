@@ -174,6 +174,8 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 ## 观战回归
 
+- `npx vitest run tests/network/lan-repair-state.test.ts tests/network/signaling-lifecycle.test.ts`：固定首份 LAN 快照早于本端 nonce 验证的顺序，检查验证前不接收视图、错误 nonce 不触发同步、验证后请求并恢复观战视图；房主拒绝未验证通道的同步请求。
+
 - `npx vitest run tests/spectators.test.ts tests/network/server-recovery.test.ts`：十二款公开投影、身份/手牌/密钥/私人核验过滤、终局公开信息、观战容量、席位切换、审批、权限、关闭及恢复。
 - `TEST_API_BASE=http://127.0.0.1:8799 node tests/network/spectators.integration.mjs`：真实云端加入、跨开局审批、链接/房间号观战、操作拒绝、断线不暂停、重连与关闭后凭据撤销。
 - `BASE_URL=http://127.0.0.1:5199 node tests/ui/spectators-live.integration.mjs`：真实 App 的云端及 WebRTC 观战流程、房主开关、准备室切换、对局中批准、公开库存、刷新和离开；默认测试两种模式，可用 `TEST_MODES=cloud` 或 `lan` 选测。
