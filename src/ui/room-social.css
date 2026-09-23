@@ -31,6 +31,8 @@
 @media(max-width:430px){.top-tools:has(.social-chat-trigger){gap:1px}.top-tools:has(.social-chat-trigger) .connection{display:none}}
 @media(max-height:500px){.social-shade{align-items:center}.social-log{height:180px}.social-sticker-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:10px}.social-sticker-grid picture{width:64px;height:64px}.social-sticker-grid button{padding:5px}.social-sticker-grid button>span{font-size:11px}}
 @media(max-height:500px) and (orientation:landscape){
+ .app:has(.social-chat-trigger) .mj-table .mj-seat.seat-self{width:112px;max-width:112px}
+ .app:has(.social-chat-trigger) .mj-table .mj-seat.seat-self small{white-space:nowrap}
  .app:has(.social-chat-trigger) .poker-table.game-table-doudizhu .classic-seat.seat-self{display:flex;width:44px;height:44px;max-width:44px;padding:0!important;bottom:0;margin-bottom:0;border:0;background:none;box-shadow:none}
  .app:has(.social-chat-trigger) .poker-table.game-table-doudizhu .classic-seat.seat-self>div{display:none}
  .app:has(.social-chat-trigger) .poker-table.game-table-doudizhu .classic-seat.seat-self .social-avatar{width:44px;height:44px}
