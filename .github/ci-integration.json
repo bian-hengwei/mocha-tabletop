@@ -106,6 +106,9 @@
   ],
   "cards": [
     {
+      "script": "tests/ui/room-social-games.integration.mjs"
+    },
+    {
       "script": "tests/ui/uno-experience.integration.mjs"
     },
     {
@@ -137,6 +140,18 @@
     }
   ],
   "social": [
+    {
+      "script": "tests/network/room-social.integration.mjs"
+    },
+    {
+      "script": "tests/ui/room-social.integration.mjs"
+    },
+    {
+      "script": "tests/ui/room-social-boundaries.integration.mjs"
+    },
+    {
+      "script": "tests/ui/room-social-assets.integration.mjs"
+    },
     {
       "script": "tests/ui/identity-portraits.integration.mjs"
     },

@@ -6,7 +6,7 @@ const out=`test-results/guandan-results-${engine}`;await fs.mkdir(out,{recursive
 const sizes=[[320,568],[390,844],[430,932],[568,320],[844,390],[932,430],[768,1024],[1440,900]];
 try{for(const locale of ['zh','en'])for(const role of ['host','guest']){
  const context=await browser.newContext({viewport:{width:390,height:844}});let socket,snapshot,revision=0;const messages=[];
- await context.routeWebSocket('**/api/rooms/**',ws=>{socket=ws;ws.onMessage(raw=>{const m=JSON.parse(String(raw));messages.push(m);if(m.type==='hello'&&snapshot)ws.send(JSON.stringify(snapshot));});});
+ await context.routeWebSocket('**/api/rooms/**',ws=>{socket=ws;ws.onMessage(raw=>{const m=JSON.parse(String(raw));messages.push(m);if(m.type==='hello'&&snapshot)ws.send(JSON.stringify(snapshot));if(m.type==='social'){ws.send(JSON.stringify({type:'social',social:{revision:revision+1,messages:[],reactions:[{id:m.requestID,playerID:'player-0000',reaction:m.command.reaction,at:Date.now()}]},serverNow:Date.now()}));ws.send(JSON.stringify({type:'socialAck',requestID:m.requestID}));}});});
  await context.addInitScript(locale=>{if(!localStorage.getItem('mocha-locale'))localStorage.setItem('mocha-locale',locale);sessionStorage.setItem('mocha-room-session',JSON.stringify({profile:{id:'player-0000',name:'Long Player Name',avatar:'🦊'},code:'ABC234',token:'a'.repeat(48),expiresAt:Date.now()+3600000}));},locale);
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(base);
  const fixture=await page.evaluate(async role=>{
@@ -18,11 +18,12 @@ try{for(const locale of ['zh','en'])for(const role of ['host','guest']){
   const authorizedRound=structuredClone(round);authorizedRound.current=0;
   return{authorizedRound:guandan.view(authorizedRound,players[0].id),room:{code:'ABC234',hostID:players[role==='host'?0:1].id,kind:'guandan',mode:'cloud',players,pending:[],started:true,revision:1,matchID:'guandan-results',expiresAt:Date.now()+3600000},active:guandan.view(active,players[0].id),round:guandan.view(round,players[0].id),finished:guandan.view(finished,players[0].id)};
  },role);
- await expect.poll(()=>!!socket).toBe(true);const send=view=>{snapshot={type:'snapshot',room:fixture.room,view,actionRevision:++revision,paused:false};socket.send(JSON.stringify(snapshot));};
+ await expect.poll(()=>!!socket).toBe(true);const send=view=>{snapshot={type:'snapshot',room:fixture.room,view,actionRevision:++revision,paused:false,social:{revision,messages:[],reactions:[]},serverNow:Date.now()};socket.send(JSON.stringify(snapshot));};
  const expected=[['1','2','3','0'],['2','2','3','0'],['3','1','0','27'],['4','1','0','27']];
  for(const phase of ['round','finished']){
   send(fixture[phase]);const panel=page.locator('.gd-results'),rows=panel.locator('tbody tr');await expect(rows).toHaveCount(4);if(phase==='finished')await expect(panel.locator('.gd-result-heading p')).toHaveText(locale==='zh'?'胜者：梅林、Even Longer Name':'Winner: 梅林, Even Longer Name');await expect(panel.locator('thead')).toContainText(locale==='zh'?'本轮得分':'Round score');await expect(page.locator('.brand small')).toBeEmpty();
   assert.deepEqual(await rows.evaluateAll(xs=>xs.map(r=>[...r.querySelectorAll('td')].map(c=>c.textContent))),expected);await expect(rows.first().locator('th')).toContainText('梅林');
+  await panel.locator('.social-avatar-button').click();await page.locator('.social-sticker-grid button').click();await expect(page.locator('.social-dialog')).toHaveCount(0);await expect(panel.locator('.social-avatar-reaction')).toHaveCount(1);await expect(page.locator('.topbar .social-avatar-button,.topbar .social-avatar-reaction')).toHaveCount(0);
   await expect(panel.locator('.gd-result-winner')).toHaveCount(phase==='finished'?2:0);await expect(page.locator('.end-banner,.classic-hand-panel,.seat-turn-label')).toHaveCount(0);
   if(role==='host')await expect(panel.getByRole('button',{name:locale==='zh'?(phase==='round'?'开始下一轮':'返回准备'):(phase==='round'?'Start the next round':'Back to lobby'),exact:true})).toBeVisible();else await expect(panel.locator('footer p')).toHaveText(locale==='zh'?(phase==='round'?'等待开始下一轮':'等待房主再开一局'):(phase==='round'?'Waiting for the next round':'Waiting for the host to start again'));
   for(const[width,height]of sizes){await page.setViewportSize({width,height});

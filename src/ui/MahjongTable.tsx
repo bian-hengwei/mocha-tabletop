@@ -1,3 +1,4 @@
+import {PlayerAvatar} from './RoomSocial';
 import {useEffect,useLayoutEffect,useRef,useState,type CSSProperties} from 'react';
 import {History,X,ChevronLeft,ChevronRight} from 'lucide-react';
 import {t} from '../i18n';
@@ -81,7 +82,7 @@ export function MahjongTable({view,selfID,command,open}:Props){
  return <div className={`classic-table mj-table game-table-mahjong ${view.spectating?'mj-spectating':''} ${view.finished?'mj-finished':''}`} onKeyDown={e=>{if(e.key==='Escape'&&!historyOpen&&riverSeat===null)clear();}}>
   <header className="mj-edition"><span className="mj-mode-name">{t(MAHJONG_MODES[b.mode])}</span>{b.wildValue>=0&&<span className="mj-wild-indicator" title={b.indicator?`${t('指示牌')} · ${t(tileTitle(b.indicator))}`:undefined}>{t('鬼牌')}<TileFace tile={{id:'wild',value:b.wildValue}}/></span>}<button className="mj-history" aria-label={`${t('胡牌记录')} (${b.wins.length})`} onClick={()=>setHistoryOpen(true)}><History size={16}/><span>{b.wins.length}</span></button></header>
   <div className="mj-arena" onClick={clear}>
-   {b.players.map((p,i)=><section key={p.id} className={`mj-seat seat-${position(i)} ${p.id===b.current&&!view.finished?'current':''} ${!view.spectating&&p.id===selfID?'self':''}`}><span className="mj-avatar">{p.avatar}</span><div><b title={p.name}>{p.name}</b><small><span>{t(['东','南','西','北'][i])}</span> · {p.score>0?'+':''}{p.score} {t('分')}</small>{p.missing!==undefined&&<small>{t('缺')} {t(['万','筒','条'][p.missing])}</small>}{p.won&&<small>{t('已胡牌')}</small>}</div>{p.id===b.current&&!view.finished&&<i aria-label={t('行动中')}/>}</section>)}
+   {b.players.map((p,i)=><section key={p.id} className={`mj-seat seat-${position(i)} ${p.id===b.current&&!view.finished?'current':''} ${!view.spectating&&p.id===selfID?'self':''}`}><PlayerAvatar id={p.id} avatar={p.avatar} className="mj-avatar"/><div><b title={p.name}>{p.name}</b><small><span>{t(['东','南','西','北'][i])}</span> · {p.score>0?'+':''}{p.score} {t('分')}</small>{p.missing!==undefined&&<small>{t('缺')} {t(['万','筒','条'][p.missing])}</small>}{p.won&&<small>{t('已胡牌')}</small>}</div>{p.id===b.current&&!view.finished&&<i aria-label={t('行动中')}/>}</section>)}
    <div className="mj-opponents" aria-hidden="true">{b.players.map((p,i)=>(view.spectating||i!==meIndex)&&<div key={p.id} className={`mj-rack mj-rack-${position(i)}`}>{Array.from({length:p.count},(_,j)=><TileFace key={j} back/>)}</div>)}</div>
    <div className="mj-public" role="region" aria-label={t('公共牌池')}>
     {b.players.map((p,i)=><River key={p.id} player={p} position={position(i)} latest={latest?.tile.id} flying={flight?.tile.id} queued={queued} onInspect={()=>setRiverSeat(i)}/>)}

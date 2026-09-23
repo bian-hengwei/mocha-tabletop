@@ -1,3 +1,4 @@
+import {PlayerAvatar} from './RoomSocial';
 import {NewGameResults} from './NewGameResults';
 import { t } from '../i18n';
 function tx<T>(value: T): T | string { return typeof value === 'string' ? t(value) : value; }
@@ -31,7 +32,7 @@ function Header({ view, selfID }: { view: GameView; selfID: string }) {
 function Scoreboard({ view, selfID }: {
     view: GameView;
     selfID: string;
-}) { return <div className="ng-players">{tx(view.board.players.map((p: any) => <div className={`ng-player ${p.id === selfID ? 'ng-self' : ''} ${!view.finished && p.id === view.board.current ? 'ng-current' : ''}`} key={p.id}><span className="ng-avatar">{tx(p.avatar)}</span><div><b>{p.name}{tx(p.id === selfID ? ' · 你' : '')}</b><small>{tx(view.kind === 'sushi' ? `${view.finished ? '已结算' : p.ready ? '✓ 已选' : '选牌中'} · 布丁 ${p.puddings + (view.finished ? 0 : p.table.filter((c: SushiCard) => c.kind === 'pudding').length)}` : view.kind === 'century' ? `${p.orderCount} 单 · 金 ${p.gold} / 银 ${p.silver}` : `${p.handCount} 张手牌`)}{view.kind==='uno'&&p.handCount===1?' · UNO!':''}</small></div><strong>{tx(p.score)}<small>{" " + t("分")}</small></strong></div>))}</div>; }
+}) { return <div className="ng-players">{tx(view.board.players.map((p: any) => <div className={`ng-player ${p.id === selfID ? 'ng-self' : ''} ${!view.finished && p.id === view.board.current ? 'ng-current' : ''}`} key={p.id}><PlayerAvatar id={p.id} avatar={p.avatar} className="ng-avatar"/><div><b>{p.name}{tx(p.id === selfID ? ' · 你' : '')}</b><small>{tx(view.kind === 'sushi' ? `${view.finished ? '已结算' : p.ready ? '✓ 已选' : '选牌中'} · 布丁 ${p.puddings + (view.finished ? 0 : p.table.filter((c: SushiCard) => c.kind === 'pudding').length)}` : view.kind === 'century' ? `${p.orderCount} 单 · 金 ${p.gold} / 银 ${p.silver}` : `${p.handCount} 张手牌`)}{view.kind==='uno'&&p.handCount===1?' · UNO!':''}</small></div><strong>{tx(p.score)}<small>{" " + t("分")}</small></strong></div>))}</div>; }
 const sushiIllustrations = { tempura:0, sashimi:1, dumpling:2, maki1:3, maki2:4, maki3:5, egg:6, salmon:7, squid:8, wasabi:9, pudding:10, chopsticks:11 };
 const sushiAccents = { tempura:'#a86b3d', sashimi:'#b76258', dumpling:'#9a8454', maki1:'#577769', maki2:'#577769', maki3:'#577769', egg:'#b18f44', salmon:'#c17960', squid:'#7f9093', wasabi:'#718551', pudding:'#a27a50', chopsticks:'#776357' };
 function SushiFace({ card, selected, onClick, onPointerDown, order, small = false }: {
