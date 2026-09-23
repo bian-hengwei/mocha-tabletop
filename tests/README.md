@@ -23,8 +23,8 @@ npm run check
 | --- | --- |
 | `app` | 入口、姓名、弹窗、存储、PWA、单机、语言、全游戏布局和真实 Worker 联机 |
 | `classic` | 麻将、扑克操作与结算、经典牌面和桌面布局 |
-| `cards` | 接龙、寿司、商旅、晶石和猫牌操作、状态与布局 |
-| `social` | 身份插画、词语隐私与回合、狼人板型、社交游戏状态与布局 |
+| `cards` | 接龙、寿司、商旅、晶石和猫牌操作、状态与布局，以及全游戏聊天头像接入 |
+| `social` | 房间通信、聊天边界、表情离线素材、身份插画、词语隐私与回合、狼人板型、社交游戏状态与布局 |
 
 基础检查只构建一次，将通过检查的 `dist/` 作为当前运行的临时 artifact 交给四个集成组，保留一天。各组随后并行启动独立 runner、Vite 和本地 Worker，组内顺序执行。虽然界面脚本通过 Vite 读取源码，Worker 的资源绑定仍需要 `dist/`；不能省略或用其他提交的构建替代。每个脚本输出名称、结果、耗时，并写入 Actions job summary。一组失败后该组剩余脚本标记为未运行，其他组继续完成以提供独立诊断。服务启动失败会及时终止并输出服务日志。
 
@@ -40,6 +40,14 @@ BASE_URL=http://127.0.0.1:5174 TEST_API_BASE=http://127.0.0.1:8787 node scripts/
 新回归加入清单时应明确覆盖范围、服务需求和参数，同一个脚本只属于一个组；调整组名时同步工作流矩阵。根据耗时汇总平衡分组。定位失败应修复行为或无效 fixture，不能靠删断言、放宽规则、无条件重试或把未执行项计为通过来加速。保存的游戏 fixture 应使用合法选项，并立即核验恢复结果。
 
 ## 浏览器与联机回归
+
+房间聊天与头像表情的新增验收：`npx vitest run tests/room-social.test.ts` 校验输入、授权、禁用游戏、限流、去重、上限和过期；`node tests/network/room-social.integration.mjs` 使用真实 Worker 覆盖 cloud/LAN 房间、重连、换局与换游戏保留记录、解散后不再广播和新房间隔离。`node tests/ui/room-social.integration.mjs` 用两个浏览器验证聊天、头像动画、IME、焦点、双语七尺寸、刷新、LAN 转云端，以及解散时清空聊天/草稿/恢复入口；支持 `TEST_BROWSER=webkit` 与 `TEST_MODES=cloud,lan`。`node tests/ui/room-social-games.integration.mjs` 覆盖八款游戏最大人数与四款禁用游戏，逐尺寸检查右上角头像仍打开资料编辑、只有自己的座位头像能发表情；支持 `TEST_GAMES` 选择游戏。联机脚本用 `BASE_URL` / `TEST_API_BASE` 指定隔离服务，批量运行时避免与其他脚本共用限流窗口；不得因此放宽产品限流。
+
+全游戏接入脚本会创建 12 个房间，放在 `cards` 隔离 runner；其余房间通信脚本放在 `social`，避免同一十分钟窗口内累计超过 15 次建房。分组调整保留脚本原有全部场景，不修改产品限流。
+
+`npx vitest run tests/network/social-client.test.ts tests/network/server-recovery.test.ts` 校验发送确认、超时不自动重发、旧确认过滤、时钟偏差、断线、解散清理，以及旧连接回包不能污染新房间；服务端回归检查解散时持久化数据不再含聊天，后续关闭回调不能重建记录。`node tests/ui/room-social-boundaries.integration.mjs` 使用固定传输快照覆盖 80 条记录与滚动位置、关闭弹窗后恢复气泡、失败/超时保留草稿、输入法、双语七尺寸与焦点、观众只读/换席清理、奶牛动图实际逐帧变化及减少动态效果的静态替代图；支持 WebKit，不替代真实联机验收。
+
+`node tests/ui/room-social-assets.integration.mjs` 需要当前 `npm run build` 产物，自启临时 HTTP 服务，检查奶牛 GIF 原始文件哈希、动静态素材缓存、断网重载解码，以及不缓存 API 或已移除表情；使用 Chromium，不代表真机安装验收。
 
 先按根目录 README 启动 Worker（8787）和 Vite（5174）。安装浏览器：
 

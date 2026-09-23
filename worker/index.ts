@@ -1,5 +1,6 @@
 import {DurableObject} from 'cloudflare:workers';
 import {discoveryNetwork} from './discovery';
+import {applyRoomSocial,emptySocial,forgetSocialActor,socialView,type SocialState} from '../src/core/roomSocial';
 import {botTurnDelay,changeBots,nextBotSeat,stepBot,continueBotRound} from '../src/core/roomBots';
 import {supportsBots} from '../src/core/bots';
 import { applyMatch,createMatch,validKind,validProfile,viewRoomMatch,MAX_SPECTATORS,normalizeGameOptions,roomLimits,validateMatchForRoom,type MatchState,type RoomInfo,type RoomMode,type RoomCandidate } from '../src/core/room';
@@ -96,7 +97,7 @@ export class RoomDirectory extends DurableObject<Env>{
  }
 }
 const ROOM_TTL=6*3600000,ACTIVITY_RENEW_INTERVAL=5*60000;
-interface StoredRoom {info:RoomInfo;tokens:Record<string,string>;pendingTokens:Record<string,string>;invite:string;match?:MatchState;ended?:boolean;expires:number;controlSeen:Record<string,string[]>;botDue?:number;botRevision?:number}
+interface StoredRoom {social?:SocialState;info:RoomInfo;tokens:Record<string,string>;pendingTokens:Record<string,string>;invite:string;match?:MatchState;ended?:boolean;expires:number;controlSeen:Record<string,string[]>;botDue?:number;botRevision?:number}
 interface Attachment {id?:string;authenticated?:boolean;pending?:boolean;opened:number;messages?:number;window?:number;lastSeen?:number}
 export class GameRoom extends DurableObject<Env>{
  private data?:StoredRoom;
@@ -111,6 +112,7 @@ export class GameRoom extends DurableObject<Env>{
  }
  private revoke(id:string,reason:string){const d=this.data!;
   delete d.tokens[id];delete d.pendingTokens[id];delete d.controlSeen[id];
+  forgetSocialActor(d.social,id);
   for(const ws of this.sockets(id)){send(ws,{type:'rejected',error:reason});ws.serializeAttachment({opened:0});ws.close(4003,reason);}
  }
  private async save(){
@@ -131,10 +133,10 @@ export class GameRoom extends DurableObject<Env>{
  private sockets(id?:string){return this.ctx.getWebSockets().filter(ws=>{const a=ws.deserializeAttachment() as Attachment;return a.authenticated&&(!id||a.id===id);});}
  private connected(id:string){return !!this.data?.info.players.find(p=>p.id===id)?.bot||this.sockets(id).length>0;}
  private infoFor(id:string):RoomInfo{const r=this.data!.info;return {...r,expiresAt:this.data!.expires,allowSpectators:r.allowSpectators!==false,spectators:(r.spectators||[]).map(p=>({...p,connected:this.connected(p.id)})),pending:id===r.hostID?r.pending:[],players:r.players.map(p=>({...p,connected:this.connected(p.id)}))};}
- private snapshot(ws:WebSocket){const a=ws.deserializeAttachment() as Attachment;const d=this.data;if(!d||!a.id||!a.authenticated)return;
+ private snapshot(ws:WebSocket){const a=ws.deserializeAttachment() as Attachment;const d=this.data;if(!d||d.ended||d.expires<=Date.now()||!a.id||!a.authenticated)return;
   if(a.pending){send(ws,{type:'pending'});return;}
   const info=this.infoFor(a.id);const match=d.match&&info.mode==='cloud'?viewRoomMatch(d.match,info,a.id):{};
-  send(ws,{type:'snapshot',room:info,...match,paused:info.mode==='cloud'&&info.started&&info.players.some(p=>!p.connected),invite:a.id===info.hostID?d.invite:undefined});
+  send(ws,{type:'snapshot',room:info,...match,social:socialView(d.social,info,Date.now()),serverNow:Date.now(),paused:info.mode==='cloud'&&info.started&&info.players.some(p=>!p.connected),invite:a.id===info.hostID?d.invite:undefined});
  }
  private broadcast(){for(const ws of this.sockets())this.snapshot(ws);}
  private directoryEntry():Omit<Entry,'hash'>{const d=this.data!;return {code:d.info.code,kind:d.info.kind,mode:d.info.mode,hostName:d.info.players.find(p=>p.id===d.info.hostID)?.name||'',count:d.ended||d.info.started?0:d.info.players.length,max:roomLimits(d.info.kind,d.info.options).max,expires:d.expires};}
@@ -183,6 +185,18 @@ export class GameRoom extends DurableObject<Env>{
    const id=a.id;
    if(msg.type==='ping'){if(!a.pending&&d.tokens[id]&&r.players.some(p=>p.id===id)&&await this.renewActivity(now)){this.broadcast();await this.index();}if(msg.sync===true)this.snapshot(ws);send(ws,{type:'pong'});return;}
    if(a.pending){if(msg.type==='leave'){r.pending=r.pending.filter(p=>p.id!==id);delete d.pendingTokens[id];await this.save();ws.close(1000,'已离开');this.broadcast();return;}throw new Error('正在等待房主同意');}
+   if(msg.type==='social'){
+    // Room communication uses the authenticated control socket in both modes.
+    // It never changes game/action revisions or broadcasts private game views.
+    try{
+     const current=d.social||emptySocial(),next=applyRoomSocial(current,r,id,msg.command,msg.requestID,now);
+     if(next!==current){await this.ctx.storage.put('room',{...d,social:next});d.social=next;}
+     const payload={type:'social',social:socialView(next,r,now),serverNow:now};
+     for(const target of this.sockets()){const member=target.deserializeAttachment() as Attachment;if(!member.pending&&member.id&&d.tokens[member.id])send(target,payload);}
+     send(ws,{type:'socialAck',requestID:msg.requestID});
+    }catch(e){send(ws,{type:'socialError',requestID:msg.requestID,error:error(e)});}
+    return;
+   }
    if(msg.type==='signal'){
     if(r.mode!=='lan')throw new Error('当前不是局域网模式');
     if(typeof msg.to!=='string'||!d.tokens[msg.to]||(id!==r.hostID&&msg.to!==r.hostID))throw new Error('配对对象无效');
@@ -211,7 +225,7 @@ export class GameRoom extends DurableObject<Env>{
    }else if(msg.type==='removePlayer'){
     if(id!==r.hostID||r.started)throw new Error('只有房主能在准备室移除离线玩家');
     if(msg.playerID===id||!r.players.some(p=>p.id===msg.playerID)||this.connected(msg.playerID))throw new Error('只能移除离线玩家');
-    r.players=r.players.filter(p=>p.id!==msg.playerID);delete d.tokens[msg.playerID];delete d.controlSeen[msg.playerID];
+    r.players=r.players.filter(p=>p.id!==msg.playerID);delete d.tokens[msg.playerID];delete d.controlSeen[msg.playerID];forgetSocialActor(d.social,msg.playerID);
    }else if(msg.type==='setSpectators'){
     if(id!==r.hostID)throw new Error('只有房主能设置观战');
     if(typeof msg.allowed!=='boolean')throw new Error('观战设置无效');
@@ -252,9 +266,15 @@ export class GameRoom extends DurableObject<Env>{
     if(r.started)d.match=validateMatchForRoom(msg.match,r);
     r.mode='cloud';
    }else if(msg.type==='leave'){
-    if(id===r.hostID){d.ended=true;for(const target of this.sockets())send(target,{type:'ended',error:'房主已解散房间'});}
+    if(id===r.hostID){
+     // Keep only the existing ended-room tombstone; chat must not survive dissolution.
+     d.ended=true;delete d.social;delete d.match;d.tokens={};d.pendingTokens={};d.controlSeen={};r.pending=[];r.revision++;
+     await this.save();
+     for(const target of this.sockets()){send(target,{type:'ended',error:'房主已解散房间'});target.close(1000,'房主已解散房间');}
+     await this.index();return;
+    }
     else if(r.started&&r.players.some(p=>p.id===id))throw new Error('牌局中请让房主结束本局再离桌');
-    else {r.players=r.players.filter(p=>p.id!==id);r.spectators=(r.spectators||[]).filter(p=>p.id!==id);delete d.tokens[id];delete d.controlSeen[id];ws.serializeAttachment({opened:0});ws.close(1000,'离桌');}
+    else {r.players=r.players.filter(p=>p.id!==id);r.spectators=(r.spectators||[]).filter(p=>p.id!==id);delete d.tokens[id];delete d.controlSeen[id];forgetSocialActor(d.social,id);ws.serializeAttachment({opened:0});ws.close(1000,'离桌');}
    }else throw new Error('未知操作');
    if(d.tokens[id])d.controlSeen[id]=[...(d.controlSeen[id]||[]),msg.requestID].slice(-128);r.revision++;await this.save();const renewed=await this.renewActivity(now);this.broadcast();if(renewed||msg.type!=='action'&&msg.type!=='ready')await this.index();
   }catch(e){send(ws,{type:'error',error:error(e)});}

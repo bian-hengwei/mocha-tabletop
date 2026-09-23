@@ -2,6 +2,12 @@
 
 ## 当前素材
 
+### 房间动态表情
+
+`public/art/reactions/cow.gif` 是 300×300 的奶牛动态表情，保留原始 GIF 帧序列与播放时长；`cow-still.png` 是首帧静态替代图。无运行时外链或 atlas，不叠加系统文字。动画仅在选择器或头像反应的五秒窗口显示；系统减少动态效果时使用静态图。此素材不属于项目原创插画，公开分发前须确认素材授权，不应默认为项目开源许可覆盖。
+
+新增表情时，在 `src/core/roomSocial.ts` 的 `REACTIONS` 加入稳定 ID，并在 `src/ui/RoomSocial.tsx` 的 `reactionArt` 配置动图、静态图及双语名称。同步素材来源、授权和动画验收；不要通过任意远程 URL 发送表情。
+
 | 文件 | 用途与来源 |
 | --- | --- |
 | `public/art/gems.jpg`、`bombs.jpg`、`werewolf.jpg`、`avalon.jpg` | 四种游戏的首页封面，为本项目生成的插画 |

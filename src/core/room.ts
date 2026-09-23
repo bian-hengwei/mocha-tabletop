@@ -1,4 +1,5 @@
 import {isMahjongMode} from './mahjongModes';
+import type {SocialView} from './roomSocial';
 import type { Command, GameKind, GameView, Player, GameOptions } from './types';
 import { AVATARS, GAMES } from './types';
 import { modules } from './registry';
@@ -10,7 +11,8 @@ export interface JoinRequest extends Player {spectator?:boolean}
 export const MAX_SPECTATORS=20;
 export interface RoomInfo {botError?:string;spectators?:RoomSpectator[];allowSpectators?:boolean;expiresAt?:number;matchID?:string;code:string;kind:GameKind;mode:RoomMode;hostID:string;options?:GameOptions;players:RoomPlayer[];pending:JoinRequest[];started:boolean;revision:number}
 export interface RoomCandidate {code:string;kind:GameKind;mode:RoomMode;hostName:string;count:number;max:number}
-export interface ClientState {status:'idle'|'connecting'|'lobby'|'playing'|'reconnecting'|'disconnected';mode?:RoomMode;room?:RoomInfo;selfID?:string;view?:GameView;error?:string;transport:'none'|'cloud'|'lan';paused:boolean;inviteURL?:string;actionRevision:number;actionPending?:boolean;waitingApproval?:boolean}
+interface SocialClientState {social?:SocialView;socialPending?:string;socialError?:string;socialAck?:string;socialOnline?:boolean}
+export interface ClientState extends SocialClientState {status:'idle'|'connecting'|'lobby'|'playing'|'reconnecting'|'disconnected';mode?:RoomMode;room?:RoomInfo;selfID?:string;view?:GameView;error?:string;transport:'none'|'cloud'|'lan';paused:boolean;inviteURL?:string;actionRevision:number;actionPending?:boolean;waitingApproval?:boolean}
 export interface MatchState {schemaVersion?:2;options?:GameOptions;game:any;revision:number;actorRevisions:Record<string,number>;seen:Record<string,string[]>}
 export function validProfile(input:any):Player {
  if(!input || typeof input.id!=='string'|| !/^[a-zA-Z0-9_-]{8,80}$/.test(input.id)||input.id.startsWith('bot_')||Object.hasOwn(Object.prototype,input.id))throw new Error('玩家身份无效');

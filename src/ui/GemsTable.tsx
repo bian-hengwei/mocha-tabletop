@@ -1,3 +1,4 @@
+import {PlayerAvatar} from './RoomSocial';
 import { t } from '../i18n';
 function tx<T>(value: T): T | string { return typeof value === 'string' ? t(value) : value; }
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
@@ -106,7 +107,7 @@ export function GemsTable({ view, selfID, command, open, onShowResults }: Props)
         return reserveFull ? '筹码不足，暂时无法购买；预留位置已满' : '筹码不足，暂不能购买。永久奖励和黄金已计入。';
     })();
     return <div className="g-table">
-  <div className="g-merchants">{tx(b.players.map((p: any) => <button className={`g-merchant ${p.id === b.current ? 'active' : ''}`} key={p.id} aria-label={tx(`查看 ${p.name} 的公开库存`)} onClick={() => setMerchantID(p.id)}><div className="merchant-head"><span>{tx(p.avatar)}</span><b>{p.name}{tx(p.id === selfID ? ' · 我' : '')}</b><strong><Crown />{tx(p.score)}</strong><small title={t("已购牌")}><Layers3 />{tx(p.bought.length)}</small><small title={t("预留牌")}><LockKeyhole />{tx(p.reservedCount)}</small><small title={t("贵族")}><Crown />{tx(p.nobles.length)}</small></div><StockNumbers tokens={p.tokens} bonuses={p.bonuses}/></button>))}</div>
+  <div className="g-merchants">{tx(b.players.map((p: any) => <div className={`g-merchant ${p.id === b.current ? 'active' : ''}`} key={p.id}><button type="button" className="social-seat-hit" aria-label={tx(`查看 ${p.name} 的公开库存`)} onClick={() => setMerchantID(p.id)}/><div className="merchant-head"><PlayerAvatar id={p.id} avatar={p.avatar}/><b>{p.name}{tx(p.id === selfID ? ' · 我' : '')}</b><strong><Crown />{tx(p.score)}</strong><small title={t("已购牌")}><Layers3 />{tx(p.bought.length)}</small><small title={t("预留牌")}><LockKeyhole />{tx(p.reservedCount)}</small><small title={t("贵族")}><Crown />{tx(p.nobles.length)}</small></div><StockNumbers tokens={p.tokens} bonuses={p.bonuses}/></div>))}</div>
   <div className="g-playfield"><aside className="g-nobles" aria-label={t("贵族")}>{tx(b.nobles.map((n: any, i: number) => <button className="g-noble" key={n.id} aria-label={`${t("贵族")} ${i + 1} · 3 ${t("分")} · ${n.cost.map((v: number, c: number) => v ? `${t(GEM_NAMES[c])} ${v} ${t("张发展牌")}` : "").filter(Boolean).join(", ")}`} onClick={() => {
                 const a = view.actions.find(a => a.id === 'noble');
                 if (a?.choices.some(c => c.id === n.id))
