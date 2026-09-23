@@ -37,3 +37,6 @@
  .app:has(.social-chat-trigger) .poker-table.game-table-doudizhu .classic-seat.seat-self>div{display:none}
  .app:has(.social-chat-trigger) .poker-table.game-table-doudizhu .classic-seat.seat-self .social-avatar{width:44px;height:44px}
 }
+@media(min-width:741px) and (max-height:500px) and (orientation:landscape){
+ .app:has(.social-chat-trigger) .mj-table .mj-rack:is(.mj-rack-left,.mj-rack-right){top:calc(50% - 20px)}
+}

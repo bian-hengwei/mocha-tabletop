@@ -26,6 +26,13 @@ try{for(const [kind,count]of Object.entries(games).filter(([kind])=>!process.env
    if(locale==='en')await page.locator('.language-toggle').click();
    for(const [width,height]of sizes){await page.setViewportSize({width,height});await page.evaluate(()=>new Promise(requestAnimationFrame));await expect(page.locator('.social-chat-trigger')).toBeInViewport();await expect(page.locator('.profile-chip')).toBeInViewport();
     const seats=page.locator('main .social-avatar');await expect(seats).toHaveCount(count);for(let i=0;i<count;i++)await expect(seats.nth(i),`${kind}/${locale}/${width} seat ${i}`).toBeVisible();
+    if(kind==='mahjong'){
+     const overlaps=await page.evaluate(()=>{
+      const label=document.querySelector('.mj-seat.seat-self>div').getBoundingClientRect();
+      return [...document.querySelectorAll('.mj-rack .mj-face')].filter(tile=>{const r=tile.getBoundingClientRect();return Math.min(label.right,r.right)>Math.max(label.left,r.left)&&Math.min(label.bottom,r.bottom)>Math.max(label.top,r.top);}).length;
+     });
+     assert.equal(overlaps,0,`${kind}/${locale}/${width} own-seat text must not intersect opponent tiles`);
+    }
     await expect(page.locator('.topbar .social-avatar-button')).toHaveCount(0);await page.locator('.profile-chip').click();await expect(page.locator('.profile-editor')).toBeVisible();await expect(page.locator('.social-dialog')).toHaveCount(0);await page.keyboard.press('Escape');await expect(page.locator('.profile-chip')).toBeFocused();
     // Check each table family's actual avatar opens the reaction selector.
     const avatar=page.locator('main .social-avatar-button');await expect(avatar,`${kind}/${locale}/${width} own seat avatar`).toBeVisible();await avatar.click();await expect(page.locator('.social-sticker-grid')).toBeVisible();await page.keyboard.press('Escape');
