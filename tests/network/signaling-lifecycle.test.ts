@@ -58,10 +58,14 @@ afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();Peer.all=[];Channel.all=
 describe('LAN signaling lifecycle',()=>{
  it('serves state sync requests only after the data channel proves its nonce',()=>{
   vi.stubGlobal('window',new EventTarget());vi.stubGlobal('document',new EventTarget());vi.stubGlobal('WebSocket',Socket);vi.stubGlobal('RTCPeerConnection',Peer);
-  const {client}=setup();void client.offer(guest.id);const channel=Channel.all[0];channel.readyState='open';channel.onopen?.();
+  const {client}=setup();client.state.room={...room,spectators:[{id:'observer',name:'Observer',avatar:'observer',connected:true}]};
+  void client.offer('observer');const observer=Channel.all[0];observer.readyState='open';observer.onopen?.();observer.receive({type:'proof',nonce:observer.sent[0].nonce});
+  void client.offer(guest.id);const channel=Channel.all[1];channel.readyState='open';channel.onopen?.();
   channel.receive({type:'sync'});expect(channel.sent.map(m=>m.type)).toEqual(['probe']);
   channel.receive({type:'proof',nonce:channel.sent[0].nonce});expect(channel.sent.at(-1)?.type).toBe('lanSnapshot');
-  const sent=channel.sent.length;channel.receive({type:'sync'});expect(channel.sent).toHaveLength(sent+1);expect(channel.sent.at(-1)?.type).toBe('lanSnapshot');
+  const sent=channel.sent.length,observerSent=observer.sent.length;channel.receive({type:'sync'});expect(channel.sent).toHaveLength(sent+1);expect(channel.sent.at(-1)?.type).toBe('lanSnapshot');expect(observer.sent).toHaveLength(observerSent);
+  for(let i=0;i<10;i++){channel.receive({type:'proof',nonce:channel.sent[0].nonce});channel.receive({type:'sync'});}
+  expect(channel.sent).toHaveLength(sent+1);expect(observer.sent).toHaveLength(observerSent);
   client.destroy();
  });
 

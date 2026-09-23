@@ -18,7 +18,7 @@ function availableStorage(localFirst=false):Storage[]{
  }
  return stores;
 }
-interface Peer {pc:RTCPeerConnection;dc?:RTCDataChannel;proven:boolean;nonce:string;pending:RTCIceCandidateInit[];pairingTimer?:ReturnType<typeof setTimeout>}
+interface Peer {pc:RTCPeerConnection;dc?:RTCDataChannel;proven:boolean;syncServed?:boolean;nonce:string;pending:RTCIceCandidateInit[];pairingTimer?:ReturnType<typeof setTimeout>}
 /** One client per tab. Cloud sockets hibernate; LAN game traffic never enters the signaling socket. */
 export class RoomClient {
  state:ClientState=initial();private listeners=new Set<(state:ClientState)=>void>();
@@ -255,12 +255,12 @@ export class RoomClient {
   dc.onclose=()=>{if(this.peers.get(id)!==p)return;p.proven=false;this.localStatus();if(this.isHost){this.broadcastLocal();this.retryPeer(id,p);}};
   dc.onmessage=e=>{if(this.peers.get(id)!==p)return;try{if(typeof e.data!=='string'||e.data.length>150000)throw new Error('局域网消息过大');const msg=JSON.parse(e.data);
     if(msg.type==='probe'){this.sendDC(p,{type:'proof',nonce:msg.nonce});return;}
-    if(msg.type==='proof'&&msg.nonce===p.nonce){p.proven=true;clearTimeout(p.pairingTimer);this.peerAttempts.delete(id);const retry=this.peerRetry.get(id);if(retry)clearTimeout(retry);this.peerRetry.delete(id);this.localStatus();if(this.isHost)this.broadcastLocal();else this.sendDC(p,{type:'sync'});return;}
+    if(msg.type==='proof'&&msg.nonce===p.nonce){if(p.proven)return;p.proven=true;p.syncServed=false;clearTimeout(p.pairingTimer);this.peerAttempts.delete(id);const retry=this.peerRetry.get(id);if(retry)clearTimeout(retry);this.peerRetry.delete(id);this.localStatus();if(this.isHost)this.broadcastLocal();else this.sendDC(p,{type:'sync'});return;}
     if(msg.type==='ping'){this.sendDC(p,{type:'pong'});return;}
     if(msg.type==='pong'){if(!p.proven)this.sendDC(p,{type:'probe',nonce:p.nonce});return;}
     if(!p.proven)return;
     // The first host snapshot may arrive before this side's nonce proof.
-    if(msg.type==='sync'&&this.isHost){this.broadcastLocal();return;}
+    if(msg.type==='sync'&&this.isHost){if(!p.syncServed){p.syncServed=true;this.broadcastLocal(id);}return;}
     if(msg.type==='action'&&this.isHost){try{this.applyLocal(id,msg);}catch(e){this.sendDC(p,{type:'error',error:e instanceof Error?e.message:'操作无效'});}return;}
     if(msg.type==='error'){this.fail(msg.error);return;}
     if(msg.type==='lanSnapshot'&&!this.isHost&&id===this.state.room?.hostID){if(msg.room.revision<this.state.room.revision)return;this.patch({room:msg.room,view:msg.view,actionRevision:msg.actionRevision||0,paused:!!msg.paused,transport:'lan',status:msg.room.started?'playing':'lobby',error:undefined});}
@@ -270,11 +270,11 @@ export class RoomClient {
  private sendDC(p:Peer,msg:any){if(p.dc?.readyState==='open'&&p.dc.bufferedAmount<1000000)p.dc.send(JSON.stringify(msg));}
  private localStatus(){const r=this.state.room;if(!r||r.mode!=='lan')return;const connected=this.isHost?r.players.every(p=>p.bot||p.id===r.hostID||this.peers.get(p.id)?.proven):!!this.peers.get(r.hostID)?.proven;this.patch({transport:connected?'lan':'none',paused:r.started&&(!connected||this.isHost&&!this.localMatch)});}
  private applyLocal(actor:string,msg:any){const r=this.state.room;if(!r||!this.localMatch||!r.started||!this.isHost)throw new Error('等待房主开始');if(this.state.paused)throw new Error('有玩家掉线，恢复连接后继续');this.localMatch=applyMatch(this.localMatch,r.kind,r.players,actor,msg.command,msg.requestID,msg.actionRevision);this.persistLocal();this.broadcastLocal();}
- private broadcastLocal(){const r=this.state.room;if(!r||r.mode!=='lan'||!this.isHost)return;this.localStatus();const room={...r,botError:this.localBotError,spectators:(r.spectators||[]).map(p=>({...p,connected:!!this.peers.get(p.id)?.proven})),players:r.players.map(p=>({...p,connected:!!p.bot||p.id===r.hostID||!!this.peers.get(p.id)?.proven}))};
-  for(const p of [...room.players.filter(p=>!p.bot),...room.spectators]){const data={type:'lanSnapshot',room:{...room,pending:p.id===r.hostID?room.pending:[]},...(this.localMatch?viewRoomMatch(this.localMatch,r,p.id):{view:undefined,actionRevision:0}),paused:this.state.paused};
+ private broadcastLocal(recipientID?:string){const r=this.state.room;if(!r||r.mode!=='lan'||!this.isHost)return;this.localStatus();const room={...r,botError:this.localBotError,spectators:(r.spectators||[]).map(p=>({...p,connected:!!this.peers.get(p.id)?.proven})),players:r.players.map(p=>({...p,connected:!!p.bot||p.id===r.hostID||!!this.peers.get(p.id)?.proven}))};
+  for(const p of [...room.players.filter(p=>!p.bot),...room.spectators]){if(recipientID&&p.id!==recipientID)continue;const data={type:'lanSnapshot',room:{...room,pending:p.id===r.hostID?room.pending:[]},...(this.localMatch?viewRoomMatch(this.localMatch,r,p.id):{view:undefined,actionRevision:0}),paused:this.state.paused};
    if(p.id===r.hostID)this.patch({room,view:data.view,actionRevision:data.actionRevision});else {const peer=this.peers.get(p.id);if(peer?.proven)this.sendDC(peer,data);}
   }
-  this.scheduleLocalBot();
+  if(!recipientID)this.scheduleLocalBot();
  }
  private scheduleLocalBot(){
   const r=this.state.room;

@@ -75,5 +75,6 @@ it('requests a fresh public snapshot after a late observer proves an initially u
  channel.receive(snapshot);expect(client.state.view).toBeUndefined();
  channel.receive({type:'proof',nonce:'wrong-nonce'});expect(client.state.view).toBeUndefined();expect(channel.sent.some(m=>m.type==='sync')).toBe(false);
  channel.receive({type:'proof',nonce:channel.sent[0].nonce});expect(channel.sent.at(-1)).toEqual({type:'sync'});
+ const sent=channel.sent.length;channel.receive({type:'proof',nonce:channel.sent[0].nonce});expect(channel.sent).toHaveLength(sent);
  channel.receive(snapshot);expect(client.state.view).toEqual(snapshot.view);expect(client.state.view?.spectating).toBe(true);
 });
