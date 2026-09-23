@@ -37,9 +37,9 @@ try{for(const language of ['en','zh']){
  for(const name of names){
   await page.evaluate(name=>{localStorage.setItem('mocha-profile',JSON.stringify({id:'name-audit-profile',name,avatar:'🦊'}));localStorage.removeItem('mocha-practice-v1');},name);
   await page.goto(base);await expect(page.locator('.profile-chip span')).toHaveText(name);await page.locator('.cover-gems').click();await page.getByRole('button',{name:language==='zh'?'同屏试玩':'Pass & play',exact:true}).click();
-  const merchant=page.locator('.g-merchant').first();assert((await merchant.getAttribute('aria-label')).includes(name),'Inventory opener accessible name preserves nickname');await merchant.click();
+  const merchant=page.locator('.g-merchant').first().getByRole('button');await expect(merchant).toHaveCount(1);assert((await merchant.getAttribute('aria-label')).includes(name),'Inventory opener accessible name preserves nickname');await merchant.focus();await page.keyboard.press('Enter');
   assert((await page.locator('.g-inventory').getAttribute('aria-label')).includes(name),`Inventory dialog ${language}/${name}: ${await page.locator('.g-inventory').getAttribute('aria-label')}`);assert((await page.locator('.g-inventory h2').textContent()).includes(name));
-  await page.keyboard.press('Escape');await page.screenshot({path:`test-results/player-names/${language}-profile-${names.indexOf(name)}.png`});
+  await page.keyboard.press('Escape');await expect(merchant).toBeFocused();await page.screenshot({path:`test-results/player-names/${language}-profile-${names.indexOf(name)}.png`});
  }
  await page.screenshot({path:`test-results/player-names/${language}.png`});assert.deepEqual(errors,[]);await page.close();console.log(`PASS ${language}: raw player names across seats, judge outcomes, secret knowledge, choices and real App inventory aria`);
 }}finally{await browser.close();}
