@@ -15,7 +15,16 @@ async function authorized(request:Request,secret?:string){
 }
 async function catalog(bucket?:R2Bucket){
  const object=await bucket?.get(manifestKey);
- return {entries:object?await object.json<ManagedReaction[]>():[],etag:object?.etag};
+ const data:unknown=object?await object.json():[];
+ if(!Array.isArray(data)||data.length>100)throw new CatalogError('表情目录暂不可用');
+ const ids=new Set<string>();
+ const entries:ManagedReaction[]=data.map((value:unknown)=>{
+  if(!value||typeof value!=='object')throw new CatalogError('表情目录暂不可用');
+  const e=value as Record<string,unknown>;
+  if(!customReactionID(e.id)||ids.has(e.id)||typeof e.zh!=='string'||typeof e.en!=='string'||![e.zh,e.en].every(v=>v.trim()&&v.length<=40&&!/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/.test(v))||typeof e.published!=='boolean'||e.src!==`/api/reactions/${e.id}/image`||e.still!==`/api/reactions/${e.id}/still`)throw new CatalogError('表情目录暂不可用');
+  ids.add(e.id);return {id:e.id,zh:e.zh,en:e.en,src:e.src as string,still:e.still as string,published:e.published};
+ });
+ return {entries,etag:object?.etag};
 }
 export async function publishedReaction(env:ReactionEnv,id:unknown){
  if(!customReactionID(id))return undefined;
@@ -79,11 +88,12 @@ export async function reactionAPI(request:Request,env:ReactionEnv):Promise<Respo
   }
   const update=path.match(/^\/api\/admin\/reactions\/(r_[a-f0-9-]{36})$/);
   if(update){
-   const body=JSON.parse(new TextDecoder().decode(await boundedBody(request,1024))) as {published?:unknown};
-   if(typeof body.published!=='boolean')throw new CatalogError('请求无效');
+   const body=JSON.parse(new TextDecoder().decode(await boundedBody(request,1024))) as {published?:unknown;delete?:unknown};
+   if(!body||(body.delete!==true&&typeof body.published!=='boolean'))throw new CatalogError('请求无效');
    if(!entries.some(e=>e.id===update[1]))return json({error:'表情不存在'},404);
-   const next=entries.map(e=>e.id===update[1]?{...e,published:body.published as boolean}:e);
+   const next=body.delete===true?entries.filter(e=>e.id!==update[1]):entries.map(e=>e.id===update[1]?{...e,published:body.published as boolean}:e);
    if(!await save(next))return json({error:'目录已更新，请刷新后重试'},409);
+   if(body.delete===true)await bucket.delete([`reactions/${update[1]}/image`,`reactions/${update[1]}/still`]);
    return json({ok:true});
   }
   return json({error:'不存在'},404);

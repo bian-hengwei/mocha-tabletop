@@ -9,6 +9,6 @@ export async function adminRequest(path:string,token:string,body?:BodyInit){
  const value=await response.json();if(!response.ok)throw new Error(value.error||'操作失败');return value;
 }
 
-export async function adminImage(id:string,token:string){
- const response=await fetch(API+'/api/admin/reactions/'+id+'/still',{headers:{Authorization:`Bearer ${token}`},cache:'no-store'});if(!response.ok)throw new Error('图片无效');return response.blob();
+export async function adminImage(id:string,token:string,variant:'image'|'still'){
+ const response=await fetch(API+'/api/admin/reactions/'+id+'/'+variant,{headers:{Authorization:`Bearer ${token}`},cache:'no-store'});if(!response.ok)throw new Error('图片无效');return response.blob();
 }

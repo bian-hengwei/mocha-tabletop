@@ -46,9 +46,9 @@ export function applyRoomSocial(state:SocialState,room:RoomInfo,actor:string,inp
  };
 }
 
-export function socialView(state:SocialState|undefined,room:RoomInfo,now:number):SocialView {
+export function socialView(state:SocialState|undefined,room:RoomInfo,now:number,customReactions=true):SocialView {
  if(!supportsRoomSocial(room.kind)||!state)return {messages:[],reactions:[],revision:state?.revision||0};
- return {messages:state.messages,reactions:state.reactions.filter(r=>r.at+SOCIAL_DURATION>now&&room.players.some(p=>p.id===r.playerID)),revision:state.revision};
+ return {messages:state.messages,reactions:state.reactions.filter(r=>(customReactions||REACTIONS.some(id=>id===r.reaction))&&r.at+SOCIAL_DURATION>now&&room.players.some(p=>p.id===r.playerID)),revision:state.revision};
 }
 
 export function forgetSocialActor(state:SocialState|undefined,id:string){

@@ -222,4 +222,4 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 `npx vitest run tests/reaction-catalog.test.ts tests/room-social.test.ts tests/network/social-client.test.ts tests/network/server-recovery.test.ts` 覆盖图片类型/边界、认证失败、缺省内置目录、动态 ID 的权威校验与共享发送回归。
 
-`npm run build` 后运行 `node tests/ui/reaction-admin.integration.mjs`。脚本自启本地 Worker/R2 与 Vite，默认独占 8893（Worker）、8894（inspector）和 5293（Vite）；可通过 `REACTION_TEST_PORT` 和 `REACTION_FRONTEND_PORT` 调整。每次生成独立临时存储和随机测试凭据，退出清理，不使用远端 R2。检查认证、来源、上传草稿/预览/上架/下架、两种房间发送、双语七尺寸及退出；截图保存在忽略的 `test-results/reaction-admin/`，需要实际视觉复核。加入 CI social 组，保持既有回归覆盖。
+`npm run build` 后运行 `node tests/ui/reaction-admin.integration.mjs`。脚本自启本地 Worker/R2 与 Vite，默认独占 8893（Worker）、8894（inspector）和 5293（Vite）；可通过 `REACTION_TEST_PORT` 和 `REACTION_FRONTEND_PORT` 调整。每次生成独立临时存储和随机测试凭据，退出清理，不使用远端 R2。检查认证、来源、上传草稿/预览/上架/下架/确认删除、两种房间发送、双语七尺寸及退出；截图保存在忽略的 `test-results/reaction-admin/`，需要实际视觉复核。加入 CI social 组，保持既有回归覆盖。

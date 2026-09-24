@@ -47,4 +47,7 @@ export const socialText:Record<string,string>={
  "请填写 1–40 字的中英文名称":"Enter Chinese and English names of 1–40 characters",
  "请选择图片和静态预览":"Choose an image and a still preview",
  "目录已更新，请刷新后重试":"The catalog changed. Refresh and try again",
+ "删除此表情及其图片？此操作无法撤销。":"Delete this reaction and its images? This cannot be undone.",
+ "表情已删除":"Reaction deleted",
+ "删除":"Delete",
 };

@@ -2,7 +2,7 @@ import {describe,it,expect} from 'vitest';
 import {readFileSync} from 'node:fs';
 // Keep Worker runtime types out of the DOM application build.
 const {reactionAPI,imageType}=await import('../worker/'+'reactionCatalog') as {reactionAPI:(request:Request,env:{REACTION_ASSETS?:object;REACTION_ADMIN_TOKEN?:string})=>Promise<Response>;imageType:(bytes:Uint8Array,still?:boolean)=>string};
-import {applyRoomSocial,emptySocial} from '../src/core/roomSocial';
+import {applyRoomSocial,emptySocial,socialView} from '../src/core/roomSocial';
 import type {RoomInfo} from '../src/core/room';
 const png=new Uint8Array(readFileSync('public/art/reactions/cow-still.png'));
 const gif=new Uint8Array(Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7','base64'));
@@ -21,6 +21,10 @@ describe('reaction upload boundaries',()=>{
   expect((await reactionAPI(request('Bearer '+'b'.repeat(48)),env)).status).toBe(401);
   expect((await reactionAPI(request('a'.repeat(48)),env)).status).toBe(401);
  });
+ it('fails closed on corrupt catalog contents',async()=>{
+  const env={REACTION_ASSETS:{get:async()=>({etag:'version',json:async()=>[{id:'r_12345678-1234-1234-1234-123456789012',published:true,zh:'Image',en:'Image',src:'https://unexpected.invalid/image.png',still:'/still.png'}]})}};
+  const response=await reactionAPI(new Request('https://site/api/reactions'),env);expect(response.status).toBe(400);expect(await response.json()).toEqual({error:'表情目录暂不可用'});
+ });
  it('keeps built-ins available without storage',async()=>{
   const response=await reactionAPI(new Request('https://site/api/reactions'),{});
   expect(await response.json()).toMatchObject([{id:'cow'}]);
@@ -32,6 +36,8 @@ describe('reaction upload boundaries',()=>{
   expect(()=>applyRoomSocial(state,room,'player1',{type:'reaction'},'one',1000)).toThrow();
   expect(()=>applyRoomSocial(state,room,'player1',{type:'reaction',reaction:asset.id},'one',1000)).toThrow();
   expect(applyRoomSocial(state,room,'player1',{type:'reaction',reaction:asset.id},'one',1000,asset).reactions[0]).toMatchObject({reaction:asset.id,asset});
+  const next=applyRoomSocial(state,room,'player1',{type:'reaction',reaction:asset.id},'two',1000,asset);
+  expect(socialView(next,room,1001,false).reactions).toEqual([]);expect(socialView(next,room,1001,true).reactions).toHaveLength(1);
   expect(state.reactions).toEqual([]);
  });
 });
