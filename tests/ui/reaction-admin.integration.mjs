@@ -1,10 +1,10 @@
-import {chromium,expect} from '@playwright/test';
+import {chromium,webkit,expect} from '@playwright/test';
 import {spawn} from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {randomBytes} from 'node:crypto';
 import assert from 'node:assert/strict';
-const out=path.resolve('test-results/reaction-admin');await fs.mkdir(out,{recursive:true});
+const out=path.resolve('test-results/reaction-admin'+(process.env.TEST_BROWSER==='webkit'?'-webkit':''));await fs.mkdir(out,{recursive:true});
 await fs.mkdir('.wrangler',{recursive:true});
 const dir=await fs.mkdtemp(path.resolve('.wrangler/reaction-test-'));
 const port=Number(process.env.REACTION_TEST_PORT||8893),frontPort=Number(process.env.REACTION_FRONTEND_PORT||5293),base=`http://127.0.0.1:${frontPort}`,api=`http://127.0.0.1:${port}`;
@@ -26,14 +26,27 @@ try{
  assert.equal((await request('/api/admin/reactions',undefined,false)).status,401);
  assert.equal((await fetch(api+'/api/admin/reactions',{headers:{Authorization:'Bearer incorrect'}})).status,401);
  assert.equal((await fetch(api+'/api/admin/reactions',{headers:{Origin:'https://evil.invalid',Authorization:`Bearer ${token}`}})).status,403);
- browser=await chromium.launch();const page=await browser.newPage({viewport:{width:390,height:844}});page.on('pageerror',e=>errors.push(e.message));await page.goto(base+'/admin/reactions');
+ browser=await (process.env.TEST_BROWSER==='webkit'?webkit:chromium).launch();const page=await browser.newPage({viewport:{width:390,height:844}});page.on('pageerror',e=>errors.push(e.message));await page.goto(base+'/admin/reactions');
  await page.getByLabel('管理员凭据').fill('wrong');await page.getByRole('button',{name:'登录',exact:true}).click();await expect(page.getByRole('alert')).toHaveText('管理员凭据无效');
  await page.getByLabel('管理员凭据').fill(token);await page.getByRole('button',{name:'登录',exact:true}).click();await page.getByRole('heading',{name:'上传表情',exact:true}).waitFor();
- await page.getByLabel('中文名称').fill('测试奶牛');await page.getByLabel('英文名称').fill('Test cow');
- await page.getByLabel('表情图片（GIF / PNG）').setInputFiles('public/art/reactions/cow-still.png');await page.getByLabel('静态预览（PNG）').setInputFiles('public/art/reactions/cow-still.png');
- await expect(page.locator('.admin-previews img')).toBeVisible();await page.getByRole('button',{name:'保存草稿',exact:true}).click();await expect(page.getByRole('status')).toHaveText('草稿已保存');
+ await expect(page.locator('input[type=file]')).toHaveCount(1);await expect(page.getByLabel('中文名称')).toHaveCount(0);
+ await page.getByLabel('选择图片（可多选）').setInputFiles('public/art/reactions/cow-still.png');await expect(page.getByRole('status')).toHaveText('已上传 1/1');await page.getByRole('combobox').selectOption('en');await expect(page.getByRole('status')).toHaveText('Uploaded 1/1');await page.getByRole('combobox').selectOption('zh');
  let entries=await (await request('/api/admin/reactions')).json();assert.equal(entries.length,1);const entry=entries[0];assert.equal(entry.published,false);assert.equal((await request(entry.src,undefined,false)).status,404);
  assert.equal((await (await request('/api/reactions',undefined,false)).json()).length,1);await expect(page.locator('li img')).toBeVisible();
+ // A real two-frame 1x1 GIF: opaque red first frame, blue second frame.
+ const animated=Buffer.from('47494638396101000100800000ff00000000ff21ff0b4e45545343415045322e30030100000021f904000a0000002c000000000100010000020244010021f904000a0000002c00000000010001000002024c01003b','hex');
+ await page.getByLabel('选择图片（可多选）').setInputFiles([{name:'animated.gif',mimeType:'image/gif',buffer:animated},{name:'invalid.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg/>')},{name:'static.png',mimeType:'image/png',buffer:await fs.readFile('public/art/reactions/cow-still.png')}]);
+ await expect(page.getByRole('status')).toHaveText('已上传 2/3');await expect(page.getByRole('alert')).toContainText('invalid.svg');await page.getByRole('combobox').selectOption('en');await expect(page.getByRole('alert')).toContainText('Use GIF or PNG');await expect(page.getByRole('status')).toHaveText('Uploaded 2/3');await page.getByRole('combobox').selectOption('zh');await expect(page.locator('li')).toHaveCount(3);
+ const batch=(await (await request('/api/admin/reactions')).json()).filter(e=>e.id!==entry.id);
+ assert.deepEqual(Buffer.from(await (await request('/api/admin/reactions/'+batch[0].id+'/image')).arrayBuffer()),animated);
+ const stillBytes=Array.from(new Uint8Array(await (await request('/api/admin/reactions/'+batch[0].id+'/still')).arrayBuffer()));
+ const firstPixel=await page.evaluate(async bytes=>{const bitmap=await createImageBitmap(new Blob([Uint8Array.from(bytes)],{type:'image/png'}));const canvas=document.createElement('canvas');canvas.width=bitmap.width;canvas.height=bitmap.height;const context=canvas.getContext('2d');context.drawImage(bitmap,0,0);bitmap.close();return Array.from(context.getImageData(0,0,1,1).data);},stillBytes);
+ assert.deepEqual(firstPixel,[255,0,0,255]);
+ await page.emulateMedia({reducedMotion:'reduce'});await expect(page.locator('li').nth(1).locator('img')).toBeVisible();
+ assert.equal(await page.locator('li').nth(1).locator('picture').evaluate(el=>el.querySelector('img').currentSrc===el.querySelector('source').srcset),true);
+ await page.emulateMedia({reducedMotion:'no-preference'});
+ for(const item of batch)assert.equal((await request('/api/admin/reactions/'+item.id,JSON.stringify({delete:true}))).status,200);
+ await page.getByRole('button',{name:'刷新目录',exact:true}).click();await expect(page.locator('li')).toHaveCount(1);
  for(const locale of ['zh','en']){await page.getByRole('combobox').selectOption(locale);await expect(page.locator('li').first().getByRole('button',{name:locale==='zh'?'删除':'Delete',exact:true})).toBeVisible();for(const [width,height]of [[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900]]){await page.setViewportSize({width,height});await page.locator('.reaction-admin').evaluate(el=>el.scrollTo(0,0));await page.screenshot({animations:'disabled',path:`${out}/${locale}-${width}-top.png`});await page.getByRole('button',{name:locale==='zh'?'上架':'Publish',exact:true}).scrollIntoViewIfNeeded();await page.screenshot({animations:'disabled',path:`${out}/${locale}-${width}-list.png`});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert(await page.locator('.reaction-admin').evaluate(el=>el.scrollWidth<=el.clientWidth));}}
  await page.getByRole('combobox').selectOption('zh');await page.getByRole('button',{name:'上架',exact:true}).click();await expect(page.getByRole('status')).toHaveText('已上架');assert.equal((await request(entry.src,undefined,false)).status,200);
  const published=await (await request('/api/reactions',undefined,false)).json();assert.equal(published.length,2);
@@ -41,12 +54,12 @@ try{
   const host=await newPlayer('Admin test host'),guest=await newPlayer('Admin test guest');
   await host.locator('.cover-gems').click();if(mode==='cloud')await host.getByRole('button',{name:/云端联机/}).click();await host.getByRole('button',{name:'创建牌桌',exact:true}).click();await host.locator('.room-code').waitFor();const code=(await host.locator('.room-code').textContent()).trim();
   await guest.getByRole('button',{name:'加入牌桌',exact:true}).click();await guest.getByRole('textbox',{name:'房间码',exact:true}).fill(code);await guest.getByRole('button',{name:'入桌',exact:true}).click();await host.getByRole('button',{name:'同意Admin test guest',exact:true}).click();await guest.getByRole('button',{name:'准备好了',exact:true}).waitFor();
-  await host.locator('.lobby-seats .social-avatar-button').click();await host.getByRole('button',{name:'测试奶牛',exact:true}).click();await expect(guest.locator('.social-avatar-reaction img')).toHaveAttribute('src',entry.src);await expect(guest.locator('.social-avatar-reaction img')).toHaveJSProperty('naturalWidth',300);
+  await host.locator('.lobby-seats .social-avatar-button').click();await host.getByRole('button',{name:'表情 2',exact:true}).click();await expect(guest.locator('.social-avatar-reaction img')).toHaveAttribute('src',entry.src);await expect(guest.locator('.social-avatar-reaction img')).toHaveJSProperty('naturalWidth',300);
   await guest.getByRole('button',{name:'准备好了',exact:true}).click();await host.getByRole('button',{name:'开局',exact:true}).click();await guest.locator('.g-table').waitFor();if(mode==='lan')await expect(guest.locator('.connection')).toContainText('Wi-Fi');
   await host.locator('.social-avatar-button').click();
-  for(const locale of ['zh','en']){if(locale==='en'){await host.keyboard.press('Escape');await host.locator('.language-toggle').click();await host.locator('.social-avatar-button').click();}for(const [width,height] of [[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900]]){await host.setViewportSize({width,height});await expect(host.getByRole('button',{name:locale==='zh'?'测试奶牛':'Test cow',exact:true})).toBeVisible();await host.screenshot({animations:'disabled',path:`${out}/${mode}-${locale}-${width}-picker.png`});}}
+  for(const locale of ['zh','en']){if(locale==='en'){await host.keyboard.press('Escape');await host.locator('.language-toggle').click();await host.locator('.social-avatar-button').click();}for(const [width,height] of [[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900]]){await host.setViewportSize({width,height});await expect(host.getByRole('button',{name:locale==='zh'?'表情 2':'Reaction 2',exact:true})).toBeVisible();await expect(host.locator('.social-sticker-grid button span')).toHaveCount(0);await host.screenshot({animations:'disabled',path:`${out}/${mode}-${locale}-${width}-picker.png`});}}
   await request('/api/admin/reactions/'+entry.id,JSON.stringify({published:false}));
-  await host.getByRole('button',{name:'Test cow',exact:true}).click();await expect(host.locator('.social-error')).toHaveText('Choose a reaction');
+  await host.getByRole('button',{name:'Reaction 2',exact:true}).click();await expect(host.locator('.social-error')).toHaveText('Choose a reaction');
   await request('/api/admin/reactions/'+entry.id,JSON.stringify({published:true}));
   await host.keyboard.press('Escape');await expect(host.locator('.social-avatar-button')).toBeFocused();await host.locator('.brand .icon').click();host.once('dialog',d=>d.accept());await host.getByRole('button',{name:/^(离开牌桌|Leave table)$/}).click();await host.context().close();await guest.context().close();
  }
@@ -75,5 +88,5 @@ try{
  worker=startWorker();await ready(api+'/api/health');
  assert.deepEqual(await (await request('/api/admin/reactions')).json(),before);
  assert.deepEqual(Buffer.from(await (await request('/api/admin/reactions/'+before[0].id+'/image')).arrayBuffer()),png);
- console.log('PASS admin auth, upload draft, preview, publish/unpublish, cloud/LAN delivery, bilingual seven-size UI and sign out');
+ console.log('PASS single/multiple upload, animated first-frame extraction, partial failures, no names, reduced motion, admin auth, upload draft, preview, publish/unpublish, cloud/LAN delivery, bilingual seven-size UI and sign out');
 }catch(error){await fs.writeFile(path.join(out,'services.log'),logs.join('').replaceAll(token,'[redacted]'));throw error;}finally{await browser?.close();worker.kill('SIGTERM');vite.kill('SIGTERM');await fs.rm(dir,{recursive:true,force:true});}
