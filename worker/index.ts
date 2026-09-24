@@ -1,3 +1,4 @@
+export {ReactionCatalog} from './reactionStorage';
 import {reactionAPI,publishedReaction,type ReactionEnv} from './reactionCatalog';
 import {DurableObject} from 'cloudflare:workers';
 import {discoveryNetwork} from './discovery';

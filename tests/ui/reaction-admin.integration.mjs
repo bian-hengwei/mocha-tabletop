@@ -10,11 +10,12 @@ const dir=await fs.mkdtemp(path.resolve('.wrangler/reaction-test-'));
 const port=Number(process.env.REACTION_TEST_PORT||8893),frontPort=Number(process.env.REACTION_FRONTEND_PORT||5293),base=`http://127.0.0.1:${frontPort}`,api=`http://127.0.0.1:${port}`;
 const token=randomBytes(32).toString('hex');
 const config=JSON.parse(await fs.readFile('wrangler.jsonc','utf8'));
-delete config.account_id;config.main=path.resolve('worker/index.ts');config.assets.directory=path.resolve('dist');config.vars={ALLOWED_ORIGINS:base,REACTION_ADMIN_TOKEN:token};config.r2_buckets=[{binding:'REACTION_ASSETS',bucket_name:'local-reaction-test'}];
+delete config.account_id;config.main=path.resolve('worker/index.ts');config.assets.directory=path.resolve('dist');config.vars={ALLOWED_ORIGINS:base,REACTION_ADMIN_TOKEN:token};
 const configPath=path.join(dir,'wrangler.json');await fs.writeFile(configPath,JSON.stringify(config));
 const logs=[];
 function start(args,env={}){const child=spawn(process.execPath,args,{env:{...process.env,...env},stdio:['ignore','pipe','pipe']});child.stdout.on('data',d=>logs.push(String(d)));child.stderr.on('data',d=>logs.push(String(d)));return child;}
-const worker=start(['node_modules/wrangler/bin/wrangler.js','dev','--local','--config',configPath,'--port',String(port),'--inspector-port',String(port+1),'--persist-to',path.join(dir,'state')]);
+const startWorker=()=>start(['node_modules/wrangler/bin/wrangler.js','dev','--local','--config',configPath,'--port',String(port),'--inspector-port',String(port+1),'--persist-to',path.join(dir,'state')]);
+let worker=startWorker();
 const vite=start(['node_modules/vite/bin/vite.js','--host','127.0.0.1','--port',String(frontPort),'--strictPort'],{MOCHA_DEV_API:api,VITE_API_BASE:''});
 let browser;const errors=[];
 async function ready(url){for(let i=0;i<100;i++){try{if((await fetch(url)).ok)return;}catch{}await new Promise(r=>setTimeout(r,200));}throw new Error('Service did not start: '+url);}
@@ -60,5 +61,19 @@ try{
  page.once('dialog',dialog=>dialog.dismiss());await page.locator('li').last().getByRole('button',{name:'删除',exact:true}).click();await expect(page.locator('li')).toHaveCount(13);
  page.once('dialog',dialog=>dialog.accept());await page.locator('li').last().getByRole('button',{name:'删除',exact:true}).click();await expect(page.locator('li')).toHaveCount(12);await expect(page.getByRole('status')).toHaveText('表情已删除');
  await page.getByRole('button',{name:'退出管理',exact:true}).click();await expect(page.getByLabel('管理员凭据')).toHaveValue('');await page.reload();await expect(page.getByLabel('管理员凭据')).toHaveValue('');assert.deepEqual(errors,[]);
+ // Concurrent writes either commit completely or return a retryable conflict.
+ const before=await (await request('/api/admin/reactions')).json();
+ const upload=()=>{const form=new FormData();form.set('zh','并发');form.set('en','Concurrent');form.set('image',new Blob([png]),'image.png');form.set('still',new Blob([png]),'still.png');return request('/api/admin/reactions',form);};
+ const results=await Promise.all([upload(),upload()]);
+ const created=[];
+ for(const response of results){assert([201,409].includes(response.status));if(response.status===201)created.push(await response.json());}
+ assert(created.length>=1);
+ assert.equal((await (await request('/api/admin/reactions')).json()).length,before.length+created.length);
+ for(const item of created){const image=await request('/api/admin/reactions/'+item.id+'/image');assert.deepEqual(Buffer.from(await image.arrayBuffer()),png);assert.equal((await request('/api/admin/reactions/'+item.id,JSON.stringify({delete:true}))).status,200);assert.equal((await request('/api/admin/reactions/'+item.id+'/image')).status,404);}
+ // Restart the runtime using the same SQLite directory; verify exact persisted bytes.
+ const stopped=new Promise(resolve=>worker.once('exit',resolve));worker.kill('SIGTERM');await stopped;
+ worker=startWorker();await ready(api+'/api/health');
+ assert.deepEqual(await (await request('/api/admin/reactions')).json(),before);
+ assert.deepEqual(Buffer.from(await (await request('/api/admin/reactions/'+before[0].id+'/image')).arrayBuffer()),png);
  console.log('PASS admin auth, upload draft, preview, publish/unpublish, cloud/LAN delivery, bilingual seven-size UI and sign out');
 }catch(error){await fs.writeFile(path.join(out,'services.log'),logs.join('').replaceAll(token,'[redacted]'));throw error;}finally{await browser?.close();worker.kill('SIGTERM');vite.kill('SIGTERM');await fs.rm(dir,{recursive:true,force:true});}

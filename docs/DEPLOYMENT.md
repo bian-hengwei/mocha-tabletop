@@ -59,16 +59,10 @@ npm run deploy:web
 
 `/admin/reactions` 提供管理员登录、上传草稿、静态预览、上架/下架和确认删除。上传一次配置完成后不需要修改代码或重新部署。内置奶牛仍随应用发布；上传表情通过动态目录加载，云端和局域网房间均由 Worker 验证已上架状态。
 
-首次启用需要一个专用的私有 R2 bucket 和 Worker secret。默认配置不创建 R2 资源，未配置时管理接口返回 503，内置表情照常使用。先确认账户已经开通 R2、所选 bucket 和当前计费，再在 `wrangler.jsonc` 添加绑定：
+存储使用 `REACTIONS` 绑定的 SQLite Durable Object `ReactionCatalog`，由 `v2-reactions` migration 创建，不需要 R2 或新增付款方式。部署前确认账户仍为 Workers Free；该计划额度耗尽后相关操作失败，不自动转为付费。表情与联机功能共享账户额度，可能同时受限；若以后主动升级为付费计划，适用该计划的计费规则。参见 [DO 定价与免费限制](https://developers.cloudflare.com/durable-objects/platform/pricing/)。
 
-```json
-"r2_buckets": [
-  { "binding": "REACTION_ASSETS", "bucket_name": "<existing-private-bucket>" }
-]
-```
-
-使用 `npx wrangler types` 重新生成本地绑定类型，并通过 `npx wrangler secret put REACTION_ADMIN_TOKEN` 的交互输入配置至少 32 字符的随机凭据。不要使用房间密码、昵称或可猜口令；不要将凭据放入 URL、前端变量或仓库。该命令会更新线上 Worker，按正常发布流程协调首次启用和后续轮换。生产配置完成后按本页发布流程部署前后端。
+首次启用需设置独立的 Worker secret `REACTION_ADMIN_TOKEN`（至少 32 字符，建议密码生成器生成 64 位随机十六进制字符串）。通过 `npx wrangler secret put REACTION_ADMIN_TOKEN` 安全输入，不写入源码、前端环境变量或公共配置；该命令会部署新版本。未配置凭据时管理接口返回 503，内置表情照常使用。保管凭据，仅分享给管理员；需要撤销访问时更换该 secret。
 
 管理员打开 `/admin/reactions`，输入凭据，选择 GIF/PNG 和一张不带动画的 PNG 预览，填写中英文名称并保存草稿，检查预览后点击上架。每张图片上限 2 MiB、1024 × 1024；最多保存 100 个自定义表情，可确认删除误传或不再使用的素材以释放名额。静态预览用于减少动态效果。登录仅保留于当前页面内存，刷新或退出后需要重新输入。下架会撤销公共图片访问和新发送权限；已下载的图片无法从用户设备撤回。
 
-目录保存在 `reactions/catalog.json`，更新使用 R2 ETag 条件写入防止覆盖并发更新。素材使用独立随机 ID，草稿仅管理员可读取。上传资源不加入 service worker 缓存，离线使用内置表情；不要公开整个 bucket，否则会绕过草稿和下架的访问限制。后端写入和读取由绑定完成，不向浏览器暴露 R2 凭据。
+目录与图片保存在专用 `catalog-v1` 对象内，图片分成 64 KiB SQLite 行。更新使用版本比较和同步事务，避免并发覆盖；上传、目录变更与删除原子提交，失败不会留下半份目录或孤立图片。素材使用独立随机 ID，草稿仅管理员可读取。上传资源不加入 service worker 缓存，离线使用内置表情；存储通过内部绑定访问，不向浏览器暴露存储凭据。

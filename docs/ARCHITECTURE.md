@@ -78,7 +78,7 @@ DataChannel 在 nonce 验证完成前不接收游戏快照。非房主在验证�
 
 ### 动态表情目录
 
-`worker/reactionCatalog.ts` 在可选 R2 绑定上维护上传素材和目录。管理员 API 使用独立的 Worker secret，浏览器管理页不持久化凭据。`GET /api/reactions` 只返回内置和已上架项；上传先创建草稿，管理员另行上架。公共图片请求和发送命令均验证发布状态。素材请求不进入离线缓存。
+`worker/reactionCatalog.ts` 处理表情 API，`worker/reactionStorage.ts` 在独立 SQLite Durable Object 中以同步事务维护目录和分块图片。并发更新使用目录版本比较，冲突返回 409；存储失败不提交部分修改。管理员 API 使用独立的 Worker secret，浏览器管理页不持久化凭据。`GET /api/reactions` 只返回内置和已上架项；上传先创建草稿，管理员另行上架。公共图片请求和发送命令均验证发布状态。素材请求不进入离线缓存。
 
 规则层 `applyRoomSocial` 只接受内置 ID 或服务端查到的目录项，客户端不能通过命令提供图片 URL。Worker 在异步查询目录之后重新确认房间和连接身份，再应用当前状态。广播包含所需图片路径和双语名称，接收方无需预先刷新目录就能渲染新表情。两种联机模式均沿用已认证的控制连接。
 

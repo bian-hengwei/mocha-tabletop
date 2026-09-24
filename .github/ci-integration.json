@@ -141,6 +141,9 @@
   ],
   "social": [
     {
+      "script": "tests/network/reaction-storage.integration.mjs"
+    },
+    {
       "script": "tests/ui/reaction-admin.integration.mjs"
     },
     {

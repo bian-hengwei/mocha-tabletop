@@ -1,7 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {readFileSync} from 'node:fs';
 // Keep Worker runtime types out of the DOM application build.
-const {reactionAPI,imageType}=await import('../worker/'+'reactionCatalog') as {reactionAPI:(request:Request,env:{REACTION_ASSETS?:object;REACTION_ADMIN_TOKEN?:string})=>Promise<Response>;imageType:(bytes:Uint8Array,still?:boolean)=>string};
+const {reactionAPI,imageType}=await import('../worker/'+'reactionCatalog') as {reactionAPI:(request:Request,env:{REACTIONS?:object;REACTION_ADMIN_TOKEN?:string})=>Promise<Response>;imageType:(bytes:Uint8Array,still?:boolean)=>string};
 import {applyRoomSocial,emptySocial,socialView} from '../src/core/roomSocial';
 import type {RoomInfo} from '../src/core/room';
 const png=new Uint8Array(readFileSync('public/art/reactions/cow-still.png'));
@@ -16,14 +16,19 @@ describe('reaction upload boundaries',()=>{
   const request=(authorization?:string)=>new Request('https://site/api/admin/reactions',{headers:authorization?{Authorization:authorization}:{}});
   expect((await reactionAPI(request(),{})).status).toBe(503);
   // Authentication must complete before touching storage.
-  const env={REACTION_ASSETS:{},REACTION_ADMIN_TOKEN:'a'.repeat(48)};
+  const env={REACTIONS:{getByName:()=>({})},REACTION_ADMIN_TOKEN:'a'.repeat(48)};
   expect((await reactionAPI(request(),env)).status).toBe(401);
   expect((await reactionAPI(request('Bearer '+'b'.repeat(48)),env)).status).toBe(401);
   expect((await reactionAPI(request('a'.repeat(48)),env)).status).toBe(401);
  });
  it('fails closed on corrupt catalog contents',async()=>{
-  const env={REACTION_ASSETS:{get:async()=>({etag:'version',json:async()=>[{id:'r_12345678-1234-1234-1234-123456789012',published:true,zh:'Image',en:'Image',src:'https://unexpected.invalid/image.png',still:'/still.png'}]})}};
+  const env={REACTIONS:{getByName:()=>({readCatalog:async()=>({etag:'version',data:[{id:'r_12345678-1234-1234-1234-123456789012',published:true,zh:'Image',en:'Image',src:'https://unexpected.invalid/image.png',still:'/still.png'}]})})}};
   const response=await reactionAPI(new Request('https://site/api/reactions'),env);expect(response.status).toBe(400);expect(await response.json()).toEqual({error:'表情目录暂不可用'});
+ });
+ it('returns a bounded error without leaking storage failures',async()=>{
+  const env={REACTIONS:{getByName:()=>({readCatalog:async()=>{throw new Error('account quota exhausted: private diagnostic');}})}};
+  const response=await reactionAPI(new Request('https://site/api/reactions'),env);
+  expect(response.status).toBe(500);expect(await response.json()).toEqual({error:'操作失败'});
  });
  it('keeps built-ins available without storage',async()=>{
   const response=await reactionAPI(new Request('https://site/api/reactions'),{});
