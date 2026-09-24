@@ -60,3 +60,5 @@ id,tier,colorIndex,points,white,blue,green,red,black
 ## 狼人杀扩展身份
 
 `public/art/roles-wolf-expanded-v1.jpg` 是内置 ImageGen 生成的 2 列 × 1 行肖像图集：白痴、狼王。既有狼人身份图集仅用作画风参考；新身份使用独立插画，不复用普通狼人或平民头像。提示词与生成模式记录在 `design/werewolf-expanded-prompt.json`，压缩 JPEG 随网站离线缓存。
+
+管理员上传的表情存放于私有 R2，不进入 `public/` 或部署产物。GIF/PNG 原图与 PNG 静态预览最大均为 2 MiB、1024 × 1024；名称由 HTML 显示，减少动态效果时使用静态预览。管理入口与绑定配置见 [部署说明](DEPLOYMENT.md#管理上传表情)。上传前应确认素材来源和使用授权。

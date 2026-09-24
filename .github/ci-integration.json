@@ -141,6 +141,9 @@
   ],
   "social": [
     {
+      "script": "tests/ui/reaction-admin.integration.mjs"
+    },
+    {
       "script": "tests/network/room-social.integration.mjs"
     },
     {

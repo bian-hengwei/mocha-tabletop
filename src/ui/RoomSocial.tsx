@@ -1,22 +1,22 @@
 import {createContext,useContext,useEffect,useLayoutEffect,useRef,useState,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import {MessageCircle,Send,X} from 'lucide-react';
-import {CHAT_LIMIT,REACTIONS,SOCIAL_DURATION,supportsRoomSocial,type ReactionID} from '../core/roomSocial';
+import {CHAT_LIMIT,SOCIAL_DURATION,supportsRoomSocial,type ReactionID} from '../core/roomSocial';
 import type {ClientState} from '../core/room';
 import type {RoomClient} from '../net/RoomClient';
 import {t,useLocale} from '../i18n';
 import {useDialog} from './useDialog';
 import './room-social.css';
+import {BUILTIN_REACTIONS,type ReactionAsset} from '../core/reactionCatalog';
+import {reactionURL,loadReactions} from '../net/reactionCatalog';
 
-const reactionArt:Record<ReactionID,{label:string;src:string;still:string}>={
- cow:{label:'奶牛',src:'/art/reactions/cow.gif',still:'/art/reactions/cow-still.png'},
-};
 type SocialContextValue={state:ClientState;now:number;canSend:boolean;openReactions:()=>void;openChat:()=>void;unread:boolean};
 const SocialContext=createContext<SocialContextValue|null>(null);
 
-function ReactionArt({reaction}:{reaction:ReactionID}){
- const art=reactionArt[reaction];
- return <picture className="social-sticker"><source media="(prefers-reduced-motion: reduce)" srcSet={art.still}/><img src={art.src} alt={t(art.label)}/></picture>;
+function ReactionArt({reaction,asset}:{reaction:ReactionID;asset?:ReactionAsset}){
+ const locale=useLocale(),art=asset||BUILTIN_REACTIONS.find(a=>a.id===reaction);
+ if(!art)return null;
+ return <picture className="social-sticker"><source media="(prefers-reduced-motion: reduce)" srcSet={reactionURL(art.still)}/><img src={reactionURL(art.src)} alt={art[locale]}/></picture>;
 }
 
 /** Portals keep messages out of clipped card regions without making them clickable. */
@@ -50,7 +50,7 @@ export function PlayerAvatar({id,avatar,className=''}:{id:string;avatar:ReactNod
  const own=!!social?.canSend&&social.state.selfID===id;
  const reaction=social?.state.social?.reactions.find(r=>r.playerID===id&&r.at+SOCIAL_DURATION>social.now);
  const message=social?.state.social?.messages.slice().reverse().find(m=>m.player.id===id&&m.at+SOCIAL_DURATION>social.now);
- const art=<>{avatar}{reaction&&<span className="social-avatar-reaction" key={reaction.id}><ReactionArt reaction={reaction.reaction}/></span>}</>;
+ const art=<>{avatar}{reaction&&<span className="social-avatar-reaction" key={reaction.id}><ReactionArt reaction={reaction.reaction} asset={reaction.asset}/></span>}</>;
  return <span ref={anchor} className={`social-avatar ${className}`} data-social-player={id}>
   {own?<button className="social-avatar-button" type="button" aria-label={t('发送表情')} aria-haspopup="dialog" onClick={e=>{e.stopPropagation();social.openReactions();}}>{art}</button>:art}
   {message&&anchor.current&&<Bubble anchor={anchor.current} text={message.text}/>}
@@ -65,6 +65,8 @@ export function SocialControls({children}:{children:ReactNode}){
 
 export function RoomSocial({state,client,active,children}:{state:ClientState;client:RoomClient;active:boolean;children:ReactNode}){
  const locale=useLocale(),[panel,setPanel]=useState<'chat'|'reaction'|null>(null),[draft,setDraft]=useState(''),[now,setNow]=useState(Date.now),[read,setRead]=useState<string>();
+ const [catalog,setCatalog]=useState<ReactionAsset[]>(BUILTIN_REACTIONS),[catalogError,setCatalogError]=useState(false);
+ useEffect(()=>{if(panel!=='reaction')return;const controller=new AbortController();setCatalogError(false);loadReactions(controller.signal).then(setCatalog).catch(()=>{if(!controller.signal.aborted)setCatalogError(true);});return()=>controller.abort();},[panel]);
  const room=state.room,enabled=active&&!!room&&supportsRoomSocial(room.kind)&&!state.waitingApproval;
  const canSend=enabled&&!!room.players.find(p=>p.id===state.selfID&&!p.bot);
  const dialog=useDialog<HTMLElement>(enabled&&!!panel,()=>setPanel(null)),log=useRef<HTMLDivElement>(null),pending=useRef<{id:string;type:'chat'|'reaction';draft:string}|undefined>(undefined),atBottom=useRef(true);
@@ -105,7 +107,8 @@ export function RoomSocial({state,client,active,children}:{state:ClientState;cli
    {panel==='chat'?<><p className="social-scope">{t(canSend?'全桌可见 · 保留最近 80 条':'观战中 · 聊天只读')}</p><div className="social-log" role="log" aria-label={t('聊天记录')} aria-live="off" tabIndex={0} ref={log} onScroll={e=>{const el=e.currentTarget;atBottom.current=el.scrollHeight-el.scrollTop-el.clientHeight<30;}}>
     {!messages.length&&<p className="social-empty">{t('还没有消息')}</p>}
     {messages.map(m=><article className={m.player.id===state.selfID?'social-own':''} key={m.id}><div><span aria-hidden="true">{m.player.avatar}</span><b>{m.player.name}</b><time dateTime={new Date(m.at).toISOString()}>{new Date(m.at).toLocaleTimeString(locale==='zh'?'zh-CN':'en-US',{hour:'2-digit',minute:'2-digit'})}</time></div><p>{m.text}</p></article>)}
-   </div>{canSend&&<form onSubmit={e=>{e.preventDefault();if(draft.trim()&&!disabled)send('chat');}}><label className="social-sr-only" htmlFor="room-chat-input">{t('消息')}</label><textarea id="room-chat-input" rows={2} maxLength={CHAT_LIMIT} placeholder={t('说点什么…')} value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing&&e.keyCode!==229){e.preventDefault();if(draft.trim()&&!disabled)send('chat');}}}/><button type="submit" aria-label={t('发送消息')} disabled={disabled||!draft.trim()}><Send size={19}/></button><small>{draft.length}/{CHAT_LIMIT}</small></form>}</>:<div className="social-sticker-grid">{REACTIONS.map(reaction=><button key={reaction} disabled={disabled} type="button" aria-label={t(reactionArt[reaction].label)} onClick={()=>send('reaction',reaction)}><ReactionArt reaction={reaction}/><span>{t(reactionArt[reaction].label)}</span></button>)}</div>}
+   </div>{canSend&&<form onSubmit={e=>{e.preventDefault();if(draft.trim()&&!disabled)send('chat');}}><label className="social-sr-only" htmlFor="room-chat-input">{t('消息')}</label><textarea id="room-chat-input" rows={2} maxLength={CHAT_LIMIT} placeholder={t('说点什么…')} value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing&&e.keyCode!==229){e.preventDefault();if(draft.trim()&&!disabled)send('chat');}}}/><button type="submit" aria-label={t('发送消息')} disabled={disabled||!draft.trim()}><Send size={19}/></button><small>{draft.length}/{CHAT_LIMIT}</small></form>}</>:<div className="social-sticker-grid">{catalog.map(art=><button key={art.id} disabled={disabled} type="button" aria-label={art[locale]} onClick={()=>send('reaction',art.id)}><ReactionArt reaction={art.id} asset={art}/><span>{art[locale]}</span></button>)}</div>}
+   {panel==='reaction'&&catalogError&&<p className="social-error" role="status">{t('表情目录暂不可用')}</p>}
    {(state.socialError||!state.socialOnline)&&<p role="alert" className="social-error">{t(state.socialError||'聊天连接中断，请重连后发送')}</p>}
   </section></div>,document.body)}
  </>}</SocialContext.Provider>;

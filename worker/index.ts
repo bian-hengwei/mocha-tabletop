@@ -1,3 +1,4 @@
+import {reactionAPI,publishedReaction,type ReactionEnv} from './reactionCatalog';
 import {DurableObject} from 'cloudflare:workers';
 import {discoveryNetwork} from './discovery';
 import {applyRoomSocial,emptySocial,forgetSocialActor,socialView,type SocialState} from '../src/core/roomSocial';
@@ -5,7 +6,7 @@ import {botTurnDelay,changeBots,nextBotSeat,stepBot,continueBotRound} from '../s
 import {supportsBots} from '../src/core/bots';
 import { applyMatch,createMatch,validKind,validProfile,viewRoomMatch,MAX_SPECTATORS,normalizeGameOptions,roomLimits,validateMatchForRoom,type MatchState,type RoomInfo,type RoomMode,type RoomCandidate } from '../src/core/room';
 import type {Player} from '../src/core/types';
-interface Env {ROOMS:DurableObjectNamespace<GameRoom>;DIRECTORY:DurableObjectNamespace<RoomDirectory>;ASSETS:Fetcher;ALLOWED_ORIGINS?:string}
+interface Env extends ReactionEnv {ROOMS:DurableObjectNamespace<GameRoom>;DIRECTORY:DurableObjectNamespace<RoomDirectory>;ASSETS:Fetcher;ALLOWED_ORIGINS?:string}
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store'}});
 const token=()=>Array.from(crypto.getRandomValues(new Uint8Array(24)),x=>x.toString(16).padStart(2,'0')).join('');
 const goodToken=(v:unknown):v is string=>typeof v==='string'&&/^[a-f0-9]{48,128}$/.test(v);
@@ -19,7 +20,8 @@ export default {async fetch(request:Request,env:Env):Promise<Response>{
  try{
   const origin=request.headers.get('Origin'); const allowed=[url.origin,...(env.ALLOWED_ORIGINS||'http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:5174,http://localhost:5174').split(',')];
   if(origin&&!allowed.includes(origin))return json({error:'来源无效'},403);
-  if(request.method==='OPTIONS')return new Response(null,{status:204,headers:{'Access-Control-Allow-Origin':origin||url.origin,'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type','Vary':'Origin'}});
+  if(request.method==='OPTIONS')return new Response(null,{status:204,headers:{'Access-Control-Allow-Origin':origin||url.origin,'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization','Vary':'Origin'}});
+  if(/^\/api\/(admin\/)?reactions(?:\/|$)/.test(url.pathname)){const result=await reactionAPI(request,env);const headers=new Headers(result.headers);headers.set('Access-Control-Allow-Origin',origin||url.origin);headers.set('Vary','Origin');return new Response(result.body,{status:result.status,headers});}
   if(url.pathname==='/api/health')return json({ok:true,version:2});
   if(!['GET','POST'].includes(request.method))return json({error:'请求无效'},405);
   if(Number(request.headers.get('Content-Length')||0)>100000)return json({error:'请求过大'},413);
@@ -189,9 +191,12 @@ export class GameRoom extends DurableObject<Env>{
     // Room communication uses the authenticated control socket in both modes.
     // It never changes game/action revisions or broadcasts private game views.
     try{
-     const current=d.social||emptySocial(),next=applyRoomSocial(current,r,id,msg.command,msg.requestID,now);
+     const asset=msg.command?.type==='reaction'&&msg.command.reaction!=='cow'?await publishedReaction(this.env,msg.command.reaction):undefined;
+     const attachment=ws.deserializeAttachment() as Attachment;
+     if(this.data!==d||d.ended||d.expires<=Date.now()||!d.tokens[id]||!attachment.authenticated||attachment.id!==id||attachment.pending)throw new Error('房间已结束');
+     const sentAt=Date.now(),current=d.social||emptySocial(),next=applyRoomSocial(current,d.info,id,msg.command,msg.requestID,sentAt,asset);
      if(next!==current){await this.ctx.storage.put('room',{...d,social:next});d.social=next;}
-     const payload={type:'social',social:socialView(next,r,now),serverNow:now};
+     const payload={type:'social',social:socialView(next,d.info,sentAt),serverNow:sentAt};
      for(const target of this.sockets()){const member=target.deserializeAttachment() as Attachment;if(!member.pending&&member.id&&d.tokens[member.id])send(target,payload);}
      send(ws,{type:'socialAck',requestID:msg.requestID});
     }catch(e){send(ws,{type:'socialError',requestID:msg.requestID,error:error(e)});}
