@@ -165,7 +165,7 @@ export class RoomClient {
   const url=new URL(API+'/api/rooms/'+this.session.code,location.origin);url.protocol=url.protocol==='https:'?'wss:':'ws:';const ws=this.ws=new WebSocket(url);clearTimeout(this.handshakeTimer);this.handshakeTimer=setTimeout(()=>this.socketClosed(ws,generation),10000);
   ws.onopen=()=>{
    if(generation!==this.connectGeneration||this.ws!==ws)return;
-   this.peerAttempts.clear();this.lastSocketTick=this.lastSocketMessage=Date.now();ws.send(JSON.stringify({type:'hello',...this.session}));
+   this.peerAttempts.clear();this.lastSocketTick=this.lastSocketMessage=Date.now();ws.send(JSON.stringify({type:'hello',...this.session,reactionCatalogVersion:1}));
    this.socketHeartbeat=setInterval(()=>{
     if(generation!==this.connectGeneration||this.ws!==ws)return;
     const now=Date.now(),delayed=now-this.lastSocketTick>30000;this.lastSocketTick=now;

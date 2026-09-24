@@ -42,3 +42,4 @@
 @media(min-width:741px) and (max-height:500px) and (orientation:landscape){
  .app:has(.social-chat-trigger) .mj-table .mj-rack:is(.mj-rack-left,.mj-rack-right){top:calc(50% - 20px)}
 }
+.social-sticker-grid button{min-width:0}.social-sticker-grid button>span{max-width:100%;overflow-wrap:anywhere}
