@@ -1,4 +1,7 @@
 export const socialText:Record<string,string>={
+ '表情':'Reaction','选择图片（可多选）':'Choose images (multiple allowed)',
+ '支持 GIF / PNG，每张不超过 2 MB、1024 × 1024。动图自动生成静态预览。':'GIF / PNG, up to 2 MB and 1024 × 1024 each. Animated images get an automatic still preview.',
+ '静态预览生成失败':'Could not generate a still preview', '上传中':'Uploading','已上传':'Uploaded',
  '房间聊天':'Room chat','发送表情':'Send a reaction','未读消息':'Unread messages',
  '聊天记录':'Chat history','还没有消息':'No messages yet','消息':'Message','说点什么…':'Say something…','发送消息':'Send message',
  '全桌可见 · 保留最近 80 条':'Visible to the table · Last 80 messages','观战中 · 聊天只读':'Spectating · Read-only chat',

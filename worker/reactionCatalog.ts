@@ -80,7 +80,7 @@ export async function reactionAPI(request:Request,env:ReactionEnv):Promise<Respo
    if(entries.length>=100)return json({error:'最多保存 100 个表情'},409);
    const body=await boundedBody(request,limit*2+16384);
    const form=await new Response(body,{headers:{'Content-Type':request.headers.get('Content-Type')||''}}).formData();
-   const zh=form.get('zh'),en=form.get('en'),image=form.get('image'),still=form.get('still');
+   const zh=form.get('zh')??'表情',en=form.get('en')??'Reaction',image=form.get('image'),still=form.get('still');
    if(typeof zh!=='string'||typeof en!=='string'||![zh,en].every(v=>v.trim()&&v.length<=40&&!/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/.test(v)))throw new CatalogError('请填写 1–40 字的中英文名称');
    if(!image||typeof image==='string'||!still||typeof still==='string')throw new CatalogError('请选择图片和静态预览');
    const bytes=new Uint8Array(await image.arrayBuffer()),preview=new Uint8Array(await still.arrayBuffer());

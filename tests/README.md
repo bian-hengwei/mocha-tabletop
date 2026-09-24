@@ -225,3 +225,5 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 `npm run build` 后运行 `node tests/ui/reaction-admin.integration.mjs`。脚本自启本地 Worker/SQLite Durable Objects 与 Vite，默认独占 8893（Worker）、8894（inspector）和 5293（Vite）；可通过 `REACTION_TEST_PORT` 和 `REACTION_FRONTEND_PORT` 调整。每次生成独立临时存储和随机测试凭据，退出清理，不使用远端存储。检查认证、来源、上传草稿/预览/上架/下架/确认删除、两种房间发送、双语七尺寸及退出；截图保存在忽略的 `test-results/reaction-admin/`，需要实际视觉复核。加入 CI social 组，保持既有回归覆盖。
 
 `node tests/network/reaction-storage.integration.mjs` 使用本地 workerd/SQLite 验证跨块图片字节、写入中途失败的事务回滚、并发版本冲突、实例隔离及删除。管理页集成还验证并发上传与服务重启后的持久化。
+
+表情管理集成支持 `TEST_BROWSER=webkit`，并检查无名称的单文件/批量上传、混合有效/无效文件、GIF 首帧像素、原动图字节保持及减少动态效果的静态图片选择。

@@ -8,3 +8,5 @@
 .admin-card li>.admin-actions{display:flex;gap:8px;flex:0 0 auto;flex-wrap:wrap}@media(max-width:430px){.admin-card li>.admin-actions{grid-column:2;grid-row:2}.admin-actions button{padding:10px 12px}}
 
 .admin-preview{display:block;overflow:hidden}.admin-preview img{width:100%;height:100%;object-fit:contain}
+
+.admin-page .admin-error{white-space:pre-wrap;overflow-wrap:anywhere}.admin-upload label{grid-column:1/-1}
