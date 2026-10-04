@@ -2,7 +2,7 @@ import {DurableObject} from 'cloudflare:workers';
 import {discoveryNetwork} from './discovery';
 import {botTurnDelay,changeBots,nextBotSeat,stepBot,continueBotRound} from '../src/core/roomBots';
 import {supportsBots} from '../src/core/bots';
-import { advanceMatchClock,applyMatch,createMatch,matchDeadline,validKind,validProfile,viewRoomMatch,MAX_SPECTATORS,normalizeGameOptions,roomLimits,validateMatchForRoom,type MatchState,type RoomInfo,type RoomMode,type RoomCandidate } from '../src/core/room';
+import { advanceMatchClock,pauseMatchClock,resumeMatchClock,applyMatch,createMatch,matchDeadline,validKind,validProfile,viewRoomMatch,MAX_SPECTATORS,normalizeGameOptions,roomLimits,validateMatchForRoom,type MatchState,type RoomInfo,type RoomMode,type RoomCandidate } from '../src/core/room';
 import type {Player} from '../src/core/types';
 interface Env {ROOMS:DurableObjectNamespace<GameRoom>;DIRECTORY:DurableObjectNamespace<RoomDirectory>;ASSETS:Fetcher;ALLOWED_ORIGINS?:string}
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store'}});
@@ -115,11 +115,18 @@ export class GameRoom extends DurableObject<Env>{
  }
  private async save(){
   const d=this.data;if(!d)return;
+  this.syncMatchClock(Date.now());
   const canAct=!d.ended&&d.expires>Date.now()&&d.info.mode==='cloud'&&!d.info.botError&&d.match&&d.info.players.every(p=>this.connected(p.id))&&nextBotSeat(d.info,d.match);
   if(canAct&&d.match){if(d.botRevision!==d.match.revision||!d.botDue){d.botRevision=d.match.revision;d.botDue=Date.now()+botTurnDelay(d.info.kind);}}
   else {delete d.botDue;delete d.botRevision;}
   await this.ctx.storage.put('room',d);
   await this.scheduleAlarm();
+ }
+ /** A disconnect freezes durable game time once; reconnecting every participant restores it. */
+ private syncMatchClock(now:number){const d=this.data;if(!d?.match||d.ended||d.info.mode!=='cloud'||!d.info.started)return false;
+  const connected=d.info.players.every(p=>this.connected(p.id));
+  const next=connected?resumeMatchClock(d.match,d.info.kind,d.info.players,now):pauseMatchClock(d.match,d.info.kind,d.info.players,now);
+  if(next===d.match)return false;d.match=next;d.info.revision++;return true;
  }
  private async scheduleAlarm(){const d=this.data;if(d)await this.ctx.storage.setAlarm(Math.min(d.expires,d.botDue??Infinity,d.match?matchDeadline(d.match,d.info.kind)||Infinity:Infinity,this.ctx.getWebSockets().some(ws=>!(ws.deserializeAttachment() as Attachment).authenticated)?Date.now()+30000:Infinity));}
  // Renew admitted-player activity in batches, rather than writing on every heartbeat.

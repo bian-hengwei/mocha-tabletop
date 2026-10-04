@@ -1,0 +1,23 @@
+.dg-stage .dg-private-answer {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: calc(100% - 20px);
+  border: 1px solid #a77a3f;
+  border-radius: 9px;
+  background: #17231eea;
+  padding: 6px 9px;
+  color: #ffe09a;
+  box-shadow: 0 2px 8px #0005;
+}
+
+.dg-private-answer small { font-size: 10px; color: #d9c897; }
+
+.dg-bottom, .dg-guess-form, .dg-guess-form label { min-width: 0; }
+.dg-guess-form input { min-width: 0; width: 100%; box-sizing: border-box; }
+.dg-draw-tools button { min-height: 44px; }
+.dg-canvas:focus-visible { outline: 3px solid #b4772f; outline-offset: -5px; }

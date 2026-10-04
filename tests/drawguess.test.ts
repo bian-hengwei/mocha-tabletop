@@ -1,6 +1,6 @@
 import {describe,expect,it} from 'vitest';
 import {drawguess,advanceDrawGuessClock} from '../src/core/games/drawguess';
-import {advanceMatchClock,createMatch,viewMatch} from '../src/core/room';
+import {advanceMatchClock,createMatch,pauseMatchClock,resumeMatchClock,viewMatch} from '../src/core/room';
 import type {Player} from '../src/core/types';
 
 const players:Player[]=[
@@ -14,6 +14,7 @@ describe('you draw, I guess',()=>{
   const drawer=drawguess.view(game,players[0].id),other=drawguess.view(game,players[1].id),spectator=drawguess.view(game,'',true);
   expect(drawer.actions[0].choices).toHaveLength(3);expect(other.actions).toEqual([]);expect(JSON.stringify(other)).not.toContain('apple');expect(JSON.stringify(spectator)).not.toContain('apple');
   game=drawguess.apply(game,players[0].id,{action:'choose',values:[drawer.actions[0].choices[0].id]});
+  expect(drawguess.view(game,players[0].id).board.answer).toBe(drawer.actions[0].choices[0].title);
   expect(drawguess.view(game,players[1].id).board.answer).toBeUndefined();expect(drawguess.view(game,'',true).board.answer).toBeUndefined();
  });
  it('does not echo a correct answer until reveal, then awards both players',()=>{
@@ -25,5 +26,29 @@ describe('you draw, I guess',()=>{
  });
  it('bounds strokes and only accepts them from the active drawer',()=>{
   let game=advanceDrawGuessClock(drawguess.create(players,3),0);const word=drawguess.view(game,players[0].id).actions[0].choices[0];game=drawguess.apply(game,players[0].id,{action:'choose',values:[word.id]});expect(()=>drawguess.apply(game,players[1].id,{action:'stroke',values:['1,2','3,4'],text:'#112233'})).toThrow();game=drawguess.apply(game,players[0].id,{action:'stroke',values:['1,2','3,4'],text:'#112233'});expect(drawguess.view(game,players[1].id).board.strokes).toHaveLength(1);expect(()=>drawguess.apply(game,players[0].id,{action:'stroke',values:['1001,2','3,4'],text:'#112233'})).toThrow();
+ });
+ it('uses configured rounds as complete equal drawing cycles',()=>{
+  let game=advanceDrawGuessClock(drawguess.create(players,12,{language:'en',drawRounds:2}),100),drawers:number[]=[];
+  while(!game.finished){
+   drawers.push(game.drawer);
+   const choice=drawguess.view(game,players[game.drawer].id).actions[0].choices[0];
+   game=drawguess.apply(game,players[game.drawer].id,{action:'choose',values:[choice.id]});
+   game=advanceDrawGuessClock(game,1);game=advanceDrawGuessClock(game,game.deadlineAt+1);
+   game=advanceDrawGuessClock(game,game.revealUntil+1);
+  }
+  expect(drawers).toEqual([0,1,2,0,1,2]);expect(game.rounds).toBe(2);expect(game.round).toBe(6);
+ });
+ it('rejects non-members on every direct action without changing state',()=>{
+  let game=advanceDrawGuessClock(drawguess.create(players,4),100);const choice=drawguess.view(game,players[0].id).actions[0].choices[0],before=structuredClone(game);
+  for(const command of [{action:'choose',values:[choice.id]},{action:'guess',values:[],text:'apple'},{action:'stroke',values:['1,1','2,2'],text:'#112233'}])expect(()=>drawguess.apply(game,'intruder',command)).toThrow('不在本局中');
+  expect(game).toEqual(before);
+ });
+ it('freezes a trusted match deadline across a disconnect and resumes only remaining time',()=>{
+  let match=advanceMatchClock(createMatch('drawguess',players,{language:'en'}),'drawguess',players,100);
+  const choice=viewMatch(match,'drawguess',players[0].id).view.actions[0].choices[0];
+  match={...match,game:drawguess.apply(match.game,players[0].id,{action:'choose',values:[choice.id]})};match=advanceMatchClock(match,'drawguess',players,200);
+  const deadline=match.game.deadlineAt,paused=pauseMatchClock(match,'drawguess',players,1000);expect(paused.game.deadlineAt).toBe(0);expect(paused.game.pausedRemaining).toBe(deadline-1000);
+  expect(advanceMatchClock(paused,'drawguess',players,deadline+100000).game.phase).toBe('draw');
+  const resumed=resumeMatchClock(paused,'drawguess',players,200000);expect(resumed.game.deadlineAt).toBe(200000+deadline-1000);expect(advanceMatchClock(resumed,'drawguess',players,resumed.game.deadlineAt+1).game.phase).toBe('reveal');
  });
 });

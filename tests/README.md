@@ -193,6 +193,10 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 ## 单机模式
 
+- `npx vitest run tests/drawguess.test.ts tests/practice.test.ts`：Mocha Sketch 的每人完整作画轮次、提示/答案隐私、受信任时钟、掉线剩余时间冻结、同屏试玩恢复与操作边界。
+- `BASE_URL=http://127.0.0.1:5311 node tests/ui/drawguess.integration.mjs`：Mocha Sketch 中英七种横竖屏尺寸的私密选词、实际绘画、猜词、无横向溢出与截图。
+- `TEST_API_BASE=http://127.0.0.1:8911 node tests/network/drawguess-cloud.integration.mjs`：三人云端绘画、观战隐私、掉线重连时间冻结、并发笔画/猜词的原子提交与计分。
+
 - `npx vitest run tests/practice.test.ts tests/storage.test.ts`：八款人机游戏的全部合法人数与三档难度、合法推进、完整寿司三轮、单人视图/操作边界、旧试玩存档、保存/重开与战绩。
 - `BASE_URL=http://127.0.0.1:5218 node tests/ui/local-play.integration.mjs`：真实 App 单机人数/难度选择、八款人机与四款交流游戏、双语八尺寸与旋转、刷新/语言/重开/战绩/退出；支持 `TEST_BROWSER=webkit`。对生产预览可加 `TEST_OFFLINE=1` 验证缓存后断网开局与恢复（Chromium）。终局界面使用显式 fixture，完整规则终局由单测覆盖。
 

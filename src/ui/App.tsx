@@ -2,7 +2,7 @@ import {RoomAudience, JoinRequests} from './RoomAudience';
 import {supportsBots} from '../core/bots';
 import type {BotDifficulty} from '../core/bots/types';
 import {botTurnDelay} from '../core/roomBots';
-import {type Practice, readPractice, writePractice, createPractice, restartPractice, practiceView, applyPractice, hasPracticeBotTurn, stepPracticeBot, practiceBotRoundWaiting, continuePracticeRound} from '../local/practice';
+import {type Practice, readPractice, writePractice, createPractice, restartPractice, practiceView, applyPractice, advancePracticeClock, hasPracticeBotTurn, stepPracticeBot, practiceBotRoundWaiting, continuePracticeRound} from '../local/practice';
 import {LocalPlayOptions} from './LocalPlayOptions';
 import {AddSeatChoices,BotSeatControls,BotRosterSummary,botDifficultyLabel} from './BotControls';
 import {formatGameText} from './gameText';
@@ -97,6 +97,27 @@ export function App() {
         if (practice)
             setMessage('浏览器无法保存试玩，关闭网页后可能无法恢复');
     } }, [practice]);
+    // The browser is the trusted host for pass-and-play. Restore and schedule the persisted deadline;
+    // player commands themselves never carry a time-advance action.
+    useEffect(() => {
+        if (!practice || practice.kind !== 'drawguess') return;
+        const current = practiceRef.current;
+        if (current) {
+            const advanced = advancePracticeClock(current, Date.now());
+            if (advanced !== current) {
+                updatePractice(advanced);
+                return;
+            }
+        }
+        const deadline = practiceView(practice).board.deadlineAt as number | undefined;
+        if (!deadline) return;
+        const timer = setTimeout(() => {
+            const saved = practiceRef.current;
+            if (saved && saved.id === practice.id)
+                updatePractice(advancePracticeClock(saved, Date.now()));
+        }, Math.max(20, deadline - Date.now() + 10));
+        return () => clearTimeout(timer);
+    }, [practice]);
     useEffect(() => {
         if (!practice || !hasPracticeBotTurn(practice)) return;
         const timer = setTimeout(() => {

@@ -2,7 +2,7 @@ import {isMahjongMode} from './mahjongModes';
 import type { Command, GameKind, GameView, Player, GameOptions } from './types';
 import { AVATARS, GAMES } from './types';
 import { modules } from './registry';
-import {advanceDrawGuessClock, drawGuessDeadline} from './games/drawguess';
+import {advanceDrawGuessClock, drawGuessDeadline, pauseDrawGuessClock, resumeDrawGuessClock} from './games/drawguess';
 import { WEREWOLF_PRESETS, werewolfPreset, werewolfPresetLimits } from './werewolfPresets';
 export type RoomMode = 'cloud' | 'lan';
 export interface RoomPlayer extends Player { ready:boolean; connected:boolean }
@@ -31,7 +31,7 @@ export function normalizeGameOptions(kind:GameKind,input:unknown,hostID:string):
  if(options.unoMode!==undefined&&(kind!=='uno'||!['single','match'].includes(options.unoMode as string)))throw new Error('七彩接龙模式无效');
  if(options.unoChallenge!==undefined&&(kind!=='uno'||typeof options.unoChallenge!=='boolean'))throw new Error('七彩接龙质疑设置无效');
  if(options.pokerCounter!==undefined&&(!['doudizhu','guandan'].includes(kind)||typeof options.pokerCounter!=='boolean'))throw new Error('记牌器设置无效');
- if(options.drawRounds!==undefined&&(!Number.isInteger(options.drawRounds)||kind!=='drawguess'||(options.drawRounds as number)<3||(options.drawRounds as number)>24))throw new Error('画词回合数无效');
+ if(options.drawRounds!==undefined&&(!Number.isInteger(options.drawRounds)||kind!=='drawguess'||(options.drawRounds as number)<1||(options.drawRounds as number)>6))throw new Error('画词回合数无效');
  if(options.drawSeconds!==undefined&&(![45,60,75,90].includes(options.drawSeconds as number)||kind!=='drawguess'))throw new Error('画词时长无效');
  if(kind!=='werewolf'){if(options.werewolfMode!==undefined||options.moderatorID!==undefined||options.werewolfPreset!==undefined||options.werewolfWin!==undefined)throw new Error('此游戏不支持主持模式选项');const result={...language,...(options.pokerCounter===true?{pokerCounter:true}:{}),...(options.mahjongMode?{mahjongMode:options.mahjongMode as GameOptions['mahjongMode']}:{}),...(options.unoMode?{unoMode:options.unoMode as 'single'|'match'}:{}),...(options.unoChallenge===false?{unoChallenge:false}:{}),...(options.drawRounds?{drawRounds:options.drawRounds as number}:{}),...(options.drawSeconds?{drawSeconds:options.drawSeconds as number}:{})};return Object.keys(result).length?result:undefined;}
  if(options.werewolfPreset!==undefined&&!WEREWOLF_PRESETS.some(p=>p.id===options.werewolfPreset))throw new Error('月夜议会配置无效');
@@ -96,6 +96,20 @@ export function applyMatch(match:MatchState,kind:GameKind,players:Player[],actor
 export function advanceMatchClock(match:MatchState,kind:GameKind,players:Player[],now:number):MatchState {
  if(kind!=='drawguess')return match;
  const game=advanceDrawGuessClock(match.game,now);if(JSON.stringify(game)===JSON.stringify(match.game))return match;
+ const actorRevisions={...match.actorRevisions};for(const p of players)actorRevisions[p.id]=(actorRevisions[p.id]||0)+1;
+ return {...match,game,revision:match.revision+1,actorRevisions};
+}
+/** Trusted connection owner freezes the current deadline on the first participant disconnect. */
+export function pauseMatchClock(match:MatchState,kind:GameKind,players:Player[],now:number):MatchState {
+ if(kind!=='drawguess')return match;
+ const game=pauseDrawGuessClock(match.game,now);if(JSON.stringify(game)===JSON.stringify(match.game))return match;
+ const actorRevisions={...match.actorRevisions};for(const p of players)actorRevisions[p.id]=(actorRevisions[p.id]||0)+1;
+ return {...match,game,revision:match.revision+1,actorRevisions};
+}
+/** Trusted connection owner restores a frozen deadline after every participant reconnects. */
+export function resumeMatchClock(match:MatchState,kind:GameKind,players:Player[],now:number):MatchState {
+ if(kind!=='drawguess')return match;
+ const game=resumeDrawGuessClock(match.game,now);if(JSON.stringify(game)===JSON.stringify(match.game))return match;
  const actorRevisions={...match.actorRevisions};for(const p of players)actorRevisions[p.id]=(actorRevisions[p.id]||0)+1;
  return {...match,game,revision:match.revision+1,actorRevisions};
 }

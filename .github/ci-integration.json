@@ -169,6 +169,12 @@
     },
     {
       "script": "tests/ui/spectators-live.integration.mjs"
+    },
+    {
+      "script": "tests/ui/drawguess.integration.mjs"
+    },
+    {
+      "script": "tests/network/drawguess-cloud.integration.mjs"
     }
   ]
 }

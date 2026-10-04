@@ -28,12 +28,15 @@
 | 七彩接龙 | 2–10 | 500 分比赛或单轮；可选 +4 质疑、选牌后出牌、手动喊牌和抓漏 |
 | 密语行动 | 4–12 | 双队词语线索、秘密密钥、零/不限猜词、违规线索补偿 |
 | 异词同伴 | 3–12 | 相近词语、顺序描述、秘密投票、平票辩护与复投 |
+| Mocha Sketch | 3–12 | 私密三选一画词、公开画板与猜词；每位玩家完成设定作画轮数 |
 
 三款新增玩法的范围、计分取舍及参考资料见 [中式棋牌桌规](docs/CLASSIC-GAMES.md)。麻将采用明确的 Mocha 聚会桌规，不等同于任一腾讯房间的全部番型。
 
 月夜议会的**法官主持**模式另需一名不参与游戏的法官：法官操作流程，玩家只查看自己的身份。**仅发身份**模式随机分配身份，后续由大家线下主持。
 
 本项目采用自己的游戏名称、界面与插画，牌面使用直观的功能名称。规则版本与数值核对见 [规则版本与显示兼容](docs/RECOGNIZABLE-RULES.md)，架构见 [实现说明](docs/ARCHITECTURE.md)。
+
+[Mocha Sketch rules](docs/DRAW-GUESS.md) describes its prompt privacy, scoring, drawing limits, and timer/reconnect behavior.
 
 ## 怎么玩
 
@@ -97,7 +100,7 @@ npm run check            # 单元测试、Worker 类型检查、前端类型检�
 npm run preview          # 查看生产构建；默认连接 .env.production 中的后端
 ```
 
-浏览器和联机回归的环境、命令见 [测试说明](tests/README.md)。GitHub Actions 在推送和 PR 时执行 `npm ci` 与 `npm run check`，并验证 Chromium 的语言切换、规则和九款游戏入口。
+浏览器和联机回归的环境、命令见 [测试说明](tests/README.md)。GitHub Actions 在推送和 PR 时执行 `npm ci` 与 `npm run check`，并验证 Chromium 的语言切换、规则和十三款游戏入口。
 
 ## 代码结构
 

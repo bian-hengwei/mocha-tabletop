@@ -1,6 +1,6 @@
 import {AVATARS, GAMES, type Command, type GameKind, type GameOptions, type Player} from '../core/types';
 import {modules} from '../core/registry';
-import {applyMatch, normalizeGameOptions, roomLimits, type MatchState, type RoomInfo} from '../core/room';
+import {advanceMatchClock,applyMatch, normalizeGameOptions, roomLimits, type MatchState, type RoomInfo} from '../core/room';
 import {continueBotRound, nextBotSeat, stepBot} from '../core/roomBots';
 import {supportsBots, validBotDifficulty} from '../core/bots';
 import type {BotDifficulty} from '../core/bots/types';
@@ -29,6 +29,11 @@ export function applyPractice(p:Practice,command:Command):Practice {
  const actor=p.mode==='solo'?p.players[0].id:p.viewer;
  return withMatch(p,applyMatch(matchFor(p),p.kind,p.players,actor,command,`local:${p.revision||1}`,p.revision||1));
 }
+/** Practice is the trusted local host: advance only from wall-clock effects or restore, never a UI action. */
+export function advancePracticeClock(p:Practice,now=Date.now()):Practice {
+ const match=matchFor(p),next=advanceMatchClock(match,p.kind,p.players,now);
+ return next===match?p:withMatch(p,next);
+}
 export function hasPracticeBotTurn(p:Practice){return p.mode==='solo'&&!p.botError&&!!nextBotSeat(roomFor(p),matchFor(p));}
 export function stepPracticeBot(p:Practice):Practice {return hasPracticeBotTurn(p)?withMatch(p,stepBot(roomFor(p),matchFor(p))):p;}
 export function practiceBotRoundWaiting(p:Practice){return p.mode==='solo'&&!practiceView(p).finished&&!practiceView(p).actions.some(a=>a.id==='nextRound')&&p.players.some(player=>player.bot&&modules[p.kind].view(p.game,player.id).actions.some(a=>a.id==='nextRound'));}
@@ -49,7 +54,7 @@ export function readPractice():Practice|null {
    if(!supportsBots(p.kind)||validBotDifficulty(p.difficulty)!==p.difficulty||p.players[0].bot||p.players.slice(1).some(player=>player.bot?.difficulty!==p.difficulty))return null;
    p.viewer=p.players[0].id;
   }else if(p.players.some(player=>player.bot))return null;
-  const view=practiceView(p);if(!Array.isArray(view.board.players)||!view.board.players.length)return null;
-  return p;
+  const restored=advancePracticeClock(p,Date.now()),view=practiceView(restored);if(!Array.isArray(view.board.players)||!view.board.players.length)return null;
+  return restored;
  }catch{return null;}
 }
