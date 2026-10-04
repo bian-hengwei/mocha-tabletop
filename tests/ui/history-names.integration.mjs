@@ -31,7 +31,7 @@ try{
   assert.match(await rows.nth(0).locator('small').textContent(),/UNO爱好者/);
   assert.match(await rows.nth(1).locator('small').textContent(),/梅林/);
   await page.getByRole('dialog').getByRole('button',{name:locale==='zh'?'关闭':'Close',exact:true}).click();
-  await page.locator('.home-footer button').last().click();
+  await page.getByRole('button',{name:locale==='zh'?'发现附近牌桌':'Find nearby tables',exact:true}).click();
   await expect(page.locator('.nearby-list button')).toHaveCount(3);
   for(let i=0;i<names.length;i++)assert.ok((await page.locator('.nearby-list b').nth(i).textContent()).startsWith(names[i]),`${locale} nearby host ${names[i]} remains verbatim`);
   await page.getByRole('dialog').getByRole('button',{name:locale==='zh'?'关闭':'Close',exact:true}).click();
