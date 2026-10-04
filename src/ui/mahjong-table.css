@@ -211,7 +211,7 @@
  .mj-table .river-self .mj-river-count{bottom:0}
 }
 @media(max-height:350px) and (orientation:landscape){
- .mj-table .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))){display:grid;grid-template-columns:minmax(0,1fr) 228px;align-items:center;gap:8px;padding:3px 8px}
+ .mj-table .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))){display:grid;grid-template-columns:minmax(0,1fr) 248px;align-items:center;gap:8px;padding:3px 8px}
  .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-hand-toolbar{grid-column:2;grid-row:1;display:grid;grid-template-columns:minmax(0,1fr) 80px;min-height:64px;gap:6px;align-items:center}
  .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-hints{flex:none;flex-direction:column;align-items:flex-start;gap:3px}
  .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-status{font-size:10px;line-height:12px;flex:none}
