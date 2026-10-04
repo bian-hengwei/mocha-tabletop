@@ -31,7 +31,7 @@
 - [Splendor 出版方规则](https://cdn.svc.asmodee.net/production-spacecowboys/uploads/2025/10/SCSPL01EN_SPLENDOR_RULES_LIGHT.pdf)
 - [Exploding Kittens 规则入口](https://www.explodingkittens.com/pages/rules-kittens)与[2025 英文规则](https://cdn.shopify.com/s/files/1/0345/9180/1483/files/ekoe-instructions-english.pdf?v=1743802429)
 - [Avalon 出版方验证规则](https://rules.dized.com/game/rZluqS52QmGdpoVxcmVLtg/the-resistance-avalon)，包括角色替换、任务与刺杀章节
-- [Gamewright Sushi Go!](https://www.gamewright.com/product/Sushi-Go)；[出版方 2014 规则镜像](https://s3.amazonaws.com/ai-assets/weymouth/sushigotm-rules_1381_orig.pdf)
+- [Gamewright Sushi Go!](https://www.gamewright.com/product/Sushi-Go)；[出版方 2014 规则](https://gamewright.com/pdfs/Rules/SushiGoTM-RULES.pdf)
 - [Century 出版方基础规则](https://cdn.svc.asmodee.net/production-nextmove/uploads/sites/4/2024/06/EN-Century-Spice-Road-Rules_2024_compressed.pdf)，独立牌表来源见 [ASSETS.md](ASSETS.md)
 - [Mattel 108 张 UNO 产品与规则入口](https://m.service.mattel.com/us/Technical/productDetail?prodno=W2085)；[英文规则](https://service.mattel.com/instruction_sheets/W2085-Eng.pdf)
 - [CGE Codenames](https://www.czechgames.com/games/codenames)；[原版规则镜像](https://cdn.1j1ju.com/medias/89/5e/99-codenames-rule.pdf)。采用桌游规则，不以手机 App 的放宽线索规则替代。
@@ -72,3 +72,7 @@
 `tests/recognizable-rules.test.ts` 另核对基础组件数量、任务人数、默认比赛规则、新旧术语翻译和旧牌局恢复。引擎翻译测试调用实际应用翻译入口，覆盖静态文本、嵌套牌名和动态日志。
 
 接龙的 +2（含起始牌）与关闭质疑后的 +4 均等待受罚玩家明确确认，无论其手中是否持有功能牌。开启质疑时仍等待接受或质疑；最后一张的罚牌确认后才计分。旧存档缺少待罚字段时沿用已完成的状态，新增待罚窗口可序列化恢复。
+
+### 喵喵危机牌桌
+
+手牌点击只切换选择；普通出牌、交牌和同名组合均通过独立按钮提交。响应窗口保留直接否决按钮。弃牌堆可展开玩家视图已经公开的最近 12 张牌，按最新在前排列；这不是完整弃牌历史，也不包含淘汰玩家的隐藏手牌。规则与私人视图边界不变。

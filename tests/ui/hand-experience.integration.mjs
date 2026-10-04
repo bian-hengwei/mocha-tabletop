@@ -16,9 +16,10 @@ try{
   await fit(page.locator('.ng-sushi-hand-panel'));await cards.first().tap();await expect(cards.first()).toHaveAttribute('aria-pressed','true');
   await page.waitForTimeout(350);await cards.first().tap();await expect(cards.first()).toHaveAttribute('aria-pressed','false');
   await cards.first().focus();await page.keyboard.press('Enter');await page.keyboard.press('Enter');await expect(cards.first()).toHaveAttribute('aria-pressed','false');
-  await cards.last().scrollIntoViewIfNeeded();const touch=await cards.last().boundingBox();await page.touchscreen.tap(touch.x+touch.width/2,touch.y+touch.height/2);await page.touchscreen.tap(touch.x+touch.width/2,touch.y+touch.height/2);await expect(page.locator('.ng-sushi-hand-panel .ng-sushi-card:enabled')).toHaveCount(0);await expect(page.locator('.ng-sushi-card.ng-selected')).toHaveCount(1);
+  await cards.last().scrollIntoViewIfNeeded();const touch=await cards.last().boundingBox();await page.touchscreen.tap(touch.x+touch.width/2,touch.y+touch.height/2);await page.touchscreen.tap(touch.x+touch.width/2,touch.y+touch.height/2);await expect(page.locator('.ng-sushi-hand-panel .ng-sushi-card:enabled')).toHaveCount(10);await expect(page.locator('.ng-sushi-card.ng-selected')).toHaveCount(0);
+  await cards.last().click();await page.locator('.ng-sushi-confirm>.ng-action').click();await expect(page.locator('.ng-sushi-hand-panel .ng-sushi-card:enabled')).toHaveCount(0);await expect(page.locator('.ng-sushi-card.ng-selected')).toHaveCount(1);
   await page.getByRole('button',{name:locale==='zh'?'重新选牌':'Choose again',exact:true}).click();await expect(page.locator('.ng-sushi-card.ng-selected')).toHaveCount(0);
-  await cards.first().dblclick();await expect(page.locator('.ng-sushi-card.ng-selected')).toHaveCount(1);
+  await cards.first().dblclick();await expect(page.locator('.ng-sushi-card.ng-selected')).toHaveCount(0);await expect(page.locator('.ng-sushi-hand-panel .ng-sushi-card:enabled')).toHaveCount(10);await cards.first().click();
   await page.getByRole('combobox',{name:'Seat',exact:true}).selectOption('english-player-1');await expect(page.locator('.ng-sushi-card.ng-selected')).toHaveCount(0);
   await page.screenshot({path:`${out}/sushi-${locale}-${width}.png`});
   await go('sushi&scenario=chopsticks');
@@ -40,7 +41,7 @@ try{
   await go('bombs');if(width<=600&&height>=451)await fit(page.locator('.bt-hand-zone'));const hand=page.locator('.bt-hand .bt-card');const attack=hand.filter({hasText:locale==='zh'?'攻击':'Attack'}).first(),skip=hand.filter({hasText:locale==='zh'?'跳过':'Skip'}).first();
   await attack.tap();await skip.tap();await expect(page.locator('.bt-hand .bt-selected')).toHaveCount(1);await expect(skip).toHaveAttribute('aria-pressed','true');
   await page.waitForTimeout(350);await skip.tap();await expect(page.locator('.bt-hand .bt-selected')).toHaveCount(0);
-  const count=await hand.count();await attack.dblclick();await expect(hand).toHaveCount(count-1);await expect(page.locator('.bt-response')).toBeVisible();
+  const count=await hand.count();await attack.dblclick();await expect(hand).toHaveCount(count);await expect(attack).toHaveAttribute('aria-pressed','false');await expect(page.locator('.bt-response')).toHaveCount(0);await attack.click();await page.locator('.bt-focus .bt-primary').click();await expect(hand).toHaveCount(count-1);await expect(page.locator('.bt-response')).toBeVisible();
   await page.screenshot({path:`${out}/bombs-${locale}-${width}.png`});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   await go('bombs&scenario=combo');const pair=hand.filter({hasText:locale==='zh'?'跳过':'Skip'});await pair.nth(0).click();await pair.nth(1).click();await pair.nth(1).dblclick();await expect(page.locator('.bt-hand .bt-selected')).toHaveCount(2);await expect(page.locator('.bt-response')).toHaveCount(0);
   await page.locator('.bt-focus .bt-primary').click();await expect(page.locator('.bt-phase-target')).toBeVisible();

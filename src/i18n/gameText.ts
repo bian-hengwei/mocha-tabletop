@@ -79,7 +79,7 @@ export const gameText:Record<string,string>={
  '玩家':'Player','没有存活玩家':'No active players remain','效果被等等':'The effect was stopped','抽牌堆已洗匀':'The draw pile was shuffled','目标没有手牌':'That player has no cards',
  '玩家 ID 不能为空':'Player ID cannot be empty','每人 7 张普通牌和 1 张安抚牌':'Each player starts with seven regular cards and one Defuse card',
  '不在本局':'Not in this game','仅本局玩家可查看':'Only players in this game can view it','自由出牌':'Play freely','出牌，或抽一张':'Play a card or draw one',
- '我的手牌':'My hand','最近弃牌':'Recent discards','抽牌':'Draw','出牌':'Play','对子':'Pair','三张':'Three of a kind','选择目标':'Choose a player',
+ '我的手牌':'My hand','最近弃牌':'Recent discards','最多显示最近 12 张，最新在前。':'Up to 12 recent discards, newest first.','关闭弃牌':'Close discards','还没有弃牌':'No discards yet','抽牌':'Draw','出牌':'Play','对子':'Pair','三张':'Three of a kind','选择目标':'Choose a player',
  '选择一位玩家':'Choose one player','取消':'Cancel','指定牌名':'Name a card','想要哪张牌？':'Which card would you like?','等等响应':'Response window',
  ' · 已等等':' · Stopped','响应':'Responses','已确认':'Confirmed','待响应':'Waiting','继续':'Continue','恢复效果':'Restore effect','交出手牌':'Give a card',
  '交出一张':'Give one card','偷瞄牌堆':'Sneak peek','顶部三张 · 仅你可见':'Top three cards · Only you can see them','牌堆顶':'Top of the deck',

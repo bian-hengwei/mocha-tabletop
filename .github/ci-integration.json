@@ -4,6 +4,9 @@
       "script": "tests/ui/app-usability.integration.mjs"
     },
     {
+      "script": "tests/ui/home-experience.integration.mjs"
+    },
+    {
       "script": "tests/ui/player-names.integration.mjs"
     },
     {
@@ -16,7 +19,13 @@
       "script": "tests/ui/history-names.integration.mjs"
     },
     {
+      "script": "tests/ui/history-filters.integration.mjs"
+    },
+    {
       "script": "tests/ui/profile-input.integration.mjs"
+    },
+    {
+      "script": "tests/ui/profile-layout.integration.mjs"
     },
     {
       "script": "tests/ui/dialog-boundaries.integration.mjs"
@@ -102,6 +111,12 @@
     },
     {
       "script": "tests/ui/mahjong-modes.integration.mjs"
+    },
+    {
+      "script": "tests/ui/mahjong-public.integration.mjs"
+    },
+    {
+      "script": "tests/ui/poker-expanded-hand.integration.mjs"
     }
   ],
   "cards": [
@@ -133,7 +148,13 @@
       "script": "tests/ui/bombs-viewport.integration.mjs"
     },
     {
+      "script": "tests/ui/bombs-experience.integration.mjs"
+    },
+    {
       "script": "tests/ui/uno-sushi-viewport.integration.mjs"
+    },
+    {
+      "script": "tests/ui/sushi-table.integration.mjs"
     }
   ],
   "social": [
@@ -151,6 +172,9 @@
     },
     {
       "script": "tests/ui/word-viewport.integration.mjs"
+    },
+    {
+      "script": "tests/ui/undercover-turn-navigation.integration.mjs"
     },
     {
       "script": "tests/ui/word-round.integration.mjs"

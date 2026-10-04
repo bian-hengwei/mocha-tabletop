@@ -41,11 +41,11 @@
 
 ## 界面与牌面
 
-麻将点选手牌后抬起，再点同一张牌打出；点桌面或按 Escape 取消。换三张仍需选满同花色三张后确认；定缺直接选择花色。可用的碰、杠、胡和过位于手牌右上方，合法性继续由引擎控制。
+麻将点选手牌后抬起，再点“打出”确认；再点已选牌、点桌面或按 Escape 取消。换三张仍需选满同花色三张后确认；定缺直接选择花色。可用的碰、杠、胡和过位于手牌右上方，合法性继续由引擎控制。
 
 牌桌延续 Mocha 的墨绿桌面、象牙色牌面与低饱和金色反馈。所有手牌、出牌、副露、暗牌背面和结算展示均使用本地 SVG；牌面来自明确 CC0 授权的完整素材，来源见 [素材说明](ASSETS.md)；英文界面保留麻将的传统图案，辅助名称与控件按语言切换。
 
-麻将手机竖屏以两行完整展示手牌，横屏和宽屏使用单行；新摸牌保留原 ID，移到显示顺序最右端并留出间距。旋转保留选择，换座和回合改变清空选择。独立的麻将布局为旋转牌面预留真实占位，副露与牌河分开。小屏桌面展示各家最近六张弃牌，宽屏展示最近十二张；点击牌河数量查看完整记录，支持换家、Escape 和关闭后焦点恢复。胡牌记录使用同样的弹窗交互。
+麻将手机竖屏以两行完整展示手牌，横屏和宽屏使用单行；新摸牌保留原 ID，移到显示顺序最右端并留出间距。旋转保留选择，换座和回合改变清空选择。独立的麻将布局为旋转牌面预留真实占位，副露与牌河分开。小屏桌面展示各家最近六张弃牌，宽屏展示最近十二张；点击顶部牌河入口或牌河数量查看完整公共牌面，支持切换玩家、完整弃牌与副露、Escape 和关闭后焦点恢复；暗杠仍只展示引擎允许当前查看者看到的牌面。胡牌记录使用同样的弹窗交互。
 
 出牌动画从公开牌河的新增牌计算，自动过牌后也能播放：由出牌方向移到中央展示，再落向对应牌河。不依赖仍在等待中的响应窗口，不延迟权威状态。初次加载和换座不重播旧牌；新局通过 match ID 重置。减少动态效果设置下保留静态牌面提示，不做位移动画。
 
@@ -70,3 +70,9 @@ Mahjong interaction and table-layout reference: [Tencent Happy Mahjong screensho
 房主可在开桌选项或准备室开启记牌器，默认关闭；修改选项会清除准备状态。计数为整副牌减去自己的手牌和公开打出的牌，不读取对手手牌，也不重复扣除地主底牌。观战者只扣除公开出牌；关闭时不下发计数。计数可收起，短横屏默认收起。
 
 Both poker tables retain seat-local public plays through a completed trick until the next lead. Hands overlap with visible rank/suit corners. Swipe to browse, hold then drag to select, or drag with a mouse; starting on a selected card deselects the swept cards. Plays require explicit confirmation. The optional host-controlled counter shows unplayed cards outside the viewer's hand; spectators receive public-only counts. It defaults off and option changes invalidate readiness.
+
+### 展开手牌
+
+斗地主与掼蛋可从手牌栏展开完整牌面网格。点数顺序沿用权威视图；花色顺序只改变弹窗排列，不修改手牌、规则或已选牌。网格中的选择与底部手牌同步，关闭弹窗仍保留本次选择，出牌必须单独确认。掼蛋的多种合法牌型仍由原牌型弹窗明确选择。换座、回合或手牌变化会关闭展开视图并清除旧选择；等待操作时可查看自己的牌，观战者没有入口。
+
+The expanded hand offers full card faces and rank/suit ordering without changing the deal. Selection is shared with the table and always requires a separate play confirmation. The existing combination declaration dialog remains available. Viewer or turn changes close the panel; spectators receive no hand panel.

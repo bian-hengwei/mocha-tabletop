@@ -19,7 +19,7 @@ try{
   await page.keyboard.press('Enter');await dialog.waitFor();await dialog.locator('header button').click();assert(await install.evaluate(node=>node===document.activeElement),'Pointer close returns focus to the install opener');
   for(const [width,height] of [[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900]]){
    await page.setViewportSize({width,height});
-   for(const button of await page.locator('.top-tools button,.home-footer button').all()){
+   for(const button of await page.locator('.top-tools button:visible,.home-footer button:visible').all()){
     const rect=await button.boundingBox();assert(rect&&rect.height>=44&&rect.width>=44,'Header controls must have usable touch targets');
    }
    const help=page.getByRole('button',{name:language==='zh'?'玩法和安装帮助':'Rules and app help',exact:true});await help.click();
