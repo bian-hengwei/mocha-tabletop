@@ -198,3 +198,10 @@
 
 .mj-public-dialog>header h2{overflow-wrap:anywhere;line-height:1.35}
 @media(max-height:650px) and (orientation:portrait){.mj-table .mj-hand-toolbar{min-height:46px}.mj-table .mj-hand{row-gap:18px}.mj-table .mj-rack:is(.mj-rack-left,.mj-rack-right){top:38%}}
+
+/* At compact landscape heights, fit the face-down opponent stacks inside the table rail. */
+@media(max-width:740px) and (max-height:500px) and (orientation:landscape){
+ .mj-rack.mj-rack-left,.mj-rack.mj-rack-right{gap:0}
+ .mj-rack.mj-rack-left .mj-face,.mj-rack.mj-rack-right .mj-face{height:7px}
+ .mj-table .mj-rack.mj-rack-left .mahjong-art,.mj-table .mj-rack.mj-rack-right .mahjong-art{width:7px;height:11px}
+}

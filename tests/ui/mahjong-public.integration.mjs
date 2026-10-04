@@ -36,6 +36,7 @@ try{
   }
   await page.goto(`${base}/tests/ui/classic.fixture.html?scenario=dense&spectator`);await expect(page.locator('.mj-hand-panel')).toHaveCount(0);await opener.click();await seats.nth(2).click();await expect(panel.locator('.mj-public-melds .mj-back')).toHaveCount(4);await expect(panel.locator('.mj-public-melds [role=img]')).toHaveCount(0);
   await page.goto(`${base}/tests/ui/classic.fixture.html?scenario=dense`);await opener.click();await page.evaluate(()=>{const select=document.querySelector('[aria-label=Seat]');select.value='1';select.dispatchEvent(new Event('change',{bubbles:true}));});await expect(panel).toHaveCount(0);
+  await page.setViewportSize({width:568,height:320});await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=mahjong&players=max`);const compactArena=page.locator('.mj-arena');assert(await compactArena.evaluate(el=>el.scrollHeight<=el.clientHeight+1),'compact arena keeps opponent racks inside its bounds');await page.screenshot({path:`${out}/${locale}-568-compact-arena.png`});
   await context.close();console.log(`PASS ${locale}: spectator public view and seat-change privacy reset`);
  }
  assert.deepEqual(errors,[]);
