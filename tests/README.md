@@ -234,3 +234,4 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `tests/ui/history-filters.integration.mjs`：真实 App 中英八尺寸的 500 条战绩，按游戏/联机/单机/同屏筛选、统计排除人机与主持、空结果、旋转、44px 控件、取消/确认删除及刷新后不恢复；支持 WebKit。
 
 - `BASE_URL=<Vite> node tests/ui/relay-input.integration.mjs`：接龙文字草稿组合输入结束后的自动保存、刷新恢复、输入开始取消待发保存、明确提交、隐藏与换座清理、Unicode 字数与多行文本；中英八尺寸，支持 `TEST_BROWSER=webkit`。组合事件由 DOM 模拟，不替代系统输入法真机验收。
+- `tests/ui/classic-dense.integration.mjs`：密集牌河的逐玩家查看、弹窗标题与焦点返回；覆盖中英八尺寸及 740×350、741×350、740×351 断点，紧凑横屏检查独立 44px 查看目标。

@@ -205,3 +205,24 @@
  .mj-rack.mj-rack-left .mj-face,.mj-rack.mj-rack-right .mj-face{height:7px}
  .mj-table .mj-rack.mj-rack-left .mahjong-art,.mj-table .mj-rack.mj-rack-right .mahjong-art{width:7px;height:11px}
 }
+
+/* A side toolbar keeps dense rivers and their inspect targets reachable in short landscape. */
+@media(max-height:500px) and (orientation:landscape){
+ .mj-table .river-self .mj-river-count{bottom:0}
+}
+@media(max-height:350px) and (orientation:landscape){
+ .mj-table .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))){display:grid;grid-template-columns:minmax(0,1fr) 228px;align-items:center;gap:8px;padding:3px 8px}
+ .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-hand-toolbar{grid-column:2;grid-row:1;display:grid;grid-template-columns:minmax(0,1fr) 80px;min-height:64px;gap:6px;align-items:center}
+ .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-hints{flex:none;flex-direction:column;align-items:flex-start;gap:3px}
+ .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-status{font-size:10px;line-height:12px;flex:none}
+ .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-actions{max-width:100%;gap:3px;justify-content:flex-start}
+ .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-actions .mj-action{padding:4px 8px}
+ .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-hand-scroll{grid-column:1;grid-row:1;padding:12px 3px 4px}
+ .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-hand{justify-content:flex-start}
+}
+@media(max-width:740px) and (max-height:500px) and (orientation:landscape){
+ /* The 145px public inset leaves a 44px target 14px from each table edge, below its player. */
+ .mj-table .river-left .mj-river-count{position:absolute;left:auto;right:calc(100% + 87px);top:0}
+ .mj-table .river-right .mj-river-count{position:absolute;left:calc(100% + 87px);top:0}
+ .mj-table :is(.river-left,.river-right) .mj-river-count{min-height:44px}
+}
