@@ -178,6 +178,12 @@
     },
     {
       "script": "tests/network/drawguess-lan.integration.mjs"
+    },
+    {
+      "script": "tests/ui/draw-relay.integration.mjs"
+    },
+    {
+      "script": "tests/network/draw-relay.integration.mjs"
     }
   ]
 }

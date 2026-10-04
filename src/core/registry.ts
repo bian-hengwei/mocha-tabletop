@@ -11,4 +11,5 @@ import { uno } from './games/uno';
 import { codenames } from './games/codenames';
 import { undercover } from './games/undercover';
 import { drawguess } from './games/drawguess';
-export const modules:Record<GameKind,GameModule>={doudizhu,guandan,mahjong,gems,bombs,werewolf,avalon,sushi,century,uno,codenames,undercover,drawguess};
+import {drawrelay} from './games/drawrelay';
+export const modules:Record<GameKind,GameModule>={doudizhu,guandan,mahjong,gems,bombs,werewolf,avalon,sushi,century,uno,codenames,undercover,drawguess,drawrelay};

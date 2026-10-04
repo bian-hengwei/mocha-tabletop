@@ -169,9 +169,12 @@ export class GameRoom extends DurableObject<Env>{
  }
  async webSocketMessage(ws:WebSocket,message:string|ArrayBuffer){
   try{
-   if(typeof message!=='string'||message.length>150000)throw new Error('消息过大');
-   const a=ws.deserializeAttachment() as Attachment;const now=Date.now();if(!a.window||now-a.window>10000){a.window=now;a.messages=0;}a.lastSeen=now;a.messages=(a.messages||0)+1;if(a.messages>100)throw new Error('操作太频繁');ws.serializeAttachment(a);
+   const a=ws.deserializeAttachment() as Attachment;
+   const relayHandoff=a.authenticated&&a.id===this.data?.info.hostID&&this.data?.info.kind==='drawrelay'&&this.data.info.mode==='lan';
+   if(typeof message!=='string'||message.length>(relayHandoff?1750000:150000))throw new Error('消息过大');
+   const now=Date.now();if(!a.window||now-a.window>10000){a.window=now;a.messages=0;}a.lastSeen=now;a.messages=(a.messages||0)+1;if(a.messages>100)throw new Error('操作太频繁');ws.serializeAttachment(a);
    const msg=JSON.parse(message);const d=this.data;if(!d||d.ended||d.expires<=now)throw new Error('房间已结束');const r=d.info;
+   if(message.length>150000&&msg.type!=='switchToCloud')throw new Error('消息过大');
    if(msg.type==='hello'){
     const p=validProfile(msg.profile);if(a.authenticated&&a.id!==p.id)throw new Error('身份不匹配');if(msg.spectator!==undefined&&typeof msg.spectator!=='boolean')throw new Error('观战设置无效');if(!goodToken(msg.token))throw new Error('身份无效');
     if(d.tokens[p.id]&&d.tokens[p.id]!==msg.token||d.pendingTokens[p.id]&&d.pendingTokens[p.id]!==msg.token)throw new Error('身份不匹配');
@@ -202,8 +205,7 @@ export class GameRoom extends DurableObject<Env>{
     if(r.players.some(p=>!this.connected(p.id)))throw new Error('有玩家掉线，牌局已暂停');
     const timed=advanceMatchClock(d.match,r.kind,r.players,now);
     if(timed!==d.match){d.match=timed;r.revision++;await this.save();this.broadcast();}
-    d.match=applyMatch(d.match,r.kind,r.players,id,msg.command,msg.requestID,msg.actionRevision);
-    d.match=advanceMatchClock(d.match,r.kind,r.players,now);
+    d.match=applyMatch(d.match,r.kind,r.players,id,msg.command,msg.requestID,msg.actionRevision);d.match=advanceMatchClock(d.match,r.kind,r.players,now);
    }else if(msg.type==='continueBotRound'){
     if(r.mode!=='cloud'||!d.match||r.players.some(p=>!this.connected(p.id)))throw new Error('连接恢复后继续');d.match=continueBotRound(r,d.match,id);
    }else if(msg.type==='approve'){

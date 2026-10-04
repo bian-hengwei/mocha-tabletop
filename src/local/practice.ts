@@ -3,6 +3,7 @@ import {modules} from '../core/registry';
 import {advanceMatchClock,applyMatch, normalizeGameOptions, roomLimits, type MatchState, type RoomInfo} from '../core/room';
 import {continueBotRound, nextBotSeat, stepBot} from '../core/roomBots';
 import {supportsBots, validBotDifficulty} from '../core/bots';
+import {validateRelayState} from '../core/games/drawrelay';
 import type {BotDifficulty} from '../core/bots/types';
 
 export interface Practice {
@@ -54,6 +55,7 @@ export function readPractice():Practice|null {
    if(!supportsBots(p.kind)||validBotDifficulty(p.difficulty)!==p.difficulty||p.players[0].bot||p.players.slice(1).some(player=>player.bot?.difficulty!==p.difficulty))return null;
    p.viewer=p.players[0].id;
   }else if(p.players.some(player=>player.bot))return null;
+   if(p.kind==='drawrelay')validateRelayState(p.game,p.options?.relaySeconds??90);
   const restored=advancePracticeClock(p,Date.now()),view=practiceView(restored);if(!Array.isArray(view.board.players)||!view.board.players.length)return null;
   return restored;
  }catch{return null;}

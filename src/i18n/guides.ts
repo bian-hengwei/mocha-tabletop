@@ -3,6 +3,20 @@ import type {GameKind} from '../core/types';
 import type {Guide} from '../ui/RuleGuide';
 const guide=(edition:string,quick:string[],sections:[string,...string[]][]):Guide=>({edition,quick,sections:sections.map(([title,...text])=>({title,text}))});
 export const guides:Record<GameKind,{zh:Guide;en:Guide}>={...classicGuides,
+drawrelay:{zh:guide('你画我猜（接龙版） · Mocha 接龙规则 · 3–12 人 · 无计分。',[
+'每人写一句开场句。所有人提交后，把画册传给下一位。','轮流画句子、看图写描述；每人只看到紧邻的上一页。','每人给每本画册贡献一页后，一起查看从头到尾的变化。'],[
+['传递顺序','每人同时持有一本画册；第 1 步写句子，第 2 步画图，第 3 步描述画，以此交替。一局共进行与人数相同的步数，因此每人恰好参与每本画册一次。'],
+['提交与时限','提交后不能修改。每步可选不限时、60、90 或 120 秒。到时保存已同步的草稿；空白页标记未完成。联机玩家断线时，所有人的倒计时暂停，重连后从剩余时间继续。','同屏接龙建议选择不限时；换座后需主动打开自己的接龙页。'],
+['画作与文字','每页最多 96 笔，可选颜色与粗细、撤销上一笔或确认清空；每笔最多保留 48 个点。文字最多 120 字。'],
+['隐私与揭晓','完成前，只能查看自己正在接手的上一页及自己的草稿；其他玩家与观众只看到提交进度。完成后，玩家分别浏览所有画册；观众跟随房主的浏览页。局域网房主和同屏设备持有完整牌局。'],
+['规则范围','采用写句子、画图、看图描述、展示画册的传话玩法。本版本没有竞分、投票、动画模式、外部画库或导出。']]),
+en:guide('Drawing Relay · Mocha telephone rules · 3–12 players · No scoring.',[
+'Everyone writes an opening sentence. Pass each album after everyone submits.','Alternate drawing a sentence and describing a picture. Only the immediately preceding page is visible.','After each person contributes once to every album, reveal the complete chains.'],[
+['Passing order','Everyone holds one album at a time. Step one is a sentence, step two is a drawing, step three describes that drawing, and so on. There are as many steps as players, so everyone contributes exactly once to every album.'],
+['Submission and timing','Submission is final. Choose no time limit, or 60, 90 or 120 seconds per step. At the deadline, synchronized drafts are saved and blank pages are marked incomplete. Online disconnects pause the timer for everyone; reconnection restores the remaining time.','No time limit is recommended for pass-and-play. Open your private page after switching seats.'],
+['Drawing and text','Each page allows 96 strokes with color, brush size, undo and confirmed clearing. Each stroke retains up to 48 points. Text is limited to 120 characters.'],
+['Privacy and reveal','Before reveal, you receive only the previous page assigned to you and your own draft. Others and spectators see submission progress. Once finished, players browse albums independently; spectators follow the host. The LAN host and shared pass-and-play device hold the full match.'],
+['Scope','This version uses the sentence, drawing, description and album-reveal telephone format. It has no scoring, voting, animation mode, external image library or export.']])},
 gems:{zh:guide('晶石商会 · 2–4 人 · 基础 90 张发展牌与 10 张贵族，15 分触发末轮。',[
 '先看市场中便宜的一级牌，决定要收集哪些颜色。','轮到你时，取三种不同颜色的晶石各一枚；或连点同一种颜色取两枚，但该颜色拿取前须至少有四枚。点“拿取”确认；有库存的颜色不足三种时，取所有可用颜色各一枚。','点市场卡片查看费用；买下后获得牌面颜色的永久折扣，之后买牌时少付一枚该色晶石。','想先留住一张牌就预留，通常还会得到一枚万能黄金。','有人达到 15 分后完成这一轮；分数最高者获胜。'],[
 ['准备与目标','每人从零开始。五种普通晶石在 2/3/4 人时各有 4/5/7 枚，黄金固定 5 枚。三个等级各公开 4 张发展牌，贵族数量为玩家数加一。发展牌与贵族的分数计入总分。'],
