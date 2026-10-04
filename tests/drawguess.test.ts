@@ -1,6 +1,6 @@
 import {describe,expect,it} from 'vitest';
 import {drawguess,advanceDrawGuessClock} from '../src/core/games/drawguess';
-import {advanceMatchClock,createMatch,pauseMatchClock,resumeMatchClock,viewMatch} from '../src/core/room';
+import {advanceMatchClock,applyMatch,createMatch,pauseMatchClock,resumeMatchClock,viewMatch} from '../src/core/room';
 import type {Player} from '../src/core/types';
 
 const players:Player[]=[
@@ -50,5 +50,12 @@ describe('you draw, I guess',()=>{
   const deadline=match.game.deadlineAt,paused=pauseMatchClock(match,'drawguess',players,1000);expect(paused.game.deadlineAt).toBe(0);expect(paused.game.pausedRemaining).toBe(deadline-1000);
   expect(advanceMatchClock(paused,'drawguess',players,deadline+100000).game.phase).toBe('draw');
   const resumed=resumeMatchClock(paused,'drawguess',players,200000);expect(resumed.game.deadlineAt).toBe(200000+deadline-1000);expect(advanceMatchClock(resumed,'drawguess',players,resumed.game.deadlineAt+1).game.phase).toBe('reveal');
+ });
+ it('advances an expired trusted deadline before rejecting an action with its old revision',()=>{
+  let match=advanceMatchClock(createMatch('drawguess',players,{language:'en'}),'drawguess',players,100);
+  const choose=viewMatch(match,'drawguess',players[0].id).view.actions[0].choices[0],oldRevision=match.actorRevisions[players[0].id];
+  match=advanceMatchClock(match,'drawguess',players,match.game.deadlineAt+1);
+  expect(match.game.phase).toBe('draw');
+  expect(()=>applyMatch(match,'drawguess',players,players[0].id,{action:'choose',values:[choose.id]},'expired-choice',oldRevision)).toThrow('牌局已变化');
  });
 });

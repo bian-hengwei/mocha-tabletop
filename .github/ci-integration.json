@@ -175,6 +175,9 @@
     },
     {
       "script": "tests/network/drawguess-cloud.integration.mjs"
+    },
+    {
+      "script": "tests/network/drawguess-lan.integration.mjs"
     }
   ]
 }

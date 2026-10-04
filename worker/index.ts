@@ -200,7 +200,10 @@ export class GameRoom extends DurableObject<Env>{
    if(msg.type==='action'){
     if(r.mode!=='cloud'||!r.started||!d.match)throw new Error('牌局未开始');
     if(r.players.some(p=>!this.connected(p.id)))throw new Error('有玩家掉线，牌局已暂停');
-    d.match=applyMatch(d.match,r.kind,r.players,id,msg.command,msg.requestID,msg.actionRevision);d.match=advanceMatchClock(d.match,r.kind,r.players,now);
+    const timed=advanceMatchClock(d.match,r.kind,r.players,now);
+    if(timed!==d.match){d.match=timed;r.revision++;await this.save();this.broadcast();}
+    d.match=applyMatch(d.match,r.kind,r.players,id,msg.command,msg.requestID,msg.actionRevision);
+    d.match=advanceMatchClock(d.match,r.kind,r.players,now);
    }else if(msg.type==='continueBotRound'){
     if(r.mode!=='cloud'||!d.match||r.players.some(p=>!this.connected(p.id)))throw new Error('连接恢复后继续');d.match=continueBotRound(r,d.match,id);
    }else if(msg.type==='approve'){
@@ -256,7 +259,7 @@ export class GameRoom extends DurableObject<Env>{
     if(id!==r.hostID||r.started)throw new Error('请先回到房间');validKind(msg.kind);if(!supportsBots(msg.kind)&&r.players.some(p=>p.bot))throw new Error('请先移除人机，再切换到此游戏');const options=normalizeGameOptions(msg.kind,msg.options,r.hostID);if(r.players.length>roomLimits(msg.kind,options).max)throw new Error('当前人数超过上限');r.kind=msg.kind;r.options=options;r.players=r.players.map(p=>({...p,ready:!!p.bot||p.id===id}));
    }else if(msg.type==='switchToCloud'){
     if(id!==r.hostID||r.mode!=='lan')throw new Error('仅局域网房主可切换');
-    if(r.started)d.match=validateMatchForRoom(msg.match,r);
+    if(r.started)d.match=pauseMatchClock(validateMatchForRoom(msg.match,r),r.kind,r.players,now);
     r.mode='cloud';
    }else if(msg.type==='leave'){
     if(id===r.hostID){d.ended=true;for(const target of this.sockets())send(target,{type:'ended',error:'房主已解散房间'});}
