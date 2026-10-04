@@ -33,24 +33,30 @@ try{
  }
 
  await clear();await canvas.evaluate(node=>{
+  const box=node.getBoundingClientRect(),emit=(type,x,y)=>{const event=new PointerEvent(type,{bubbles:true,pointerId:9,pointerType:'touch',isPrimary:false,button:0,buttons:1,clientX:box.x+x*box.width,clientY:box.y+y*box.height});Object.defineProperty(event,'isPrimary',{value:false});node.dispatchEvent(event);};
+  emit('pointerdown',.1,.3);emit('pointermove',.8,.3);emit('pointerup',.8,.3);
+ });await expect.poll(marks).toBe(0);assert.deepEqual(await strokes(),[],'an initial non-primary pointer never creates a draft or stroke');
+ await canvas.evaluate(node=>{
   const box=node.getBoundingClientRect();node.setPointerCapture=()=>{};node.hasPointerCapture=()=>false;
   const emit=(type,pointerId,x,y,isPrimary=true)=>node.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId,pointerType:'touch',isPrimary,button:0,buttons:1,clientX:box.x+x*box.width,clientY:box.y+y*box.height}));
   emit('pointerdown',10,.1,.3);emit('pointermove',10,.5,.3);emit('pointerdown',11,.9,.9,false);emit('pointermove',11,.9,.1,false);emit('pointerup',11,.9,.1,false);emit('pointermove',10,.8,.3);emit('pointerup',10,.8,.3);
  });
  assert.equal((await strokes()).length,1);assert((decode((await strokes())[0])).every(([,y])=>y===230),'a second pointer cannot replace or mix the owned stroke');
 
- await clear();await canvas.evaluate(node=>{
+ await clear();const finalEndpoint=[972,690];await canvas.evaluate((node,[finalX,finalY])=>{
   const box=node.getBoundingClientRect();node.setPointerCapture=()=>{};node.hasPointerCapture=()=>false;
-  const emit=(type,x)=>node.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:30,pointerType:'pen',isPrimary:true,button:0,buttons:1,clientX:box.x+x*box.width,clientY:box.y+box.height*.5}));
-  emit('pointerdown',0);for(let index=1;index<=1000;index++)emit('pointermove',index/1000);emit('pointerup',1);
- });
- assert.equal((await strokes()).length,1);const long=decode((await strokes())[0]);assert(long.length<=48);assert.equal(long[0][0],0);assert.equal(long.at(-1)[0],1023);assert.equal(long[0][1],long.at(-1)[1],'long stroke retains its final point on the same horizontal path');
+  const emit=(type,x,y)=>node.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:30,pointerType:'pen',isPrimary:true,button:0,buttons:1,clientX:box.x+x/1023*box.width,clientY:box.y+y/767*box.height}));
+  emit('pointerdown',100,120);for(let index=0;index<2600;index++)emit('pointermove',index%2?900:120,index%2?620:140);emit('pointermove',finalX,finalY);emit('pointerup',finalX,finalY);
+ },finalEndpoint);
+ assert.equal((await strokes()).length,1);const long=decode((await strokes())[0]);assert(long.length<=48);assert.deepEqual(long.at(-1),finalEndpoint,'a >2048 accepted-point zigzag retains its final unique endpoint');
 
  await clear();await canvas.evaluate(node=>{
   const box=node.getBoundingClientRect();node.setPointerCapture=()=>{};node.hasPointerCapture=()=>false;
   for(const type of ['pointerdown','pointermove','pointercancel','pointerup'])node.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:20,pointerType:'touch',isPrimary:true,button:0,buttons:1,clientX:box.x+100,clientY:box.y+100}));
  });
  await expect.poll(marks).toBe(0);assert.deepEqual(await strokes(),[],'cancelled touch never submits');
- await canvas.press('Enter');await expect.poll(async()=>(await strokes()).length).toBe(1);assert.equal(decode((await strokes())[0]).length,1,'keyboard emits a point');await expect.poll(()=>canvas.locator('circle').count()).toBeGreaterThan(1);
+ await canvas.press('ArrowRight');await expect.poll(async()=>(await strokes()).length).toBe(1);await expect(canvas.locator('circle[fill="none"]')).toHaveCount(1);await canvas.evaluate(node=>node.blur());await expect(canvas.locator('circle[fill="none"]')).toHaveCount(0);
+ await canvas.press('Enter');await expect.poll(async()=>(await strokes()).length).toBe(2);await expect(canvas.locator('circle[fill="none"]')).toHaveCount(1);await page.getByText('Toggle permission',{exact:true}).evaluate(button=>button.click());await expect(canvas.locator('circle[fill="none"]')).toHaveCount(0);await page.getByText('Toggle permission',{exact:true}).evaluate(button=>button.click());
+ await canvas.press('Enter');await expect.poll(async()=>(await strokes()).length).toBe(3);await expect(canvas.locator('circle[fill="none"]')).toHaveCount(1);await page.getByText('Clear',{exact:true}).evaluate(button=>button.click());await expect(canvas.locator('circle[fill="none"]')).toHaveCount(0);assert.deepEqual(await strokes(),[],'clear removes the keyboard cursor and strokes');
  assert.deepEqual(errors,[]);console.log(`${engine}: relay live feedback, endpoint retention, single-point SVG, right-click, blur/lostcapture/hidden, permission/seat/clear, pointer ownership, cancel, keyboard PASS`);
 }finally{await browser.close();}
