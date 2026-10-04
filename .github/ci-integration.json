@@ -198,6 +198,9 @@
       "script": "tests/ui/drawguess.integration.mjs"
     },
     {
+      "script": "tests/ui/drawguess-input.integration.mjs"
+    },
+    {
       "script": "tests/ui/drawing-feedback.integration.mjs"
     },
     {
