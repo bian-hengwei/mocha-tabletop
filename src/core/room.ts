@@ -2,6 +2,7 @@ import {isMahjongMode} from './mahjongModes';
 import type { Command, GameKind, GameView, Player, GameOptions } from './types';
 import { AVATARS, GAMES } from './types';
 import { modules } from './registry';
+import {advanceDrawGuessClock, drawGuessDeadline} from './games/drawguess';
 import { WEREWOLF_PRESETS, werewolfPreset, werewolfPresetLimits } from './werewolfPresets';
 export type RoomMode = 'cloud' | 'lan';
 export interface RoomPlayer extends Player { ready:boolean; connected:boolean }
@@ -23,14 +24,16 @@ export function validKind(kind:any):asserts kind is GameKind {if(!Object.hasOwn(
 export function normalizeGameOptions(kind:GameKind,input:unknown,hostID:string):GameOptions|undefined {
  if(input!==undefined&&(input===null||typeof input!=='object'||Array.isArray(input)))throw new Error('游戏选项无效');
  const options=(input||{}) as Record<string,unknown>;
- if(Object.keys(options).some(key=>!['mahjongMode','werewolfMode','moderatorID','language','unoMode','unoChallenge','pokerCounter','werewolfPreset','werewolfWin'].includes(key)))throw new Error('未知游戏选项');
+ if(Object.keys(options).some(key=>!['mahjongMode','werewolfMode','moderatorID','language','unoMode','unoChallenge','pokerCounter','werewolfPreset','werewolfWin','drawRounds','drawSeconds'].includes(key)))throw new Error('未知游戏选项');
  if(options.language!==undefined&&!['zh','en'].includes(options.language as string))throw new Error('游戏语言无效');
  if(options.mahjongMode!==undefined&&(kind!=='mahjong'||!isMahjongMode(options.mahjongMode)))throw new Error('Mahjong mode is invalid');
  const language=options.language===undefined?{}:{language:options.language as 'zh'|'en'};
  if(options.unoMode!==undefined&&(kind!=='uno'||!['single','match'].includes(options.unoMode as string)))throw new Error('七彩接龙模式无效');
  if(options.unoChallenge!==undefined&&(kind!=='uno'||typeof options.unoChallenge!=='boolean'))throw new Error('七彩接龙质疑设置无效');
  if(options.pokerCounter!==undefined&&(!['doudizhu','guandan'].includes(kind)||typeof options.pokerCounter!=='boolean'))throw new Error('记牌器设置无效');
- if(kind!=='werewolf'){if(options.werewolfMode!==undefined||options.moderatorID!==undefined||options.werewolfPreset!==undefined||options.werewolfWin!==undefined)throw new Error('此游戏不支持主持模式选项');const result={...language,...(options.pokerCounter===true?{pokerCounter:true}:{}),...(options.mahjongMode?{mahjongMode:options.mahjongMode as GameOptions['mahjongMode']}:{}),...(options.unoMode?{unoMode:options.unoMode as 'single'|'match'}:{}),...(options.unoChallenge===false?{unoChallenge:false}:{})};return Object.keys(result).length?result:undefined;}
+ if(options.drawRounds!==undefined&&(!Number.isInteger(options.drawRounds)||kind!=='drawguess'||(options.drawRounds as number)<3||(options.drawRounds as number)>24))throw new Error('画词回合数无效');
+ if(options.drawSeconds!==undefined&&(![45,60,75,90].includes(options.drawSeconds as number)||kind!=='drawguess'))throw new Error('画词时长无效');
+ if(kind!=='werewolf'){if(options.werewolfMode!==undefined||options.moderatorID!==undefined||options.werewolfPreset!==undefined||options.werewolfWin!==undefined)throw new Error('此游戏不支持主持模式选项');const result={...language,...(options.pokerCounter===true?{pokerCounter:true}:{}),...(options.mahjongMode?{mahjongMode:options.mahjongMode as GameOptions['mahjongMode']}:{}),...(options.unoMode?{unoMode:options.unoMode as 'single'|'match'}:{}),...(options.unoChallenge===false?{unoChallenge:false}:{}),...(options.drawRounds?{drawRounds:options.drawRounds as number}:{}),...(options.drawSeconds?{drawSeconds:options.drawSeconds as number}:{})};return Object.keys(result).length?result:undefined;}
  if(options.werewolfPreset!==undefined&&!WEREWOLF_PRESETS.some(p=>p.id===options.werewolfPreset))throw new Error('月夜议会配置无效');
  if(options.werewolfWin!==undefined&&!['sides','parity'].includes(options.werewolfWin as string))throw new Error('月夜议会胜负条件无效');
  const rules={...(options.werewolfPreset&&options.werewolfPreset!=='auto'?{werewolfPreset:options.werewolfPreset as GameOptions['werewolfPreset']}:{}),...(options.werewolfWin==='parity'?{werewolfWin:'parity' as const}:{})};
@@ -81,13 +84,22 @@ export function applyMatch(match:MatchState,kind:GameKind,players:Player[],actor
  if(typeof requestID!=='string'||requestID.length>100||!requestID)throw new Error('操作编号无效');
  if(match.seen[actor]?.includes(requestID))return match;
  if(actionRevision!==match.actorRevisions[actor])throw new Error('牌局已变化，请重选');
- if(!command||typeof command.action!=='string'||!Array.isArray(command.values)||command.values.length>32||command.values.some(v=>typeof v!=='string'||v.length>200)||(command.text!==undefined&&(typeof command.text!=='string'||command.text.length>32)))throw new Error('操作无效');
+ const drawStroke=kind==='drawguess'&&command?.action==='stroke';
+ if(!command||typeof command.action!=='string'||!Array.isArray(command.values)||command.values.length>(drawStroke?32:32)||command.values.some(v=>typeof v!=='string'||v.length>200)||(command.text!==undefined&&(typeof command.text!=='string'||command.text.length>(drawStroke?16:32))))throw new Error('操作无效');
  const before=Object.fromEntries(players.map(p=>[p.id,JSON.stringify(modules[kind].view(match.game,p.id).actions)]));
  const game=modules[kind].apply(structuredClone(match.game),actor,command);
  const actorRevisions={...match.actorRevisions};
  for(const p of players)if(p.id===actor||before[p.id]!==JSON.stringify(modules[kind].view(game,p.id).actions))actorRevisions[p.id]=(actorRevisions[p.id]||0)+1;
  return {...match,game,revision:match.revision+1,actorRevisions,seen:{...match.seen,[actor]:[...(match.seen[actor]||[]),requestID].slice(-128)}};
 }
+/** Advance only from a trusted room host. It is intentionally not exposed as a player command. */
+export function advanceMatchClock(match:MatchState,kind:GameKind,players:Player[],now:number):MatchState {
+ if(kind!=='drawguess')return match;
+ const game=advanceDrawGuessClock(match.game,now);if(JSON.stringify(game)===JSON.stringify(match.game))return match;
+ const actorRevisions={...match.actorRevisions};for(const p of players)actorRevisions[p.id]=(actorRevisions[p.id]||0)+1;
+ return {...match,game,revision:match.revision+1,actorRevisions};
+}
+export function matchDeadline(match:MatchState,kind:GameKind){return kind==='drawguess'?drawGuessDeadline(match.game):0;}
 export function viewMatch(match:MatchState,kind:GameKind,id:string){return {view:modules[kind].view(match.game,id),actionRevision:match.actorRevisions[id]||0};}
 
 /** Only authenticated room members may reach this projection. Spectators never borrow a seat. */

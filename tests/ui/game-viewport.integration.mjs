@@ -33,7 +33,7 @@ async function checkShortGemsTable(page,language){
 }
 try{
  const page=await browser.newPage();page.setDefaultTimeout(7000);page.on('pageerror',error=>errors.push(error.message));
- await page.goto(base);const games=await page.evaluate(async()=>Object.keys((await import('/src/core/types.ts')).GAMES));assert.equal(games.length,12);
+ await page.goto(base);const games=await page.evaluate(async()=>Object.keys((await import('/src/core/types.ts')).GAMES));assert.equal(games.length,13);
  for(const language of ['zh','en']){
   await page.addInitScript(language=>localStorage.setItem('mocha-locale',language),language);
   for(const [width,height]of sizes){await page.setViewportSize({width,height});
@@ -46,7 +46,7 @@ try{
     assert(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+1&&document.documentElement.scrollWidth<=innerWidth+1),`${kind}: document fits viewport`);
     if(width===320||width===844)await page.screenshot({path:`${out}/${kind}-${language}-${width}.png`});
    }
-   console.log(layoutIssues.some(issue=>issue.language===language&&issue.width===width)?'FAIL':'PASS','all twelve maximum-player tables have bounded, reachable layouts',language,width,height);
+   console.log(layoutIssues.some(issue=>issue.language===language&&issue.width===width)?'FAIL':'PASS','all thirteen maximum-player tables have bounded, reachable layouts',language,width,height);
   }
  }
  assert.deepEqual(errors,[]);assert.deepEqual(layoutIssues,[],'All game surfaces must fit without vertical scroll or clipping');

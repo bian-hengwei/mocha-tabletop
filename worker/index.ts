@@ -2,7 +2,7 @@ import {DurableObject} from 'cloudflare:workers';
 import {discoveryNetwork} from './discovery';
 import {botTurnDelay,changeBots,nextBotSeat,stepBot,continueBotRound} from '../src/core/roomBots';
 import {supportsBots} from '../src/core/bots';
-import { applyMatch,createMatch,validKind,validProfile,viewRoomMatch,MAX_SPECTATORS,normalizeGameOptions,roomLimits,validateMatchForRoom,type MatchState,type RoomInfo,type RoomMode,type RoomCandidate } from '../src/core/room';
+import { advanceMatchClock,applyMatch,createMatch,matchDeadline,validKind,validProfile,viewRoomMatch,MAX_SPECTATORS,normalizeGameOptions,roomLimits,validateMatchForRoom,type MatchState,type RoomInfo,type RoomMode,type RoomCandidate } from '../src/core/room';
 import type {Player} from '../src/core/types';
 interface Env {ROOMS:DurableObjectNamespace<GameRoom>;DIRECTORY:DurableObjectNamespace<RoomDirectory>;ASSETS:Fetcher;ALLOWED_ORIGINS?:string}
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store'}});
@@ -121,7 +121,7 @@ export class GameRoom extends DurableObject<Env>{
   await this.ctx.storage.put('room',d);
   await this.scheduleAlarm();
  }
- private async scheduleAlarm(){const d=this.data;if(d)await this.ctx.storage.setAlarm(Math.min(d.expires,d.botDue??Infinity,this.ctx.getWebSockets().some(ws=>!(ws.deserializeAttachment() as Attachment).authenticated)?Date.now()+30000:Infinity));}
+ private async scheduleAlarm(){const d=this.data;if(d)await this.ctx.storage.setAlarm(Math.min(d.expires,d.botDue??Infinity,d.match?matchDeadline(d.match,d.info.kind)||Infinity:Infinity,this.ctx.getWebSockets().some(ws=>!(ws.deserializeAttachment() as Attachment).authenticated)?Date.now()+30000:Infinity));}
  // Renew admitted-player activity in batches, rather than writing on every heartbeat.
  private async renewActivity(now:number){
   const d=this.data;if(!d||d.ended||d.expires<=now||d.expires>=now+ROOM_TTL-ACTIVITY_RENEW_INTERVAL)return false;
@@ -242,7 +242,7 @@ export class GameRoom extends DurableObject<Env>{
     if(r.players.some(p=>!p.ready||!this.connected(p.id)))throw new Error('请等待所有玩家准备');
     if(r.mode==='lan'&&(!Array.isArray(msg.directPeers)||r.players.some(p=>p.id!==id&&!p.bot&&!msg.directPeers.includes(p.id))))throw new Error('等待局域网直连完成');
     for(const p of r.pending){if(r.allowSpectators!==false)p.spectator=true;else this.revoke(p.id,'房主已关闭观战');}if(r.allowSpectators===false)r.pending=[];
-    if(r.mode==='cloud')d.match=createMatch(r.kind,r.players,r.options);r.started=true;r.matchID=crypto.randomUUID();
+    if(r.mode==='cloud')d.match=advanceMatchClock(createMatch(r.kind,r.players,r.options),r.kind,r.players,now);r.started=true;r.matchID=crypto.randomUUID();
    }else if(msg.type==='replay'||msg.type==='endGame'){
     if(id!==r.hostID)throw new Error('只有房主能结束本局');r.started=false;delete r.matchID;delete r.botError;delete d.match;r.players=r.players.map(p=>({...p,ready:!!p.bot||p.id===id}));
    }else if(msg.type==='selectGame'){
@@ -273,6 +273,7 @@ export class GameRoom extends DurableObject<Env>{
    catch{d.info.botError='人机暂时无法行动，请重试';}
    delete d.botDue;delete d.botRevision;await this.save();this.broadcast();
   }
+  if(this.data?.match&&this.data.info.mode==='cloud'&&this.data.info.started&&this.data.info.players.every(p=>this.connected(p.id))){const next=advanceMatchClock(this.data.match,this.data.info.kind,this.data.info.players,now);if(next!==this.data.match){this.data.match=next;this.data.info.revision++;await this.save();this.broadcast();}}
   if(this.data&&this.data.expires>now)await this.scheduleAlarm();
   if(this.data&&this.data.expires<=now){this.data.ended=true;for(const ws of this.sockets()){send(ws,{type:'ended',error:'房间已到期，请重新建房'});ws.close(1000,'房间到期');}await this.index();await this.ctx.storage.deleteAll();this.data=undefined;}
  }

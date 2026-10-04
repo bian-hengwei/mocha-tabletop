@@ -1,6 +1,6 @@
 import {botTurnDelay,nextBotSeat,stepBot,continueBotRound} from '../core/roomBots';
 import type {BotDifficulty} from '../core/bots/types';
-import {applyMatch,createMatch,validProfile,viewRoomMatch,optionsKey,validateMatchForRoom,type ClientState,type MatchState,type RoomInfo,type RoomCandidate,type RoomMode} from '../core/room';
+import {advanceMatchClock,applyMatch,createMatch,matchDeadline,validProfile,viewRoomMatch,optionsKey,validateMatchForRoom,type ClientState,type MatchState,type RoomInfo,type RoomCandidate,type RoomMode} from '../core/room';
 import type {Command,GameKind,Player,GameOptions} from '../core/types';
 export type {ClientState,RoomCandidate,RoomMode} from '../core/room';
 const API=(import.meta.env.VITE_API_BASE||'').replace(/\/$/,'');
@@ -21,7 +21,7 @@ interface Peer {pc:RTCPeerConnection;dc?:RTCDataChannel;proven:boolean;nonce:str
 /** One client per tab. Cloud sockets hibernate; LAN game traffic never enters the signaling socket. */
 export class RoomClient {
  state:ClientState=initial();private listeners=new Set<(state:ClientState)=>void>();
- private botTimer?:ReturnType<typeof setTimeout>;private botMatch?:MatchState;private localBotError?:string;
+ private botTimer?:ReturnType<typeof setTimeout>;private clockTimer?:ReturnType<typeof setTimeout>;private botMatch?:MatchState;private localBotError?:string;
  private ws?:WebSocket;private session?:Session;private stopped=true;private reconnects=0;private reconnectTimer?:ReturnType<typeof setTimeout>;private handshakeTimer?:ReturnType<typeof setTimeout>;
  private socketHeartbeat?:ReturnType<typeof setInterval>;private lastSocketMessage=0;private lastSocketTick=0;private socketProbe?:ReturnType<typeof setTimeout>;
  private networkToken?:string;
@@ -180,7 +180,7 @@ export class RoomClient {
   this.starting=false;this.ensurePeers();this.localStatus();if(host)this.broadcastLocal();
  }
  private reset(){this.stopped=true;this.reconnects=0;this.starting=false;++this.connectGeneration;clearTimeout(this.reconnectTimer);clearTimeout(this.handshakeTimer);clearInterval(this.socketHeartbeat);clearTimeout(this.socketProbe);this.socketProbe=undefined;this.ws?.close();this.ws=undefined;this.session=undefined;this.dropPeers();this.localMatch=undefined;this.state=initial();}
- private dropPeers(){clearTimeout(this.botTimer);this.botTimer=undefined;this.botMatch=undefined;this.localBotError=undefined;for(const timer of this.peerRetry.values())clearTimeout(timer);this.peerRetry.clear();this.peerAttempts.clear();clearInterval(this.heartbeat);this.heartbeat=undefined;for(const peer of this.peers.values()){clearTimeout(peer.pairingTimer);peer.dc?.close();peer.pc.close();}this.peers.clear();}
+ private dropPeers(){clearTimeout(this.botTimer);clearTimeout(this.clockTimer);this.botTimer=undefined;this.clockTimer=undefined;this.botMatch=undefined;this.localBotError=undefined;for(const timer of this.peerRetry.values())clearTimeout(timer);this.peerRetry.clear();this.peerAttempts.clear();clearInterval(this.heartbeat);this.heartbeat=undefined;for(const peer of this.peers.values()){clearTimeout(peer.pairingTimer);peer.dc?.close();peer.pc.close();}this.peers.clear();}
  private removeLocal(){if(this.state.room)for(const storage of availableStorage())try{storage.removeItem('mocha-host-'+this.state.room.code);}catch{}}
  private persistLocal(){const r=this.state.room;if(r&&this.localMatch){const raw=JSON.stringify({kind:r.kind,options:r.options,matchID:r.matchID,expiresAt:r.expiresAt,players:r.players.map(p=>p.id).join(','),match:this.localMatch});let saved=false;for(const storage of availableStorage())try{storage.setItem('mocha-host-'+r.code,raw);saved=true;}catch{}if(!saved)this.fail('本地牌局存档失败，请保持房主页打开或切换云端');}}
  private ensurePeers(){
@@ -242,12 +242,14 @@ export class RoomClient {
  private sendDC(p:Peer,msg:any){if(p.dc?.readyState==='open'&&p.dc.bufferedAmount<1000000)p.dc.send(JSON.stringify(msg));}
  private localStatus(){const r=this.state.room;if(!r||r.mode!=='lan')return;const connected=this.isHost?r.players.every(p=>p.bot||p.id===r.hostID||this.peers.get(p.id)?.proven):!!this.peers.get(r.hostID)?.proven;this.patch({transport:connected?'lan':'none',paused:r.started&&(!connected||this.isHost&&!this.localMatch)});}
  private applyLocal(actor:string,msg:any){const r=this.state.room;if(!r||!this.localMatch||!r.started||!this.isHost)throw new Error('等待房主开始');if(this.state.paused)throw new Error('有玩家掉线，恢复连接后继续');this.localMatch=applyMatch(this.localMatch,r.kind,r.players,actor,msg.command,msg.requestID,msg.actionRevision);this.persistLocal();this.broadcastLocal();}
- private broadcastLocal(){const r=this.state.room;if(!r||r.mode!=='lan'||!this.isHost)return;this.localStatus();const room={...r,botError:this.localBotError,spectators:(r.spectators||[]).map(p=>({...p,connected:!!this.peers.get(p.id)?.proven})),players:r.players.map(p=>({...p,connected:!!p.bot||p.id===r.hostID||!!this.peers.get(p.id)?.proven}))};
+ private broadcastLocal(){const r=this.state.room;if(!r||r.mode!=='lan'||!this.isHost)return;if(this.localMatch){const timed=advanceMatchClock(this.localMatch,r.kind,r.players,Date.now());if(timed!==this.localMatch){this.localMatch=timed;this.persistLocal();}}this.localStatus();const room={...r,botError:this.localBotError,spectators:(r.spectators||[]).map(p=>({...p,connected:!!this.peers.get(p.id)?.proven})),players:r.players.map(p=>({...p,connected:!!p.bot||p.id===r.hostID||!!this.peers.get(p.id)?.proven}))};
   for(const p of [...room.players.filter(p=>!p.bot),...room.spectators]){const data={type:'lanSnapshot',room:{...room,pending:p.id===r.hostID?room.pending:[]},...(this.localMatch?viewRoomMatch(this.localMatch,r,p.id):{view:undefined,actionRevision:0}),paused:this.state.paused};
    if(p.id===r.hostID)this.patch({room,view:data.view,actionRevision:data.actionRevision});else {const peer=this.peers.get(p.id);if(peer?.proven)this.sendDC(peer,data);}
   }
   this.scheduleLocalBot();
+  this.scheduleLocalClock();
  }
+ private scheduleLocalClock(){const r=this.state.room,deadline=this.localMatch&&r?matchDeadline(this.localMatch,r.kind):0;clearTimeout(this.clockTimer);this.clockTimer=undefined;if(!r||!deadline||r.mode!=='lan'||!this.isHost||this.state.paused)return;this.clockTimer=setTimeout(()=>{this.clockTimer=undefined;this.broadcastLocal();},Math.max(20,deadline-Date.now()+10));}
  private scheduleLocalBot(){
   const r=this.state.room;
   if(!r||r.mode!=='lan'||!this.isHost||this.state.paused||this.localBotError||!this.localMatch||!nextBotSeat(r,this.localMatch)){clearTimeout(this.botTimer);this.botTimer=undefined;this.botMatch=undefined;return;}
