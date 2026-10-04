@@ -17,7 +17,7 @@ describe('you draw, I guess',()=>{
   expect(drawguess.view(game,players[1].id).board.answer).toBeUndefined();expect(drawguess.view(game,'',true).board.answer).toBeUndefined();
  });
  it('does not echo a correct answer until reveal, then awards both players',()=>{
-  let game=advanceDrawGuessClock(drawguess.create(players,8,{language:'en'}),100);const choice=drawguess.view(game,players[0].id).actions[0].choices[0];game=drawguess.apply(game,players[0].id,{action:'choose',values:[choice.id]});game=drawguess.apply(game,players[1].id,{action:'guess',values:[],text:choice.title});
+  let game=advanceDrawGuessClock(drawguess.create(players,8,{language:'en'}),100);const choice=drawguess.view(game,players[0].id).actions[0].choices[0];game=drawguess.apply(game,players[0].id,{action:'choose',values:[choice.id]});game=advanceDrawGuessClock(game,100);game=drawguess.apply(game,players[1].id,{action:'guess',values:[],text:choice.title});
   const beforeReveal=drawguess.view(game,players[2].id);expect(beforeReveal.board.answer).toBe(choice.title);expect(beforeReveal.board.guesses[0].text).toBe('');expect(beforeReveal.log.join(' ')).not.toContain(choice.title);expect(beforeReveal.board.players[0].score).toBe(1);expect(beforeReveal.board.players[1].score).toBe(2);
  });
  it('only a trusted clock helper advances time; public actions cannot send timeout',()=>{

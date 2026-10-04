@@ -193,7 +193,7 @@ export class GameRoom extends DurableObject<Env>{
    if(msg.type==='action'){
     if(r.mode!=='cloud'||!r.started||!d.match)throw new Error('牌局未开始');
     if(r.players.some(p=>!this.connected(p.id)))throw new Error('有玩家掉线，牌局已暂停');
-    d.match=applyMatch(d.match,r.kind,r.players,id,msg.command,msg.requestID,msg.actionRevision);
+    d.match=applyMatch(d.match,r.kind,r.players,id,msg.command,msg.requestID,msg.actionRevision);d.match=advanceMatchClock(d.match,r.kind,r.players,now);
    }else if(msg.type==='continueBotRound'){
     if(r.mode!=='cloud'||!d.match||r.players.some(p=>!this.connected(p.id)))throw new Error('连接恢复后继续');d.match=continueBotRound(r,d.match,id);
    }else if(msg.type==='approve'){
