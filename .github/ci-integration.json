@@ -213,6 +213,9 @@
       "script": "tests/ui/draw-relay.integration.mjs"
     },
     {
+      "script": "tests/ui/relay-input.integration.mjs"
+    },
+    {
       "script": "tests/network/draw-relay.integration.mjs"
     }
   ]
