@@ -225,7 +225,8 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 ## 你画我猜（接龙版）
 
 - `tests/draw-relay.test.ts` 与 `tests/network/draw-relay-server.test.ts`：完整传递顺序、草稿隐私、超时/暂停、陈旧动作、画册大小及大存档切云权限。
-- `BASE_URL=<Vite> node tests/ui/draw-relay.integration.mjs`：真实 App 双语七尺寸、绘画/键盘/撤销清空确认、换座隐藏、画册和完整同屏对局；支持 `TEST_BROWSER=webkit`。
+- `BASE_URL=<Vite> node tests/ui/draw-relay.integration.mjs`：真实 App 双语八尺寸（含 568×320 紧凑横屏）、绘画/键盘/撤销清空确认、换座隐藏、画册和完整同屏对局；支持 `TEST_BROWSER=webkit`。
+- `BASE_URL=<Vite> node tests/ui/relay-feedback.integration.mjs`：接龙 SVG 画板的按住实时笔迹、48 点终点保留、单点可见性、右键/多指归属、取消、失焦/失去 capture/隐藏、权限/换座/清空和键盘笔迹；支持 `TEST_BROWSER=webkit`。
 - `TEST_FRONTEND=<Vite> node tests/network/draw-relay.integration.mjs`：需 Vite 代理同一 Worker，四浏览器覆盖云端/局域网完整对局、同时草稿、观战、重连和切云。
 - `tests/ui/bombs-experience.integration.mjs`：喵喵危机中英八尺寸的选牌/取消/独立确认（普通牌、交牌、否决及组合）、最近 12 张公开弃牌顺序与上限、空弃牌、真实观战投影、弹窗焦点/键盘/旋转；支持 WebKit。
 - `tests/ui/history-filters.integration.mjs`：真实 App 中英八尺寸的 500 条战绩，按游戏/联机/单机/同屏筛选、统计排除人机与主持、空结果、旋转、44px 控件、取消/确认删除及刷新后不恢复；支持 WebKit。

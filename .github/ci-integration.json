@@ -216,6 +216,9 @@
       "script": "tests/ui/relay-input.integration.mjs"
     },
     {
+      "script": "tests/ui/relay-feedback.integration.mjs"
+    },
+    {
       "script": "tests/network/draw-relay.integration.mjs"
     }
   ]

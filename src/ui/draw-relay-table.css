@@ -9,3 +9,4 @@
 @media(orientation:landscape) and (max-height:500px){.relay-work.draw .relay-canvas{max-height:min(230px,calc(100dvh - 190px))}}
 @media(min-width:700px){.relay-work.write:has(.relay-previous){grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}.relay-work.draw{grid-template-columns:minmax(0,.7fr) minmax(0,1.8fr)}}
 @media(orientation:landscape) and (max-height:500px){.relay-work.write:has(.relay-previous){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.relay-work.draw{grid-template-columns:minmax(0,.65fr) minmax(0,1.4fr)}}
+@media(orientation:landscape) and (max-width:600px) and (max-height:500px){.relay-work.draw{grid-template-columns:minmax(110px,.55fr) minmax(0,1.45fr)}.relay-work.draw .relay-draft{grid-template-columns:minmax(0,1fr)}.relay-progress{min-width:0;width:100%}}
