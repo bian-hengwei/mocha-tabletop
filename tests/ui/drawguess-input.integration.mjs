@@ -31,7 +31,8 @@ try {
   assert.equal(await input.inputValue(),legacy,'legacy composing Enter keeps the draft');
   assert.equal((await page.locator('.dg-guesses').innerText()).includes(legacy),false,'legacy composing Enter does not submit a guess');
   await input.press('Enter');
-  assert.equal(await input.inputValue(),'','ordinary Enter clears after local command acceptance');
+  await page.waitForFunction(()=>document.querySelector('.dg-guess-form input')?.value==='');
+  assert.equal(await input.inputValue(),'','ordinary Enter clears after authoritative local acceptance');
   assert.equal((await page.locator('.dg-guesses').innerText()).includes(legacy),true,'ordinary Enter submits the guess');
   assert.deepEqual(errors,[]);
   await context.close();

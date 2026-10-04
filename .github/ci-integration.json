@@ -223,6 +223,9 @@
     },
     {
       "script": "tests/ui/codenames-input.integration.mjs"
+    },
+    {
+      "script": "tests/ui/drawguess-rejection.integration.mjs"
     }
   ]
 }

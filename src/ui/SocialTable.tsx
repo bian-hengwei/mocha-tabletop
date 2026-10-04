@@ -18,6 +18,7 @@ type Props = {
     view: GameView;
     selfID: string;
     command: (c: Command) => void;
+    commandPending?: boolean;
     open: (a: Action, selected?: string[]) => void;
 };
 const roleKeys: Record<string, string> = { '狼人': 'wolf', '平民': 'villager', '预言家': 'seer', '女巫': 'witch', '猎人': 'hunter', '守卫': 'guard', '白痴': 'idiot', '狼王': 'wolfKing', '梅林': 'merlin', '派西维尔': 'percival', '忠臣': 'servant', '莫甘娜': 'morgana', '刺客': 'assassin', '爪牙': 'minion', '法官': 'moderator' };

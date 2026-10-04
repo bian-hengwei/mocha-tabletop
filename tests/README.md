@@ -202,6 +202,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `BASE_URL=http://127.0.0.1:5311 node tests/ui/drawguess.integration.mjs`：Mocha Sketch 中英八种横竖屏尺寸（含 568×320）的私密选词、画布下边缘真实指针绘画、清空确认/取消、旋转、猜词、完整画布可达性与截图。可用 `TEST_BROWSER=webkit` 检查 WebKit。
 - `BASE_URL=http://127.0.0.1:5344 node tests/ui/drawing-feedback.integration.mjs`：真实浏览器按住时的本地笔迹、长笔划终点、一次提交、落点、右键、失焦、权限/换座/清空、双指归属与取消。可用 `TEST_BROWSER=webkit` 检查 WebKit；使用组件 fixture，不连接房间。
 - `BASE_URL=http://127.0.0.1:5311 node tests/ui/drawguess-input.integration.mjs`：Mocha Sketch 猜词输入在中英界面保留输入法候选草稿，兼容 `isComposing` 和 `keyCode=229` 的 Enter 路径；合成结束后普通 Enter 仍提交。可用 `TEST_BROWSER=webkit` 检查 WebKit；合成事件覆盖浏览器事件边界，不等同于系统输入法真机验收。
+- `BASE_URL=http://127.0.0.1:5311 node tests/ui/drawguess-rejection.integration.mjs`：本地延迟回执 fixture 覆盖拒绝保留草稿、权威猜词确认后清空、全角 NFKC 归一、等待时编辑代际、正确揭晓、换座与输入法保护；不连接真实房间。fixture 直接向组件注入 pending，真实联机界面在 `actionPending` 期间仍沿用既有的全局交互锁；拒绝解除后草稿保留并可继续提交。可用 `TEST_BROWSER=webkit` 检查 WebKit。
 - `TEST_API_BASE=http://127.0.0.1:8911 node tests/network/drawguess-cloud.integration.mjs`：三人云端绘画、观战隐私、掉线重连时间冻结、并发笔画/猜词的原子提交与计分。
 - `TEST_FRONTEND=http://127.0.0.1:5313 node tests/network/drawguess-lan.integration.mjs`：三浏览器局域网绘画、私密答案、笔画同步、掉线暂停/恢复和牌局中的云端切换。前端应以 `MOCHA_DEV_API=http://127.0.0.1:8911` 启动。
 
