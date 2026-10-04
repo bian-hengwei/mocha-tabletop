@@ -150,6 +150,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `tests/ui/werewolf-lineups.integration.mjs`：四种固定板型的中英选择、角色配比、三模式、独立身份插画、刷新后重开保留规则（支持 TEST_BROWSER=webkit）。
 - `tests/ui/proactive-new-games.integration.mjs`：手机付款/升级操作无需滚动、短横屏商人市场逐卡可达、UNO无可出牌时抽牌优先、寿司确认状态；中英八尺寸，支持 WebKit。
 - `tests/ui/word-usability.integration.mjs`：异步拒绝保留线索、成功清空、隐藏词后准备、投票和发言进度。
+- `tests/ui/codenames-input.integration.mjs`：线索输入的候选回车、原生 composing 标记、229 兼容、直接表单提交保护、换座清理与正常发送；中英八尺寸，支持 WebKit。输入法事件为浏览器模拟。
 
 输入法回归使用浏览器 DOM 键盘事件覆盖 `isComposing` 和兼容性的 `keyCode=229` 路径，随后用真实键盘事件验证普通 Enter/Escape；这不等同于系统输入法真机验收。事件边界依据 [MDN 的 IME 键盘事件说明](https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event#keydown_events_with_ime)。
 

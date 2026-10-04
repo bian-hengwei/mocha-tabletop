@@ -220,6 +220,9 @@
     },
     {
       "script": "tests/network/draw-relay.integration.mjs"
+    },
+    {
+      "script": "tests/ui/codenames-input.integration.mjs"
     }
   ]
 }
