@@ -32,7 +32,7 @@ try{for(const locale of ['zh','en'])for(const [width,height]of sizes){
  await page.locator('.cover-sushi').click();await page.locator('.sushi-menu-options>label>select').first().selectOption('party');
  const fields=page.locator('.sushi-menu-options select');await expect(fields).toHaveCount(8);
  await fields.nth(1).selectOption('uramaki');await fields.nth(2).selectOption('onigiri');await fields.nth(3).selectOption('tofu');await fields.nth(4).selectOption('miso');await fields.nth(5).selectOption('spoon');await fields.nth(6).selectOption('takeout');await fields.nth(7).selectOption('fruit');
- const count=page.locator('.local-play-fields select').first();await count.selectOption('8');await expect(fields.nth(5).locator('option[value="order"]')).toBeDisabled();await expect(fields.nth(2).locator('option[value="tofu"]')).toBeDisabled();
+ const count=page.locator('.local-play-fields select').first();await count.selectOption('8');await expect(fields.nth(5).locator('option[value="order"]')).toHaveJSProperty('disabled',true);await expect(fields.nth(2).locator('option[value="tofu"]')).toHaveJSProperty('disabled',true);
  await page.screenshot({path:`${out}/${locale}-${width}x${height}-setup.png`});await page.locator('.local-play-actions button').first().click();await expect(page.locator('.sushi-players button')).toHaveCount(8);await expect(page.locator('.ng-hand .ng-sushi-card')).toHaveCount(7);
  for(const scenario of ['bonus','copy','menu','spoon','give','takeout','chopsticks']){
   await seed(page,locale,scenario);const buttons=page.locator('.ng-sushi-confirm button'),trigger=buttons.first();await trigger.click();const dialog=page.locator('.action-sheet');await expect(dialog).toBeVisible();

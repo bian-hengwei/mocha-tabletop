@@ -1,3 +1,4 @@
+import {PlayerAvatar} from './RoomSocial';
 import {NewGameResults} from './NewGameResults';
 import { t } from '../i18n';
 function tx<T>(value: T): T | string { return typeof value === 'string' ? t(value) : value; }
@@ -33,7 +34,7 @@ function Header({ view, selfID }: { view: GameView; selfID: string }) {
 function Scoreboard({ view, selfID }: {
     view: GameView;
     selfID: string;
-}) { return <div className="ng-players">{tx(view.board.players.map((p: any) => <div className={`ng-player ${p.id === selfID ? 'ng-self' : ''} ${!view.finished && p.id === view.board.current ? 'ng-current' : ''}`} key={p.id}><span className="ng-avatar">{tx(p.avatar)}</span><div><b>{p.name}{tx(p.id === selfID ? ' · 你' : '')}</b><small>{tx(view.kind === 'sushi' ? `${view.finished ? '已结算' : p.ready ? '✓ 已选' : '选牌中'} · 布丁 ${p.puddings + (view.finished ? 0 : p.table.filter((c: SushiCard) => c.kind === 'pudding').length)}` : view.kind === 'century' ? `${p.orderCount} 单 · 金 ${p.gold} / 银 ${p.silver}` : `${p.handCount} 张手牌`)}{view.kind==='uno'&&p.handCount===1?' · UNO!':''}</small></div><strong>{tx(p.score)}<small>{" " + t("分")}</small></strong></div>))}</div>; }
+}) { return <div className="ng-players">{tx(view.board.players.map((p: any) => <div className={`ng-player ${p.id === selfID ? 'ng-self' : ''} ${!view.finished && p.id === view.board.current ? 'ng-current' : ''}`} key={p.id}><PlayerAvatar id={p.id} avatar={p.avatar} className="ng-avatar"/><div><b>{p.name}{tx(p.id === selfID ? ' · 你' : '')}</b><small>{tx(view.kind === 'sushi' ? `${view.finished ? '已结算' : p.ready ? '✓ 已选' : '选牌中'} · 布丁 ${p.puddings + (view.finished ? 0 : p.table.filter((c: SushiCard) => c.kind === 'pudding').length)}` : view.kind === 'century' ? `${p.orderCount} 单 · 金 ${p.gold} / 银 ${p.silver}` : `${p.handCount} 张手牌`)}{view.kind==='uno'&&p.handCount===1?' · UNO!':''}</small></div><strong>{tx(p.score)}<small>{" " + t("分")}</small></strong></div>))}</div>; }
 const unoColors: Record<string, string> = { red: '#b73d48', yellow: '#936b19', green: '#2d826b', blue: '#376da6', wild: '#665482' };
 function UnoFace({ card, onClick, onPointerDown, drawn=false, selected=false }: {
  card:UnoCard; onClick?:(event:MouseEvent<HTMLButtonElement>)=>void; onPointerDown?:(event:PointerEvent<HTMLButtonElement>)=>void; drawn?:boolean; selected?:boolean;

@@ -21,6 +21,10 @@
       {
         "name": "DIRECTORY",
         "class_name": "RoomDirectory"
+      },
+      {
+        "name": "REACTIONS",
+        "class_name": "ReactionCatalog"
       }
     ]
   },
@@ -30,6 +34,12 @@
       "new_sqlite_classes": [
         "GameRoom",
         "RoomDirectory"
+      ]
+    },
+    {
+      "tag": "v2-reactions",
+      "new_sqlite_classes": [
+        "ReactionCatalog"
       ]
     }
   ],

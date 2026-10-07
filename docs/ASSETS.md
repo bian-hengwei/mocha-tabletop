@@ -2,6 +2,12 @@
 
 ## 当前素材
 
+### 房间动态表情
+
+`public/art/reactions/cow.gif` 是 300×300 的奶牛动态表情，保留原始 GIF 帧序列与播放时长；`cow-still.png` 是首帧静态替代图。无运行时外链或 atlas，不叠加系统文字。动画仅在选择器或头像反应的五秒窗口显示；系统减少动态效果时使用静态图。素材提供方已确认具有授权，允许本项目在公开仓库和线上网站使用、分发此素材。此素材不属于项目原创插画，不应默认为项目开源许可覆盖；其他用途需另行取得相应许可。
+
+新增表情可在 `/admin/reactions` 选择一个或多个 GIF/PNG 文件直接上传，自动生成静态预览，检查后上架，无需修改代码。同步素材来源、授权和动画验收；不要通过任意远程 URL 发送表情。
+
 | 文件 | 用途与来源 |
 | --- | --- |
 | `public/art/gems.jpg`、`bombs.jpg`、`werewolf.jpg`、`avalon.jpg` | 四种游戏的首页封面，为本项目生成的插画 |
@@ -58,3 +64,5 @@ id,tier,colorIndex,points,white,blue,green,red,black
 ## Drawing Relay
 
 `public/art/drawrelay.svg` is an original 720×440 geometric vector cover: two album pages, a pencil and rotation arrows. It contains no text, external imagery or atlas cells. The whole cover is cropped with `object-fit: cover`; game canvases render validated strokes in a separate 1024×768 SVG coordinate space.
+
+管理员上传的表情存放于专用 SQLite Durable Object，不进入 `public/` 或部署产物。GIF/PNG 原图与 PNG 静态预览最大均为 2 MiB、1024 × 1024；表情仅显示图片，减少动态效果时使用静态预览。管理入口与绑定配置见 [部署说明](DEPLOYMENT.md#管理上传表情)。上传前应确认素材来源和使用授权。

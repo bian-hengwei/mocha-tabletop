@@ -27,6 +27,14 @@ try{
    const overflow=await page.locator('.game-surface').evaluate(surface=>[surface,...surface.querySelectorAll('*')].filter(x=>x instanceof HTMLElement&&x.clientHeight>0&&x.scrollHeight>x.clientHeight+2&&['hidden','auto','scroll'].includes(getComputedStyle(x).overflowY)&&!x.matches('.illustrated-tile,.role-art')).map(x=>({class:x.className,h:x.clientHeight,content:x.scrollHeight})));
    if(overflow.length)issues.push({kind,language,width,height,overflow,details:await page.locator('.social-table-v2,.social-board,.round-table,.seats,.seat-pagination').evaluateAll(xs=>xs.map(x=>({class:x.className,y:x.getBoundingClientRect().y,h:x.getBoundingClientRect().height,style:getComputedStyle(x).height,flex:getComputedStyle(x).flex}))) });
    for(const selector of ['.mj-hand-panel','.classic-hand-panel','.g-own-tray','.identity-deck','.bt-hand-zone','.ng-sushi-hand-panel','.ng-uno-hand-panel','.ng-century-hand-dock','.wg-secret-panel'])await expect(page.locator(selector)).toHaveCount(0);
+   if(kind==='doudizhu'){
+    await expect(page.locator('.social-avatar-button')).toHaveCount(0);
+    for(const seat of await page.locator('.classic-seat').all()){
+     await expect(seat.locator('.social-avatar')).toBeVisible();
+     await expect(seat.locator('b').first()).toBeVisible();
+     await expect(seat.locator('small').first()).toBeVisible();
+    }
+   }
    if(kind==='mahjong'){await expect(page.locator('.mj-seat.seat-self')).toBeVisible();await expect(page.locator('.mahjong-assist-button,.mj-tile')).toHaveCount(0);await expect(page.locator('.mj-rack')).toHaveCount(4);await expect(page.locator('.mj-rack .mj-face:not(.mj-back)')).toHaveCount(0);assert(await page.locator('.mj-seat.seat-self').evaluate(seat=>{const a=seat.getBoundingClientRect(),b=document.querySelector('.mj-rack-self').getBoundingClientRect();return a.bottom<=b.top||a.right<=b.left||a.left>=b.right;}),'spectator bottom seat does not cover the rack');}
    await page.screenshot({path:`${out}/${scenario}-${language}-${width}.png`});
    await page.locator('.audience-trigger').click();const dialog=page.getByRole('dialog',{name:language==='zh'?'观战席':'Spectators',exact:true});await expect(dialog).toBeVisible();

@@ -10,6 +10,40 @@ const member=(id:string,pending=false)=>new ServerSocket({id,authenticated:true,
 const message=(ws:ServerSocket,msg:any)=>server.webSocketMessage(ws,JSON.stringify({requestID:crypto.randomUUID(),...msg}));
 beforeEach(()=>{vi.useFakeTimers();sockets=[member(host.id),member(guest.id)];server=Object.create(GameRoom.prototype);server.data={info:{code:'ABC234',kind:'gems',mode:'cloud',hostID:host.id,players:[host,guest],pending:[],started:false,revision:1},tokens:{[host.id]:'a'.repeat(48),[guest.id]:'b'.repeat(48)},pendingTokens:{},invite:'invite',expires:Date.now()+3600000,controlSeen:{}};server.ctx={getWebSockets:()=>sockets,storage:{async put(){},async setAlarm(at:number){alarm=at;},async deleteAll(){}}};server.env={DIRECTORY:{getByName:()=>({fetch:async()=>new Response('{}')})}};});
 afterEach(()=>{vi.useRealTimers();});
+describe('room-level social lifecycle',()=>{
+ it.each(['cloud','lan'])('clears durable chat immediately on %s dissolution and never broadcasts it again',async mode=>{
+  server.data.info.mode=mode;
+  await message(sockets[0],{type:'social',command:{type:'chat',text:'room history'}});
+  await message(sockets[1],{type:'social',command:{type:'reaction',reaction:'cow'}});
+  expect(server.data.social.messages).toHaveLength(1);expect(server.data.social.reactions).toHaveLength(1);
+  const put=vi.spyOn(server.ctx.storage,'put'),offsets=sockets.map(ws=>ws.messages.length);
+  await message(sockets[0],{type:'leave'});
+  expect(server.data.ended).toBe(true);expect(server.data.social).toBeUndefined();
+  expect(server.data.tokens).toEqual({});expect(server.data.pendingTokens).toEqual({});expect(server.data.match).toBeUndefined();
+  expect(put.mock.calls.at(-1)?.[1]).not.toHaveProperty('social');
+  for(const [i,ws] of sockets.entries()){
+   expect(ws.messages.slice(offsets[i])).toEqual([{type:'ended',error:'房主已解散房间'}]);expect(ws.closed).toBe(1000);
+  }
+  await server.webSocketClose(sockets[1]);await server.alarm();
+  expect(server.data.social).toBeUndefined();expect(put.mock.calls.at(-1)?.[1]).not.toHaveProperty('social');
+  for(const [i,ws] of sockets.entries())expect(ws.messages.slice(offsets[i]).some(m=>m.type==='snapshot'||m.type==='social')).toBe(false);
+  expect((await server.fetch(new Request('https://internal/status'))).status).toBe(404);
+ });
+ it('keeps chat through replay and game changes, masking it only while a constrained game is selected',async()=>{
+  await message(sockets[0],{type:'social',command:{type:'chat',text:'same room'}});const original=structuredClone(server.data.social.messages);
+  await message(sockets[0],{type:'start'});await message(sockets[0],{type:'replay'});expect(server.data.social.messages).toEqual(original);
+  for(const kind of ['uno','codenames','werewolf','avalon','undercover','gems']){
+   await message(sockets[0],{type:'selectGame',kind});expect(server.data.info.kind).toBe(kind);expect(server.data.social.messages).toEqual(original);
+   expect(sockets[0].snapshot.social.messages).toEqual(['uno','gems'].includes(kind)?original:[]);
+  }
+ });
+ it('deletes abandoned chat when the room expires, without a final room snapshot',async()=>{
+  await message(sockets[0],{type:'social',command:{type:'chat',text:'expired room'}});const remove=vi.spyOn(server.ctx.storage,'deleteAll');
+  server.data.expires=Date.now();const offset=sockets[0].messages.length;await server.alarm();
+  expect(remove).toHaveBeenCalledOnce();expect(server.data).toBeUndefined();
+  expect(sockets[0].messages.slice(offset)).toEqual([{type:'ended',error:'房间已到期，请重新建房'}]);
+ });
+});
 describe('authoritative reconnect and presence',()=>{
  it('does not let a rejected socket close erase a new application from the same player',async()=>{const profile={id:'pending0',name:'申请人',avatar:'🦊'},token='c'.repeat(48);const first=new ServerSocket();sockets.push(first);await message(first,{type:'hello',profile,token});await message(sockets[0],{type:'approve',playerID:profile.id,accept:false});const retry=new ServerSocket();sockets.push(retry);await message(retry,{type:'hello',profile,token});await server.webSocketClose(first);expect(server.data.info.pending).toEqual([profile]);expect(server.data.pendingTokens[profile.id]).toBe(token);await message(sockets[0],{type:'approve',playerID:profile.id,accept:true});expect(retry.snapshot.room.players.some((p:any)=>p.id===profile.id)).toBe(true);});
  it('keeps private state and host controls unavailable to applicants and guests',async()=>{const applicant=new ServerSocket();sockets.push(applicant);await message(applicant,{type:'hello',profile:{id:'pending0',name:'申请人',avatar:'🦊'},token:'c'.repeat(48)});await message(applicant,{type:'ready',ready:true});expect(applicant.messages.at(-1).error).toContain('等待房主');expect(applicant.messages.some(m=>m.room||m.view||m.invite)).toBe(false);for(const type of ['start','endGame','selectGame','removePlayer','approve']){const revision=server.data.info.revision;await message(sockets[1],{type,kind:'uno',playerID:host.id,accept:true});expect(sockets[1].messages.at(-1).type).toBe('error');expect(server.data.info.revision).toBe(revision);}expect(sockets[1].snapshot?.invite).toBeUndefined();});

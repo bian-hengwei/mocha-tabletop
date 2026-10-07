@@ -1,3 +1,4 @@
+import {PlayerAvatar} from './RoomSocial';
 import {effectiveSushi,sushiPartyDescription} from '../core/games/sushiParty';
 import {SUSHI_MENU_NAMES} from '../core/games/sushiMenu';
 import {useLayoutEffect,useRef,useState,type CSSProperties} from 'react';
@@ -53,11 +54,11 @@ export function SushiTable({view,selfID,command,onShowResults,open}:Props){
  return <div className={`ng-table ng-sushi ${view.finished?'ng-sushi-finished':''}`}>
   <div className="ng-sushi-overview">{b.menu&&<details className="sushi-table-menu"><summary>{t('本桌菜单')}</summary><p>{['nigiri',b.menu.roll,...b.menu.appetizers,...b.menu.specials,b.menu.dessert].map(k=>t(SUSHI_MENU_NAMES[k])).join(' · ')}</p></details>}
    <div ref={tabs} className="ng-players sushi-players" role="group" aria-label={t('查看玩家盘面')}>
-    {b.players.map(player=><button type="button" key={player.id} className={`ng-player ${player.id===selfID?'ng-self':''}`} aria-pressed={plate.id===player.id} aria-controls="sushi-public-plate" onClick={()=>setPlateID(player.id)}>
-     <span className="ng-avatar" aria-hidden="true">{player.avatar}</span><div><b>{player.name}{player.id===selfID?` · ${t('你')}`:''}</b>
+    {b.players.map(player=><div className="sushi-player-seat" key={player.id}><button type="button" className={`ng-player ${player.id===selfID?'ng-self':''}`} aria-pressed={plate.id===player.id} aria-controls="sushi-public-plate" onClick={()=>setPlateID(player.id)}>
+     <span className="ng-avatar" aria-hidden="true"/><div><b>{player.name}{player.id===selfID?` · ${t('你')}`:''}</b>
       <small>{view.finished?t('已结算'):t(player.ready?'✓ 已选':'选牌中')}</small>
      </div><strong>{player.score}<small> {t('分')}</small></strong><span className="sushi-player-counts">{t('卷数')} {rolls(player.table)} · {t(b.edition==='party'?'甜点':'布丁')} {pudding(player)}</span>
-    </button>)}
+    </button><PlayerAvatar id={player.id} avatar={player.avatar} className="sushi-seat-avatar"/></div>)}
    </div>
    <section id="sushi-public-plate" className="sushi-public-plate" aria-label={`${plate.name} · ${t('盘面')}`}>
     <header><div><h3>{plate.avatar} {plate.name}<small>{t('盘面')}</small></h3><p>{t('料理分')} <b>{plate.plateScore??sushiPlateScore(plate.table)}</b> · {t('卷数')} <b>{rolls(plate.table)}</b> · {t(b.edition==='party'?'甜点':'布丁')} <b>{pudding(plate)}</b></p></div>

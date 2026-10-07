@@ -1,6 +1,7 @@
 import {afterEach,expect,it,vi} from 'vitest';
 import {RoomClient} from '../../src/net/RoomClient';
 import type {RoomInfo} from '../../src/core/room';
+import {createMatch,viewRoomMatch} from '../../src/core/room';
 
 class Channel {
  readyState='open';bufferedAmount=0;
@@ -56,4 +57,24 @@ it('pauses a guest immediately when a replacement LAN offer invalidates the prov
  expect(client.state.paused).toBe(true);
  replacement.receive({type:'proof',nonce:replacement.sent[0].nonce});
  expect(client.state.transport).toBe('lan');expect(client.state.paused).toBe(false);
+});
+
+it('requests a fresh public snapshot after a late observer proves an initially untrusted channel',async()=>{
+ vi.stubGlobal('window',{addEventListener(){},removeEventListener(){}});
+ vi.stubGlobal('document',{addEventListener(){},removeEventListener(){}});
+ vi.stubGlobal('location',{origin:'https://table.test',pathname:'/'});
+ for(const key of ['localStorage','sessionStorage'])vi.stubGlobal(key,{getItem(){return null;},setItem(){},removeItem(){}});
+ vi.stubGlobal('WebSocket',Socket);vi.stubGlobal('RTCPeerConnection',Peer);Peer.all=[];
+ const host={id:'host0000',name:'Host',avatar:'🦊'},guest={id:'guest000',name:'Guest',avatar:'🐶'},observer={id:'observer',name:'Observer',avatar:'🐼'};
+ const room:RoomInfo={code:'ABC234',hostID:host.id,kind:'gems',mode:'lan',players:[host,guest].map(p=>({...p,connected:true,ready:true})),spectators:[{...observer,connected:true}],pending:[],started:true,revision:1,matchID:'test-match'};
+ const match=createMatch(room.kind,room.players),snapshot={type:'lanSnapshot',room,...viewRoomMatch(match,room,observer.id),paused:false};
+ client=new RoomClient();await client.join(observer,room.code,undefined,true);expect(client.state.error).toBeUndefined();const socket=Socket.current;socket.onopen?.();socket.receive({type:'snapshot',room});expect(client.state.room).toEqual(room);
+ socket.receive({type:'signal',from:host.id,data:{description:{type:'offer',sdp:'late-observer'}}});
+ await vi.waitFor(()=>expect(Peer.all[0].localDescription?.type).toBe('answer'));
+ const channel=new Channel();Peer.all[0].ondatachannel?.({channel});channel.onopen?.();
+ channel.receive(snapshot);expect(client.state.view).toBeUndefined();
+ channel.receive({type:'proof',nonce:'wrong-nonce'});expect(client.state.view).toBeUndefined();expect(channel.sent.some(m=>m.type==='sync')).toBe(false);
+ channel.receive({type:'proof',nonce:channel.sent[0].nonce});expect(channel.sent.at(-1)).toEqual({type:'sync'});
+ const sent=channel.sent.length;channel.receive({type:'proof',nonce:channel.sent[0].nonce});expect(channel.sent).toHaveLength(sent);
+ channel.receive(snapshot);expect(client.state.view).toEqual(snapshot.view);expect(client.state.view?.spectating).toBe(true);
 });
