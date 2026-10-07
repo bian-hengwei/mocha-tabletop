@@ -64,15 +64,16 @@ try{
   await expect(page.locator('.relay-submit button')).toBeEnabled();
   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.game.submitted[0]),false);
   await page.locator('.relay-submit button').click();
-  await expect(page.locator('.relay-private-bar')).toContainText(locale==='zh'?'已提交':'Submitted');
+  await expect(page.locator('.relay-wait')).toContainText(locale==='zh'?'已提交':'Submitted');
   await seed(page,locale);
   await textarea.dispatchEvent('compositionstart');await textarea.fill('Private draft');
-  await page.locator('.relay-private-bar button').click();
-  await page.waitForTimeout(650);assert.equal(await savedDraft(page),'');
-  await page.locator('.relay-sealed button').click();await expect(textarea).toHaveValue('');
+  await expect(page.locator('.relay-heading button')).toBeDisabled();
+  await textarea.dispatchEvent('compositionend',{data:'Private draft'});await saved(page,'Private draft');
+  await page.locator('.relay-heading button').click();
+  await page.locator('.relay-sealed button').click();await expect(textarea).toHaveValue('Private draft');
   await textarea.dispatchEvent('compositionstart');await textarea.fill('Seat one private');
   await page.locator('.practice-switch select').selectOption('practice-1');
-  await page.waitForTimeout(650);assert.equal(await savedDraft(page),'');
+  await page.waitForTimeout(650);assert.equal(await savedDraft(page),'Private draft');
   await page.locator('.relay-sealed button').click();await expect(textarea).toHaveValue('');
   // Preserve the existing Unicode code-point limit and multiline editing.
   await textarea.fill('😀'.repeat(120));await textarea.dispatchEvent('compositionstart');

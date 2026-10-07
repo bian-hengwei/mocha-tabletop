@@ -27,16 +27,10 @@ describe('word-game choice content stays separate from translated system labels'
    else expect(choice).toBeUndefined();
   }
  });
- it('marks avatar-prefixed vote targets literal without exposing secret words or roles',()=>{
-  let s=undercover.create(players,1,{language:'zh'});
-  for(const player of players)s=undercover.apply(s,player.id,{action:'ready',values:[]});
-  while(s.phase==='describe')s=undercover.apply(s,players[s.order[s.speaker]].id,{action:'described',values:[]});
-  const view=undercover.view(s,players[0].id),choices=view.actions.find(a=>a.id==='vote')!.choices;
-  expect(choices).toEqual(players.slice(1).map(p=>({id:p.id,title:`${p.avatar} ${p.name}`,translateTitle:false})));
-  expect(view.board.players.every((p:{word?:string;role?:string})=>p.word===undefined&&p.role===undefined)).toBe(true);
-  expect(choices.some(c=>c.id===players[0].id)).toBe(false);
-  s=undercover.apply(s,players[0].id,{action:'vote',values:[players[1].id]});
-  expect(undercover.view(s,players[0].id).actions[0].id).toBe('cancel_vote');
-  expect(undercover.view(s,players[1].id).board.lastVotes).toEqual({});
+ it('keeps dealer roster names literal and omits voting and role choices',()=>{
+  const s=undercover.create(players,1,{language:'zh'}),v=undercover.view(s,players[0].id);
+  expect(v.board.players.map((p:{name:string})=>p.name)).toEqual(players.map(p=>p.name));
+  expect(v.actions.map(a=>a.id)).toEqual(['ready']);expect(v.actions[0].choices).toEqual([]);
+  expect(v.board.players.every((p:{word?:string;role?:string})=>!p.word&&!p.role)).toBe(true);
  });
 });

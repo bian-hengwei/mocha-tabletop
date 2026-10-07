@@ -155,6 +155,9 @@
     },
     {
       "script": "tests/ui/sushi-table.integration.mjs"
+    },
+    {
+      "script": "tests/ui/sushi-party.integration.mjs"
     }
   ],
   "social": [
@@ -174,7 +177,7 @@
       "script": "tests/ui/word-viewport.integration.mjs"
     },
     {
-      "script": "tests/ui/undercover-turn-navigation.integration.mjs"
+      "script": "tests/ui/undercover-dealer.integration.mjs"
     },
     {
       "script": "tests/ui/word-round.integration.mjs"
@@ -226,6 +229,9 @@
     },
     {
       "script": "tests/ui/drawguess-rejection.integration.mjs"
+    },
+    {
+      "script": "tests/ui/feedback.integration.mjs"
     }
   ]
 }

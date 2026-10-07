@@ -1,3 +1,4 @@
+import {roomLimits} from '../src/core/room';
 import {beforeEach,describe,expect,it} from 'vitest';
 import {BOT_GAMES,BOT_DIFFICULTIES,chooseBotCommand} from '../src/core/bots';
 import {modules} from '../src/core/registry';
@@ -9,7 +10,7 @@ const entries=new Map<string,string>();
 beforeEach(()=>{entries.clear();Object.defineProperty(globalThis,'localStorage',{configurable:true,value:{getItem:(key:string)=>entries.get(key)||null,setItem:(key:string,value:string)=>entries.set(key,value),removeItem:(key:string)=>entries.delete(key)}});});
 describe('local solo configuration',()=>{
  it.each(BOT_GAMES)('starts %s at every supported count and difficulty and progresses legal actions',kind=>{
-  for(let count=GAMES[kind].min;count<=GAMES[kind].max;count++)for(const difficulty of BOT_DIFFICULTIES){
+  for(let count=roomLimits(kind).min;count<=roomLimits(kind).max;count++)for(const difficulty of BOT_DIFFICULTIES){
    let p=createPractice(kind,count,human,{language:'en'},difficulty,314);
    expect(p.players).toHaveLength(count);expect(p.players.filter(player=>!player.bot)).toHaveLength(1);
    expect(p.players.slice(1).every(player=>player.bot?.difficulty===difficulty)).toBe(true);

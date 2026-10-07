@@ -35,11 +35,11 @@ function Scoreboard({ view, selfID }: {
     selfID: string;
 }) { return <div className="ng-players">{tx(view.board.players.map((p: any) => <div className={`ng-player ${p.id === selfID ? 'ng-self' : ''} ${!view.finished && p.id === view.board.current ? 'ng-current' : ''}`} key={p.id}><span className="ng-avatar">{tx(p.avatar)}</span><div><b>{p.name}{tx(p.id === selfID ? ' · 你' : '')}</b><small>{tx(view.kind === 'sushi' ? `${view.finished ? '已结算' : p.ready ? '✓ 已选' : '选牌中'} · 布丁 ${p.puddings + (view.finished ? 0 : p.table.filter((c: SushiCard) => c.kind === 'pudding').length)}` : view.kind === 'century' ? `${p.orderCount} 单 · 金 ${p.gold} / 银 ${p.silver}` : `${p.handCount} 张手牌`)}{view.kind==='uno'&&p.handCount===1?' · UNO!':''}</small></div><strong>{tx(p.score)}<small>{" " + t("分")}</small></strong></div>))}</div>; }
 const unoColors: Record<string, string> = { red: '#b73d48', yellow: '#936b19', green: '#2d826b', blue: '#376da6', wild: '#665482' };
-function UnoFace({ card, onClick, drawn=false, selected=false }: {
- card:UnoCard; onClick?:(event:MouseEvent<HTMLButtonElement>)=>void; drawn?:boolean; selected?:boolean;
+function UnoFace({ card, onClick, onPointerDown, drawn=false, selected=false }: {
+ card:UnoCard; onClick?:(event:MouseEvent<HTMLButtonElement>)=>void; onPointerDown?:(event:PointerEvent<HTMLButtonElement>)=>void; drawn?:boolean; selected?:boolean;
 }) {
  const rank=typeof card.value==='number'?card.value:({skip:'⊘',reverse:'⇄',draw2:'+2',wild:'✦',wild4:'+4'}[card.value]);
- return <button type="button" disabled={!onClick} aria-pressed={onClick?selected:undefined} className={`ng-uno-card ${drawn?'ng-drawn':''} ${selected?'ng-uno-selected':''} ${card.color==='wild'?'ng-wild-card':''}`} style={{'--uno-color':unoColors[card.color]} as CSSProperties} onClick={onClick} aria-label={t(unoTitle(card))}>
+ return <button type="button" disabled={!onClick} aria-pressed={onClick?selected:undefined} className={`ng-uno-card ${drawn?'ng-drawn':''} ${selected?'ng-uno-selected':''} ${card.color==='wild'?'ng-wild-card':''}`} style={{'--uno-color':unoColors[card.color]} as CSSProperties} onPointerDown={onPointerDown} onClick={onClick} aria-label={t(unoTitle(card))}>
   <ColorCardArt color={unoColors[card.color]} wild={card.color==='wild'}/>
   <span className="ng-uno-corner" aria-hidden="true">{rank}</span>
   <strong>{rank}</strong>
@@ -65,8 +65,10 @@ function UnoTable(props: Props) {
  const valid=!!selectedAction&&(selectedCard?.color!=='wild'||!!selectedAction.choices.find(c=>c.id===selectedColor));
  const choose=(id:string)=>{setSelectedID(old=>old===id?null:id);setSelectedColor(null);};
  const submit=()=>{if(!valid||!selectedCard||!selectedAction)return;command({action:selectedAction.id,values:[selectedCard.color==='wild'?selectedColor!:selectedCard.id]});setSelectedID(null);setSelectedColor(null);};
- const selectCard=(card:UnoCard)=>{
+ const taps=useCardDoubleTap([selfID,b.roundNumber,b.round,b.phase,b.current,b.drawn,b.top?.id,handIDs].join(':'));
+ const selectCard=(card:UnoCard,event:MouseEvent<HTMLButtonElement>)=>{
   const action=actionFor(card);if(!action)return;
+  if(taps.isDoubleTap(card.id,event)){if(card.color==='wild'){setSelectedID(card.id);setSelectedColor(null);open(action);}else{command({action:action.id,values:[card.id]});setSelectedID(null);setSelectedColor(null);}return;}
   choose(card.id);
  };
  const playerName=(id:string)=>b.players.find((p:any)=>p.id===id)?.name||id;
@@ -76,7 +78,7 @@ function UnoTable(props: Props) {
   <section className="ng-uno-center ng-panel"><div><h3>{t('当前弃牌')}</h3><UnoFace card={b.top}/></div><div className="ng-uno-status"><span className="ng-color-badge" style={{background:unoColors[b.color]}}>{t(UNO_LABEL[b.color])}</span><strong>{t(b.direction===1?'顺时针 →':'← 逆时针')}</strong><small>{t('抽牌堆')} {t(`${b.deckCount} 张`)}</small><Controls {...props} omit={['play','confirmChallenge','draw','pass']}/></div></section>
 
   </div>
-  {!view.spectating&&<section className="ng-panel ng-uno-hand-panel"><h3>{t('你的手牌')}<small>{t(`${b.hand.length} 张`)}{handOverflow&&<span className="ng-hand-scroll-cue">↔ {t('滑动查看手牌')}</span>}</small>{!view.finished&&b.current===selfID&&b.phase==='play'&&<span className="ng-uno-turn-label" role="status">{t('轮到你了')}</span>}</h3><div ref={handRef} className="ng-hand ng-uno-hand" tabIndex={0} aria-label={t('手牌可左右滑动')}>{(b.hand as UnoCard[]).map(c=><UnoFace card={c} key={c.id} drawn={b.drawn===c.id} selected={selectedID===c.id&&!!selectedAction} onClick={actionFor(c)?()=>selectCard(c):undefined}/>)}</div>
+  {!view.spectating&&<section className="ng-panel ng-uno-hand-panel"><h3>{t('你的手牌')}<small>{t(`${b.hand.length} 张`)}{handOverflow&&<span className="ng-hand-scroll-cue">↔ {t('滑动查看手牌')}</span>}</small>{!view.finished&&b.current===selfID&&b.phase==='play'&&<span className="ng-uno-turn-label" role="status">{t('轮到你了')}</span>}</h3><div ref={handRef} className="ng-hand ng-uno-hand" tabIndex={0} aria-label={t('手牌可左右滑动')}>{(b.hand as UnoCard[]).map(c=><UnoFace card={c} key={c.id} drawn={b.drawn===c.id} selected={selectedID===c.id&&!!selectedAction} onPointerDown={taps.onPointerDown} onClick={actionFor(c)?e=>selectCard(c,e):undefined}/>)}</div>
   {b.phase==='play'&&b.current===selfID&&<div className="ng-uno-playbar"><div className="ng-uno-selection" aria-live="polite">{selectedCard&&selectedAction?<><strong>{t(selectedCard.color==='wild'&&!selectedColor?'选择出牌颜色':unoTitle(selectedCard))}</strong>{selectedCard.color==='wild'&&<div className="ng-uno-colors" role="group" aria-label={t('选择出牌颜色')}>{selectedAction.choices.map(c=><button key={c.id} type="button" aria-pressed={selectedColor===c.id} className={selectedColor===c.id?'selected':''} style={{'--uno-color':unoColors[c.id]} as CSSProperties} onClick={()=>setSelectedColor(c.id)}>{t(c.title)}</button>)}</div>}</>:null}</div><div className="ng-uno-play-actions">{playableCount>0&&<button type="button" className="ng-action ng-uno-play" disabled={!valid} onClick={submit}>{t('出牌')}</button>}{view.actions.filter(a=>['draw','pass'].includes(a.id)).map(a=><button type="button" className={`ng-action ${playableCount?'ng-uno-secondary':'ng-uno-only-action'}`} key={a.id} onClick={()=>{setSelectedID(null);setSelectedColor(null);command({action:a.id,values:[]});}}>{t(a.title)}</button>)}</div></div>}
   </section>}
 

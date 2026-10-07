@@ -2,12 +2,13 @@ import {useEffect, useLayoutEffect, useRef, type KeyboardEvent, type PointerEven
 import {t} from '../i18n';
 
 type Point = [number, number];
-export type DrawGuessStroke = {points: Point[]; color: string};
+export type DrawGuessStroke = {points: Point[]; color: string; width?:number};
 type Props = {
  strokes: DrawGuessStroke[];
  enabled: boolean;
  color: string;
- onStroke: (points: Point[], color: string) => void;
+ width?:number;
+ onStroke: (points: Point[], color: string, width?:number) => void;
 };
 
 function sample(points: Point[], limit: number): Point[] {
@@ -15,10 +16,10 @@ function sample(points: Point[], limit: number): Point[] {
  return Array.from({length: limit}, (_, i) => points[Math.round(i * (points.length - 1) / (limit - 1))]);
 }
 
-export function DrawGuessCanvas({strokes, enabled, color, onStroke}: Props) {
+export function DrawGuessCanvas({strokes, enabled, color, width=9, onStroke}: Props) {
  const canvas = useRef<HTMLCanvasElement>(null);
  const draft = useRef<Point[]>([]), pointer = useRef<number | null>(null);
- const draftColor = useRef(color), keyboardPoint = useRef<Point>([500, 500]);
+ const draftWidth=useRef(width), draftColor = useRef(color), keyboardPoint = useRef<Point>([500, 500]);
  const frame = useRef<number | null>(null), previousCount = useRef(strokes.length);
  const paint = useRef(() => {});
  paint.current = () => {
@@ -30,7 +31,8 @@ export function DrawGuessCanvas({strokes, enabled, color, onStroke}: Props) {
   if (!ctx) return;
   ctx.scale(scale, scale); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   ctx.lineWidth = Math.max(3, Math.min(8, rect.width / 70));
-  for (const stroke of [...strokes, ...(draft.current.length ? [{points: draft.current, color: draftColor.current}] : [])]) {
+  for (const stroke of [...strokes, ...(draft.current.length ? [{points: draft.current, color: draftColor.current,width:draftWidth.current}] : [])]) {
+   ctx.lineWidth=stroke.width?stroke.width/1000*rect.width:Math.max(3,Math.min(8,rect.width/70));
    ctx.strokeStyle = stroke.color; ctx.fillStyle = stroke.color;
    if (stroke.points.every(point => point[0] === stroke.points[0][0] && point[1] === stroke.points[0][1])) {
     const [x, y] = stroke.points[0];
@@ -88,22 +90,22 @@ export function DrawGuessCanvas({strokes, enabled, color, onStroke}: Props) {
   if (pointer.current !== event.pointerId) return;
   if (!enabled) { cancel(); return; }
   append(position(event));
-  const points = sample(draft.current, 32), strokeColor = draftColor.current;
+  const points = sample(draft.current, 32), strokeColor = draftColor.current,strokeWidth=draftWidth.current;
   cancel();
   if (points.length === 1) points.push(points[0]);
-  if (points.length) onStroke(points, strokeColor);
+  if (points.length) onStroke(points, strokeColor,strokeWidth);
  };
  const keyboard = (event: KeyboardEvent<HTMLCanvasElement>) => {
   if (!enabled || pointer.current !== null) return;
   const delta: Record<string, Point> = {ArrowUp: [0, -40], ArrowDown: [0, 40], ArrowLeft: [-40, 0], ArrowRight: [40, 0]};
   if (event.key === 'Enter' || event.key === ' ') {
-   event.preventDefault(); onStroke([keyboardPoint.current, keyboardPoint.current], color); return;
+   event.preventDefault(); onStroke([keyboardPoint.current, keyboardPoint.current], color,width); return;
   }
   const move = delta[event.key]; if (!move) return;
   event.preventDefault();
   const previous = keyboardPoint.current;
   const next: Point = [Math.max(0, Math.min(1000, previous[0] + move[0])), Math.max(0, Math.min(1000, previous[1] + move[1]))];
-  keyboardPoint.current = next; onStroke([previous, next], color);
+  keyboardPoint.current = next; onStroke([previous, next], color,width);
  };
  return <canvas ref={canvas} className={`dg-canvas ${enabled ? 'dg-can-draw' : ''}`}
   aria-label={t(enabled ? '作画区域' : '共享画板')} aria-description={enabled ? t('方向键作画，回车落点') : undefined}
@@ -111,7 +113,7 @@ export function DrawGuessCanvas({strokes, enabled, color, onStroke}: Props) {
   onPointerDown={event => {
    if (!enabled || pointer.current !== null || event.button !== 0 || !event.isPrimary) return;
    event.preventDefault(); event.currentTarget.focus({preventScroll: true}); event.currentTarget.setPointerCapture(event.pointerId);
-   pointer.current = event.pointerId; draftColor.current = color; draft.current = [position(event)]; drawSoon();
+   pointer.current = event.pointerId; draftColor.current = color; draftWidth.current=width; draft.current = [position(event)]; drawSoon();
   }}
   onPointerMove={event => {
    if (!enabled || pointer.current !== event.pointerId) return;

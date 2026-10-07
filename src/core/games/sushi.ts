@@ -1,11 +1,13 @@
+import {PARTY_INFO,type ExtraSushiKind} from './sushiMenu';
+import {createSushiParty,viewSushiParty,applySushiParty,type SushiPartyData} from './sushiParty';
 import { action, assertPlayers, seeded, shuffle, validateCommand, type GameModule, type Player } from '../types';
 
-export type SushiKind='tempura'|'sashimi'|'dumpling'|'maki1'|'maki2'|'maki3'|'egg'|'salmon'|'squid'|'wasabi'|'pudding'|'chopsticks';
-export interface SushiCard {id:string;kind:SushiKind}
-export const SUSHI_INFO:Record<SushiKind,{title:string;symbol:string;detail:string}>={
+export type SushiKind=ExtraSushiKind|'tempura'|'sashimi'|'dumpling'|'maki1'|'maki2'|'maki3'|'egg'|'salmon'|'squid'|'wasabi'|'pudding'|'chopsticks';
+export interface SushiCard {id:string;kind:SushiKind;number?:number;playedAt?:number;copy?:SushiKind;flipped?:boolean;wasabiID?:string;used?:boolean;copiedNumber?:number;noWasabi?:boolean}
+export const SUSHI_INFO:Record<SushiKind,{title:string;symbol:string;detail:string}>={...PARTY_INFO,
   tempura:{title:'天妇罗',symbol:'🍤',detail:'每 2 张得 5 分'},sashimi:{title:'刺身',symbol:'🐟',detail:'每 3 张得 10 分'},dumpling:{title:'饺子',symbol:'🥟',detail:'1 / 3 / 6 / 10 / 15 分'},maki1:{title:'寿司卷 · 1',symbol:'🍙',detail:'卷数第一 6 分，第二 3 分'},maki2:{title:'寿司卷 · 2',symbol:'🍙',detail:'卷数第一 6 分，第二 3 分'},maki3:{title:'寿司卷 · 3',symbol:'🍙',detail:'卷数第一 6 分，第二 3 分'},egg:{title:'玉子握寿司',symbol:'🍣',detail:'1 分 · 芥末可变 3 分'},salmon:{title:'三文鱼握寿司',symbol:'🍣',detail:'2 分 · 芥末可变 6 分'},squid:{title:'鱿鱼握寿司',symbol:'🍣',detail:'3 分 · 芥末可变 9 分'},wasabi:{title:'芥末',symbol:'🌿',detail:'之后的第一张握寿司 ×3'},pudding:{title:'布丁',symbol:'🍮',detail:'三轮后最多 +6，最少 −6'},chopsticks:{title:'筷子',symbol:'🥢',detail:'之后可换选 2 张，再传出筷子'}
 };
-export interface SushiState {players:Player[];deck:SushiCard[];hands:SushiCard[][];table:SushiCard[][];picks:(string[]|null)[];scores:number[];puddings:number[];round:number;step:number;finished:boolean;winners:string[];history:string[];roundScores:number[][]}
+export interface SushiState {party?:SushiPartyData;players:Player[];deck:SushiCard[];hands:SushiCard[][];table:SushiCard[][];picks:(string[]|null)[];scores:number[];puddings:number[];round:number;step:number;finished:boolean;winners:string[];history:string[];roundScores:number[][]}
 export function sushiPlateScore(cards:SushiCard[]):number {
   const count=(k:SushiKind)=>cards.filter(c=>c.kind===k).length;
   let total=Math.floor(count('tempura')/2)*5+Math.floor(count('sashimi')/3)*10+[0,1,3,6,10,15][Math.min(5,count('dumpling'))],wasabi=0;
@@ -25,12 +27,12 @@ function scoreRound(s:SushiState){
   const best=Math.max(...s.scores),dessert=Math.max(...s.puddings.filter((_,i)=>s.scores[i]===best));s.winners=s.players.filter((_,i)=>s.scores[i]===best&&s.puddings[i]===dessert).map(p=>p.id);s.finished=true;
 }
 export const sushi:GameModule<SushiState>={
- create(players,seed){assertPlayers(players,2,5);const quantities:Record<SushiKind,number>={tempura:14,sashimi:14,dumpling:14,maki1:6,maki2:12,maki3:8,egg:5,salmon:10,squid:5,wasabi:6,pudding:10,chopsticks:4};const deck=shuffle(Object.entries(quantities).flatMap(([kind,n])=>Array.from({length:n},(_,i)=>({id:`${kind}-${i}`,kind:kind as SushiKind}))),seeded(seed));const s:SushiState={players:structuredClone(players),deck,hands:[],table:[],picks:[],scores:players.map(()=>0),puddings:players.map(()=>0),round:1,step:1,finished:false,winners:[],history:['同时选牌，全部确认后揭晓，手牌向左传递'],roundScores:[]};deal(s);return s;},
- view(s,id,spectator=false){if(spectator)id='';const me=s.players.findIndex(p=>p.id===id);if(me<0&&!spectator)return{kind:'sushi',phase:'不在本局',instruction:'仅本局玩家可查看',finished:s.finished,actions:[],sections:[],log:[],board:{}};
+ create(players,seed,options){if(options?.sushiEdition==='party')return createSushiParty(players,seed,options.sushiMenu);assertPlayers(players,2,5);const quantities:Partial<Record<SushiKind,number>>={tempura:14,sashimi:14,dumpling:14,maki1:6,maki2:12,maki3:8,egg:5,salmon:10,squid:5,wasabi:6,pudding:10,chopsticks:4};const deck=shuffle(Object.entries(quantities).flatMap(([kind,n])=>Array.from({length:n},(_,i)=>({id:`${kind}-${i}`,kind:kind as SushiKind}))),seeded(seed));const s:SushiState={players:structuredClone(players),deck,hands:[],table:[],picks:[],scores:players.map(()=>0),puddings:players.map(()=>0),round:1,step:1,finished:false,winners:[],history:['同时选牌，全部确认后揭晓，手牌向左传递'],roundScores:[]};deal(s);return s;},
+ view(s,id,spectator=false){if(s.party)return viewSushiParty(s,id,spectator);if(spectator)id='';const me=s.players.findIndex(p=>p.id===id);if(me<0&&!spectator)return{kind:'sushi',phase:'不在本局',instruction:'仅本局玩家可查看',finished:s.finished,actions:[],sections:[],log:[],board:{}};
  const picks=s.picks[me],choices=(s.hands[me]||[]).map(c=>({id:c.id,title:SUSHI_INFO[c.kind].title,subtitle:SUSHI_INFO[c.kind].detail})),canDouble=(s.table[me]||[]).some(c=>c.kind==='chopsticks')&&choices.length>=2;
  const actions=spectator||s.finished?[]:picks?[action('cancel','重新选牌')]:[action('pick','确认选牌',choices,1,canDouble?2:1,canDouble?'可用已打出的筷子选 2 张；按点选顺序结算芥末。':'选择 1 张，等待大家同时揭晓')];
  return structuredClone({kind:'sushi',phase:s.finished?'三轮结束':`第 ${s.round} / 3 轮 · 第 ${s.step} 手`,instruction:s.finished?`胜者：${s.players.filter(p=>s.winners.includes(p.id)).map(p=>p.name).join('、')}`:picks?'已锁定，等待其他人选牌':'选好一道，传出余下的手牌',finished:s.finished,actions,sections:[],log:s.history,board:{hand:s.hands[me]||[],selected:picks,round:s.round,step:s.step,roundScores:s.roundScores,winners:s.winners,players:s.players.map((p,i)=>({...p,table:s.table[i],score:s.scores[i],puddings:s.puddings[i],ready:!!s.picks[i],handCount:s.hands[i].length}))}});},
- apply(state,id,command){validateCommand(sushi.view(state,id),command);const s=structuredClone(state),me=s.players.findIndex(p=>p.id===id);if(command.action==='cancel'){s.picks[me]=null;return s;}s.picks[me]=[...command.values];
+ apply(state,id,command){if(state.party)return applySushiParty(state,id,command);validateCommand(sushi.view(state,id),command);const s=structuredClone(state),me=s.players.findIndex(p=>p.id===id);if(command.action==='cancel'){s.picks[me]=null;return s;}s.picks[me]=[...command.values];
  if(s.picks.every(Boolean)){
    s.picks.forEach((ids,i)=>{if(ids!.length===2){const chop=s.table[i].findIndex(c=>c.kind==='chopsticks');s.hands[i].push(s.table[i].splice(chop,1)[0]);}for(const cardID of ids!){const at=s.hands[i].findIndex(c=>c.id===cardID);s.table[i].push(s.hands[i].splice(at,1)[0]);}});
    s.picks=s.players.map(()=>null);s.hands=s.hands.map((_,i)=>s.hands[(i+s.players.length-1)%s.players.length]);s.step++;

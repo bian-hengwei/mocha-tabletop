@@ -50,23 +50,23 @@ try {
   await page.locator('.dg-canvas').press('ArrowRight');
   await assertLayout(page);await drawAtBottom(page);
   await page.screenshot({path:`${out}/${language}-${width}x${height}-draw.png`});
-  await page.locator('.dg-draw-tools button').click();
-  assert.equal(await page.locator('.dg-draw-tools [role="status"]').count(),1);
+  await page.getByRole('button',{name:/^(清空画布|Clear canvas)$/}).click();
+  assert.equal(await page.getByRole('dialog').count(),1);
   await assertLayout(page);
   await page.screenshot({path:`${out}/${language}-${width}x${height}-clear.png`});
   await page.keyboard.press('Escape');
-  assert.equal(await page.locator('.dg-draw-tools [role="status"]').count(),0);
+  assert.equal(await page.getByRole('dialog').count(),0);
   assert(await bottomInk(page.locator('.dg-canvas'))>0,'Cancelling preserves the lower-edge stroke');
   // Rotate with confirmation open; the whole canvas and primary action remain reachable.
   if(width===320&&height===568){
-   await page.locator('.dg-draw-tools button').click();
+   await page.getByRole('button',{name:/^(清空画布|Clear canvas)$/}).click();
    await page.setViewportSize({width:568,height:320});await assertLayout(page);
-   assert.equal(await page.locator('.dg-draw-tools [role="status"]').count(),1);
-   await drawAtBottom(page);await page.keyboard.press('Escape');
+   assert.equal(await page.getByRole('dialog').count(),1);
+   await page.keyboard.press('Escape');await drawAtBottom(page);
    await page.setViewportSize({width,height});await assertLayout(page);
   }
-  await page.locator('.dg-draw-tools button').click();
-  await page.getByLabel('Seat').selectOption('english-player-1');
+  await page.getByRole('button',{name:/^(清空画布|Clear canvas)$/}).click();
+  await page.getByLabel('Seat').selectOption('english-player-1');await expect(page.getByRole('dialog')).toHaveCount(0);
   assert.equal(await page.locator('.dg-private-answer').count(),0);
   await assertLayout(page);
   await page.locator('.dg-guess-form input').fill('wrong answer');
@@ -75,8 +75,8 @@ try {
   if(language==='en')assert(!/[\u3400-\u9fff]/u.test(await page.locator('.dg-table').innerText()),'English drawing view contains Chinese');
   await page.screenshot({path:`${out}/${language}-${width}x${height}.png`,fullPage:true});
   await page.getByLabel('Seat').selectOption('english-player-0');
-  assert.equal(await page.locator('.dg-draw-tools [role="status"]').count(),0,'Seat changes reset clear confirmation');
-  await page.locator('.dg-draw-tools button').click();await page.locator('.dg-draw-tools button').click();
+  assert.equal(await page.getByRole('dialog').count(),0,'Seat changes reset clear confirmation');
+  await page.getByRole('button',{name:/^(清空画布|Clear canvas)$/}).click();await page.getByRole('button',{name:/^(确认清空画布|Confirm clear canvas)$/}).click();
   await expect.poll(()=>bottomInk(page.locator('.dg-canvas'))).toBe(0);
   await context.close();console.log('PASS drawguess',engine,language,width,height);
  }

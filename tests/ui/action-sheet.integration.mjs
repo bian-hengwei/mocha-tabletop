@@ -49,16 +49,13 @@ try{for(const language of ['zh','en']){
   await page.locator('.action-sheet footer button').click();assert.deepEqual(JSON.parse(await page.getByTestId('commands').textContent()),[{action:'explode',values:[]}]);
  }
  // Drive real stored practice states through the shared confirmation sheet.
- for(const scenario of ['undercover','guess','penalty']){
+ for(const scenario of ['guess','penalty']){
   await page.goto(`${base}/tests/ui/action-sheet.fixture.html`);
   await page.evaluate(async({scenario,language})=>{
    const {modules}=await import('/src/core/registry.ts');
    const players=Array.from({length:4},(_,i)=>({id:'action-word-player-'+i,name:['Mocha','梅林','红队','普通玩家'][i],avatar:['🦊','🐼','🐱','🐻'][i]}));
-   const kind=scenario==='undercover'?'undercover':'codenames';let game,viewer=players[0].id;
-   if(kind==='undercover'){
-    game=modules[kind].create(players,1,{language:'zh'});for(const p of players)game=modules[kind].apply(game,p.id,{action:'ready',values:[]});
-    while(game.phase==='describe')game=modules[kind].apply(game,players[game.order[game.speaker]].id,{action:'described',values:[]});
-   }else{
+   const kind='codenames';let game,viewer=players[0].id;
+   {
     for(let seed=1;seed<=500;seed++){
      game=modules[kind].create(players,seed,{language:'zh'});if(!game.cards.some(c=>c.word==='黄金'))continue;
      const captain=game.captains[game.turn==='red'?0:1];game=modules[kind].apply(game,captain,{action:'clue',values:['1'],text:'缤纷世界'});
@@ -69,10 +66,9 @@ try{for(const language of ['zh','en']){
    }
    localStorage.setItem('mocha-locale',language);localStorage.setItem('mocha-profile',JSON.stringify(players[0]));localStorage.setItem('mocha-practice-v1',JSON.stringify({at:Date.now(),practice:{id:crypto.randomUUID(),kind,players,game,viewer,options:{language:'zh'}}}));
   },{scenario,language});await page.goto(base);
-  if(scenario==='undercover')await page.locator('.wg-odd-player').nth(1).click();
-  else if(scenario==='penalty'){await page.locator('.wg-extra-actions button').first().click();await page.locator('.choice').filter({has:page.locator('span',{hasText:/^黄金$/})}).click();}
+  if(scenario==='penalty'){await page.locator('.wg-extra-actions button').first().click();await page.locator('.choice').filter({has:page.locator('span',{hasText:/^黄金$/})}).click();}
   else await (await findWordPage(page,page.locator('.wg-word').filter({has:page.locator('strong',{hasText:/^黄金$/})}))).click();
-  await expect(page.locator('.choice.selected span')).toHaveText(scenario==='undercover'?'🐼 梅林':'黄金');
+  await expect(page.locator('.choice.selected span')).toHaveText('黄金');
   await expect(page.locator('.action-sheet footer button')).toBeEnabled();await page.screenshot({path:`test-results/action-sheet/${safari?'webkit':'chrome'}-${language}-${scenario}-literal.png`});
   await page.locator('.action-sheet footer button').click();await expect(page.locator('.action-sheet')).toHaveCount(0);
  }

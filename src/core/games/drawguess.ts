@@ -1,7 +1,7 @@
 import { action, assertPlayers, seeded, shuffle, validateCommand, type Action, type Command, type GameModule, type GameOptions, type Player } from '../types';
 
 type Point=[number,number];
-export interface DrawStroke {points:Point[];color:string}
+export interface DrawStroke {points:Point[];color:string;width?:number}
 /** `rounds` is the number of complete drawing cycles: every player draws once per cycle. */
 export interface DrawGuessState {players:Player[];language:'zh'|'en';round:number;rounds:number;seconds:number;drawer:number;phase:'choose'|'draw'|'reveal'|'finished';choices:{id:string;zh:string;en:string}[];answer?:{id:string;zh:string;en:string};strokes:DrawStroke[];guesses:{playerID:string;text:string;correct:boolean}[];scores:number[];history:string[];deadlineAt:number;revealUntil:number;/** Remaining milliseconds while the online/LAN host has paused for a disconnected player. */ pausedRemaining?:number;finished:boolean;winnerIDs:string[]}
 
@@ -47,7 +47,7 @@ export const drawguess:GameModule<DrawGuessState>={
  create(players,seed,options){assertPlayers(players,3,12);const language:'zh'|'en'=options?.language==='en'?'en':'zh',rounds=Math.max(1,Math.min(6,options?.drawRounds||1)),seconds=[45,60,75,90].includes(options?.drawSeconds||60)?options?.drawSeconds||60:60;const initial:DrawGuessState={players:structuredClone(players),language,round:1,rounds,seconds,drawer:0,phase:'choose',choices:[],strokes:[],guesses:[],scores:players.map(()=>0),history:['每位画手从三个词中秘密选择一个。'],deadlineAt:0,revealUntil:0,finished:false,winnerIDs:[]};initial.choices=makeChoices(initial,seed);return initial;},
  view(s,id,spectator=false){if(spectator)id='';const me=s.players.findIndex(p=>p.id===id);if(me<0&&!spectator)return {kind:'drawguess',phase:'不在本局',instruction:'仅本局玩家可查看',finished:s.finished,actions:[],sections:[],log:[],board:{}};
   const drawing=id===drawerID(s),inTurn=!s.finished&&s.phase==='draw',canChoose=!s.finished&&s.phase==='choose'&&drawing,canClear=inTurn&&drawing;
-  const actions:Action[]=[...(canChoose?[action('choose', '选择要画的词',s.choices.map(word=>({id:word.id,title:label(s,word),translateTitle:false})),1,1)]:[]),...(canClear?[action('clear','清空画布')]:[])];
+  const actions:Action[]=[...(canChoose?[action('choose', '选择要画的词',s.choices.map(word=>({id:word.id,title:label(s,word),translateTitle:false})),1,1)]:[]),...(canClear?[action('clear','清空画布'),...(s.strokes.length?[action('undo','撤销上一笔')]:[])]:[])];
   const answerVisible=(drawing&&s.phase==='draw')||s.phase==='reveal'||s.finished;
   const instruction=s.finished?'本局结束':s.phase==='choose'?`${s.players[s.drawer].name} 正在选词`:s.phase==='draw'?`${s.players[s.drawer].name} 正在作画`: '本轮揭晓';
   return structuredClone({kind:'drawguess',phase:turnTitle(s),instruction,finished:s.finished,actions,sections:[],log:s.history,board:{phase:s.phase,round:s.round,cycle:cycle(s),rounds:s.rounds,seconds:s.seconds,deadlineAt:drawGuessDeadline(s),drawerID:drawerID(s),isDrawer:drawing,answer:answerVisible&&s.answer?label(s,s.answer):undefined,strokes:s.strokes,guesses:s.guesses.map(g=>({playerID:g.playerID,text:g.correct?'':g.text,correct:g.correct,label:publicGuess(s,g)})),players:s.players.map((p,i)=>({...p,score:s.scores[i],drawing:p.id===drawerID(s)})),winnerIDs:s.winnerIDs,canGuess:inTurn&&!drawing&&!spectator}});
@@ -57,9 +57,9 @@ export const drawguess:GameModule<DrawGuessState>={
   // Drawing is deliberately separate from generic choice validation: points are bounded
   // numeric payloads, not a server-provided choice list.
   if(command.action==='stroke'){
-   const s=structuredClone(state);if(s.phase!=='draw'||id!==drawerID(s)||s.strokes.length>=180||!/^#[0-9a-f]{6}$/i.test(command.text||'')||command.values.length<2||command.values.length>32)throw Error('这个操作已失效，请重新选择');
+   const s=structuredClone(state);if(s.phase!=='draw'||id!==drawerID(s)||s.strokes.length>=180||!/^#[0-9a-f]{6}(?::(?:4|9|18|30|48))?$/i.test(command.text||'')||command.values.length<2||command.values.length>32)throw Error('这个操作已失效，请重新选择');
    const points:Point[]=command.values.map(value=>{const pair=value.split(',');const x=Number(pair[0]),y=Number(pair[1]);if(pair.length!==2||!Number.isInteger(x)||!Number.isInteger(y)||x<0||x>1000||y<0||y>1000)throw Error('画笔坐标无效');return [x,y];});
-   s.strokes.push({points,color:command.text!});return s;
+   const [color,size]=command.text!.split(':');s.strokes.push({points,color,...(size?{width:Number(size)}:{})});return s;
   }
   if(command.action==='guess'){
    const s=structuredClone(state);if(s.phase!=='draw'||id===drawerID(s)||typeof command.text!=='string')throw Error('这个操作已失效，请重新选择');const text=command.text.trim().normalize('NFKC');if(!text||text.length>32)throw Error('猜词限 1–32 个字');const correct=!!s.answer&&normalized(text)===normalized(label(s,s.answer));s.guesses.push({playerID:id,text,correct});if(correct){const guesser=s.players.findIndex(p=>p.id===id);s.scores[guesser]+=2;s.scores[s.drawer]+=1;s.phase='reveal';s.deadlineAt=0;s.revealUntil=0;s.history.push(`${player(s,id)?.name||''} 猜对了`);}s.guesses=s.guesses.slice(-24);return s;
@@ -67,6 +67,7 @@ export const drawguess:GameModule<DrawGuessState>={
   validateCommand(drawguess.view(state,id),command);const s=structuredClone(state);
   if(command.action==='choose'){s.answer=s.choices.find(word=>word.id===command.values[0]);s.phase='draw';s.deadlineAt=0;s.history.push(`${player(s,id)?.name||''} 已选词`);}
   else if(command.action==='clear'){s.strokes=[];}
+  else if(command.action==='undo'){s.strokes.pop();}
   return s;
  }
 };

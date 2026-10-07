@@ -14,7 +14,7 @@ try{
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'page width overflow');assert(await page.locator('.relay-table').evaluate(n=>n.scrollWidth<=n.clientWidth+1),'relay width overflow');
   const heading=await page.locator('.relay-heading').evaluate(el=>{const box=el.getBoundingClientRect(),topbar=document.querySelector('.topbar').getBoundingClientRect();return {top:box.top,bottom:box.bottom,topbarBottom:topbar.bottom,visible:el.contains(document.elementFromPoint(box.x+box.width/2,box.y+box.height/2))};});
   assert(heading.top>=heading.topbarBottom-1&&heading.bottom<=height&&heading.visible,`phase and timer remain visible after scrolling canvas: ${JSON.stringify(heading)}`);
-  const submit=await page.locator('.relay-submit button').boundingBox();assert(submit&&submit.y>=0&&submit.y+submit.height<=height+1,'submit remains in reach while drawing');
+  const submit=await page.locator('.relay-submit>.primary').boundingBox();assert(submit&&submit.y>=0&&submit.y+submit.height<=height+1,'submit remains in reach while drawing');
   const canvas=await page.locator('.relay-paper .relay-canvas').boundingBox(),footer=await page.locator('.relay-submit').boundingBox();assert(canvas&&footer&&canvas.y>=heading.bottom-1&&canvas.y+canvas.height<=footer.y+1,'entire canvas remains between the pinned heading and submit controls');
   for(const box of await page.locator('.relay-table button').evaluateAll(nodes=>nodes.map(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height}))))assert(box.h>=43,'short touch target');
   await page.getByRole('button',{name:locale==='en'?'Clear canvas':'清空画布',exact:true}).click();await expect(page.getByRole('dialog')).toBeVisible();await page.setViewportSize({width:height,height:width});await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.locator('.relay-paper polyline')).toHaveCount(1);
@@ -29,7 +29,7 @@ try{
   await page.locator('.practice-switch select').selectOption(`practice-${seat}`);await open(page);
   if(step%2){await draw(page);await page.locator('.relay-canvas').press('ArrowRight');await expect(page.locator('.relay-paper polyline')).toHaveCount(2);}
   else{await page.locator('.relay-writing textarea').fill(`English word ${step}-${seat}`);await expect(page.getByRole('status').filter({hasText:'Draft saved'})).toBeVisible();}
-  await page.locator('.relay-submit button').click();if(seat<2)await expect(page.locator('.relay-private-bar')).toContainText('Submitted');else if(step<2)await expect(page.locator('.relay-heading>div>small')).toHaveText(`Step ${step+2} / 3`);console.log('PASS relay contribution',step,seat);
+  await page.locator('.relay-submit>.primary').click();if(seat<2)await expect(page.locator('.relay-wait')).toContainText('Submitted');else if(step<2)await expect(page.locator('.relay-heading>div>span')).toHaveText(`${step+2} / 3`);console.log('PASS relay contribution',step,seat);
  }
  await expect(page.locator('.relay-gallery-page')).toBeVisible();await page.reload();await expect(page.locator('.relay-gallery-page')).toBeVisible();await page.close();
  assert.deepEqual(errors,[]);console.log('PASS complete 3-player local relay and persisted gallery');

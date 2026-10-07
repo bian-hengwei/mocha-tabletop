@@ -165,8 +165,11 @@ function sushiValue(card: Card, table: Card[], hand: Card[], difficulty: BotDiff
 
 function sushiBot(view: GameView, selfID: string, difficulty: BotDifficulty, rng: () => number): Command | undefined {
   const board = view.board as unknown as SushiBoard;
+  const special=view.actions.find(a=>a.id.startsWith('sushi:')&&!['sushi:bonus','sushi:copy'].includes(a.id));
+  if(special)return command(special,special.min?special.choices.slice(0,special.min).map(c=>c.id):[]);
   if (board.selected) return undefined;
   const pick = action(view, 'pick');
+  if(pick&&!pick.choices.length){const copy=action(view,'sushi:copy');if(copy)return command(copy,[copy.choices[0].id]);}
   if (!pick) return undefined;
   const me = board.players.find(player => player.id === selfID);
   const table = me?.table ?? [];

@@ -149,7 +149,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 - `tests/ui/werewolf-lineups.integration.mjs`：四种固定板型的中英选择、角色配比、三模式、独立身份插画、刷新后重开保留规则（支持 TEST_BROWSER=webkit）。
 - `tests/ui/proactive-new-games.integration.mjs`：手机付款/升级操作无需滚动、短横屏商人市场逐卡可达、UNO无可出牌时抽牌优先、寿司确认状态；中英八尺寸，支持 WebKit。
-- `tests/ui/word-usability.integration.mjs`：异步拒绝保留线索、成功清空、隐藏词后准备、投票和发言进度。
+- `tests/ui/word-usability.integration.mjs`：异步拒绝保留线索、成功清空、发词确认、换座隐私及移除线上投票/发言流程。
 - `tests/ui/codenames-input.integration.mjs`：线索输入的候选回车、原生 composing 标记、229 兼容、直接表单提交保护、换座清理与正常发送；中英八尺寸，支持 WebKit。输入法事件为浏览器模拟。
 
 输入法回归使用浏览器 DOM 键盘事件覆盖 `isComposing` 和兼容性的 `keyCode=229` 路径，随后用真实键盘事件验证普通 Enter/Escape；这不等同于系统输入法真机验收。事件边界依据 [MDN 的 IME 键盘事件说明](https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event#keydown_events_with_ime)。
@@ -222,7 +222,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `tests/ui/poker-motion.integration.mjs`：双语八尺寸的叫分/等待手牌不透明、飞牌路径与落牌截图、快速连续出牌、换座/旋转/减少动态效果的取消恢复；支持 Chromium/WebKit。
 
 - `tests/ui/home-experience.integration.mjs`：双语七尺寸首页、横屏战绩入口、选游戏/加入弹窗与旋转后的焦点恢复；支持 `TEST_BROWSER=webkit`。
-- `BASE_URL=http://127.0.0.1:5174 node tests/ui/undercover-turn-navigation.integration.mjs`：十二人异词同伴自动显示当前发言者所在页，保留手动翻页，换座隐藏秘密词，进入投票时定位本人；中英七尺寸和横竖屏切换，可用 `TEST_BROWSER=webkit`。
+- `BASE_URL=http://127.0.0.1:5174 node tests/ui/undercover-dealer.integration.mjs`：十二人发词工具、旧回合存档兼容、换座隐藏秘密词、语言切换保留词语与帮助弹窗；中英七尺寸和横竖屏切换，可用 `TEST_BROWSER=webkit`。
 
 ## 你画我猜（接龙版）
 
@@ -235,3 +235,8 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 - `BASE_URL=<Vite> node tests/ui/relay-input.integration.mjs`：接龙文字草稿组合输入结束后的自动保存、刷新恢复、输入开始取消待发保存、明确提交、隐藏与换座清理、Unicode 字数与多行文本；中英八尺寸，支持 `TEST_BROWSER=webkit`。组合事件由 DOM 模拟，不替代系统输入法真机验收。
 - `tests/ui/classic-dense.integration.mjs`：密集牌河的逐玩家查看、弹窗标题与焦点返回；覆盖中英八尺寸及 740×350、741×350、740×351 断点，紧凑横屏检查独立 44px 查看目标。
+
+- `tests/sushi-party.test.ts`、`tests/sushi-party-effects.test.ts`、`tests/feedback-rules.test.ts`：派对版牌表与自选菜单、特殊动作与守恒、独立接龙队列、绘图工具和个人标记隐私。
+- `BASE_URL=<Vite> node tests/ui/feedback.integration.mjs`：真实 App 双语八尺寸、待办积累/切换/刷新、画笔颜色/粗细/橡皮擦/撤销及弹窗旋转、十二人发词与个人标记、八人 Party 菜单。支持 WebKit。
+
+- `BASE_URL=<Vite> node tests/ui/sushi-party.integration.mjs`：中英八尺寸的 Party 自选菜单与人数限制、七类特殊动作弹窗、旋转、焦点、实际提交和存档恢复。支持 WebKit。

@@ -1,3 +1,4 @@
+import {independentRelay} from '../src/core/room';
 import {DurableObject} from 'cloudflare:workers';
 import {discoveryNetwork} from './discovery';
 import {botTurnDelay,changeBots,nextBotSeat,stepBot,continueBotRound} from '../src/core/roomBots';
@@ -141,7 +142,7 @@ export class GameRoom extends DurableObject<Env>{
  private snapshot(ws:WebSocket){const a=ws.deserializeAttachment() as Attachment;const d=this.data;if(!d||!a.id||!a.authenticated)return;
   if(a.pending){send(ws,{type:'pending'});return;}
   const info=this.infoFor(a.id);const match=d.match&&info.mode==='cloud'?viewRoomMatch(d.match,info,a.id):{};
-  send(ws,{type:'snapshot',room:info,...match,paused:info.mode==='cloud'&&info.started&&info.players.some(p=>!p.connected),invite:a.id===info.hostID?d.invite:undefined});
+  send(ws,{type:'snapshot',room:info,...match,paused:info.mode==='cloud'&&info.started&&!independentRelay(info)&&info.players.some(p=>!p.connected),invite:a.id===info.hostID?d.invite:undefined});
  }
  private broadcast(){for(const ws of this.sockets())this.snapshot(ws);}
  private directoryEntry():Omit<Entry,'hash'>{const d=this.data!;return {code:d.info.code,kind:d.info.kind,mode:d.info.mode,hostName:d.info.players.find(p=>p.id===d.info.hostID)?.name||'',count:d.ended||d.info.started?0:d.info.players.length,max:roomLimits(d.info.kind,d.info.options).max,expires:d.expires};}
@@ -202,7 +203,7 @@ export class GameRoom extends DurableObject<Env>{
    if(d.controlSeen[id]?.includes(msg.requestID)){this.snapshot(ws);return;}
    if(msg.type==='action'){
     if(r.mode!=='cloud'||!r.started||!d.match)throw new Error('牌局未开始');
-    if(r.players.some(p=>!this.connected(p.id)))throw new Error('有玩家掉线，牌局已暂停');
+    if(!independentRelay(r)&&r.players.some(p=>!this.connected(p.id)))throw new Error('有玩家掉线，牌局已暂停');
     const timed=advanceMatchClock(d.match,r.kind,r.players,now);
     if(timed!==d.match){d.match=timed;r.revision++;await this.save();this.broadcast();}
     d.match=applyMatch(d.match,r.kind,r.players,id,msg.command,msg.requestID,msg.actionRevision);d.match=advanceMatchClock(d.match,r.kind,r.players,now);

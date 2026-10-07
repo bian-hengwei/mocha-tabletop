@@ -1,3 +1,4 @@
+import {roomLimits} from '../../src/core/room';
 import {ClassicTable} from '../../src/ui/ClassicTable';
 import {useState} from 'react';
 import {createRoot} from 'react-dom/client';
@@ -19,13 +20,13 @@ import {DrawRelayTable} from '../../src/ui/DrawRelayTable';
 import {NewGamesTable} from '../../src/ui/NewGamesTable';
 import {ActionSheet,ActionDock} from '../../src/ui/Boards';
 const params=new URLSearchParams(location.search),kind=(params.get('kind')||'gems') as GameKind;
-const players=Array.from({length:params.get("players")==="max"?GAMES[kind].max:kind==='uno'&&params.get("players")==="10"?10:params.get("scenario")==="challenge"?3:GAMES[kind].min},(_,i)=>({id:`english-player-${i}`,name:['Alex','Blair','Casey','Drew','Eli','Frank','Grace','Hayden','Indigo','Jules'][i]||`Player ${i+1}`,avatar:['🦊','🐼','🐱','🐻'][i%4]}));
+const players=Array.from({length:params.get("players")==="max"?roomLimits(kind).max:kind==='uno'&&params.get("players")==="10"?10:params.get("scenario")==="challenge"?3:GAMES[kind].min},(_,i)=>({id:`english-player-${i}`,name:['Alex','Blair','Casey','Drew','Eli','Frank','Grace','Hayden','Indigo','Jules'][i]||`Player ${i+1}`,avatar:['🦊','🐼','🐱','🐻'][i%4]}));
 function initialGame(){
  if(kind==='undercover'&&params.get('scenario')==='late-speaker'){
   const game=modules.undercover;
   let state=game.create(players,11,{language:params.get('words')==='zh'?'zh':'en'});
   for(const player of players)state=game.apply(state,player.id,{action:'ready',values:[]});
-  for(let i=0;i<Math.min(8,players.length-1);i++)state=game.apply(state,players[i].id,{action:'described',values:[]});
+  state.phase='describe';state.order=players.map((_,i)=>i);state.speaker=Math.min(8,players.length-1);
   return state;
  }
 

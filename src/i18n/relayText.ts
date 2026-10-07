@@ -1,4 +1,7 @@
 export const relayText:Record<string,string>={
+ '画图':'Draw','猜图':'Guess','待办':'Tasks','待办任务':'Pending tasks','待办队列':'Task queue','同步轮次':'Synchronous rounds','接龙模式':'Relay mode','接龙模式无效':'Invalid relay mode','画册独立传递，任务不限时':'Albums advance independently, with no time limit','等待接龙任务':'Waiting for relay tasks','暂无待办':'No pending tasks','新任务到达后会自动显示':'New tasks will appear here','切换任务':'Switch task','传递':'Pass',
+ '个人标记':'My notes','完成标记':'Done marking','更改标记':'Change note','候选':'Possible','排除':'Ruled out','已看词':'Read','记住了':'Got it','发词后在线下组织游戏':'Continue the game in person after dealing words','描述、讨论和投票在线下进行。重新开局可再次发词。':'Describe, discuss and vote in person. Restart to deal new words.','3–6 人有 1 位异词玩家，7–10 人有 2 位，11–12 人有 3 位。不含白板。':'1 odd-word player for 3–6 players, 2 for 7–10, and 3 for 11–12. No blank roles.',
+ '画笔工具':'Drawing tools','画笔颜色':'Pen color','橡皮擦':'Eraser','橙色':'Orange','粉色':'Pink','嫩绿':'Lime','青色':'Teal','棕色':'Brown','灰色':'Grey','黑色':'Black','米色':'Cream','浅蓝':'Light blue',
  '接龙存档无效':'Invalid relay checkpoint',
  '草稿尚未保存':'Draft not saved','重试保存':'Retry save',
  '你画我猜（接龙版）':'Drawing Relay','画册揭晓':'Album reveal','写开场句':'Write a sentence','把句子画出来':'Draw the sentence','看图写描述':'Describe the drawing',

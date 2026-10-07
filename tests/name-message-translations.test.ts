@@ -97,13 +97,10 @@ describe('dynamic messages preserve names and words independently of system term
   }
  });
 
- it('preserves the real odd-word runoff candidate list and description target',()=>{
-  let s=undercover.create(players.slice(0,4),1);
-  for(const p of s.players)s=undercover.apply(s,p.id,{action:'ready',values:[]});
-  bilingual(undercover.view(s,players[0].id).instruction,'请 梅林 描述','梅林: describe your word');
-  for(const p of s.players)s=undercover.apply(s,p.id,{action:'described',values:[]});
-  for(const [i,p]of s.players.entries())s=undercover.apply(s,p.id,{action:'vote',values:[players[i%2===0?1:0].id]});
-  bilingual(s.history.at(-1)!,'平票：UNO爱好者、梅林','Tie: UNO爱好者、梅林');
+ it('keeps word-dealer roster names intact and translates its offline handoff',()=>{
+  const s=undercover.create(players.slice(0,4),1),v=undercover.view(s,players[0].id);
+  expect(v.board.players.map((p:{name:string})=>p.name)).toEqual(players.slice(0,4).map(p=>p.name));
+  bilingual(v.instruction,'发词后在线下组织游戏','Continue the game in person after dealing words');
  });
 
  it('keeps real three-round Sushi result names and per-round points intact in history summaries',()=>{

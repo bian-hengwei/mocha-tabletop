@@ -92,8 +92,8 @@ try {
  await page.mouse.move(tableBox.x + tableBox.width * .2, tableBox.y + tableBox.height * .7);
  await page.mouse.down(); await page.mouse.move(tableBox.x + tableBox.width * .8, tableBox.y + tableBox.height * .7);
  await expect.poll(() => pixels()).toBeGreaterThan(0);
- await page.locator('.dg-draw-tools button').evaluate(button => {button.click();});
- await page.locator('.dg-draw-tools button').evaluate(button => {button.click();});
+ await page.getByRole('button',{name:/^(清空画布|Clear canvas)$/}).evaluate(button => {button.click();});
+ await page.getByRole('button',{name:/^(确认清空画布|Confirm clear canvas)$/}).evaluate(button => {button.click();});
  await page.mouse.up(); await expect.poll(() => pixels()).toBe(0);
  assert.deepEqual(errors, []);
  console.log(`${name}: live feedback,160/1000-move endpoints,one-submit,tap,right-click,blur,permission/seat/clear,multi-touch,cancel,keyboard,table empty-clear PASS`);
