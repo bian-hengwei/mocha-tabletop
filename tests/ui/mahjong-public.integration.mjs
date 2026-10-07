@@ -29,10 +29,13 @@ try{
    await page.setViewportSize({width:height,height:width});await fit(page);await expect(seats.nth(2)).toHaveAttribute('aria-pressed','true');await page.keyboard.press('Tab');assert(await panel.evaluate(el=>el.contains(document.activeElement)),'dialog traps focus');await page.keyboard.press('Escape');await expect(panel).toHaveCount(0);await expect(opener).toBeFocused();
    await page.setViewportSize({width,height});await page.goto(`${base}/tests/ui/classic.fixture.html?scenario=quick`);
    const tile=page.locator('.mj-hand button').last(),confirm=page.locator('.mj-discard-confirm');await expect(confirm).toBeDisabled();
-   await tile.dblclick();await expect(tile).toHaveAttribute('aria-pressed','false');await expect(page.locator('.river-self .mj-face')).toHaveCount(0);await expect(confirm).toBeDisabled();
+   const handCount=await page.locator('.mj-hand button').count(),playedID=await tile.getAttribute('data-tile-id');
+   await tile.dblclick();await expect(page.locator('.river-self .mj-face')).toHaveCount(1);await expect(page.locator('.mj-hand button')).toHaveCount(handCount-1);await expect(page.locator(`.mj-hand button[data-tile-id="${playedID}"]`)).toHaveCount(0);await expect(page.locator('.mj-tile.selected')).toHaveCount(0);await expect(confirm).toHaveCount(0);await expect(page.locator('.mj-seat.current')).toContainText('Blair');
+   await page.goto(`${base}/tests/ui/classic.fixture.html?scenario=quick`);await expect(confirm).toBeDisabled();
+   await tile.click();await expect(confirm).toBeEnabled();await tile.click();await expect(tile).toHaveAttribute('aria-pressed','false');await expect(confirm).toBeDisabled();await expect(page.locator('.river-self .mj-face')).toHaveCount(0);
    await tile.click();await expect(confirm).toBeEnabled();await page.screenshot({path:`${out}/${locale}-${width}-selected.png`});
    await opener.click();await expect(panel.locator('.mj-public-empty')).toHaveCount(2);await page.keyboard.press('Escape');await expect(tile).toHaveAttribute('aria-pressed','true');await confirm.click();await expect(page.locator('.river-self .mj-face')).toHaveCount(1);await expect(page.locator('.mj-tile.selected')).toHaveCount(0);
-   console.log(`PASS ${locale} ${width}x${height}: public rivers/melds, concealed privacy, stable hand, focus/rotation and explicit discard`);
+   console.log(`PASS ${locale} ${width}x${height}: public rivers/melds, concealed privacy, stable hand, focus/rotation double-click and explicit discard`);
   }
   await page.goto(`${base}/tests/ui/classic.fixture.html?scenario=dense&spectator`);await expect(page.locator('.mj-hand-panel')).toHaveCount(0);await opener.click();await seats.nth(2).click();await expect(panel.locator('.mj-public-melds .mj-back')).toHaveCount(4);await expect(panel.locator('.mj-public-melds [role=img]')).toHaveCount(0);
   await page.goto(`${base}/tests/ui/classic.fixture.html?scenario=dense`);await opener.click();await page.evaluate(()=>{const select=document.querySelector('[aria-label=Seat]');select.value='1';select.dispatchEvent(new Event('change',{bubbles:true}));});await expect(panel).toHaveCount(0);
