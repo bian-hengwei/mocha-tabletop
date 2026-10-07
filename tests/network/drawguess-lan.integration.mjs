@@ -1,7 +1,7 @@
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 
-const url=process.env.TEST_FRONTEND||'http://127.0.0.1:5311';
+const url=process.env.TEST_FRONTEND||process.env.BASE_URL||'http://127.0.0.1:5174';
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||undefined});
 const contexts=[];
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
