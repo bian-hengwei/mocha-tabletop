@@ -1,3 +1,4 @@
+import {roomLimits} from '../src/core/room';
 import {describe,it,expect} from 'vitest';
 import {BOT_GAMES,supportsBots,chooseBotCommand} from '../src/core/bots';
 import {changeBots,nextBotSeat} from '../src/core/roomBots';
@@ -13,7 +14,7 @@ describe('mixed human/bot room contract',()=>{
   expect(()=>changeBots(room,host.id,{type:'addBot',difficulty:'normal'})).toThrow('已满');
  });
  it('supports all eight games at their actual minimum and maximum tables',()=>{
-  for(const kind of BOT_GAMES)for(const count of new Set([GAMES[kind].min,GAMES[kind].max])){
+  for(const kind of BOT_GAMES)for(const count of new Set([roomLimits(kind).min,roomLimits(kind).max])){
    const room={...lobby(),kind};for(let i=1;i<count;i++)room.players=changeBots(room,host.id,{type:'addBot',difficulty:'normal'});
    const match=createMatch(kind,room.players);expect(modules[kind].view(match.game,host.id).finished).toBe(false);
    expect(validateMatchForRoom(match,room).game.players).toEqual(room.players);

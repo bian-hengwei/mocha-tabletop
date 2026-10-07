@@ -10,4 +10,6 @@ import { century } from './games/century';
 import { uno } from './games/uno';
 import { codenames } from './games/codenames';
 import { undercover } from './games/undercover';
-export const modules:Record<GameKind,GameModule>={doudizhu,guandan,mahjong,gems,bombs,werewolf,avalon,sushi,century,uno,codenames,undercover};
+import { drawguess } from './games/drawguess';
+import {drawrelay} from './games/drawrelay';
+export const modules:Record<GameKind,GameModule>={doudizhu,guandan,mahjong,gems,bombs,werewolf,avalon,sushi,century,uno,codenames,undercover,drawguess,drawrelay};

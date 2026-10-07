@@ -61,4 +61,8 @@ id,tier,colorIndex,points,white,blue,green,red,black
 
 `public/art/roles-wolf-expanded-v1.jpg` 是内置 ImageGen 生成的 2 列 × 1 行肖像图集：白痴、狼王。既有狼人身份图集仅用作画风参考；新身份使用独立插画，不复用普通狼人或平民头像。提示词与生成模式记录在 `design/werewolf-expanded-prompt.json`，压缩 JPEG 随网站离线缓存。
 
+## Drawing Relay
+
+`public/art/drawrelay.svg` is an original 720×440 geometric vector cover: two album pages, a pencil and rotation arrows. It contains no text, external imagery or atlas cells. The whole cover is cropped with `object-fit: cover`; game canvases render validated strokes in a separate 1024×768 SVG coordinate space.
+
 管理员上传的表情存放于专用 SQLite Durable Object，不进入 `public/` 或部署产物。GIF/PNG 原图与 PNG 静态预览最大均为 2 MiB、1024 × 1024；表情仅显示图片，减少动态效果时使用静态预览。管理入口与绑定配置见 [部署说明](DEPLOYMENT.md#管理上传表情)。上传前应确认素材来源和使用授权。

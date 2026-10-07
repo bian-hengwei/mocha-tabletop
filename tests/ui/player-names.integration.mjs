@@ -11,7 +11,7 @@ try{for(const language of ['en','zh']){
  await visit('avalon','identity');await page.locator('.identity-deck').click();
  await expect(page.locator('.identity-knowledge p').first()).toHaveText(names.join('、'));await expect(page.locator('.identity-knowledge small').nth(1)).toHaveText('梅林');await page.keyboard.press('Escape');
  await page.getByRole('button',{name:'Player choices',exact:true}).click();await expect(page.locator('.choice span')).toHaveText([...names,'梅林',language==='en'?'Approve':'同意']);await page.keyboard.press('Escape');
- for(const [kind,selector]of [['gems','.merchant-head>b'],['bombs','.bt-seat b'],['sushi','.ng-player b'],['century','.ng-player b'],['uno','.ng-player b'],['codenames','.wg-member'],['undercover','.wg-odd-player strong']]){
+ for(const [kind,selector]of [['gems','.merchant-head>b'],['bombs','.bt-seat b'],['sushi','.ng-player b'],['century','.ng-player b'],['uno','.ng-player b'],['codenames','.wg-member'],['undercover','.wg-dealt-players b']]){
   await visit(kind);if(kind==='bombs')await expect(page.locator('.bt-focus h2')).toHaveText('同意');const labels=await page.locator(selector).allTextContents();for(const name of names)assert(labels.some(label=>label.includes(name)),`${kind} preserves ${name}`);
  }
  // Structured scenarios use real legal engine actions, then the same indexed log renderer as App.

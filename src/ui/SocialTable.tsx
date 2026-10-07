@@ -10,6 +10,7 @@ import type { Action, Command, GameView } from '../core/types';
 import { SocialBoard } from './Boards';
 import { AvalonBoard } from './AvalonBoard';
 import { RoleArt } from './Art';
+import { DrawGuessTable } from './DrawGuessTable';
 import './social-table.css';
 import './social-viewport.css';
 import './avalon-table.css';
@@ -17,6 +18,7 @@ type Props = {
     view: GameView;
     selfID: string;
     command: (c: Command) => void;
+    commandPending?: boolean;
     open: (a: Action, selected?: string[]) => void;
 };
 const roleKeys: Record<string, string> = { '狼人': 'wolf', '平民': 'villager', '预言家': 'seer', '女巫': 'witch', '猎人': 'hunter', '守卫': 'guard', '白痴': 'idiot', '狼王': 'wolfKing', '梅林': 'merlin', '派西维尔': 'percival', '忠臣': 'servant', '莫甘娜': 'morgana', '刺客': 'assassin', '爪牙': 'minion', '法官': 'moderator' };
@@ -67,6 +69,7 @@ function JudgeTable({ view, open }: {
     return <section className={`judge-table ${night ? 'is-night' : ''}`}><header className="judge-heading"><div><span className="judge-eye"><Eye size={15}/></span><b>{t("法官手册")}</b><small>{t("仅你可见")}</small></div><span>{tx(night ? <Moon size={13}/> : <Sun size={13}/>)}{t("第") + " "}{tx(b.night)} {tx(night ? '夜' : '天')}</span></header><div className="judge-workspace"><div className={`judge-roster count-${b.players.length}`}>{tx(b.players.map((p: any, i: number) => i>=seats.start&&i<seats.end&&<button type="button" className={`judge-player ${p.alive ? '' : 'dead'} ${m.pendingDeaths.includes(p.id) ? 'pending' : ''}`} key={p.id} onClick={() => selectPlayer(p.id)} aria-label={`${t("座位")} ${i + 1} · ${p.name} · ${t(p.role)}${p.alive ? "" : ` · ${t("已出局")}`}`}><span className="judge-player-art"><RoleArt role={p.roleKey} align="top"/>{tx(!p.alive && <Skull size={20}/>)}</span><span className="judge-player-number">{tx(i + 1)}</span><div><b>{p.name}</b><small>{tx(p.role)}{tx(p.sheriff && <Crown size={10}/>)}</small></div></button>))}<SeatPagination {...seats}/></div><aside className="judge-console"><div className="judge-phase-pips">{tx(phases.map((p, i) => <i key={p} className={i === stageIndex ? 'active' : i < stageIndex ? 'done' : ''}/>))}</div><span className="judge-phase-label">{tx(b.stage === 'finished' ? '终章' : '当前流程')}</span><h2>{tx(m.prompt)}</h2>{tx(b.stage === 'dawn' ? <div className="judge-death-list"><small>{t("即将公布")}</small><b>{m.pendingDeaths.length ? m.pendingDeaths.map(title).join('、') : t('平安夜')}</b></div> : b.stage === 'witch' ? <div className="judge-potions"><span className={m.potions.antidote ? 'available' : ''}>{t("解药") + " "}{tx(m.potions.antidote ? '●' : '○')}</span><span className={m.potions.poison ? 'available' : ''}>{t("毒药") + " "}{tx(m.potions.poison ? '●' : '○')}</span><small>{m.potions.antidote ? <>{t('刀口')} · {m.knife ? title(m.knife) : t('无人')}</> : t('解药已用，不提示刀口')}</small></div> : <>{primary?.help && <p className="judge-guidance">{tx(primary.help)}</p>}</>)}{tx(m.checks.length > 0 && <div className="judge-last-check"><Eye size={12}/><span>{title(m.checks.at(-1).target)}{" " + t("·") + " "}{tx(m.checks.at(-1).result)}</span></div>)}{tx(primary && <button className="judge-next" aria-label={tx(primary.title)} onClick={() => open(primary)}>{tx(primary.title)}<span>{t("→")}</span></button>)}</aside></div></section>;
 }
 export function SocialTable(props: Props) {
+    if(props.view.kind==='drawguess')return <DrawGuessTable {...props}/>;
     const { view, selfID, open } = props, b = view.board, [revealed, setRevealed] = useState(false), hosted = !view.spectating && (b.mode === 'judge' || b.mode === 'deal');
     useEffect(() => setRevealed(false), [selfID, view.kind, view.finished, b.dealNumber]);
     const [rulesOpen,setRulesOpen]=useState(false),rulesRef=useDialog<HTMLDivElement>(rulesOpen,()=>setRulesOpen(false));

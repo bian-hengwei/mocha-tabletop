@@ -116,8 +116,8 @@ try{
      const actor=(await Promise.all(pages.slice(0,count).map(async p=>await p.locator('.ng-uno-playbar').count()?p:null))).find(Boolean);assert(actor,'UNO actor');
      const hand=actor.locator('.ng-uno-hand .ng-uno-card'),normal=actor.locator('.ng-uno-hand .ng-uno-card:not(:disabled):not(.ng-wild-card)'),wild=actor.locator('.ng-uno-hand .ng-wild-card:not(:disabled)');
      const before=await hand.count();
-     if(await normal.count()){await normal.first().dblclick();played=true;}
-     else if(await wild.count()){await wild.first().dblclick();await expect(actor.locator('.ng-uno-colors button')).toHaveCount(4);await actor.locator('.ng-uno-colors button').first().click();await actor.locator('.ng-uno-play').click();played=true;}
+     if(await normal.count()){await normal.first().click();await actor.locator('.ng-uno-play').click();played=true;}
+     else if(await wild.count()){await wild.first().click();await expect(actor.locator('.ng-uno-colors button')).toHaveCount(4);await actor.locator('.ng-uno-colors button').first().click();await actor.locator('.ng-uno-play').click();played=true;}
      else{await actor.locator('.ng-uno-play-actions button:not(:disabled)').first().click();await actor.waitForTimeout(250);}
      if(played){await expect(hand).toHaveCount(before-1);const top=await actor.locator('.ng-uno-center .ng-uno-card').getAttribute('aria-label');for(const p of pages.slice(0,count))await expect(p.locator('.ng-uno-center .ng-uno-card')).toHaveAttribute('aria-label',top);}
     }

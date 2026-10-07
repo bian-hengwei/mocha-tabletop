@@ -153,6 +153,16 @@
  .poker-table.game-table-doudizhu .played .classic-face.mini{width:24px;min-width:24px;margin-right:-5px}
  .poker-table.game-table-doudizhu .played-scroll{padding-top:0;padding-bottom:2px}
 }
+/* A 320px portrait table needs dedicated public-play lanes without shrinking card faces. */
+@media(max-width:380px) and (max-height:650px) and (orientation:portrait){
+ .poker-table.game-table-doudizhu .classic-seat.seat-left,.poker-table.game-table-doudizhu .classic-seat.seat-right{top:39px!important}
+ .poker-table.game-table-doudizhu .poker-seat-play.play-left,.poker-table.game-table-doudizhu .poker-seat-play.play-right{top:105px}
+ .poker-table.game-table-doudizhu .classic-seat.seat-self{bottom:8px;margin-bottom:0}
+ .poker-table.game-table-doudizhu .poker-seat-play.play-self{bottom:0}
+ .poker-table.game-table-doudizhu .played-caption>span{font-size:9px;padding:1px 4px}
+ .poker-table.game-table-guandan .poker-seat-play.play-left,.poker-table.game-table-guandan .poker-seat-play.play-right,.poker-table.game-table-guandan .poker-seat-play.play-across{top:69px}
+ .poker-table.game-table-guandan .poker-seat-play.play-self{bottom:0}
+}
 @media(max-height:500px) and (orientation:landscape){.poker-table.game-table-doudizhu .classic-seat.seat-self{display:none}}
 /* Upright overlapping cards keep every rank and suit visible, like a held hand. */
 .poker-table .classic-hand{--poker-step:36px;--poker-width:72px;display:grid;grid-template-columns:repeat(calc(var(--hand-total) - 1),var(--poker-step)) var(--poker-width);grid-template-rows:1fr;gap:0;justify-items:start;align-items:end;width:max-content;min-width:calc((var(--hand-total) - 1)*var(--poker-step) + var(--poker-width));padding-right:3px}

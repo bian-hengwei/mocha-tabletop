@@ -25,6 +25,7 @@ export const appText:Record<string,string>={
 "观战中 · 仅显示公开信息":"Watching · public information only",
 
 '选择游戏':'Choose a game',
+'游戏列表':'Game library',
 '个人资料':'Profile',
 '昵称':'Name',
 '需联网配对':'Internet required to pair',

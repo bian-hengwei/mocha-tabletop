@@ -43,7 +43,9 @@ BASE_URL=http://127.0.0.1:5174 TEST_API_BASE=http://127.0.0.1:8787 node scripts/
 
 房间聊天与头像表情的新增验收：`npx vitest run tests/room-social.test.ts` 校验输入、授权、禁用游戏、限流、去重、上限和过期；`node tests/network/room-social.integration.mjs` 使用真实 Worker 覆盖 cloud/LAN 房间、重连、换局与换游戏保留记录、解散后不再广播和新房间隔离。`node tests/ui/room-social.integration.mjs` 用两个浏览器验证聊天、头像动画、IME、焦点、双语七尺寸、刷新、LAN 转云端，以及解散时清空聊天/草稿/恢复入口；支持 `TEST_BROWSER=webkit` 与 `TEST_MODES=cloud,lan`。`node tests/ui/room-social-games.integration.mjs` 覆盖八款游戏最大人数与四款禁用游戏，逐尺寸检查右上角头像仍打开资料编辑、只有自己的座位头像能发表情；支持 `TEST_GAMES` 选择游戏。联机脚本用 `BASE_URL` / `TEST_API_BASE` 指定隔离服务，批量运行时避免与其他脚本共用限流窗口；不得因此放宽产品限流。
 
-全游戏接入脚本会创建 12 个房间，放在 `cards` 隔离 runner；其余房间通信脚本放在 `social`，避免同一十分钟窗口内累计超过 15 次建房。分组调整保留脚本原有全部场景，不修改产品限流。
+全游戏接入脚本会创建 12 个房间，放在 `cards` 隔离 runner；其余房间通信脚本放在 `social`。接龙联机的四种完整对局在清单中标记 `isolated: true`，由 `scripts/isolated-integration.mjs` 启动独立的本地 Worker、Vite、临时配置与存储，并使用空闲端口，避免累计建房触发其他脚本的限流窗口。包装器保留脚本参数、全部场景和退出状态，失败时输出服务日志，并清理自己启动的进程和临时目录；不修改产品限流。可直接运行 `node scripts/isolated-integration.mjs tests/network/draw-relay.integration.mjs` 复现（需要当前 `dist/`）。
+
+CI 浏览器依赖安装保留完整字体和系统库，设置 APT 网络超时及更新失败检查，整个安装步骤最多五分钟；测试组另有二十分钟上限。软件源故障会明确失败，不自动重试或跳过依赖。
 
 `npx vitest run tests/network/social-client.test.ts tests/network/server-recovery.test.ts` 校验发送确认、超时不自动重发、旧确认过滤、时钟偏差、断线、解散清理，以及旧连接回包不能污染新房间；服务端回归检查解散时持久化数据不再含聊天，后续关闭回调不能重建记录。`node tests/ui/room-social-boundaries.integration.mjs` 使用固定传输快照覆盖 80 条记录与滚动位置、关闭弹窗后恢复气泡、失败/超时保留草稿、输入法、双语七尺寸与焦点、观众只读/换席清理、奶牛动图实际逐帧变化及减少动态效果的静态替代图；支持 WebKit，不替代真实联机验收。
 
@@ -67,6 +69,7 @@ npx playwright install chromium webkit
 | `node tests/ui/table-layout.integration.mjs` | 麻将四方座位/牌河、换座方位盘、对手仅背面、斗地主出牌方向与叫分/不出标记；中英八尺寸，支持 WebKit |
 | `node tests/ui/classic-dense.integration.mjs` | 密集牌河与副露、完整弃牌查询、血流锁牌、记录弹窗焦点与旋转；支持 WebKit |
 | `node tests/ui/classic-cloud.integration.mjs` | 四个独立浏览器上下文，全部麻将模式、访客只读规则、刷新重连和两款扑克云端出牌；可对实际部署运行 |
+| `node tests/ui/poker-expanded-hand.integration.mjs` | 斗地主/掼蛋中英八尺寸完整手牌网格、点数/花色整理、选中/取消/无效组合、明确出牌、嵌套牌型确认、旋转/焦点、回合变化关闭、观战隐私与真实 App 刷新恢复，支持 WebKit |
 | `node tests/ui/poker-declaration.integration.mjs` | 掼蛋同花顺默认解释与手动宣告普通顺子；27 张手牌领出/跟牌、双语八尺寸、牌型弹窗旋转与焦点、清空重选及实际出牌；支持 WebKit |
 | `node tests/ui/poker-feedback.integration.mjs` | 掼蛋级牌与斗地主跟牌：区分无效牌型和无法压过、改选后正常出牌；满手牌且无法压过时按钮文字完整、无需纵向滚动并实际不出；双语八尺寸与旋转，支持 WebKit |
 | `node tests/ui/poker-caption.integration.mjs` | 上一手扑克的牌型与点数，掼蛋级牌、2、大小王映射及单张数量文案、出完手牌后等待具体玩家；中英八尺寸，支持 WebKit |
@@ -74,8 +77,10 @@ npx playwright install chromium webkit
 | `node tests/ui/mahjong-assistance.integration.mjs` | 可听弃牌高亮、选牌自动显示听牌、已听自动显示、无说明段落、双语八尺寸、详情/焦点/旋转/换座与零张/多种听牌；需 Vite，支持 WebKit |
 | `node tests/ui/uno-penalty.integration.mjs` | +2/+4 手动确认罚摸、双语七尺寸按钮可达性；需 Vite |
 | `node tests/ui/bot-pacing.integration.mjs` | 真实 App 麻将人机完整一圈：每张出牌的时间间隔、动画无积压、双语七尺寸、弹窗旋转、刷新与退出；支持 WebKit。默认需 Vite；生产可用 `BOT_PACING_FIXTURE` 指定本地生成的 fixture.json，`TEST_PACING_COMPACT=1` 仅测 390×844 |
+| `node tests/ui/mahjong-public.integration.mjs` | 麻将中英八尺寸公共牌河/副露浏览、暗杠和观战隐私、选牌后独立确认、旋转/焦点和换座清理，支持 WebKit |
 | `node tests/ui/mahjong-experience.integration.mjs` | 麻将再次点选出牌、桌面/Escape 取消、新摸牌排序、出牌动画、完整牌河弹窗、换牌与自动过；中英七尺寸，支持 WebKit |
-| `node tests/ui/hand-experience.integration.mjs` | 寿司单张双击/双触、筷子顺序与取消锁定；商旅固定操作区；猫牌换选/组合与双击；中英八尺寸，支持 WebKit |
+| `node tests/ui/sushi-table.integration.mjs` | 寿司双语八尺寸：五人盘面切换、卷数与布丁、料理详情与旋转焦点、筷子选牌顺序和换座隐私；真实 App 三轮完赛、刷新锁定恢复及结算重开，支持 WebKit |
+| `node tests/ui/hand-experience.integration.mjs` | 寿司单张点选/取消与单独确认、快速双触不提交、筷子顺序与取消锁定；商旅固定操作区；猫牌换选/组合与双击；中英八尺寸，支持 WebKit |
 | `node tests/ui/uno-experience.integration.mjs` | UNO 双击/双触、万能牌选色、28 张单行手牌、等待回合的溢出滑动提示、10 人座位、八尺寸与旋转，支持 WebKit |
 | `node tests/ui/mahjong-actions.integration.mjs` | 麻将确定性场景：自摸、血流继续、暗杠、抢杠、胡优先、碰与流局；支持 WebKit |
 | `node tests/network/message-text.integration.mjs` | 真实 Worker 的结构化姓名、投票公开时机、私密狼队计划与断线重连；使用 TEST_API_BASE |
@@ -93,6 +98,7 @@ npx playwright install chromium webkit
 | `node tests/ui/pwa-update.integration.mjs` | 独立临时 HTTP 服务上的真实 Service Worker 升级、安装等待、旧缓存清理、断网资源与 API 不缓存；Chromium，无需启动应用服务 |
 | `node tests/ui/history-names.integration.mjs` | 历史记录、附近房主及离线名单在中英切换后保留原名；本地模拟网络；支持 WebKit |
 | `node tests/ui/profile-input.integration.mjs` | 中英昵称输入：输入法候选确认不提前提交，普通回车保存、关闭及刷新记忆；支持 WebKit |
+| `node tests/ui/profile-layout.integration.mjs` | 中英八尺寸个人资料：44px 触控、48 个头像首尾滚动、空昵称、旋转与语言切换保留草稿、取消/保存/刷新、焦点恢复，以及压缩可视高度；支持 WebKit |
 | `node tests/ui/dialog-boundaries.integration.mjs` | 安装说明焦点约束、背景不可交互、旋转和关闭后焦点恢复；帮助内容滚到底部仍可关闭，中英七尺寸触控范围；输入法 Escape/Tab 不触发弹窗快捷键；支持 WebKit |
 | `node tests/ui/finished-recovery.integration.mjs` | 玩家离线或刷新后仍可查看终局结果与记录，未结束的新局仍暂停；本地模拟消息，中英七尺寸，支持 WebKit |
 | `node tests/ui/storage-boundaries.integration.mjs` | 存储区属性不可读时首屏、临时身份及标签页恢复入口可用；恢复 socket 在测试内拦截，不连接真实房间；支持 WebKit |
@@ -153,7 +159,8 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 - `tests/ui/werewolf-lineups.integration.mjs`：四种固定板型的中英选择、角色配比、三模式、独立身份插画、刷新后重开保留规则（支持 TEST_BROWSER=webkit）。
 - `tests/ui/proactive-new-games.integration.mjs`：手机付款/升级操作无需滚动、短横屏商人市场逐卡可达、UNO无可出牌时抽牌优先、寿司确认状态；中英八尺寸，支持 WebKit。
-- `tests/ui/word-usability.integration.mjs`：异步拒绝保留线索、成功清空、隐藏词后准备、投票和发言进度。
+- `tests/ui/word-usability.integration.mjs`：异步拒绝保留线索、成功清空、发词确认、换座隐私及移除线上投票/发言流程。
+- `tests/ui/codenames-input.integration.mjs`：线索输入的候选回车、原生 composing 标记、229 兼容、直接表单提交保护、换座清理与正常发送；中英八尺寸，支持 WebKit。输入法事件为浏览器模拟。
 
 输入法回归使用浏览器 DOM 键盘事件覆盖 `isComposing` 和兼容性的 `keyCode=229` 路径，随后用真实键盘事件验证普通 Enter/Escape；这不等同于系统输入法真机验收。事件边界依据 [MDN 的 IME 键盘事件说明](https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event#keydown_events_with_ime)。
 
@@ -184,7 +191,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 以上浏览器测试使用 Chromium，截图写入忽略的 `test-results/`。两个端口必须指向同一份代码，并按上方独立副本说明配置 Worker 来源与 Vite 代理。
 - `tests/ui/century-viewport.integration.mjs`：商旅双语八尺寸，市场/订单/商队/已用商人切换、费用完整、末张牌横向可达、付款、五人密集手牌与空手牌说明；订单详情显示香料名称及所需/持有/差额，覆盖可交单、材料不足、等待回合、旋转、Escape 与焦点恢复；支持 WebKit。
 - `tests/ui/game-viewport.integration.mjs`：按注册表遍历十二款游戏，最大人数、中英八尺寸，检查页面和所有桌面容器没有纵向滚动或内容裁剪；晶石短横屏另检查各区无遮挡、44px 筹码、选择/清空和库存开关。配合各游戏的状态/操作测试及实际截图验收，不能单独代表完整游戏流程。
-- `tests/ui/bombs-viewport.integration.mjs`：喵喵危机中英八尺寸、最大五人，初始/选牌/响应/目标/索要/交牌/预知/拆弹/插入/结束十种状态，所有容器纵向溢出与裁切检查；出牌自动确认、直接否决/反制及其余玩家重新响应；预知时手牌不响应选择、私密换座隐藏及查看结束后恢复选牌；支持 WebKit。
+- `tests/ui/bombs-viewport.integration.mjs`：喵喵危机中英八尺寸、最大五人，初始/选牌/响应/目标/索要/交牌/预知/拆弹/插入/结束十种状态，所有容器纵向溢出与裁切检查；出牌者自动响应、直接否决/反制及其余玩家重新响应；预知时手牌不响应选择、私密换座隐藏及查看结束后恢复选牌；支持 WebKit。
 
 - `tests/ui/guandan-results.integration.mjs`：真实 App 配合模拟房间回包，四人本轮/全场结算、名次/队伍/本轮得分/余牌、54 张公开剩余牌详情、房主/访客双语八尺寸、旋转和焦点、下一轮/重开、刷新及新局手牌恢复；支持 WebKit。
 
@@ -203,6 +210,14 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 ## 单机模式
 
+- `npx vitest run tests/drawguess.test.ts tests/practice.test.ts`：Mocha Sketch 的每人完整作画轮次、提示/答案隐私、受信任时钟、掉线剩余时间冻结、同屏试玩恢复与操作边界。
+- `BASE_URL=http://127.0.0.1:5311 node tests/ui/drawguess.integration.mjs`：Mocha Sketch 中英八种横竖屏尺寸（含 568×320）的私密选词、画布下边缘真实指针绘画、清空确认/取消、旋转、猜词、完整画布可达性与截图。可用 `TEST_BROWSER=webkit` 检查 WebKit。
+- `BASE_URL=http://127.0.0.1:5344 node tests/ui/drawing-feedback.integration.mjs`：真实浏览器按住时的本地笔迹、长笔划终点、一次提交、落点、右键、失焦、权限/换座/清空、双指归属与取消。可用 `TEST_BROWSER=webkit` 检查 WebKit；使用组件 fixture，不连接房间。
+- `BASE_URL=http://127.0.0.1:5311 node tests/ui/drawguess-input.integration.mjs`：Mocha Sketch 猜词输入在中英界面保留输入法候选草稿，兼容 `isComposing` 和 `keyCode=229` 的 Enter 路径；合成结束后普通 Enter 仍提交。可用 `TEST_BROWSER=webkit` 检查 WebKit；合成事件覆盖浏览器事件边界，不等同于系统输入法真机验收。
+- `BASE_URL=http://127.0.0.1:5311 node tests/ui/drawguess-rejection.integration.mjs`：本地延迟回执 fixture 覆盖拒绝保留草稿、权威猜词确认后清空、全角 NFKC 归一、等待时编辑代际、正确揭晓、换座与输入法保护；不连接真实房间。fixture 直接向组件注入 pending，真实联机界面在 `actionPending` 期间仍沿用既有的全局交互锁；拒绝解除后草稿保留并可继续提交。可用 `TEST_BROWSER=webkit` 检查 WebKit。
+- `TEST_API_BASE=http://127.0.0.1:8911 node tests/network/drawguess-cloud.integration.mjs`：三人云端绘画、观战隐私、掉线重连时间冻结、并发笔画/猜词的原子提交与计分。
+- `TEST_FRONTEND=http://127.0.0.1:5313 node tests/network/drawguess-lan.integration.mjs`：三浏览器局域网绘画、私密答案、笔画同步、掉线暂停/恢复和牌局中的云端切换。前端应以 `MOCHA_DEV_API=http://127.0.0.1:8911` 启动。
+
 - `npx vitest run tests/practice.test.ts tests/storage.test.ts`：八款人机游戏的全部合法人数与三档难度、合法推进、完整寿司三轮、单人视图/操作边界、旧试玩存档、保存/重开与战绩。
 - `BASE_URL=http://127.0.0.1:5218 node tests/ui/local-play.integration.mjs`：真实 App 单机人数/难度选择、八款人机与四款交流游戏、双语八尺寸与旋转、刷新/语言/重开/战绩/退出；支持 `TEST_BROWSER=webkit`。对生产预览可加 `TEST_OFFLINE=1` 验证缓存后断网开局与恢复（Chromium）。终局界面使用显式 fixture，完整规则终局由单测覆盖。
 
@@ -217,6 +232,26 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `tests/ui/poker-cloud.integration.mjs`：真实 Worker 的房主记牌器开关、访客只读、准备重置、出牌留存、刷新重连、新轮清理及重开关闭；支持 WebKit。
 
 - `tests/ui/poker-motion.integration.mjs`：双语八尺寸的叫分/等待手牌不透明、飞牌路径与落牌截图、快速连续出牌、换座/旋转/减少动态效果的取消恢复；支持 Chromium/WebKit。
+
+- `tests/ui/home-experience.integration.mjs`：双语七尺寸首页、横屏战绩入口、选游戏/加入弹窗与旋转后的焦点恢复；支持 `TEST_BROWSER=webkit`。
+- `BASE_URL=http://127.0.0.1:5174 node tests/ui/undercover-dealer.integration.mjs`：十二人发词工具、旧回合存档兼容、换座隐藏秘密词、语言切换保留词语与帮助弹窗；中英七尺寸和横竖屏切换，可用 `TEST_BROWSER=webkit`。
+
+## 你画我猜（接龙版）
+
+- `tests/draw-relay.test.ts` 与 `tests/network/draw-relay-server.test.ts`：完整传递顺序、草稿隐私、超时/暂停、陈旧动作、画册大小及大存档切云权限。
+- `BASE_URL=<Vite> node tests/ui/draw-relay.integration.mjs`：真实 App 双语八尺寸（含 568×320 紧凑横屏）、绘画/键盘/撤销清空确认、换座隐藏、画册和完整同屏对局；支持 `TEST_BROWSER=webkit`。
+- `BASE_URL=<Vite> node tests/ui/relay-feedback.integration.mjs`：接龙 SVG 画板的按住实时笔迹、48 点终点保留、单点可见性、右键/多指归属、取消、失焦/失去 capture/隐藏、权限/换座/清空和键盘笔迹；支持 `TEST_BROWSER=webkit`。
+- `TEST_FRONTEND=<Vite> node tests/network/draw-relay.integration.mjs`：需 Vite 代理同一 Worker，四浏览器覆盖云端/局域网完整对局、同时草稿、观战、重连和切云。
+- `tests/ui/bombs-experience.integration.mjs`：喵喵危机中英八尺寸的选牌/取消/独立确认（普通牌、交牌、否决及组合）、最近 12 张公开弃牌顺序与上限、空弃牌、真实观战投影、弹窗焦点/键盘/旋转；支持 WebKit。
+- `tests/ui/history-filters.integration.mjs`：真实 App 中英八尺寸的 500 条战绩，按游戏/联机/单机/同屏筛选、统计排除人机与主持、空结果、旋转、44px 控件、取消/确认删除及刷新后不恢复；支持 WebKit。
+
+- `BASE_URL=<Vite> node tests/ui/relay-input.integration.mjs`：接龙文字草稿组合输入结束后的自动保存、刷新恢复、输入开始取消待发保存、明确提交、隐藏与换座清理、Unicode 字数与多行文本；中英八尺寸，支持 `TEST_BROWSER=webkit`。组合事件由 DOM 模拟，不替代系统输入法真机验收。
+- `tests/ui/classic-dense.integration.mjs`：密集牌河的逐玩家查看、弹窗标题与焦点返回；覆盖中英八尺寸及 740×350、741×350、740×351 断点，紧凑横屏检查独立 44px 查看目标。
+
+- `tests/sushi-party.test.ts`、`tests/sushi-party-effects.test.ts`、`tests/feedback-rules.test.ts`：派对版牌表与自选菜单、特殊动作与守恒、独立接龙队列、绘图工具和个人标记隐私。
+- `BASE_URL=<Vite> node tests/ui/feedback.integration.mjs`：真实 App 双语八尺寸、待办积累/切换/刷新、画笔颜色/粗细/橡皮擦/撤销及弹窗旋转、十二人发词与个人标记、八人 Party 菜单。支持 WebKit。
+
+- `BASE_URL=<Vite> node tests/ui/sushi-party.integration.mjs`：中英八尺寸的 Party 自选菜单与人数限制、七类特殊动作弹窗、旋转、焦点、实际提交和存档恢复。支持 WebKit。
 
 ## 表情管理
 

@@ -1,7 +1,7 @@
 import type {MahjongMode} from './mahjongModes';
-export type GameKind = 'gems' | 'bombs' | 'werewolf' | 'avalon' | 'sushi' | 'century' | 'uno' | 'codenames' | 'undercover' | 'doudizhu' | 'guandan' | 'mahjong';
+export type GameKind = 'gems' | 'bombs' | 'werewolf' | 'avalon' | 'sushi' | 'century' | 'uno' | 'codenames' | 'undercover' | 'drawguess' | 'drawrelay' | 'doudizhu' | 'guandan' | 'mahjong';
 export interface Player { id: string; name: string; avatar: string; bot?: {difficulty: import('./bots/types').BotDifficulty} }
-export interface GameOptions { pokerCounter?:boolean; mahjongMode?: MahjongMode; werewolfMode?: 'standard' | 'judge' | 'deal'; moderatorID?: string; werewolfPreset?: 'auto' | 'hunter' | 'guard' | 'classic9' | 'classic' | 'idiot' | 'wolfKing'; werewolfWin?: 'sides' | 'parity'; language?: 'zh' | 'en'; unoMode?: 'single' | 'match'; unoChallenge?: boolean }
+export interface GameOptions { sushiEdition?:'classic'|'party'; sushiMenu?:import('./games/sushiMenu').SushiMenu; pokerCounter?:boolean; mahjongMode?: MahjongMode; werewolfMode?: 'standard' | 'judge' | 'deal'; moderatorID?: string; werewolfPreset?: 'auto' | 'hunter' | 'guard' | 'classic9' | 'classic' | 'idiot' | 'wolfKing'; werewolfWin?: 'sides' | 'parity'; language?: 'zh' | 'en'; unoMode?: 'single' | 'match'; unoChallenge?: boolean; drawRounds?: number; drawSeconds?: number; relaySeconds?: number; relayMode?:'rounds'|'queue' }
 export interface Choice { id: string; title: string; subtitle?: string; /** False for literal player names and dealt words. */ translateTitle?:boolean }
 export interface Action { id: string; title: string; choices: Choice[]; min: number; max: number; help?: string }
 /** Strings in values are literal data; only templates are localized. */
@@ -31,11 +31,13 @@ export const GAMES: Record<GameKind, { name: string; min: number; max: number; c
   bombs: {name:'喵喵危机',min:2,max:5,color:'#ee9671'},
   werewolf: {name:'月夜议会',min:6,max:18,color:'#c7b4f2'},
   avalon: {name:'迷雾远征',min:5,max:10,color:'#ecc780'},
-  sushi: {name:'寿司小宴',min:2,max:5,color:'#f4ae9b'},
+  sushi: {name:'寿司小宴',min:2,max:8,color:'#f4ae9b'},
   century: {name:'香料商旅',min:2,max:5,color:'#dfb675'},
   uno: {name:'七彩接龙',min:2,max:10,color:'#8cb9e0'},
   codenames: {name:'密语行动',min:4,max:12,color:'#c7ab86'},
-  undercover: {name:'异词同伴',min:3,max:12,color:'#b9acd9'}
+  undercover: {name:'异词同伴',min:3,max:12,color:'#b9acd9'},
+  drawguess: {name:'你画我猜',min:3,max:12,color:'#e9a46c'},
+  drawrelay: {name:'你画我猜（接龙版）',min:3,max:12,color:'#8cbdc9'}
 };
 export const AVATARS = ['🦊','🐼','🐱','🐻','🐰','🐨','🐯','🐸','🦁','🐧','🦉','🐙','🦋','🐳','🌵','🍄','🐶','🐺','🐹','🐷','🐮','🐵','🦝','🦦','🦥','🦔','🐿️','🦜','🦚','🦩','🐢','🦎','🦖','🐉','🐬','🦈','🪼','🐝','🐞','🌻','🌷','🍀','🍓','🍒','🍑','🥑','🍩','🧋'];
 export function action(id:string,title:string,choices:Choice[]=[],min=0,max=0,help=''):Action {return {id,title,choices,min,max,help};}

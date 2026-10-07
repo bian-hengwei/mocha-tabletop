@@ -46,7 +46,9 @@ try{
   },{fixture,profile,locale});
   await page.goto(base);await page.locator('.mj-table').waitFor();
   const tile=page.locator(`.mj-hand [data-tile-id="${fixture.tile}"]`);
-  await tile.click();await expect(tile).toHaveAttribute('aria-pressed','true');await tile.click();
+  await tile.click();await expect(tile).toHaveAttribute('aria-pressed','true');
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.game.discards.flat().length),0,'selecting a tile does not discard');
+  await page.locator('.mj-discard-confirm').click();
   await page.waitForFunction(()=>window.pacing.some(p=>p.count===1));
   await page.waitForTimeout(500);
   assert.equal(await page.evaluate(()=>window.pacing.at(-1).count),1,'bot cannot overtake the human discard animation');
@@ -83,7 +85,7 @@ try{
  },{fixture,profile});
  await page.clock.install();await page.clock.pauseAt(new Date());await page.reload();await page.locator('.mj-table').waitFor();
  const revision=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.revision);
- const tile=page.locator(`.mj-hand [data-tile-id="${fixture.tile}"]`);await tile.click();await tile.click();
+ const tile=page.locator(`.mj-hand [data-tile-id="${fixture.tile}"]`);await tile.click();await page.locator('.mj-discard-confirm').click();
  assert.equal(await revision(),2);await page.clock.runFor(1000);assert.equal(await revision(),2);
  await page.reload();await page.locator('.mj-table').waitFor();
  await page.clock.runFor(1399);assert.equal(await revision(),2,'reload gives a full fresh pause');

@@ -1,3 +1,4 @@
+import {roomLimits} from '../src/core/room';
 import { describe, expect, it } from 'vitest';
 import { modules } from '../src/core/registry';
 import { GAMES, type GameKind, type Player } from '../src/core/types';
@@ -17,7 +18,7 @@ const restore = <T>(state: T): T => JSON.parse(JSON.stringify(state));
 
 describe('player identifiers remain data in rule engines', () => {
   it.each(Object.keys(GAMES) as GameKind[])('%s starts at both capacity boundaries with serializable private views', kind => {
-    for (const count of new Set([GAMES[kind].min, GAMES[kind].max])) {
+    for (const count of new Set([roomLimits(kind).min, roomLimits(kind).max])) {
       const seats = players(count), state = restore(modules[kind].create(seats, 7));
       const views = seats.map(p => modules[kind].view(state, p.id));
       expect(views.some(view => view.actions.length > 0)).toBe(true);
@@ -44,25 +45,11 @@ describe('player identifiers remain data in rule engines', () => {
     expect(state.winner).toContain('梅林被刺杀');
   });
 
-  it('supports Undercover secret voting, cancellation and tallying special target IDs', () => {
-    let state = undercover.create(players(3), 42);
-    for (const p of state.players) state = restore(undercover.apply(state, p.id, { action: 'ready', values: [] }));
-    while (state.phase === 'describe') state = undercover.apply(state, state.players[state.order[state.speaker]].id, { action: 'described', values: [] });
-    for (const p of state.players) {
-      const view = undercover.view(state, p.id);
-      expect(view.board.ownVote).toBeNull();
-      expect(view.board.players.every((entry: { voted: boolean }) => !entry.voted)).toBe(true);
-    }
-    const odd = state.players.find((_, i) => state.roles[i] === 'odd')!;
-    const common = state.players.filter(p => p.id !== odd.id);
-    state = undercover.apply(state, common[0].id, { action: 'vote', values: [odd.id] });
-    expect(undercover.view(state, common[0].id).board.ownVote).toBe(odd.id);
-    state = restore(undercover.apply(state, common[0].id, { action: 'cancel_vote', values: [] }));
-    expect(undercover.view(state, common[0].id).board.ownVote).toBeNull();
-    for (const p of state.players) state = restore(undercover.apply(state, p.id, { action: 'vote', values: [p.id === odd.id ? common[0].id : odd.id] }));
-    expect(state.finished).toBe(true);
-    expect(state.winnerRole).toBe('common');
-    expect(state.lastVotes[common[0].id]).toBe(odd.id);
+  it('acknowledges privately dealt words for special player identifiers',()=>{
+    let state=undercover.create(players(3),42);
+    for(const p of state.players){state=restore(undercover.apply(state,p.id,{action:'ready',values:[]}));expect(undercover.view(state,p.id).board.ready).toBe(true);}
+    expect(state.ready).toEqual([true,true,true]);expect(state.finished).toBe(false);
+    for(const p of state.players)expect(undercover.view(state,p.id).board.players.every((p:{role?:string;word?:string})=>!p.role&&!p.word)).toBe(true);
   });
 
   it('completes Werewolf nights, records inspections and counts votes after checkpoint restores', () => {

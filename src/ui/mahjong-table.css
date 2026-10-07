@@ -163,3 +163,66 @@
  .mj-table .mj-seat:is(.seat-left,.seat-right) b{line-height:12px}
  .mj-table .mj-rack:is(.mj-rack-left,.mj-rack-right){top:40%}
 }
+
+/* Public information is available without targeting the small tiles in the arena. */
+.mj-table .mj-edition{height:44px;gap:4px}
+.mj-table .mj-history{margin-left:0}
+.mj-public-button{display:flex;align-items:center;justify-content:center;gap:5px;min-width:44px;min-height:44px;padding:4px 8px;border:0;border-radius:10px;background:#d4c39410;color:#dfd1ab;font-size:11px;flex-shrink:0}
+.mj-public-button:focus-visible,.mj-public-seats button:focus-visible{outline:3px solid #e6d49a;outline-offset:1px}
+.mj-table .mj-discard-confirm{display:flex;align-items:center;justify-content:center;gap:5px;min-width:80px}
+.mj-public-dialog.panel{width:min(650px,calc(100vw - 24px));padding:14px;gap:10px}
+.mj-public-seats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;flex:none}
+.mj-public-seats button{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:3px 6px;padding:7px;min-height:58px;min-width:44px;border:1px solid #a8c4af40;border-radius:11px;background:#15372e;color:#dce9df;text-align:left}
+.mj-public-seats button[aria-pressed=true]{border-color:#edd097;background:#d8c28d;color:#203b2f}
+.mj-public-seats button>span{font-size:22px;grid-row:1/3}
+.mj-public-seats b{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mj-public-seats small{font-size:10px}
+.mj-public-summary{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12px;color:#d4dfd0;flex:none}
+.mj-public-summary b{font-weight:650;color:#f3dbaa}
+.mj-public-section{padding:0 2px 12px}
+.mj-public-section+section{border-top:1px solid #91a98940;padding-top:12px}
+.mj-public-section h3{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:13px;font-weight:600}
+.mj-public-section h3 small{font-size:11px;font-weight:400;color:#c0d0bf}
+.mj-public-empty{padding:16px 0;margin:0;font-size:12px;color:#aabfac;text-align:center}
+.mj-public-dialog .mj-all-discards{grid-template-columns:repeat(6,minmax(0,1fr));gap:12px 9px}
+.mj-all-discards>div{min-width:0;text-align:center;display:flex;flex-direction:column;gap:5px}
+.mj-all-discards>div>small{font-size:10px;line-height:1.3;color:#ccddca;overflow-wrap:normal}
+.mj-all-discards>.is-latest .mj-face{outline:2px solid #ebc680;outline-offset:2px}
+.mj-public-melds{display:flex;flex-wrap:wrap;gap:12px}
+.mj-public-melds>div{border:1px solid #abc4ab33;background:#17372d;border-radius:9px;padding:8px;display:flex;flex-direction:column;gap:6px}
+.mj-public-melds>div>span{font-size:11px;color:#d4ddc9}
+.mj-public-melds>div>div{display:flex;gap:2px}
+.mj-public-melds .mj-face{width:35px;height:47px;flex:none}
+@media(max-width:420px){.mj-public-dialog.panel{padding:10px;gap:8px}.mj-public-seats button{grid-template-columns:1fr;text-align:center;justify-items:center;gap:2px;padding:6px 3px}.mj-public-seats button>span{grid-row:auto;font-size:20px}.mj-public-seats b{max-width:100%;font-size:10px}.mj-public-seats small{font-size:9px}.mj-public-dialog .mj-all-discards{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px 6px}.mj-all-discards>div>small{font-size:9px}.mj-public-summary{gap:10px;font-size:11px}}
+@media(max-height:500px) and (orientation:landscape){.mj-public-dialog.panel{padding:9px 12px;gap:7px}.mj-public-dialog>header h2{font-size:15px}.mj-public-seats button{min-height:44px;padding:4px 8px}.mj-public-dialog .mj-all-discards{grid-template-columns:repeat(auto-fill,minmax(55px,1fr));gap:10px 7px}.mj-public-dialog .mj-dialog-content{padding:3px 2px}.mj-public-summary{font-size:11px}.mj-table .mj-public-button>span{display:none}}
+
+.mj-public-dialog>header h2{overflow-wrap:anywhere;line-height:1.35}
+@media(max-height:650px) and (orientation:portrait){.mj-table .mj-hand-toolbar{min-height:46px}.mj-table .mj-hand{row-gap:18px}.mj-table .mj-rack:is(.mj-rack-left,.mj-rack-right){top:38%}}
+
+/* At compact landscape heights, fit the face-down opponent stacks inside the table rail. */
+@media(max-width:740px) and (max-height:500px) and (orientation:landscape){
+ .mj-rack.mj-rack-left,.mj-rack.mj-rack-right{gap:0}
+ .mj-rack.mj-rack-left .mj-face,.mj-rack.mj-rack-right .mj-face{height:7px}
+ .mj-table .mj-rack.mj-rack-left .mahjong-art,.mj-table .mj-rack.mj-rack-right .mahjong-art{width:7px;height:11px}
+}
+
+/* A side toolbar keeps dense rivers and their inspect targets reachable in short landscape. */
+@media(max-height:500px) and (orientation:landscape){
+ .mj-table .river-self .mj-river-count{bottom:0}
+}
+@media(max-height:350px) and (orientation:landscape){
+ .mj-table .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))){display:grid;grid-template-columns:minmax(0,1fr) 248px;align-items:center;gap:8px;padding:3px 8px}
+ .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-hand-toolbar{grid-column:2;grid-row:1;display:grid;grid-template-columns:minmax(0,1fr) 80px;min-height:64px;gap:6px;align-items:center}
+ .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-hints{flex:none;flex-direction:column;align-items:flex-start;gap:3px}
+ .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-status{font-size:10px;line-height:12px;flex:none}
+ .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-actions{max-width:100%;gap:3px;justify-content:flex-start}
+ .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-actions .mj-action{padding:4px 8px}
+ .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-hand-scroll{grid-column:1;grid-row:1;padding:12px 3px 4px}
+ .mj-hand-panel:not(:has(.mj-actions button:nth-child(2))) .mj-hand{justify-content:flex-start}
+}
+@media(max-width:740px) and (max-height:500px) and (orientation:landscape){
+ /* The 145px public inset leaves a 44px target 14px from each table edge, below its player. */
+ .mj-table .river-left .mj-river-count{position:absolute;left:auto;right:calc(100% + 87px);top:0}
+ .mj-table .river-right .mj-river-count{position:absolute;left:calc(100% + 87px);top:0}
+ .mj-table :is(.river-left,.river-right) .mj-river-count{min-height:44px}
+}

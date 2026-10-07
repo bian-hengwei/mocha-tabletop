@@ -1,6 +1,6 @@
 # 游戏规则版本与显示兼容
 
-本文记录九款游戏采用的规则版本、组件数量、验证来源及显示名称。游戏、角色和行动使用稳定的内部 ID；展示名变化不会修改存档结构，旧房间与试玩存档按相同 ID 恢复。
+本文记录相关游戏采用的规则版本、组件数量、验证来源及显示名称。游戏、角色和行动使用稳定的内部 ID；展示名变化不会修改存档结构，旧房间与试玩存档按相同 ID 恢复。
 
 ## 显示名称与存档兼容
 
@@ -20,18 +20,18 @@
 | 喵喵危机 | Exploding Kittens Original Edition 2025 规则，启用两张与三张组合 | 7 普通牌 + 1 拆弹起手；N−1 爆炸；额外两张拆弹（5 人时一张）；功能牌 4/4/4/4/5/5，五种猫咪各 4。逐个完成攻击叠加、跳过、索取、洗牌、预知、否决链、组合、拆弹放回和淘汰。`cards.test.ts`、`recognizable-rules.test.ts`、猫牌完整 UI 牌局。此版不含旧版五张不同牌回收弃牌，不启用快速删牌变体。 |
 | 月夜议会 | 中文常见狼人桌规，保留并展示本桌选项 | 自动与灵活人数配置、固定九人预女猎、十二人预女猎白/预女猎守/狼王守卫、屠边/人数胜利；女巫不可自救、守救同死、毒死猎人不开枪、警长 1.5 票。三种主持方式与 6–18 人边界见 `werewolf-presets.test.ts`、`werewolf-hosted.test.ts` 和 `social.test.ts`。该类游戏没有覆盖所有版本的统一规则。 |
 | 迷雾远征 | Avalon 基础任务，加入 Percival 与 Morgana 角色组合 | 5–10 人阵营和任务人数、过半通过、连续五否决、7 人起第四任务双失败、三成功后刺杀。`social.test.ts`、`game-identities.test.ts`、`recognizable-rules.test.ts`。不启用其他角色或湖中仙女。 |
-| 寿司小宴 | Sushi Go! 108 张基础版 | 2–5 人每轮 10/9/8/7 张；三轮向左传牌、筷子、芥末顺序、料理组合、卷寿司排名分配、布丁及双人例外、同分布丁比较。`new-games.test.ts`、`new-games-boundary.test.ts` 与完整 UI 操作。 |
+| 寿司小宴 | Sushi Go! 108 张基础版；可选 Party 基础盒自选菜单 | 2–5 人每轮 10/9/8/7 张；三轮向左传牌、筷子、芥末顺序、料理组合、卷寿司排名分配、布丁及双人例外、同分布丁比较。`new-games.test.ts`、`new-games-boundary.test.ts` 与完整 UI 操作。Party 的 181 张牌、2–8 人及菜单人数限制、特殊动作和独立计分见 [SUSHI_PARTY.md](SUSHI_PARTY.md)。 |
 | 香料商旅 | Century: Spice Road 基础版 | 43 商人、36 订单独立数据对照；初始资源、付费招募、任意次交易、逐级升级、10 容量、金币转银币、5/6 订单末轮及后手破同分。`century-catalog.test.ts`、`century-playthrough.test.ts` 和 `new-games.test.ts`。 |
 | 七彩接龙 | UNO 经典 108 张规则；默认累计 500 分与 +4 质疑 | 7 张起手、开局功能牌、同色/同数/同功能、只出刚摸的牌、手动确认罚摸后跳过、无叠加、+4 私密核验、漏喊罚 2、末张罚牌计分、双人反转。`uno-full-rules.test.ts`、`new-games.test.ts`。单轮和关闭质疑是建房时明确选择的模式。 |
 | 密语行动 | Codenames 双队基础桌游规则 | 25 格、9/8 特工、7 路人、1 刺客；一词加数字、至少一猜、数字加一、0/不限、错猜换队、刺客立即输、违规线索补偿及密钥隐私。`word-games.test.ts`。词库为原创；含义、复合词与非语言暗示由双方按规则判断。 |
-| 异词同伴 | 相近词「平民/卧底」桌规，不启用白板 | 3–6/7–10/11–12 人配 1/2/3 少数者、依次描述、秘密投票、平票辩护复投、再次平票无人出局、少数达到人数平衡获胜。`word-games.test.ts`。不同商业版本的身份与胜负条件不同，当前配置完整列在规则中。 |
+| 异词同伴 | 相近词「平民/卧底」桌规，不启用白板 | 3–6/7–10/11–12 人配 1/2/3 少数者；仅私密发词和已读确认。讨论、投票、出局及胜负均在线下完成。`word-games.test.ts` 验证词语隐私与旧存档兼容。 |
 
 原始规则来源：
 
 - [Splendor 出版方规则](https://cdn.svc.asmodee.net/production-spacecowboys/uploads/2025/10/SCSPL01EN_SPLENDOR_RULES_LIGHT.pdf)
 - [Exploding Kittens 规则入口](https://www.explodingkittens.com/pages/rules-kittens)与[2025 英文规则](https://cdn.shopify.com/s/files/1/0345/9180/1483/files/ekoe-instructions-english.pdf?v=1743802429)
 - [Avalon 出版方验证规则](https://rules.dized.com/game/rZluqS52QmGdpoVxcmVLtg/the-resistance-avalon)，包括角色替换、任务与刺杀章节
-- [Gamewright Sushi Go!](https://www.gamewright.com/product/Sushi-Go)；[出版方 2014 规则镜像](https://s3.amazonaws.com/ai-assets/weymouth/sushigotm-rules_1381_orig.pdf)
+- [Gamewright Sushi Go!](https://www.gamewright.com/product/Sushi-Go)；[出版方 2014 规则](https://gamewright.com/pdfs/Rules/SushiGoTM-RULES.pdf)
 - [Century 出版方基础规则](https://cdn.svc.asmodee.net/production-nextmove/uploads/sites/4/2024/06/EN-Century-Spice-Road-Rules_2024_compressed.pdf)，独立牌表来源见 [ASSETS.md](ASSETS.md)
 - [Mattel 108 张 UNO 产品与规则入口](https://m.service.mattel.com/us/Technical/productDetail?prodno=W2085)；[英文规则](https://service.mattel.com/instruction_sheets/W2085-Eng.pdf)
 - [CGE Codenames](https://www.czechgames.com/games/codenames)；[原版规则镜像](https://cdn.1j1ju.com/medias/89/5e/99-codenames-rule.pdf)。采用桌游规则，不以手机 App 的放宽线索规则替代。
@@ -72,3 +72,7 @@
 `tests/recognizable-rules.test.ts` 另核对基础组件数量、任务人数、默认比赛规则、新旧术语翻译和旧牌局恢复。引擎翻译测试调用实际应用翻译入口，覆盖静态文本、嵌套牌名和动态日志。
 
 接龙的 +2（含起始牌）与关闭质疑后的 +4 均等待受罚玩家明确确认，无论其手中是否持有功能牌。开启质疑时仍等待接受或质疑；最后一张的罚牌确认后才计分。旧存档缺少待罚字段时沿用已完成的状态，新增待罚窗口可序列化恢复。
+
+### 喵喵危机牌桌
+
+手牌点击只切换选择；普通出牌、交牌和同名组合均通过独立按钮提交。响应窗口保留直接否决按钮。弃牌堆可展开玩家视图已经公开的最近 12 张牌，按最新在前排列；这不是完整弃牌历史，也不包含淘汰玩家的隐藏手牌。规则与私人视图边界不变。

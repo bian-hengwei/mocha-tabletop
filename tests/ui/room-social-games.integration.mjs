@@ -6,8 +6,8 @@ const base=process.env.BASE_URL||'http://127.0.0.1:5174',api=process.env.TEST_AP
 const out=`test-results/room-social-games-${engine}`;await fs.mkdir(out,{recursive:true});
 const browser=await(engine==='webkit'?webkit:chromium).launch(),errors=[];
 const sizes=[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900]];
-const games={gems:4,bombs:5,sushi:5,century:5,uno:10,doudizhu:3,guandan:4,mahjong:4,codenames:4,werewolf:6,avalon:5,undercover:3};
-const blocked=['codenames','werewolf','avalon','undercover'];
+const games={gems:4,bombs:5,sushi:5,century:5,uno:10,doudizhu:3,guandan:4,mahjong:4,codenames:4,werewolf:6,avalon:5,undercover:3,drawguess:3,drawrelay:3};
+const blocked=['codenames','werewolf','avalon','undercover','drawguess','drawrelay'];
 const credentials=i=>({profile:{id:randomUUID(),name:i===0?'Host 长昵称 ABC':'Player '+i,avatar:i%2?'🐱':'🦊'},token:randomBytes(24).toString('hex')});
 async function peer(code,cred,invite){const ws=new WebSocket(api.replace(/^http/,'ws')+'/api/rooms/'+code);const messages=[];ws.addEventListener('message',e=>messages.push(JSON.parse(e.data)));await new Promise((r,j)=>{ws.addEventListener('open',r,{once:true});ws.addEventListener('error',j,{once:true});});ws.send(JSON.stringify({type:'hello',...cred,invite}));const c={ws,messages,send(m){ws.send(JSON.stringify({requestID:randomUUID(),...m}));},async wait(pred){for(let i=0;i<400;i++){const found=messages.find(pred);if(found)return found;await new Promise(r=>setTimeout(r,20));}throw Error('peer timeout '+JSON.stringify(messages.at(-1)));}};await c.wait(m=>m.type==='snapshot');return c;}
 try{for(const [kind,count]of Object.entries(games).filter(([kind])=>!process.env.TEST_GAMES||process.env.TEST_GAMES.split(',').includes(kind))){
@@ -27,6 +27,10 @@ try{for(const [kind,count]of Object.entries(games).filter(([kind])=>!process.env
    for(const [width,height]of sizes){await page.setViewportSize({width,height});await page.evaluate(()=>new Promise(requestAnimationFrame));await expect(page.locator('.social-chat-trigger')).toBeInViewport();await expect(page.locator('.profile-chip')).toBeInViewport();
     const seats=page.locator('main .social-avatar');await expect(seats).toHaveCount(count);for(let i=0;i<count;i++)await expect(seats.nth(i),`${kind}/${locale}/${width} seat ${i}`).toBeVisible();
     if(kind==='doudizhu')assert(await page.locator('.classic-arena').evaluate(arena=>arena.scrollHeight<=arena.clientHeight+2),`${kind}/${locale}/${width} seat and turn label stay inside the arena`);
+    if(kind==='sushi')assert(await page.locator('.sushi-player-seat').first().evaluate(seat=>{
+     const avatar=seat.querySelector('.social-avatar').getBoundingClientRect(),name=seat.querySelector('.ng-player>div').getBoundingClientRect();
+     return avatar.width>=44&&avatar.height>=44&&avatar.right<=name.left;
+    }),`${kind}/${locale}/${width} avatar target must not cover the player name`);
     if(kind==='mahjong'){
      const overlaps=await page.evaluate(()=>{
       const label=document.querySelector('.mj-seat.seat-self>div').getBoundingClientRect();

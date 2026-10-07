@@ -1,0 +1,20 @@
+export const relayText:Record<string,string>={
+ '画图':'Draw','猜图':'Guess','待办':'Tasks','待办任务':'Pending tasks','待办队列':'Task queue','同步轮次':'Synchronous rounds','接龙模式':'Relay mode','接龙模式无效':'Invalid relay mode','画册独立传递，任务不限时':'Albums advance independently, with no time limit','等待接龙任务':'Waiting for relay tasks','暂无待办':'No pending tasks','新任务到达后会自动显示':'New tasks will appear here','切换任务':'Switch task','传递':'Pass',
+ '个人标记':'My notes','完成标记':'Done marking','更改标记':'Change note','候选':'Possible','排除':'Ruled out','已看词':'Read','记住了':'Got it','发词后在线下组织游戏':'Continue the game in person after dealing words','描述、讨论和投票在线下进行。重新开局可再次发词。':'Describe, discuss and vote in person. Restart to deal new words.','3–6 人有 1 位异词玩家，7–10 人有 2 位，11–12 人有 3 位。不含白板。':'1 odd-word player for 3–6 players, 2 for 7–10, and 3 for 11–12. No blank roles.',
+ '画笔工具':'Drawing tools','画笔颜色':'Pen color','橡皮擦':'Eraser','橙色':'Orange','粉色':'Pink','嫩绿':'Lime','青色':'Teal','棕色':'Brown','灰色':'Grey','黑色':'Black','米色':'Cream','浅蓝':'Light blue',
+ '接龙存档无效':'Invalid relay checkpoint',
+ '草稿尚未保存':'Draft not saved','重试保存':'Retry save',
+ '你画我猜（接龙版）':'Drawing Relay','画册揭晓':'Album reveal','写开场句':'Write a sentence','把句子画出来':'Draw the sentence','看图写描述':'Describe the drawing',
+ '查看每句话怎样传到最后':'See how each sentence changed','等待玩家完成接龙':'Waiting for the relay','已提交，等待其他玩家':'Submitted · Waiting for the others',
+ '写一句话，交给下一位画出来':'Write a sentence for the next person to draw','根据上一页的句子作画':'Draw the sentence on the previous page','只看这幅画，写下你的理解':'Describe what you see in this drawing',
+ '当前页':'Current page','传给下一位':'Pass it on','画笔':'Pen','撤销上一笔':'Undo stroke','清空画布':'Clear canvas','保存草稿':'Save draft','选择画册':'Choose album','选择页码':'Choose page',
+ '接龙笔迹无效':'Invalid relay stroke','接龙已换页，请重新查看':'The relay has moved on. Check your new page.','接龙时长无效':'Invalid relay time limit','已经提交本页':'This page has already been submitted',
+ '画布已满，请撤销后继续':'Canvas full. Undo a stroke to continue.','接龙文字限 120 字':'Relay text is limited to 120 characters','画布没有笔迹':'The canvas is empty','请先完成这一页':'Complete this page first',
+ '每步时长':'Time per step','不限时':'No time limit','秒':'seconds','上一页的句子':'Previous sentence','上一页的画':'Previous drawing','开场句':'Opening sentence','你的描述':'Your description',
+ '查看我的接龙页':'Open my relay page','隐藏接龙页':'Hide relay page','仅你可见':'Only you can see this','提交后不能修改':'You cannot edit after submitting','上一步未完成':'The previous page was left blank',
+ '接龙画板':'Relay canvas','方向键作画，回车落点':'Use arrow keys to draw; Enter places a dot','笔迹数量':'Stroke count','笔刷粗细':'Brush size','细笔':'Fine','中笔':'Medium','粗笔':'Broad',
+ '墨黑':'Ink','珊瑚红':'Coral','金黄':'Gold','松绿':'Pine','湖蓝':'Blue','紫罗兰':'Violet','白色':'White','清空这幅画？':'Clear this drawing?','清空后不能恢复':'This cannot be undone.','保留画作':'Keep drawing','确认清空':'Clear drawing',
+ '画册':'Album','第几步':'Step','接龙页':'Relay page','已提交':'Submitted','作画中':'Drawing','填写中':'Writing','未完成':'Not completed','到时保存':'Saved at time limit','草稿已保存':'Draft saved','正在保存草稿':'Saving draft',
+ '上一页':'Previous page','下一页':'Next page','再玩接龙':'Play relay again','接龙已结束':'Relay complete','更换画册':'Change album',
+ '同屏接龙建议选择不限时':'No time limit is recommended for pass-and-play'
+};

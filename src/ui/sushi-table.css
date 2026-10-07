@@ -1,0 +1,116 @@
+.ng-table.ng-sushi{gap:12px;padding:12px;max-width:1400px}
+.ng-sushi .ng-sushi-overview{gap:8px;overflow:hidden}
+.ng-sushi .sushi-players{gap:8px;margin:0;padding:3px 3px 6px;scrollbar-width:thin;flex:none}
+.ng-sushi .sushi-players .ng-player{flex:1 0 185px;min-height:58px;text-align:left;color:var(--ng-ink);background:#132b26;border-radius:12px;padding:8px;border:1px solid #c5b08442}
+.ng-sushi .sushi-players .ng-player[aria-pressed=true]{border-color:#ebcd95;background:#554932;box-shadow:inset 0 -3px #ebcd95}
+.ng-sushi .sushi-players small{font-size:10px;white-space:nowrap;color:#d1c9b4;margin-top:4px}
+.ng-sushi .sushi-public-plate{display:flex;flex:1;min-width:0;min-height:0;flex-direction:column;border:1px solid #caba8355;border-radius:16px;background:radial-gradient(ellipse at 50% 50%,#42534270,#162c2560);overflow:hidden}
+.sushi-public-plate>header{display:flex;align-items:center;justify-content:space-between;gap:6px;flex:none;padding:8px 12px;border-bottom:1px solid #dfc79626;background:#10271e60}
+.sushi-public-plate>header>div{min-width:0}
+.sushi-public-plate h3{display:flex;align-items:baseline;gap:8px;margin:0;font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.sushi-public-plate h3 small{font-size:10px;font-weight:400;color:#cbc6ac;flex-shrink:0}
+.sushi-public-plate header p{margin:4px 0 0;font-size:11px;color:#c4c3aa}
+.sushi-public-plate header p b{font-size:14px;color:#eed7a0}
+.sushi-public-plate nav{display:flex;align-items:center;gap:2px;flex:none}
+.sushi-public-plate nav>span{font-size:11px;font-variant-numeric:tabular-nums;min-width:26px;text-align:center;color:#ceccb2}
+.sushi-public-plate nav button{display:grid;place-items:center;min-width:44px;width:44px;height:44px;padding:0;background:#e7d19a0a;color:#ebd8ad;border:1px solid #c8b58542;border-radius:9px}
+.sushi-public-plate nav button:disabled{opacity:.3}
+.ng-sushi .sushi-dishes{flex:1;min-height:0;display:flex;align-items:center;gap:12px;padding:14px 12px;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;overscroll-behavior-x:contain}
+.ng-sushi .sushi-dishes>.ng-small{flex:0 0 100px;width:100px;max-height:100%;padding:0 0 6px;min-height:0}
+.ng-sushi .sushi-dishes .ng-sushi-illustration{height:100px;min-height:0;flex:1;aspect-ratio:1}
+.ng-sushi .sushi-dishes .ng-small>b{min-height:30px;font-size:11px;flex:none;padding:5px 3px 0}
+.sushi-empty{margin:auto;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;font-size:12px;line-height:1.5;color:#d0ccb5}
+.sushi-empty>span{display:grid;place-items:center;font-size:64px;line-height:1;color:#cfbd8755;border:1px solid #c8ba7e26;border-radius:50%;width:100px;height:100px;box-shadow:0 0 0 9px #d0c09108}
+.ng-sushi .sushi-status{margin:0;min-height:0;flex:none;gap:6px}
+.ng-sushi .sushi-status strong{font-size:12px;font-weight:500;color:#e4d8b5}
+.ng-sushi>.ng-sushi-hand-panel{padding:10px 12px;display:flex;flex-direction:column;min-height:0}
+.ng-sushi .ng-sushi-hand-panel>h3{padding:0 0 6px;flex:none;margin:0;font-size:13px}
+.sushi-hand-cue{margin-left:auto;color:#d8cda8;font-size:20px;line-height:1}
+.ng-sushi .ng-sushi-hand-panel .ng-hand{padding:12px 5px 10px;gap:12px;min-height:0;align-items:stretch}
+.ng-sushi .ng-sushi-hand-panel .ng-sushi-card{flex:0 0 124px;width:124px}
+.ng-sushi .ng-sushi-hand-panel .ng-sushi-illustration{height:100px;aspect-ratio:auto;flex:none}
+.ng-sushi .ng-sushi-hand-panel .ng-sushi-card>b{font-size:12px;padding:7px 4px 3px;min-height:30px}
+.ng-sushi .ng-sushi-hand-panel .ng-sushi-card>small{font-size:11px;line-height:1.4;padding:0 6px;min-height:32px}
+.ng-sushi .ng-sushi-confirm{min-height:50px;justify-content:space-between;flex:none;flex-wrap:nowrap;gap:10px}
+.ng-sushi .ng-sushi-confirm>.ng-action{flex:0 1 55%;min-width:120px;min-height:44px}
+.ng-sushi .ng-sushi-confirm>.ng-action:only-child{flex:1}
+.sushi-pick-limit{font-size:12px;line-height:1.4;color:#ded5b7}
+.sushi-pick-limit>small{display:block;font-size:10px;margin-top:2px;color:#bfbea8}
+.sushi-dish-dialog{display:flex;flex-direction:column;max-height:calc(100dvh - 24px);width:min(340px,calc(100vw - 24px));padding:12px;background:#1a3229;border:1px solid #c9b781;border-radius:16px;color:#ebddbc;overflow:auto}
+.sushi-dish-dialog>header{display:flex;align-items:center;gap:10px;justify-content:space-between;flex:none}
+.sushi-dish-dialog h2{margin:0;font-size:18px}
+.sushi-dish-dialog .icon{width:44px;height:44px;min-width:44px;min-height:44px}
+.sushi-dish-dialog>.illustrated-tile{width:100%;aspect-ratio:1;max-height:52dvh;margin:10px 0;border-radius:10px;flex-shrink:0}
+.sushi-dish-dialog>p{font-size:14px;line-height:1.6;text-align:center;margin:6px 0}
+@media(min-width:700px) and (min-height:600px){
+ .ng-sushi .sushi-dishes>.ng-small{flex-basis:132px;width:132px}
+ .ng-sushi .sushi-dishes .ng-sushi-illustration{height:132px}
+ .ng-sushi .sushi-dishes .ng-small>b{font-size:13px;min-height:38px}
+ .ng-sushi .sushi-dishes{gap:16px;justify-content:flex-start}
+ .ng-sushi .ng-sushi-hand-panel .ng-sushi-card{flex-basis:134px;width:134px}
+ .ng-sushi .ng-sushi-hand-panel .ng-sushi-illustration{height:112px}
+}
+@media(max-height:650px) and (orientation:portrait){
+ .ng-table.ng-sushi{padding:5px 6px;gap:5px}
+ .ng-sushi .ng-sushi-overview{gap:3px}
+ .ng-sushi .sushi-players{padding:1px 2px 3px;gap:6px}
+ .ng-sushi .sushi-players .ng-player{min-height:46px;padding:4px 6px;flex-basis:170px}
+ .sushi-public-plate>header{padding:3px 7px}
+ .sushi-public-plate h3{font-size:11px;gap:4px}
+ .sushi-public-plate header p{font-size:10px;margin-top:1px}.sushi-public-plate header p b{font-size:11px}
+ .sushi-public-plate nav>span{min-width:22px;font-size:10px}
+ .ng-sushi .sushi-dishes{padding:5px 7px;gap:7px}
+ .ng-sushi .sushi-dishes>.ng-small{flex-basis:68px;width:68px;min-height:44px}
+ .ng-sushi .sushi-dishes .ng-sushi-illustration{height:45px}
+ .ng-sushi .sushi-dishes .ng-small>b{font-size:10px;min-height:28px;padding:3px 1px 0}
+ .sushi-empty{font-size:10px;gap:3px}.sushi-empty>span{display:none}
+ .ng-sushi>.ng-sushi-hand-panel{padding:5px 7px}
+ .ng-sushi .ng-sushi-hand-panel>h3{font-size:11px;padding-bottom:3px}
+ .ng-sushi .ng-sushi-hand-panel .ng-hand{padding:10px 4px 7px;gap:9px}
+ .ng-sushi .ng-sushi-hand-panel .ng-sushi-card{flex-basis:105px;width:105px}
+ .ng-sushi .ng-sushi-hand-panel .ng-sushi-illustration{height:62px}
+ .ng-sushi .ng-sushi-hand-panel .ng-sushi-card>b{font-size:11px;padding:4px 3px 2px;min-height:23px}
+ .ng-sushi .ng-sushi-hand-panel .ng-sushi-card>small{font-size:10px;min-height:30px;padding:0 4px}
+ .ng-sushi .ng-sushi-confirm{padding-top:3px;min-height:47px}
+ .sushi-pick-limit{font-size:10px}.sushi-pick-limit>small{font-size:9px}
+ .ng-sushi .sushi-status strong{font-size:10px}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .ng-table.ng-sushi{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);padding:5px 7px;gap:8px}
+ .ng-sushi .ng-sushi-overview{gap:3px}
+ .ng-sushi .sushi-players{padding:1px 2px 3px;gap:6px}
+ .ng-sushi .sushi-players .ng-player{min-height:45px;flex-basis:176px;padding:4px 6px}
+ .sushi-public-plate>header{padding:3px 7px}.sushi-public-plate h3{font-size:12px}
+ .sushi-public-plate header p{font-size:10px;margin-top:1px}.sushi-public-plate header p b{font-size:12px}
+ .ng-sushi .sushi-dishes{padding:7px 8px;gap:8px}
+ .ng-sushi .sushi-dishes>.ng-small{flex-basis:76px;width:76px;min-height:44px}
+ .ng-sushi .sushi-dishes .ng-sushi-illustration{height:70px;aspect-ratio:auto}
+ .ng-sushi .sushi-dishes .ng-small>b{font-size:10px;min-height:28px}
+ .sushi-empty{font-size:11px}.sushi-empty>span{display:none}
+ .ng-sushi>.ng-sushi-hand-panel{padding:6px 8px;display:flex}
+ .ng-sushi .ng-sushi-hand-panel>h3{font-size:11px;gap:5px;padding-bottom:3px}
+ .ng-sushi .ng-sushi-hand-panel>h3>small{font-size:10px}
+ .ng-sushi .ng-sushi-hand-panel .ng-hand{flex:1;align-items:stretch;padding:10px 4px 8px}
+ .ng-sushi .ng-sushi-hand-panel .ng-sushi-card{display:flex;flex-direction:column;flex-basis:110px;width:110px;height:auto;max-height:100%;padding:0 0 6px;gap:0;min-height:0}
+ .ng-sushi .ng-sushi-hand-panel .ng-sushi-illustration{width:100%;height:80px;min-height:12px;flex:1}
+ .ng-sushi .ng-sushi-hand-panel .ng-sushi-card>b{font-size:11px;padding:5px 3px 2px;min-height:25px;flex:none}
+ .ng-sushi .ng-sushi-hand-panel .ng-sushi-card>small{font-size:10px;min-height:30px;flex:none}
+ .ng-sushi .ng-sushi-confirm{padding-top:3px;gap:5px;min-height:47px}
+ .ng-sushi .ng-sushi-confirm>.ng-action{min-width:105px;padding:5px}
+ .sushi-pick-limit{font-size:10px}
+ .sushi-pick-limit>small{font-size:9px}
+ .ng-sushi .sushi-status strong{font-size:11px}
+ .sushi-dish-dialog{display:grid;grid-template-columns:minmax(0,1fr) 1fr;width:min(560px,calc(100vw - 24px));gap:8px}
+ .sushi-dish-dialog>header{grid-column:1/-1}.sushi-dish-dialog>.illustrated-tile{margin:0;width:100%;max-height:calc(100dvh - 108px)}.sushi-dish-dialog>p{align-self:center}
+}
+
+/* Keep scores and resource counts separate even in narrow player buttons. */
+.ng-sushi .sushi-players .ng-player{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:2px 6px}
+.ng-sushi .sushi-players .ng-player>.ng-avatar{grid-row:1;grid-column:1;font-size:22px}
+.ng-sushi .sushi-players .ng-player>div{grid-row:1;grid-column:2}
+.ng-sushi .sushi-players .ng-player>strong{grid-row:1;grid-column:3;align-self:center}
+.ng-sushi .sushi-player-counts{grid-column:1/-1;display:block;text-align:center;font-size:10px;line-height:1.4;color:#d2c8b1;white-space:nowrap}
+
+.sushi-symbol{display:grid;place-content:center;height:100%;width:100%;min-height:50px;font-size:clamp(22px,4vw,42px);background:radial-gradient(ellipse at center,#fff2de 0 45%,#d6c7a680 47% 51%,transparent 53%);border-radius:12px}.sushi-dish-dialog>.sushi-symbol{height:180px;font-size:72px}.sushi-copy-label{position:absolute;left:3px;top:3px;font-size:9px;background:#fff3d8;border-radius:3px;padding:2px;color:#57452c}.sushi-action-number{position:absolute;right:4px;bottom:4px;font-size:11px;color:#5f4b37}.sushi-table-menu{font-size:12px;line-height:1.5;margin:0 0 8px}.sushi-table-menu summary{cursor:pointer;min-height:28px}.sushi-table-menu p{margin:6px 0}.ng-sushi-confirm{flex-wrap:wrap}.sushi-menu-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.sushi-menu-options>label:first-child,.sushi-menu-options>small{grid-column:1/-1}.sushi-menu-options label{min-width:0}.sushi-menu-options select{min-width:0;width:100%;min-height:44px}
+
+.sushi-player-seat{position:relative;flex:1 0 185px;display:flex}.sushi-player-seat>.sushi-seat-avatar{position:absolute;left:1px;top:3px;width:44px;height:44px;font-size:22px;border-radius:9px;pointer-events:none}.sushi-seat-avatar .social-avatar-button{pointer-events:auto}.ng-sushi .sushi-seat-avatar .social-avatar-button:focus-visible{outline-offset:-3px}

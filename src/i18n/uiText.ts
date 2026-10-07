@@ -1,4 +1,13 @@
 export const uiText: Record<string,string> = {
+  '两人局：三轮后最多 +6，最少不扣分':'Two players: most +6 after round three; no penalty for fewest',
+  '查看玩家盘面':'Browse players’ plates','上一位玩家':'Previous player','下一位玩家':'Next player',
+  '料理分':'Dish points','卷数':'Maki','盘面可左右滑动':'Public plate; swipe left or right',
+  '筷子：可选 1–2 张':'Chopsticks: pick 1–2','按所选顺序出牌':'Play in selection order','选择 1 张':'Pick 1 card',
+  '手牌张数':'Hand tiles','公共牌面':'Public tiles','查看玩家':'View player','尚无弃牌':'No discards yet','尚无副露':'No melds yet','选择一张牌':'Select a tile',
+  '展开手牌':'Expand hand','展开':'Expand','手牌排序':'Hand order','按点数':'By rank','按花色':'By suit','返回牌桌':'Back to table','逢人配':'Wild',
+  '筛选游戏':'Filter game','全部游戏':'All games','对局类型':'Match type','全部类型':'All types','联机对局':'Multiplayer',
+  '重置筛选':'Reset filters','没有符合筛选的战绩':'No matching results',
+
   '永久奖励':'Bonus',
   '查看支付':'Review payment',
   '公共供应':'Shared supply',
@@ -348,6 +357,10 @@ export const uiText: Record<string,string> = {
   "+4 可以被质疑。出牌者当时若持有原颜色牌，质疑成功，出牌者抽 4 张；否则质疑者抽 6 张并跳过。只有质疑者能核验出牌时的手牌。接受 +4 则抽 4 张并跳过。": "You may challenge +4. If the player held the previous color, the challenge succeeds and they draw 4. Otherwise, the challenger draws 6 and skips. Only the challenger sees the hand held at the time. Accepting +4 means drawing 4 and skipping."
 };
 export const uiPatterns: [RegExp,string,number[]?][] = [
+  [/^(\d+) \/ 1 条战绩$/, '$1 of 1 result'],
+  [/^(\d+) \/ (\d+) 条战绩$/, '$1 of $2 results'],
+  [/^删除全部 1 条战绩$/, 'Delete the result'],
+  [/^删除全部 (\d+) 条战绩$/, 'Delete all $1 results'],
  [/^1 色$/, '1 color'],
  [/^(\d+) 色$/, '$1 colors'],
  [/^1 种颜色$/, '1 color'],

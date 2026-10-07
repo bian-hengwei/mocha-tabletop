@@ -5,7 +5,7 @@ import {GAMES,type GameKind} from '../src/core/types';
 const player={id:'player01',name:'狼人杀 <b>',avatar:'🦊',ready:true,connected:true};
 const room:RoomInfo={code:'ABC234',kind:'gems',mode:'cloud',hostID:player.id,players:[player],spectators:[{id:'watcher1',name:'Observer',avatar:'🐱',connected:true}],pending:[],revision:7,started:false};
 describe('room communication boundary',()=>{
- it('explicitly supports eight games and blocks four constrained-information games',()=>{
+ it('explicitly supports eight games and blocks games with constrained communication',()=>{
   const allowed=['gems','bombs','sushi','century','uno','doudizhu','guandan','mahjong'];
   for(const kind of Object.keys(GAMES) as GameKind[])expect(supportsRoomSocial(kind),kind).toBe(allowed.includes(kind));
  });

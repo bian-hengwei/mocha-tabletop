@@ -8,23 +8,26 @@ try{
  const page=await browser.newPage();page.setDefaultTimeout(7000);page.on('pageerror',e=>errors.push(e.message));
  let snapshot,connection;
  await page.routeWebSocket('**/api/rooms/ABC234',ws=>{connection=ws;ws.onMessage(raw=>{const m=JSON.parse(raw);if(m.type==='hello')ws.send(JSON.stringify(snapshot));if(m.type==='ping')ws.send(JSON.stringify({type:'pong'}));});});
- for(const language of ['zh','en'])for(const scenario of (process.env.TEST_GAMES?.split(',')||['doudizhu','guandan','mahjong','gems','bombs','sushi','century','uno','codenames','undercover','werewolf','werewolf-judge','werewolf-deal','avalon'])){
-  const kind=scenario.startsWith('werewolf')?'werewolf':scenario,werewolfMode=scenario.split('-')[1];
+ for(const language of ['zh','en'])for(const scenario of (process.env.TEST_GAMES?.split(',')||['doudizhu','guandan','mahjong','gems','bombs','sushi','sushi-party','century','uno','codenames','undercover','werewolf','werewolf-judge','werewolf-deal','avalon'])){
+  const kind=scenario.startsWith('werewolf')?'werewolf':scenario==='sushi-party'?'sushi':scenario,werewolfMode=kind==='werewolf'?scenario.split('-')[1]:undefined;
   await page.goto(base+'/manifest-mocha.webmanifest');
-  snapshot=await page.evaluate(async({kind,language,werewolfMode})=>{
-   const {GAMES}=await import('/src/core/types.ts'),{createMatch,viewRoomMatch}=await import('/src/core/room.ts');
-   const players=Array.from({length:GAMES[kind].max+(werewolfMode==='judge'?1:0)},(_,i)=>({id:`watch-player-${i}`,name:`Player ${i+1}`,avatar:'🦊',ready:true,connected:true}));
+  snapshot=await page.evaluate(async({kind,language,werewolfMode,scenario})=>{
+   const {createMatch,viewRoomMatch,roomLimits}=await import('/src/core/room.ts');
+   const options={language,...(werewolfMode?{werewolfMode}:{}),...(scenario==='sushi-party'?{sushiEdition:'party'}:{})};
+   const players=Array.from({length:roomLimits(kind,options).max},(_,i)=>({id:`watch-player-${i}`,name:kind==='undercover'?`Player LongName ${i+1}`:`Player ${i+1}`,avatar:'🦊',ready:true,connected:true}));
    const watcher={id:'watcher-00',name:'Watcher',avatar:'🐼',connected:true},spectators=[watcher,...Array.from({length:19},(_,i)=>({id:`watcher-long-${i}`,name:`观众 Observer ${i}`,avatar:'🐻',connected:i%2===0}))];
-   const options={language,...(werewolfMode?{werewolfMode}:{})},room={code:'ABC234',kind,hostID:players[0].id,mode:'cloud',players,spectators,allowSpectators:true,pending:[],started:true,revision:1,matchID:'spectator-layout-match',options},match=createMatch(kind,players,options);
+   const room={code:'ABC234',kind,hostID:players[0].id,mode:'cloud',players,spectators,allowSpectators:true,pending:[],started:true,revision:1,matchID:'spectator-layout-match',options},match=createMatch(kind,players,options);
    if(kind==='sushi')match.game.table=players.map((_,i)=>[{id:`public-dumpling-${i}`,kind:'dumpling'},{id:`public-maki-${i}`,kind:'maki2'}]);
    localStorage.clear();sessionStorage.clear();localStorage.setItem('mocha-profile',JSON.stringify(watcher));localStorage.setItem('mocha-locale',language);localStorage.setItem('mocha-room-session',JSON.stringify({profile:watcher,code:'ABC234',token:'a'.repeat(48),savedAt:Date.now(),expiresAt:Date.now()+3600000}));
    return{type:'snapshot',room,...viewRoomMatch(match,room,watcher.id),paused:false};
-  },{kind,language,werewolfMode});
+  },{kind,language,werewolfMode,scenario});
   await page.goto(base);await page.locator('.spectator-surface').waitFor();
-  for(const [width,height]of sizes){
+  for(const [width,height]of (kind==='undercover'||scenario==='sushi-party'?[...sizes,[568,320]]:sizes)){
    await page.setViewportSize({width,height});await page.waitForTimeout(60);
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1),`${kind} ${language} ${width}: page fits`);
-   const overflow=await page.locator('.game-surface').evaluate(surface=>[surface,...surface.querySelectorAll('*')].filter(x=>x instanceof HTMLElement&&x.clientHeight>0&&x.scrollHeight>x.clientHeight+2&&['hidden','auto','scroll'].includes(getComputedStyle(x).overflowY)&&!x.matches('.illustrated-tile,.role-art')).map(x=>({class:x.className,h:x.clientHeight,content:x.scrollHeight})));
+   // Artwork viewports intentionally crop raster layers; card labels and controls must fit.
+   if(kind==='sushi')for(const label of await page.locator('.sushi-dishes .ng-sushi-card>b').all())await expect(label).toBeInViewport();
+   const overflow=await page.locator('.game-surface').evaluate(surface=>[surface,...surface.querySelectorAll('*')].filter(x=>x instanceof HTMLElement&&x.clientHeight>0&&x.scrollHeight>x.clientHeight+2&&['hidden','auto','scroll'].includes(getComputedStyle(x).overflowY)&&!x.matches('.illustrated-tile,.role-art,.ng-sushi-illustration')).map(x=>({class:x.className,h:x.clientHeight,content:x.scrollHeight})));
    if(overflow.length)issues.push({kind,language,width,height,overflow,details:await page.locator('.social-table-v2,.social-board,.round-table,.seats,.seat-pagination').evaluateAll(xs=>xs.map(x=>({class:x.className,y:x.getBoundingClientRect().y,h:x.getBoundingClientRect().height,style:getComputedStyle(x).height,flex:getComputedStyle(x).flex}))) });
    for(const selector of ['.mj-hand-panel','.classic-hand-panel','.g-own-tray','.identity-deck','.bt-hand-zone','.ng-sushi-hand-panel','.ng-uno-hand-panel','.ng-century-hand-dock','.wg-secret-panel'])await expect(page.locator(selector)).toHaveCount(0);
    if(kind==='doudizhu'){

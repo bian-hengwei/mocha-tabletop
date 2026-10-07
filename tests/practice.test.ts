@@ -1,15 +1,16 @@
+import {roomLimits} from '../src/core/room';
 import {beforeEach,describe,expect,it} from 'vitest';
 import {BOT_GAMES,BOT_DIFFICULTIES,chooseBotCommand} from '../src/core/bots';
 import {modules} from '../src/core/registry';
 import {GAMES} from '../src/core/types';
-import {createPractice,applyPractice,practiceView,hasPracticeBotTurn,stepPracticeBot,continuePracticeRound,practiceBotRoundWaiting,readPractice,writePractice,restartPractice} from '../src/local/practice';
+import {createPractice,applyPractice,advancePracticeClock,practiceView,hasPracticeBotTurn,stepPracticeBot,continuePracticeRound,practiceBotRoundWaiting,readPractice,writePractice,restartPractice} from '../src/local/practice';
 import {makeRecord,readHistory,saveRecord} from '../src/local/storage';
 const human={id:'human-0001',name:'Human',avatar:'🦊'};
 const entries=new Map<string,string>();
 beforeEach(()=>{entries.clear();Object.defineProperty(globalThis,'localStorage',{configurable:true,value:{getItem:(key:string)=>entries.get(key)||null,setItem:(key:string,value:string)=>entries.set(key,value),removeItem:(key:string)=>entries.delete(key)}});});
 describe('local solo configuration',()=>{
  it.each(BOT_GAMES)('starts %s at every supported count and difficulty and progresses legal actions',kind=>{
-  for(let count=GAMES[kind].min;count<=GAMES[kind].max;count++)for(const difficulty of BOT_DIFFICULTIES){
+  for(let count=roomLimits(kind).min;count<=roomLimits(kind).max;count++)for(const difficulty of BOT_DIFFICULTIES){
    let p=createPractice(kind,count,human,{language:'en'},difficulty,314);
    expect(p.players).toHaveLength(count);expect(p.players.filter(player=>!player.bot)).toHaveLength(1);
    expect(p.players.slice(1).every(player=>player.bot?.difficulty===difficulty)).toBe(true);
@@ -65,6 +66,15 @@ it('pauses bot-owned round continuation for human acknowledgement and allows ret
  expect(hasPracticeBotTurn(p)).toBe(false);expect(practiceBotRoundWaiting(p)).toBe(true);
  const next=continuePracticeRound(p);expect((next.game as typeof game).round).toBe(2);expect(game.round).toBe(1);
  const ready=createPractice('sushi',3,human,undefined,'normal',1);expect(hasPracticeBotTurn({...ready,botError:true})).toBe(false);expect(hasPracticeBotTurn({...ready,botError:false})).toBe(true);
+});
+it('advances and restores a pass-and-play drawing clock only through the local authority',()=>{
+ let p=createPractice('drawguess',3,human,{language:'en',drawRounds:1},undefined,21);const now=Date.now();
+ p=advancePracticeClock(p,now);expect((p.game as {phase:string;deadlineAt:number}).phase).toBe('choose');
+ const choose=practiceView(p).actions[0].choices[0];p=applyPractice(p,{action:'choose',values:[choose.id]});p=advancePracticeClock(p,now+1);
+ const drawing=p.game as {phase:string;deadlineAt:number;revealUntil:number};expect(drawing.phase).toBe('draw');
+ p=advancePracticeClock(p,drawing.deadlineAt+1);expect((p.game as typeof drawing).phase).toBe('reveal');
+ writePractice(p);const restored=readPractice()!;expect((restored.game as typeof drawing).phase).toBe('reveal');
+ expect(advancePracticeClock(restored,(restored.game as typeof drawing).revealUntil+1).game).not.toEqual(restored.game);
 });
 it('plays an entire five-seat solo Sushi match and stores a distinct private-free solo result',()=>{
  let p=createPractice('sushi',5,human,undefined,'normal',246);let steps=0;

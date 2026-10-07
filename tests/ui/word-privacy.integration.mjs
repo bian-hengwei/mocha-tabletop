@@ -58,13 +58,11 @@ const overlaps=await page.locator('.wg-word,.wg-odd-player').evaluateAll(xs=>xs.
   assert.equal(await page.locator('.wg-secret.wg-open').count(),0,'Returning to a seat must not reveal its previous secret word');assert.equal(await page.locator('.wg-secret').getAttribute('aria-pressed'),'false');
   await capture('odd-deal');
   const words=[];for(let index=0;index<3;index++){await seat(index);await page.locator('.wg-secret').click();words.push(await page.locator('.wg-secret>strong').textContent());await page.locator('.wg-secret-panel>.wg-primary').click();}
-  for(let index=0;index<3;index++){await seat(index);await page.locator('.wg-speaking>.wg-primary').click();}
-  await capture('odd-vote',{voting:true});
-  const odd=words.findIndex(word=>words.filter(candidate=>candidate===word).length===1);assert(odd>=0);
-  for(let index=0;index<3;index++){await seat(index);if(index===2)await page.locator('.wg-secret').click();const target=index===odd?(index+1)%3:odd;await page.locator('.wg-odd-player').nth(target).click();await confirm();}
-  await page.locator('.end-banner').waitFor();assert.equal(await page.locator('.wg-secret.wg-open').count(),1,'Keep a revealed final word to exercise replay state reset');const oddMatch=await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id);
-  await page.locator('.end-banner .primary').click();assert.notEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id),oddMatch);assert.equal(await page.locator('.wg-secret.wg-open').count(),0,'Replaying Odd Word Out must not expose its new secret word');assert.equal(await page.locator('.wg-secret').getAttribute('aria-pressed'),'false');
-  console.log(`PASS ${locale} secret word away/back privacy, compact voting controls, complete game, revealed-word replay privacy, ${sizes.length*2} illustrated layouts`);
+  assert.equal(await page.locator('.wg-speaking,.wg-odd-player,.end-banner').count(),0);
+  const oddMatch=await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id);
+  await page.locator('.wg-secret').click();await page.getByRole('button',{name:locale==='zh'?'牌桌菜单':'Table menu',exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'再来一局':'Play again',exact:true}).click();
+  assert.notEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id),oddMatch);assert.equal(await page.locator('.wg-secret.wg-open').count(),0,'A new deal hides words again');
+  console.log(`PASS ${locale} dealer seat privacy, menu redeal, hidden new words, layouts`);
   await context.close();
  }
  assert.deepEqual(errors,[]);console.log(`PASS word-game privacy and replay regressions, ${sizes.length*6} bilingual responsive screenshots, loaded atlases, voting priority, no clipped labels or browser errors`);

@@ -16,7 +16,7 @@ export interface SocialState extends SocialView {seen:Record<string,string[]>;la
 export const emptySocial = ():SocialState => ({messages:[],reactions:[],revision:0,seen:{},lastSent:{}});
 
 // These games constrain when players may communicate or reveal identities/words.
-export function supportsRoomSocial(kind:GameKind){return !['codenames','werewolf','undercover','avalon'].includes(kind);}
+export function supportsRoomSocial(kind:GameKind){return ['gems','bombs','sushi','century','uno','doudizhu','guandan','mahjong'].includes(kind);}
 
 export function applyRoomSocial(state:SocialState,room:RoomInfo,actor:string,input:unknown,requestID:unknown,now:number,asset?:ReactionAsset):SocialState {
  if(!supportsRoomSocial(room.kind))throw new Error('此游戏不开放聊天和表情');

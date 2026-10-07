@@ -1,8 +1,12 @@
+import {validateSushiState} from './games/sushiValidation';
+import {validateSushiMenu,DEFAULT_SUSHI_MENU} from './games/sushiMenu';
 import {isMahjongMode} from './mahjongModes';
 import type {SocialView} from './roomSocial';
 import type { Command, GameKind, GameView, Player, GameOptions } from './types';
 import { AVATARS, GAMES } from './types';
 import { modules } from './registry';
+import {advanceDrawGuessClock, drawGuessDeadline, pauseDrawGuessClock, resumeDrawGuessClock} from './games/drawguess';
+import {advanceRelayClock, relayDeadline, pauseRelayClock, resumeRelayClock, validateRelayState} from './games/drawrelay';
 import { WEREWOLF_PRESETS, werewolfPreset, werewolfPresetLimits } from './werewolfPresets';
 export type RoomMode = 'cloud' | 'lan';
 export interface RoomPlayer extends Player { ready:boolean; connected:boolean }
@@ -14,6 +18,7 @@ export interface RoomCandidate {code:string;kind:GameKind;mode:RoomMode;hostName
 interface SocialClientState {social?:SocialView;socialPending?:string;socialError?:string;socialAck?:string;socialOnline?:boolean}
 export interface ClientState extends SocialClientState {status:'idle'|'connecting'|'lobby'|'playing'|'reconnecting'|'disconnected';mode?:RoomMode;room?:RoomInfo;selfID?:string;view?:GameView;error?:string;transport:'none'|'cloud'|'lan';paused:boolean;inviteURL?:string;actionRevision:number;actionPending?:boolean;waitingApproval?:boolean}
 export interface MatchState {schemaVersion?:2;options?:GameOptions;game:any;revision:number;actorRevisions:Record<string,number>;seen:Record<string,string[]>}
+export const independentRelay=(room:Pick<RoomInfo,'kind'|'options'>)=>room.kind==='drawrelay'&&room.options?.relayMode==='queue';
 export function validProfile(input:any):Player {
  if(!input || typeof input.id!=='string'|| !/^[a-zA-Z0-9_-]{8,80}$/.test(input.id)||input.id.startsWith('bot_')||Object.hasOwn(Object.prototype,input.id))throw new Error('玩家身份无效');
  if(typeof input.name!=='string'||!input.name.trim()||input.name.trim().length>16)throw new Error('昵称限 1–16 个字');
@@ -25,14 +30,21 @@ export function validKind(kind:any):asserts kind is GameKind {if(!Object.hasOwn(
 export function normalizeGameOptions(kind:GameKind,input:unknown,hostID:string):GameOptions|undefined {
  if(input!==undefined&&(input===null||typeof input!=='object'||Array.isArray(input)))throw new Error('游戏选项无效');
  const options=(input||{}) as Record<string,unknown>;
- if(Object.keys(options).some(key=>!['mahjongMode','werewolfMode','moderatorID','language','unoMode','unoChallenge','pokerCounter','werewolfPreset','werewolfWin'].includes(key)))throw new Error('未知游戏选项');
+ if(Object.keys(options).some(key=>!['mahjongMode','werewolfMode','moderatorID','language','unoMode','unoChallenge','pokerCounter','werewolfPreset','werewolfWin','drawRounds','drawSeconds','relaySeconds','relayMode','sushiEdition','sushiMenu'].includes(key)))throw new Error('未知游戏选项');
  if(options.language!==undefined&&!['zh','en'].includes(options.language as string))throw new Error('游戏语言无效');
  if(options.mahjongMode!==undefined&&(kind!=='mahjong'||!isMahjongMode(options.mahjongMode)))throw new Error('Mahjong mode is invalid');
+ if(options.relaySeconds!==undefined&&(kind!=='drawrelay'||![0,60,90,120].includes(options.relaySeconds as number)))throw new Error('接龙时长无效');
+ if(options.relayMode!==undefined&&(kind!=='drawrelay'||!['rounds','queue'].includes(options.relayMode as string)))throw new Error('接龙模式无效');
+ if(options.sushiEdition!==undefined&&(kind!=='sushi'||!['classic','party'].includes(options.sushiEdition as string)))throw new Error('寿司版本无效');
+ if(options.sushiMenu!==undefined&&(kind!=='sushi'||options.sushiEdition!=='party'))throw new Error('自选菜单需要派对版');
+ const sushiOptions=options.sushiEdition==='party'?{sushiEdition:'party' as const,sushiMenu:validateSushiMenu(options.sushiMenu??DEFAULT_SUSHI_MENU)}:options.sushiEdition==='classic'?{sushiEdition:'classic' as const}:{};
  const language=options.language===undefined?{}:{language:options.language as 'zh'|'en'};
  if(options.unoMode!==undefined&&(kind!=='uno'||!['single','match'].includes(options.unoMode as string)))throw new Error('七彩接龙模式无效');
  if(options.unoChallenge!==undefined&&(kind!=='uno'||typeof options.unoChallenge!=='boolean'))throw new Error('七彩接龙质疑设置无效');
  if(options.pokerCounter!==undefined&&(!['doudizhu','guandan'].includes(kind)||typeof options.pokerCounter!=='boolean'))throw new Error('记牌器设置无效');
- if(kind!=='werewolf'){if(options.werewolfMode!==undefined||options.moderatorID!==undefined||options.werewolfPreset!==undefined||options.werewolfWin!==undefined)throw new Error('此游戏不支持主持模式选项');const result={...language,...(options.pokerCounter===true?{pokerCounter:true}:{}),...(options.mahjongMode?{mahjongMode:options.mahjongMode as GameOptions['mahjongMode']}:{}),...(options.unoMode?{unoMode:options.unoMode as 'single'|'match'}:{}),...(options.unoChallenge===false?{unoChallenge:false}:{})};return Object.keys(result).length?result:undefined;}
+ if(options.drawRounds!==undefined&&(!Number.isInteger(options.drawRounds)||kind!=='drawguess'||(options.drawRounds as number)<1||(options.drawRounds as number)>6))throw new Error('画词回合数无效');
+ if(options.drawSeconds!==undefined&&(![45,60,75,90].includes(options.drawSeconds as number)||kind!=='drawguess'))throw new Error('画词时长无效');
+ if(kind!=='werewolf'){if(options.werewolfMode!==undefined||options.moderatorID!==undefined||options.werewolfPreset!==undefined||options.werewolfWin!==undefined)throw new Error('此游戏不支持主持模式选项');const result={...language,...sushiOptions,...(options.relayMode?{relayMode:options.relayMode as 'rounds'|'queue'}:{}),...(options.pokerCounter===true?{pokerCounter:true}:{}),...(options.mahjongMode?{mahjongMode:options.mahjongMode as GameOptions['mahjongMode']}:{}),...(options.unoMode?{unoMode:options.unoMode as 'single'|'match'}:{}),...(options.unoChallenge===false?{unoChallenge:false}:{}),...(options.drawRounds?{drawRounds:options.drawRounds as number}:{}),...(options.drawSeconds?{drawSeconds:options.drawSeconds as number}:{}),...(options.relaySeconds!==undefined?{relaySeconds:options.relaySeconds as number}:{})};return Object.keys(result).length?result:undefined;}
  if(options.werewolfPreset!==undefined&&!WEREWOLF_PRESETS.some(p=>p.id===options.werewolfPreset))throw new Error('月夜议会配置无效');
  if(options.werewolfWin!==undefined&&!['sides','parity'].includes(options.werewolfWin as string))throw new Error('月夜议会胜负条件无效');
  const rules={...(options.werewolfPreset&&options.werewolfPreset!=='auto'?{werewolfPreset:options.werewolfPreset as GameOptions['werewolfPreset']}:{}),...(options.werewolfWin==='parity'?{werewolfWin:'parity' as const}:{})};
@@ -43,7 +55,7 @@ export function normalizeGameOptions(kind:GameKind,input:unknown,hostID:string):
  if(options.moderatorID!==undefined&&options.moderatorID!==hostID)throw new Error('法官或发牌人必须是房主');
  return {werewolfMode:mode as 'judge'|'deal',moderatorID:hostID,...language,...rules};
 }
-export function roomLimits(kind:GameKind,options?:GameOptions):{min:number;max:number}{if(kind!=='werewolf')return {min:GAMES[kind].min,max:GAMES[kind].max};const extra=options?.werewolfMode==='judge'?1:0,{min,max}=werewolfPresetLimits(options?.werewolfPreset);return {min:min+extra,max:max+extra};}
+export function roomLimits(kind:GameKind,options?:GameOptions):{min:number;max:number}{if(kind==='sushi')return {min:options?.sushiEdition==='party'&&(options.sushiMenu?.appetizers.includes('edamame')||options.sushiMenu?.specials.includes('spoon'))?3:2,max:options?.sushiEdition!=='party'?5:options.sushiMenu?.specials.some(k=>k==='menu'||k==='order')?6:8};if(kind!=='werewolf')return {min:GAMES[kind].min,max:GAMES[kind].max};const extra=options?.werewolfMode==='judge'?1:0,{min,max}=werewolfPresetLimits(options?.werewolfPreset);return {min:min+extra,max:max+extra};}
 export function optionsKey(kind:GameKind,options:GameOptions|undefined,hostID:string){return JSON.stringify(normalizeGameOptions(kind,options,hostID)||{});}
 export function createMatch(kind:GameKind,players:Player[],options?:GameOptions):MatchState {
  const canonical=normalizeGameOptions(kind,options,players[0]?.id||'');
@@ -75,6 +87,8 @@ export function validateMatchForRoom(value:unknown,room:RoomInfo):MatchState {
   if(JSON.stringify(Object.values(match.game.roles).sort())!==JSON.stringify(werewolfPreset(participantIDs.length,expected.werewolfPreset).sort()))throw new Error('身份牌配置与房间不一致');
   if(expected.werewolfMode==='judge'&&Object.hasOwn(match.game.roles,room.hostID))throw new Error('法官不能参与发牌');
  }
+ if(room.kind==='sushi')validateSushiState(match.game,room.options);
+ if(room.kind==='drawrelay')validateRelayState(match.game,room.options?.relaySeconds??90,room.options?.relayMode);
  for(const id of ids)viewMatch(match,room.kind,id);
  return structuredClone(match);
 }
@@ -83,13 +97,39 @@ export function applyMatch(match:MatchState,kind:GameKind,players:Player[],actor
  if(typeof requestID!=='string'||requestID.length>100||!requestID)throw new Error('操作编号无效');
  if(match.seen[actor]?.includes(requestID))return match;
  if(actionRevision!==match.actorRevisions[actor])throw new Error('牌局已变化，请重选');
- if(!command||typeof command.action!=='string'||!Array.isArray(command.values)||command.values.length>32||command.values.some(v=>typeof v!=='string'||v.length>200)||(command.text!==undefined&&(typeof command.text!=='string'||command.text.length>32)))throw new Error('操作无效');
+ const drawStroke=kind==='drawguess'&&command?.action==='stroke';
+ if(!command||typeof command.action!=='string'||!Array.isArray(command.values)||command.values.length>(drawStroke?32:32)||command.values.some(v=>typeof v!=='string'||v.length>200)||(command.text!==undefined&&(typeof command.text!=='string'||command.text.length>(drawStroke?16:(kind==='drawrelay'&&command.action==='draft'?240:32)))))throw new Error('操作无效');
  const before=Object.fromEntries(players.map(p=>[p.id,JSON.stringify(modules[kind].view(match.game,p.id).actions)]));
  const game=modules[kind].apply(structuredClone(match.game),actor,command);
  const actorRevisions={...match.actorRevisions};
  for(const p of players)if(p.id===actor||before[p.id]!==JSON.stringify(modules[kind].view(game,p.id).actions))actorRevisions[p.id]=(actorRevisions[p.id]||0)+1;
  return {...match,game,revision:match.revision+1,actorRevisions,seen:{...match.seen,[actor]:[...(match.seen[actor]||[]),requestID].slice(-128)}};
 }
+/** Advance only from a trusted room host. It is intentionally not exposed as a player command. */
+export function advanceMatchClock(match:MatchState,kind:GameKind,players:Player[],now:number):MatchState {
+ if(kind==='drawrelay'){const game=advanceRelayClock(match.game,now);if(game===match.game)return match;const actorRevisions={...match.actorRevisions};for(const p of players)actorRevisions[p.id]=(actorRevisions[p.id]||0)+1;return {...match,game,revision:match.revision+1,actorRevisions};}
+ if(kind!=='drawguess')return match;
+ const game=advanceDrawGuessClock(match.game,now);if(JSON.stringify(game)===JSON.stringify(match.game))return match;
+ const actorRevisions={...match.actorRevisions};for(const p of players)actorRevisions[p.id]=(actorRevisions[p.id]||0)+1;
+ return {...match,game,revision:match.revision+1,actorRevisions};
+}
+/** Trusted connection owner freezes the current deadline on the first participant disconnect. */
+export function pauseMatchClock(match:MatchState,kind:GameKind,players:Player[],now:number):MatchState {
+ if(kind==='drawrelay'){const game=pauseRelayClock(match.game,now);if(game===match.game)return match;const actorRevisions={...match.actorRevisions};for(const p of players)actorRevisions[p.id]=(actorRevisions[p.id]||0)+1;return {...match,game,revision:match.revision+1,actorRevisions};}
+ if(kind!=='drawguess')return match;
+ const game=pauseDrawGuessClock(match.game,now);if(JSON.stringify(game)===JSON.stringify(match.game))return match;
+ const actorRevisions={...match.actorRevisions};for(const p of players)actorRevisions[p.id]=(actorRevisions[p.id]||0)+1;
+ return {...match,game,revision:match.revision+1,actorRevisions};
+}
+/** Trusted connection owner restores a frozen deadline after every participant reconnects. */
+export function resumeMatchClock(match:MatchState,kind:GameKind,players:Player[],now:number):MatchState {
+ if(kind==='drawrelay'){const game=resumeRelayClock(match.game,now);if(game===match.game)return match;const actorRevisions={...match.actorRevisions};for(const p of players)actorRevisions[p.id]=(actorRevisions[p.id]||0)+1;return {...match,game,revision:match.revision+1,actorRevisions};}
+ if(kind!=='drawguess')return match;
+ const game=resumeDrawGuessClock(match.game,now);if(JSON.stringify(game)===JSON.stringify(match.game))return match;
+ const actorRevisions={...match.actorRevisions};for(const p of players)actorRevisions[p.id]=(actorRevisions[p.id]||0)+1;
+ return {...match,game,revision:match.revision+1,actorRevisions};
+}
+export function matchDeadline(match:MatchState,kind:GameKind){return kind==='drawguess'?drawGuessDeadline(match.game):kind==='drawrelay'?relayDeadline(match.game):0;}
 export function viewMatch(match:MatchState,kind:GameKind,id:string){return {view:modules[kind].view(match.game,id),actionRevision:match.actorRevisions[id]||0};}
 
 /** Only authenticated room members may reach this projection. Spectators never borrow a seat. */
