@@ -11,6 +11,12 @@ try{for(const locale of ['zh','en'])for(const [width,height]of [[320,568],[390,8
  await page.getByRole('button',{name:'Toggle language'}).click();await expect(page.locator('.wg-secret strong')).toHaveText(word);await page.getByRole('button',{name:'Toggle language'}).click();
  await page.getByLabel('Seat',{exact:true}).selectOption('english-player-8');await expect(page.locator('.wg-open')).toHaveCount(0);await page.getByLabel('Seat',{exact:true}).selectOption('english-player-0');await expect(page.locator('.wg-open')).toHaveCount(0);
  await page.locator('.wg-help-button').click();await expect(page.getByRole('dialog')).toBeVisible();await page.setViewportSize({width:height,height:width});await page.keyboard.press('Escape');await expect(page.locator('.wg-help-button')).toBeFocused();await page.setViewportSize({width,height});
- await page.locator('.wg-dealt-players>span').last().scrollIntoViewIfNeeded();await expect(page.locator('.wg-dealt-players>span').last()).toBeInViewport();assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ for(const name of await page.locator('.wg-dealt-players>span').all())await expect(name).toBeInViewport({ratio:1});
+ await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=undercover&players=max&names=long`);
+ await expect(page.locator('.wg-dealt-players>span')).toHaveCount(12);
+ await expect(page.locator('.wg-secret-panel>.wg-primary')).toBeDisabled();await page.locator('.wg-secret').click();await page.locator('.wg-secret-panel>.wg-primary').click();await expect(page.locator('.wg-open')).toHaveCount(0);
+ for(const name of await page.locator('.wg-dealt-players>span').all())await expect(name).toBeInViewport({ratio:1});
+ assert(await page.locator('.game-surface').evaluate(surface=>[surface,...surface.querySelectorAll('*')].every(node=>!(node instanceof HTMLElement)||!node.clientHeight||node.scrollHeight<=node.clientHeight+2||!['auto','scroll','hidden'].includes(getComputedStyle(node).overflowY)||node.matches('.illustrated-tile,.role-art'))),'dealer names and controls fit without vertical clipping');
+ assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth&&document.documentElement.scrollHeight<=innerHeight));
  await page.screenshot({path:`${out}/${locale}-${width}x${height}.png`});await page.close();console.log('PASS',locale,width,height,'legacy checkpoint as dealer, seat privacy, language, help, all names');
 }}finally{await browser.close();}
