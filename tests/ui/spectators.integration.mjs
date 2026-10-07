@@ -25,7 +25,9 @@ try{
   for(const [width,height]of (kind==='undercover'||scenario==='sushi-party'?[...sizes,[568,320]]:sizes)){
    await page.setViewportSize({width,height});await page.waitForTimeout(60);
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1),`${kind} ${language} ${width}: page fits`);
-   const overflow=await page.locator('.game-surface').evaluate(surface=>[surface,...surface.querySelectorAll('*')].filter(x=>x instanceof HTMLElement&&x.clientHeight>0&&x.scrollHeight>x.clientHeight+2&&['hidden','auto','scroll'].includes(getComputedStyle(x).overflowY)&&!x.matches('.illustrated-tile,.role-art')).map(x=>({class:x.className,h:x.clientHeight,content:x.scrollHeight})));
+   // Artwork viewports intentionally crop raster layers; card labels and controls must fit.
+   if(kind==='sushi')for(const label of await page.locator('.sushi-dishes .ng-sushi-card>b').all())await expect(label).toBeInViewport();
+   const overflow=await page.locator('.game-surface').evaluate(surface=>[surface,...surface.querySelectorAll('*')].filter(x=>x instanceof HTMLElement&&x.clientHeight>0&&x.scrollHeight>x.clientHeight+2&&['hidden','auto','scroll'].includes(getComputedStyle(x).overflowY)&&!x.matches('.illustrated-tile,.role-art,.ng-sushi-illustration')).map(x=>({class:x.className,h:x.clientHeight,content:x.scrollHeight})));
    if(overflow.length)issues.push({kind,language,width,height,overflow,details:await page.locator('.social-table-v2,.social-board,.round-table,.seats,.seat-pagination').evaluateAll(xs=>xs.map(x=>({class:x.className,y:x.getBoundingClientRect().y,h:x.getBoundingClientRect().height,style:getComputedStyle(x).height,flex:getComputedStyle(x).flex}))) });
    for(const selector of ['.mj-hand-panel','.classic-hand-panel','.g-own-tray','.identity-deck','.bt-hand-zone','.ng-sushi-hand-panel','.ng-uno-hand-panel','.ng-century-hand-dock','.wg-secret-panel'])await expect(page.locator(selector)).toHaveCount(0);
    if(kind==='doudizhu'){
