@@ -8,8 +8,9 @@ const suites = JSON.parse(readFileSync(new URL('../.github/ci-integration.json',
 const scripts = new Set();
 for (const entries of Object.values(suites)) {
   assert(entries.length > 0, 'CI groups must not be empty');
-  for (const {script, env = {}} of entries) {
+  for (const {script, env = {}, isolated = false} of entries) {
     assert(/^tests\/(ui|network)\/[\w-]+\.integration\.mjs$/.test(script), `Invalid CI script: ${script}`);
+    assert(typeof isolated === 'boolean', `Invalid isolation setting for ${script}`);
     assert(!scripts.has(script), `Duplicate CI script: ${script}`);
     assert(Object.values(env).every(value => typeof value === 'string'), `Invalid environment for ${script}`);
     accessSync(new URL(`../${script}`, import.meta.url));
@@ -27,10 +28,10 @@ if (group === '--list') {
     if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, text);
   };
   summary(`## Integration tests: ${group}\n\n| Script | Result | Seconds |\n| --- | --- | ---: |\n`);
-  for (const {script, env = {}} of suites[group]) {
+  for (const {script, env = {}, isolated = false} of suites[group]) {
     console.log(process.env.GITHUB_ACTIONS === 'true' ? `::group::${script}` : `Running ${script}`);
     const started = performance.now();
-    const result = spawnSync(process.execPath, [script], {
+    const result = spawnSync(process.execPath, isolated ? ['scripts/isolated-integration.mjs', script] : [script], {
       cwd: root,
       env: {...process.env, ...env},
       stdio: 'inherit',

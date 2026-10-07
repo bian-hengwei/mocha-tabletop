@@ -34,7 +34,7 @@ jobs:
     name: Integration (${{ matrix.group }})
     needs: quality
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -53,8 +53,16 @@ jobs:
           name: integration-dist
           path: dist/
       - name: Install browser for integration tests
-        run: npx playwright install --with-deps chromium
+        timeout-minutes: 5
+        run: |
+          sudo tee /etc/apt/apt.conf.d/99-mocha-ci-timeouts > /dev/null <<'EOF'
+          Acquire::http::Timeout "30";
+          Acquire::https::Timeout "30";
+          APT::Update::Error-Mode "any";
+          EOF
+          npx playwright install --with-deps chromium
       - name: Run integration group
+        timeout-minutes: 20
         env:
           BASE_URL: http://127.0.0.1:5174
           TEST_API_BASE: http://127.0.0.1:8787
