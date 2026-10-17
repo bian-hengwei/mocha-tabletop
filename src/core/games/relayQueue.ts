@@ -4,6 +4,15 @@ export interface RelayQueue {drafts:(RelayEntry|null)[];selected:Record<string,n
 const owner=(s:DrawRelayState,book:number)=>s.players[(book+s.books[book].length)%s.players.length].id;
 const taskID=(s:DrawRelayState,book:number)=>`${book}:${s.books[book].length}`;
 export const queuedBooks=(s:DrawRelayState,id:string)=>s.books.flatMap((pages,book)=>pages.length<s.players.length&&owner(s,book)===id?[book]:[]);
+// Pin the effective selection before a handoff can insert an earlier album.
+// This also upgrades checkpoints whose selection map was left empty.
+function retainActiveTasks(s:DrawRelayState){
+ for(const {id} of s.players){
+  const books=queuedBooks(s,id);
+  if(!books.length)delete s.queue!.selected[id];
+  else if(!books.includes(s.queue!.selected[id]))s.queue!.selected[id]=books[0];
+ }
+}
 export function freshQueueDraft(s:DrawRelayState,book:number):RelayEntry|null{
  const step=s.books[book].length;if(step===s.players.length)return null;
  return {author:owner(s,book),kind:step%2?'drawing':'text',...(step%2?{strokes:[]}:{text:''})};
@@ -19,7 +28,7 @@ export function applyRelayQueue(state:DrawRelayState,id:string,command:Command):
  if(book===undefined)throw new Error('接龙已换页，请重新查看');
  if(command.action==='task'){
   if(command.values.length!==1)throw new Error('操作无效');
-  const s=structuredClone(state);s.queue!.selected[id]=book;return s;
+  const s=structuredClone(state);retainActiveTasks(s);s.queue!.selected[id]=book;return s;
  }
  const old=state.queue!.drafts[book]!;
  if(command.action==='stroke'){
@@ -30,7 +39,7 @@ export function applyRelayQueue(state:DrawRelayState,id:string,command:Command):
  if(['undo','clear'].includes(command.action)&&(old.kind!=='drawing'||!old.strokes!.length))throw new Error('画布没有笔迹');
  if(command.action==='submit'&&!(old.kind==='drawing'?old.strokes!.length:old.text!.trim()))throw new Error('请先完成这一页');
  if(!['stroke','draft','undo','clear','submit'].includes(command.action))throw new Error('操作无效');
- const s=structuredClone(state),draft=s.queue!.drafts[book]!;
+ const s=structuredClone(state);retainActiveTasks(s);const draft=s.queue!.drafts[book]!;
  if(command.action==='stroke')draft.strokes!.push(command.values[1]);
  if(command.action==='draft')draft.text=command.text!;
  if(command.action==='undo')draft.strokes!.pop();
@@ -38,7 +47,7 @@ export function applyRelayQueue(state:DrawRelayState,id:string,command:Command):
  if(command.action==='submit'){
   s.books[book].push(draft);s.queue!.drafts[book]=freshQueueDraft(s,book);
   s.step=Math.min(...s.books.map(p=>p.length));s.finished=s.step===s.players.length;
-  delete s.queue!.selected[id];
+  retainActiveTasks(s);
  }
  return s;
 }

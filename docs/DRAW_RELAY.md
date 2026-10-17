@@ -6,7 +6,7 @@ The text → drawing → text → reveal format follows [Draw & Guess](https://s
 
 Each player starts one album. Albums move in seat order, alternating text and drawing, until every player contributes exactly once to every album. There is no scoring.
 
-New tables default to `relayMode: queue`: each album advances immediately on submission. Different albums can therefore be at different steps. A player may have multiple drawing/text tasks and choose their order. Tasks are untimed, preserve drafts, and wait for the assigned player. Other disconnected players do not pause available tasks. LAN still requires its host. All albums must finish before the reveal.
+New tables default to `relayMode: queue`: each album advances immediately on submission. Different albums can therefore be at different steps. A player may have multiple drawing/text tasks and choose their order. Tasks are untimed, preserve drafts, and wait for the assigned player. Arriving albums do not change the active task; a player switches it explicitly or submits it to move to the next pending task. The active task is retained in checkpoints, including after an older checkpoint with an empty selection map receives its next action. Other disconnected players do not pause available tasks. LAN still requires its host. All albums must finish before the reveal.
 
 `relayMode: rounds` retains synchronized steps. All players submit before advancing; choose unlimited time or 60/90/120 seconds. A trusted deadline saves synchronized drafts, marking blanks incomplete. Disconnects freeze the clock. Old checkpoints without a mode keep the original synchronous behavior.
 

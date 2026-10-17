@@ -269,3 +269,4 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 表情管理集成支持 `TEST_BROWSER=webkit`，并检查无名称的单文件/批量上传、混合有效/无效文件、GIF 首帧像素、原动图字节保持及减少动态效果的静态图片选择。
 
 - `BASE_URL=<vite> node tests/ui/relay-gallery-reading.integration.mjs`：十二人终局画册，中英八尺寸的四边完整画作、保持比例、可达的画册与翻页/重开控件、旋转与焦点；支持 WebKit。
+- `BASE_URL=<vite> node tests/ui/relay-active-task.integration.mjs`：真实 App 配合本地模拟快照，验证新任务到达时输入法文字、焦点与未结束画笔保持；覆盖中英八尺寸、明确切换、刷新恢复和弹窗旋转。真实 Worker/WebRTC 恢复由 `tests/network/draw-relay.integration.mjs` 覆盖。

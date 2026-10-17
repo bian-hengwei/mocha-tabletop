@@ -252,6 +252,9 @@
       "script": "tests/ui/relay-feedback.integration.mjs"
     },
     {
+      "script": "tests/ui/relay-active-task.integration.mjs"
+    },
+    {
       "script": "tests/network/draw-relay.integration.mjs",
       "isolated": true
     },

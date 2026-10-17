@@ -35,7 +35,17 @@ try{for(const mode of ['cloud','lan'])for(const relayMode of ['rounds','queue'])
  assert.deepEqual(await third.evaluate(()=>client.state.view.board.openingPrompts),openingIdeas[2],'reconnection must retain the dealt opening ideas');
 
  if(relayMode==='queue'){
-  for(const [i,p] of pages.entries()){const task=`${i}:0`;await action(p,{action:'task',values:[task]});await action(p,{action:'draft',values:[task],text:`PRIVATE ${i}`});await submitQueued(p,task,pages);}
+  await action(guest,{action:'draft',values:['1:0'],text:'Original active task'});
+  for(const [i,p] of pages.entries()){
+   if(i===1){
+    await guest.waitForFunction(()=>client.state.view.board.tasks.some(t=>t.id==='0:1'));
+    assert.equal(await guest.evaluate(()=>client.state.view.board.taskID),'1:0','incoming lower album must not replace the active task');
+    await guest.evaluate(()=>client.destroy());
+    await guest.evaluate(async()=>{const {RoomClient}=await import('/src/net/client.ts');window.client=new RoomClient();await client.connect();});await ready(guest);
+    assert.equal(await guest.evaluate(()=>client.state.view.board.taskID),'1:0');
+    assert.equal(await guest.evaluate(()=>client.state.view.board.draft.text),'Original active task');
+   }
+   const task=`${i}:0`;await action(p,{action:'task',values:[task]});await action(p,{action:'draft',values:[task],text:`PRIVATE ${i}`});await submitQueued(p,task,pages);}
   await Promise.all(pages.map(p=>p.waitForFunction(()=>client.state.view.board.draft?.kind==='drawing')));
   const task=await host.evaluate(()=>client.state.view.board.taskID);await action(host,{action:'stroke',values:[task,'ABAAAAPPPX']});
   await third.evaluate(()=>client.destroy());await host.waitForFunction(()=>client.state.room.players.some(p=>!p.online));

@@ -29,6 +29,7 @@ try{
    await seed(page,kind,locale);
    if(kind==='drawrelay'){
     await page.locator('.relay-sealed button').click();await expect(page.locator('.relay-heading')).toContainText('3');
+    await page.getByRole('combobox',{name:locale==='zh'?'待办任务':'Pending tasks'}).selectOption('3:3');
     const canvas=page.locator('.relay-paper .relay-canvas'),rect=await canvas.boundingBox();assert(rect&&rect.height>=70);
     await page.mouse.move(rect.x+rect.width*.2,rect.y+rect.height*.2);await page.mouse.down();await page.mouse.move(rect.x+rect.width*.8,rect.y+rect.height*.7,{steps:6});await page.mouse.up();await expect(canvas.locator('polyline')).toHaveCount(1);
     await page.screenshot({path:`${output}/${locale}-${width}x${height}-${kind}.png`});
