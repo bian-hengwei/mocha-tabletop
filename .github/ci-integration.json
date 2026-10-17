@@ -253,6 +253,9 @@
       "script": "tests/ui/codenames-input.integration.mjs"
     },
     {
+      "script": "tests/ui/codenames-clue-controls.integration.mjs"
+    },
+    {
       "script": "tests/ui/drawguess-rejection.integration.mjs"
     },
     {
