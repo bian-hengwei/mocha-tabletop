@@ -38,7 +38,11 @@ for(const kind of ['avalon','werewolf']){
    await act(leader,'propose',a.choices.slice(0,a.min).map(c=>c.id));
    for(let i=0;i<count;i++){
     await act(i,'approve',[i===1?'no':'yes']);
-    if(i<count-1)for(const c of clients)assert.deepEqual(c.latest().view.logText,{});
+    if(i<count-1){
+     assert.equal(clients[i].latest().view.instruction,'表决已提交');
+     for(const c of clients)assert.deepEqual(c.latest().view.logText,{});
+     if(i===1)await reconnect(1);
+    }
    }
    const reference=host.latest().view.logText;
    assert.equal(Object.keys(reference).length,1);
@@ -46,7 +50,13 @@ for(const kind of ['avalon','werewolf']){
    const votes=Object.values(reference)[0].values.votes.filter(v=>v.values);
    assert.deepEqual(votes.map(v=>v.values.name),names.slice(0,count));
    assert.deepEqual(votes.map(v=>v.template),['{name} 赞成','{name} 反对','{name} 赞成','{name} 赞成','{name} 赞成']);
-   await reconnect(1);
+   // A submitted private mission card is acknowledged only to its sender, including reconnect.
+   const missionSender=clients.findIndex((c,i)=>i>0&&c.latest().view.actions.some(a=>a.id==='mission'));
+   assert(missionSender>0);const beforeMission=clients.map(c=>c.latest().view);
+   await act(missionSender,'mission',['success']);
+   assert.equal(clients[missionSender].latest().view.instruction,'任务牌已提交');
+   clients.forEach((c,i)=>{if(i!==missionSender)assert.deepEqual(c.latest().view,beforeMission[i]);});
+   await reconnect(missionSender);
   }else{
    const wolves=clients.flatMap((c,i)=>c.latest().view.board.ownRoleKey==='wolf'?[i]:[]);assert.equal(wolves.length,2);
    await act(wolves[0],'wolf',[creds[1].profile.id]);await act(wolves[1],'wolf',['skip']);

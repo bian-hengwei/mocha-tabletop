@@ -86,7 +86,7 @@ npx playwright install chromium webkit
 | `node tests/ui/hand-experience.integration.mjs` | 寿司单张点选/取消与单独确认、快速双触不提交、筷子顺序与取消锁定；商旅固定操作区；猫牌换选/组合与双击；中英八尺寸，支持 WebKit |
 | `node tests/ui/uno-experience.integration.mjs` | UNO 双击/双触、万能牌选色、28 张单行手牌、等待回合的溢出滑动提示、10 人座位、八尺寸与旋转，支持 WebKit |
 | `node tests/ui/mahjong-actions.integration.mjs` | 麻将确定性场景：自摸、血流继续、暗杠、抢杠、胡优先、碰与流局；支持 WebKit |
-| `node tests/network/message-text.integration.mjs` | 真实 Worker 的结构化姓名、投票公开时机、私密狼队计划与断线重连；使用 TEST_API_BASE |
+| `node tests/network/message-text.integration.mjs` | 真实 Worker 的结构化姓名、投票公开时机、本人表决/秘密任务提交回执、私密狼队计划与断线重连；使用 TEST_API_BASE |
 | `node tests/network/uno-mahjong-assistance.integration.mjs` | Uno 罚摸确认/重试去重/恢复、麻将私有助手计数与恢复；使用 TEST_API_BASE，清理测试房间 |
 | `node tests/network/classic-games.integration.mjs` | 六种玩法的真实 Worker WebSocket 指令、私密视图、幂等与重连 |
 | `node tests/ui/language.integration.mjs` | 十二款英文入口与双版本规则，检查未翻译文本 |
@@ -120,6 +120,7 @@ npx playwright install chromium webkit
 | `node tests/ui/cards.integration.mjs` | 晶石商会、喵喵危机的实际界面操作，遍历所有市场层级；支付摘要在中英八尺寸与旋转后可见，取消恢复库存且不购买；支持 WebKit |
 | `node tests/ui/gems-layout.integration.mjs` | 宝石牌桌布局 |
 | `node tests/ui/bombs-table.integration.mjs` | 喵喵危机牌桌布局 |
+| `node tests/ui/avalon-ballot-receipts.integration.mjs` | 迷雾远征本人表决/任务牌提交回执：实际 App 十人操作、刷新恢复、换席与阶段切换清理；身份隐藏与中英八尺寸旋转，支持 WebKit |
 | `node tests/ui/social.integration.mjs` | 月夜议会单次闭眼、女巫阶段等待与迷雾远征直接投票、座位操作；支持 WebKit |
 | `node tests/ui/social-hosted.integration.mjs` | 月夜议会法官、发身份界面 |
 | `node tests/ui/social-max.integration.mjs` | 最大人数的身份和座位布局 |
