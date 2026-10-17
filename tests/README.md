@@ -80,6 +80,7 @@ npx playwright install chromium webkit
 | `node tests/ui/bot-pacing.integration.mjs` | 真实 App 麻将人机完整一圈：每张出牌的时间间隔、动画无积压、双语七尺寸、弹窗旋转、刷新与退出；支持 WebKit。默认需 Vite；生产可用 `BOT_PACING_FIXTURE` 指定本地生成的 fixture.json，`TEST_PACING_COMPACT=1` 仅测 390×844 |
 | `node tests/ui/mahjong-public.integration.mjs` | 麻将中英八尺寸公共牌河/副露浏览、暗杠和观战隐私、选牌后独立确认、旋转/焦点和换座清理，支持 WebKit |
 | `node tests/ui/mahjong-experience.integration.mjs` | 麻将再次点选出牌、桌面/Escape 取消、新摸牌排序、出牌动画、完整牌河弹窗、换牌与自动过；中英七尺寸，支持 WebKit |
+| `node tests/ui/sushi-copy-recovery.integration.mjs` | Party 特别点单与已选特殊牌的权威选择刷新回填、换席/阶段清理；Menu/Spoon/交牌/Takeout/筷子待定选择刷新后继续，实际 App 中英八尺寸旋转与焦点；支持 WebKit |
 | `node tests/ui/sushi-table.integration.mjs` | 寿司双语八尺寸：五人盘面切换、卷数与布丁、料理详情与旋转焦点、筷子选牌顺序和换座隐私；真实 App 三轮完赛、刷新锁定恢复及结算重开，支持 WebKit |
 | `node tests/ui/hand-experience.integration.mjs` | 寿司单张点选/取消与单独确认、快速双触不提交、筷子顺序与取消锁定；商旅固定操作区；猫牌换选/组合与双击；中英八尺寸，支持 WebKit |
 | `node tests/ui/uno-experience.integration.mjs` | UNO 双击/双触、万能牌选色、28 张单行手牌、等待回合的溢出滑动提示、10 人座位、八尺寸与旋转，支持 WebKit |

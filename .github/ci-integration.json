@@ -164,6 +164,9 @@
     },
     {
       "script": "tests/ui/sushi-party.integration.mjs"
+    },
+    {
+      "script": "tests/ui/sushi-copy-recovery.integration.mjs"
     }
   ],
   "social": [

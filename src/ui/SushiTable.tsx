@@ -75,7 +75,7 @@ export function SushiTable({view,selfID,command,onShowResults,open}:Props){
    <div ref={hand} className="ng-hand" tabIndex={0} aria-label={t('手牌可左右滑动')}>
     {b.hand.map(card=><SushiFace key={card.id} card={card} playerCount={b.players.length} selected={shown.includes(card.id)} order={shown.includes(card.id)?shown.indexOf(card.id)+1:undefined} onClick={pick?.choices.some(c=>c.id===card.id)?()=>toggle(card.id):undefined}/>)}
    </div>
-   <div className="ng-controls ng-sushi-confirm">{view.actions.filter(a=>a.id.startsWith('sushi:')).map(a=><button type="button" className="ng-action" key={a.id} onClick={()=>open(a,a.id==='sushi:bonus'?b.bonus:undefined)}>{t(a.title)}{a.id==='sushi:bonus'&&!!b.bonus?.length?` · ${b.bonus.length}`:''}</button>)}
+   <div className="ng-controls ng-sushi-confirm">{view.actions.filter(a=>a.id.startsWith('sushi:')).map(a=><button type="button" className="ng-action" key={a.id} onClick={()=>open(a,a.id==='sushi:bonus'?b.bonus:a.id==='sushi:copy'&&b.copyTarget?[b.copyTarget]:undefined)}>{t(a.title)}{a.id==='sushi:bonus'&&!!b.bonus?.length?` · ${b.bonus.length}`:''}</button>)}
     {pick&&<><span className="sushi-pick-limit">{pick.max===2?t('筷子：可选 1–2 张'):t('选择 1 张')}{pick.max===2&&<small>{t('按所选顺序出牌')}</small>}</span><button type="button" className="ng-action" disabled={!valid} onClick={()=>{if(valid){command({action:'pick',values:selected});setSelected([]);}}}>{selected.length?t(`确认 ${selected.length} 张`):t('确认选牌')}</button></>}
     {cancel&&<button type="button" className="ng-action" onClick={()=>command({action:'cancel',values:[]})}>{t(cancel.title)}</button>}
    </div>
