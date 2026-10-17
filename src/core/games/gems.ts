@@ -16,12 +16,24 @@ export const gemBonuses = (m:Merchant) => GEM_COLORS.slice(0,5).map(c=>m.bought.
 export const gemScore = (m:Merchant) => m.bought.reduce((n,c)=>n+c.points,0)+m.nobles.length*3;
 const describe = (xs:number[]) => xs.map((n,i)=>n?`${SYMBOLS[i]}×${n}`:'').filter(Boolean).join(' ') || '无';
 const title = (c:GemCard) => `${LABELS[GEM_COLORS.indexOf(c.bonus)]}${['矿场','商路','工坊'][c.tier-1]} · ${c.points} 分`;
-const needs = (s:GemsState,c:GemCard) => c.cost.map((n,i)=>Math.max(0,n-gemBonuses(s.merchants[s.current])[i]));
-function payment(s:GemsState,c:GemCard):number[]|null {
-  const result=[0,0,0,0,0,0], tokens=s.merchants[s.current].tokens;
-  needs(s,c).forEach((n,i)=>{result[i]=Math.min(n,tokens[i]);result[5]+=n-result[i];});
-  return result[5]<=tokens[5]?result:null;
+export interface GemPurchaseQuote {
+  discounts: number[]; needed: number[]; tokens: number[]; shortfall: number[];
+  gold: number; goldNeeded: number; missing: number; payment: number[] | null;
 }
+/** Base-game discounts and gold substitution, shared by previews and legal purchases. */
+export function gemPurchaseQuote(merchant: Merchant, card: GemCard): GemPurchaseQuote {
+  const bonuses = gemBonuses(merchant);
+  const discounts = card.cost.map((cost, color) => Math.min(cost, bonuses[color]));
+  const needed = card.cost.map((cost, color) => cost - discounts[color]);
+  const tokens = merchant.tokens.slice(0, 5);
+  const paid = needed.map((cost, color) => Math.min(cost, tokens[color]));
+  const shortfall = needed.map((cost, color) => cost - paid[color]);
+  const goldNeeded = sum(shortfall), gold = merchant.tokens[5];
+  return { discounts, needed, tokens, shortfall, gold, goldNeeded,
+    missing: Math.max(0, goldNeeded - gold), payment: goldNeeded <= gold ? [...paid, goldNeeded] : null };
+}
+const needs = (s:GemsState,c:GemCard) => gemPurchaseQuote(s.merchants[s.current],c).needed;
+const payment = (s:GemsState,c:GemCard) => gemPurchaseQuote(s.merchants[s.current],c).payment;
 function random(s:{rng:number}) { s.rng=(s.rng+0x6D2B79F5)>>>0; let t=Math.imul(s.rng^(s.rng>>>15),1|s.rng);t^=t+Math.imul(t^(t>>>7),61|t);return((t^(t>>>14))>>>0)/4294967296; }
 function shuffled<T>(s:{rng:number}, xs:T[]):T[] {const a=[...xs];for(let i=a.length-1;i>0;i--){const j=Math.floor(random(s)*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 const eligible = (s:GemsState) => s.nobles.filter(n=>n.cost.every((v,i)=>gemBonuses(s.merchants[s.current])[i]>=v));
@@ -76,7 +88,7 @@ export const gems:GameModule<GemsState>={
     const mine=s.current===viewer;
     const instruction=s.finished?`胜者：${s.players.filter(p=>s.winners.includes(p.id)).map(p=>p.name).join('、')}`:mine?({action:'轮到你了',payment:'确认支付',discard:'归还多余筹码',noble:'选择来访贵族'}[s.phase]):`等待 ${s.players[s.current].name}`;
     const view:GameView={kind:'gems',phase:s.finished?'游戏结束':`第 ${s.round} 轮${s.finalRound?' · 最后一轮':''}`,instruction,finished:s.finished,actions:mine?actions(s):[],sections:[{id:'bank',title:'供应',items:s.bank.map((n,i)=>({id:GEM_COLORS[i],title:LABELS[i],detail:`${n}`}))},...s.market.map((cards,i)=>({id:`market:${i}`,title:`${i+1} 级市场`,items:cards.map(c=>({id:c.id,title:title(c),detail:describe(c.cost)}))})),{id:'reserved',title:'我的预留',private:true,items:(s.merchants[viewer]?.reserved||[]).map(c=>({id:c.id,title:title(c),detail:describe(c.cost)}))},{id:'nobles',title:'贵族',items:s.nobles.map(n=>({id:n.id,title:n.id,detail:describe(n.cost)}))}],log:s.history,
-      board:{phase:s.phase,market:s.market.flat(),bank:s.bank,nobles:s.nobles,players:s.players.map((p,i)=>({...p,tokens:s.merchants[i].tokens,bonuses:gemBonuses(s.merchants[i]),score:gemScore(s.merchants[i]),reservedCount:s.merchants[i].reserved.length,reservedCards:s.merchants[i].reserved.map((card,slot)=>s.merchants[i].publicReserved?.includes(card.id)?{id:card.id,tier:card.tier,public:true,card}:{id:'reserved-'+p.id+'-'+slot,tier:card.tier,public:false}),bought:s.merchants[i].bought,nobles:s.merchants[i].nobles})),hand:(s.merchants[viewer]?.reserved||[]),current:s.players[s.current].id,decks:s.decks.map(d=>d.length),round:s.round,finalRound:s.finalRound,winners:s.winners,payment:mine&&s.payment?{card:s.payment,needed:needs(s,s.payment),auto:payment(s,s.payment)}:null}};
+      board:{purchaseQuotes:viewer < 0 ? {} : Object.fromEntries([...s.market.flat(), ...s.merchants[viewer].reserved].map(card => [card.id, gemPurchaseQuote(s.merchants[viewer], card)])),phase:s.phase,market:s.market.flat(),bank:s.bank,nobles:s.nobles,players:s.players.map((p,i)=>({...p,tokens:s.merchants[i].tokens,bonuses:gemBonuses(s.merchants[i]),score:gemScore(s.merchants[i]),reservedCount:s.merchants[i].reserved.length,reservedCards:s.merchants[i].reserved.map((card,slot)=>s.merchants[i].publicReserved?.includes(card.id)?{id:card.id,tier:card.tier,public:true,card}:{id:'reserved-'+p.id+'-'+slot,tier:card.tier,public:false}),bought:s.merchants[i].bought,nobles:s.merchants[i].nobles})),hand:(s.merchants[viewer]?.reserved||[]),current:s.players[s.current].id,decks:s.decks.map(d=>d.length),round:s.round,finalRound:s.finalRound,winners:s.winners,payment:mine&&s.payment?{card:s.payment,needed:needs(s,s.payment),auto:payment(s,s.payment)}:null}};
     return structuredClone(view);
   },
   apply(state,playerID,command){

@@ -28,7 +28,7 @@
 
 原始规则来源：
 
-- [Splendor 出版方规则](https://cdn.svc.asmodee.net/production-spacecowboys/uploads/2025/10/SCSPL01EN_SPLENDOR_RULES_LIGHT.pdf)
+- [Splendor 出版方规则](https://cdn.svc.asmodee.net/production-spacecowboys/uploads/2025/10/SCSPL01EN_SPLENDOR_RULES_LIGHT.pdf)；2026-10-17 复核第 2 页购买与奖励章节。发展牌详情的个人费用预览和权威支付共用计算：奖励逐色减价且不低于零，黄金只统一覆盖一次缺色合计；`gem-purchase-quotes.test.ts` 检查多色缺口、免费购买、实际支付与接收者隐私。
 - [Exploding Kittens 规则入口](https://www.explodingkittens.com/pages/rules-kittens)与[2025 英文规则](https://cdn.shopify.com/s/files/1/0345/9180/1483/files/ekoe-instructions-english.pdf?v=1743802429)
 - [Avalon 出版方验证规则](https://rules.dized.com/game/rZluqS52QmGdpoVxcmVLtg/the-resistance-avalon)，包括角色替换、任务与刺杀章节
 - [Gamewright Sushi Go!](https://www.gamewright.com/product/Sushi-Go)；[出版方 2014 规则](https://gamewright.com/pdfs/Rules/SushiGoTM-RULES.pdf)

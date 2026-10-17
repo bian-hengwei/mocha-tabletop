@@ -1,4 +1,6 @@
 export const feedbackText:Record<string,string>={
+ '我的购买费用':'My purchase cost','原价':'Cost','奖励抵扣':'Bonus','需付':'Pay','持有':'Have','缺色':'Short',
+ '黄金补缺':'Gold needed','筹码缺口':'Token shortfall:','无需筹码':'No tokens needed','筹码充足':'Enough tokens','预留位置已满':'All reserve slots are full.',
  '寿司版本':'Sushi edition','基础版 · 108 张':'Classic · 108 cards','派对版 · 自选菜单':'Party · Custom menu','固定握寿司，另选以下 7 道':'Nigiri plus seven menu selections','前菜':'Appetizer','特殊牌':'Special','甜点':'Dessert','本桌菜单':'Table menu','握寿司':'Nigiri','寿司卷':'Maki rolls','手卷':'Temaki','反卷':'Uramaki','鳗鱼':'Eel','豆腐':'Tofu','饭团':'Onigiri','毛豆':'Edamame','味噌汤':'Miso soup','酱油':'Soy sauce','茶':'Tea','菜单':'Menu','勺子':'Spoon','特别点单':'Special order','打包盒':'Takeout box','抹茶冰淇淋':'Green tea ice cream','水果':'Fruit',
  '菜单需选 1 种卷、3 种前菜、2 种特殊牌和 1 种甜点':'Choose 1 roll, 3 different appetizers, 2 different specials and 1 dessert',
  '两人局不能使用毛豆或勺子':'Edamame and Spoon require at least 3 players','七至八人局不能使用菜单或特别点单':'Menu and Special order support at most 6 players',

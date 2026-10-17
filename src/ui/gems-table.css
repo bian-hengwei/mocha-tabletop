@@ -223,3 +223,48 @@
  .game-gems:has(.g-payment) .action-dock{display:grid;grid-template-columns:minmax(75px,1fr) minmax(0,4fr);gap:6px;padding:4px 0}
  .game-gems:has(.g-payment) .instruction{font-size:10px;line-height:1.3}
 }
+
+/* Put the player's discounts, tokens and shared gold pool beside the inspected card. */
+.g-card-inspector.g-has-quote{width:min(600px,calc(100vw - 24px));display:grid;grid-template-columns:160px minmax(0,1fr);gap:10px 16px;padding:44px 16px 14px;overflow:auto}
+.g-has-quote>.development-card{height:180px;grid-column:1;grid-row:1}
+.g-has-quote>.g-purchase-preview{grid-column:2;grid-row:1/3;min-width:0}
+.g-has-quote>.g-card-buttons{grid-column:1;grid-row:2;padding:0;align-items:start;flex-direction:column;gap:6px}
+.g-has-quote>.g-card-buttons .compact{width:100%;min-width:0;justify-content:center}
+.g-has-quote>.g-card-note{grid-column:1/-1;grid-row:3;margin:0;font-size:12px;line-height:1.4}
+.g-purchase-preview h3{font-size:14px;line-height:20px;margin:0 0 8px;color:#f3e4bd;font-weight:600}
+.g-purchase-preview table{width:100%;border-collapse:collapse;font-size:12px;line-height:18px;text-align:center;font-variant-numeric:tabular-nums}
+.g-purchase-preview th{font-weight:500;color:#bbc9ba;font-size:11px;padding:3px 2px}
+.g-purchase-preview td{padding:4px 2px;border-top:1px solid #d3cba522;color:#eee5ce}
+.g-purchase-preview tbody th{border-top:1px solid #d3cba522;width:26px;padding:2px}
+.g-purchase-preview .gem-art{width:23px;height:23px;margin:auto}
+.g-purchase-preview td.g-shortfall,.g-purchase-preview .g-shortfall{color:#ffd39f;font-weight:700}
+.g-quote-gold{display:flex;align-items:center;gap:7px;margin-top:8px;font-size:12px;line-height:20px}
+.g-quote-gold .gem-art{margin:0;width:24px;height:24px}
+.g-quote-gold b{color:#f3e4bd}
+.g-quote-result{display:block;margin-top:4px;font-size:13px;line-height:20px;color:#c6e8b6}
+@media(max-width:480px) and (orientation:portrait){
+ .g-card-inspector.g-has-quote{width:min(340px,calc(100vw - 24px));grid-template-columns:minmax(0,1fr);gap:8px;padding:44px 14px 12px}
+ .g-has-quote>.development-card{height:140px;grid-column:1;grid-row:1}
+ .g-has-quote>.g-purchase-preview{grid-column:1;grid-row:2}
+ .g-has-quote>.g-card-buttons{grid-column:1;grid-row:3;flex-direction:row}
+ .g-has-quote>.g-card-note{grid-column:1;grid-row:4}
+ .g-purchase-preview h3{margin-bottom:4px}
+}
+@media(max-height:600px) and (orientation:portrait){
+ .g-has-quote>.development-card{height:100px}
+ .g-has-quote .development-top>b{font-size:32px}
+ .g-has-quote .development-top>.gem-art{width:32px;height:32px}
+}
+@media(max-height:450px) and (orientation:landscape){
+ .g-card-inspector.g-has-quote{grid-template-columns:140px minmax(0,1fr);gap:6px 12px;padding:44px 12px 10px}
+ .g-has-quote>.development-card{height:150px}
+ .g-purchase-preview h3{margin-bottom:2px;font-size:13px;line-height:18px}
+ .g-purchase-preview th{padding:1px 2px}
+ .g-purchase-preview td{padding:2px}
+ .g-purchase-preview .gem-art{width:21px;height:21px}
+ .g-quote-gold{margin-top:4px}
+ .g-quote-result{margin-top:2px}
+}
+
+.g-quote-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+@media(max-height:350px) and (orientation:landscape){.g-has-quote>.development-card{height:130px}}

@@ -31,6 +31,17 @@ function initialGame(){
   return state;
  }
 
+ if(kind==='gems'&&params.get('scenario')?.startsWith('quote-')){
+  const state=gems.create(players,11),scenario=params.get('scenario');
+  const take=(id:string)=>{for(const pile of [...state.market,...state.decks]){const index=pile.findIndex(card=>card.id===id);if(index>=0)return pile.splice(index,1)[0];}throw Error(`Missing quote fixture card ${id}`);};
+  const card=take('white-L1-08');
+  state.market[0].unshift(card);
+  state.merchants[0].bought=[take('blue-L1-01'),take('red-L1-01')];
+  state.merchants[0].tokens=[0,0,1,0,0,scenario==='quote-ready'?2:1];
+  if(scenario==='quote-free')state.merchants[0].bought.push(take('green-L1-01'),take('green-L1-02'),take('black-L1-01'));
+  state.bank=state.bank.map((count,color)=>count-state.merchants[0].tokens[color]);
+  return state;
+ }
  if(kind==='gems'&&params.get('scenario')==='empty-tier'){
   const state=modules.gems.create(players,11);state.market[0]=[];state.decks[0]=[];return state;
  }
