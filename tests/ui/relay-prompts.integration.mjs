@@ -47,7 +47,7 @@ try{
   assert.deepEqual(await buttons.allTextContents(),own);await expect(textarea).toHaveValue(own[1]);
   await page.getByRole('button',{name:locale==='zh'?'切换为中文':'Switch to English',exact:true}).click();
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'page width overflow');
-  for(const box of await page.locator('.relay-prompt-modes button,.relay-prompt-choices button').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().toJSON())))assert(box.height>=43&&box.width>=43,'prompt controls need touch targets');
+  for(const box of await page.locator('.relay-prompt-modes button,.relay-prompt-choices button,.relay-heading>select').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().toJSON())))assert(box.height>=43&&box.width>=43,'prompt controls need touch targets');
   const submitBox=await pass.boundingBox();assert(submitBox.y>=0&&submitBox.y+submitBox.height<=height+1,'Pass remains fully visible');
   await page.screenshot({path:`${out}/${locale}-${width}x${height}-${relayMode}.png`});
   await page.reload();await expect(page.locator('.relay-prompt-choices')).toHaveCount(0);await page.locator('.relay-sealed button').click();
