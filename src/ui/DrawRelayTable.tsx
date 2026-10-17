@@ -7,12 +7,15 @@ import {useDialog} from './useDialog';
 import {DrawRelayCanvas} from './DrawRelayCanvas';
 import {DrawingTools} from './DrawingTools';
 import './draw-relay-table.css';
+import './relay-gallery-reading.css';
 
 type Props={view:GameView;selfID:string;command:(command:Command)=>void;onReplay?:()=>void};
 type Task={id:string;book:number;step:number;kind:'drawing'|'text'};
 function Entry({entry}:{entry:RelayEntry}){return entry.skipped?<div className="relay-skipped">{t('上一步未完成')}</div>:entry.kind==='drawing'?<DrawRelayCanvas strokes={entry.strokes||[]}/>:<blockquote className="relay-sentence">{entry.text}</blockquote>;}
 function Editor({view,command,selfID,onBusy}:{view:GameView;command:Props['command'];selfID:string;onBusy:(busy:boolean)=>void}){
  const b=view.board,draft=b.draft as RelayEntry,marker=b.taskID??String(b.step),values=[marker];
+ const prompts=b.stage==='prompt'?b.openingPrompts as string[]|undefined:undefined;
+ const [promptMode,setPromptMode]=useState<'preset'|'custom'>(prompts&&(!draft.text||prompts.includes(draft.text))?'preset':'custom');
  const [text,setText]=useState(draft.text||''),[submitWanted,setSubmitWanted]=useState(false),[color,setColor]=useState(0),[width,setWidth]=useState(1),[clearOpen,setClearOpen]=useState(false),[canvasVersion,setCanvasVersion]=useState(0);
  const [sending,setSending]=useState<string|null>(null),[saveFailed,setSaveFailed]=useState(false),[composing,setComposing]=useState(false),sendRef=useRef(command);sendRef.current=command;
  const clearDialog=useDialog<HTMLDivElement>(clearOpen,()=>setClearOpen(false));
@@ -22,8 +25,15 @@ function Editor({view,command,selfID,onBusy}:{view:GameView;command:Props['comma
  useEffect(()=>{if(sending!==null&&sending===saved){setSending(null);setSaveFailed(false);}},[saved,sending]);
  useEffect(()=>{if(sending===null)return;const timer=setTimeout(()=>{setSending(null);setSaveFailed(true);setSubmitWanted(false);},5000);return()=>clearTimeout(timer);},[sending]);
  useEffect(()=>{if(drawing||b.submitted||composing)return;if(text===saved){if(submitWanted){setSubmitWanted(false);sendRef.current({action:'submit',values:[marker]});}return;}if(sending!==null||saveFailed)return;const timer=setTimeout(()=>{setSending(text);sendRef.current({action:'draft',values:[marker],text});},submitWanted?0:350);return()=>clearTimeout(timer);},[text,saved,drawing,submitWanted,b.submitted,marker,sending,saveFailed,composing]);
- return <><div className={`relay-work ${drawing?'draw':'write'}`}>
+ return <><div className={`relay-work ${drawing?'draw':'write'} ${prompts?'opening':''}`}>
  {b.previous&&<section className="relay-previous"><Entry entry={b.previous}/></section>}
+ {prompts&&<section className="relay-opening-prompts" aria-label={t('开场词来源')}>
+  <div className="relay-prompt-modes" role="group" aria-label={t('开场词来源')}>
+   <button type="button" aria-pressed={promptMode==='preset'} disabled={b.submitted||composing} onClick={()=>setPromptMode('preset')}>{t('预设词')}</button>
+   <button type="button" aria-pressed={promptMode==='custom'} disabled={b.submitted||composing} onClick={()=>setPromptMode('custom')}>{t('自己写')}</button>
+  </div>
+  {promptMode==='preset'&&<div className="relay-prompt-choices" role="group" aria-label={t('选择开场词')}>{prompts.map(prompt=><button type="button" key={prompt} aria-pressed={text===prompt} disabled={b.submitted||composing} onClick={()=>{setSaveFailed(false);setText(text===prompt?'':prompt);}}>{prompt}</button>)}</div>}
+ </section>}
  <section className="relay-draft">{drawing?<div className="relay-paper"><DrawRelayCanvas key={`${marker}:${selfID}:${canvasVersion}`} strokes={draft.strokes||[]} enabled={!b.submitted&&(draft.strokes?.length||0)<RELAY_MAX_STROKES} color={color} width={width} onStroke={encoded=>command({action:'stroke',values:[marker,encoded]})}/></div>:<label className="relay-writing"><textarea aria-label={t(b.step?'你的描述':'开场句')} placeholder={t(b.step?'你的描述':'开场句')} value={text} rows={2} maxLength={240} disabled={b.submitted} onCompositionStart={()=>setComposing(true)} onCompositionEnd={e=>{setComposing(false);setText([...e.currentTarget.value].slice(0,120).join(''));}} onChange={e=>{setSaveFailed(false);setText([...e.target.value].slice(0,120).join(''));}} autoComplete="off"/><span className="relay-draft-status"><small role="status">{t(saveFailed?'草稿尚未保存':text===saved?'草稿已保存':'正在保存草稿')}</small><small>{[...text].length}/120</small></span>{saveFailed&&<button type="button" onClick={()=>setSaveFailed(false)}>{t('重试保存')}</button>}</label>}</section></div>
  {!b.submitted?<footer className="relay-submit">{drawing?<DrawingTools color={color} width={width} onColor={setColor} onWidth={setWidth} onUndo={draft.strokes?.length?()=>command({action:'undo',values}):undefined} onClear={draft.strokes?.length?()=>setClearOpen(true):undefined}/>:<span/>}<button className="primary" disabled={!valid||submitWanted||composing} onClick={()=>drawing||text===saved?command({action:'submit',values}):setSubmitWanted(true)}><Send size={17}/><span>{t('传递')}</span></button></footer>:<p className="relay-wait" role="status">{t('已提交，等待其他玩家')}</p>}
  {clearOpen&&<div className="modal-shade"><div ref={clearDialog} className="panel relay-clear-dialog" role="dialog" aria-modal="true" aria-label={t('清空这幅画？')} tabIndex={-1}><h2>{t('清空这幅画？')}</h2><p>{t('清空后不能恢复')}</p><div><button onClick={()=>setClearOpen(false)}>{t('保留画作')}</button><button className="primary" onClick={()=>{command({action:'clear',values});setCanvasVersion(value=>value+1);setClearOpen(false);}}>{t('确认清空')}</button></div></div></div>}

@@ -3,10 +3,55 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 const base=process.env.BASE_URL||'http://127.0.0.1:5174',engine=process.env.TEST_BROWSER||'chromium';
 const browser=await(engine==='webkit'?webkit:chromium).launch(),out=`test-results/home-experience-${engine}`;await fs.mkdir(out,{recursive:true});
-try{for(const locale of ['zh','en'])for(const [width,height]of [[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900]]){
+try{for(const locale of ['zh','en'])for(const [width,height]of [[320,568],[390,844],[430,932],[568,320],[844,390],[932,430],[768,1024],[1440,900]]){
  const page=await browser.newPage({viewport:{width,height}});await page.addInitScript(locale=>{localStorage.setItem('mocha-profile',JSON.stringify({id:'home_review',name:'Mocha',avatar:'🦊'}));localStorage.setItem('mocha-locale',locale);},locale);await page.goto(base);await expect(page.locator('.home-shell')).toBeVisible();await expect(page.locator('.home-shell .game-cover')).toHaveCount(14);await page.screenshot({path:`${out}/${locale}-${width}x${height}.png`});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
  for(const size of await page.locator('.home-entry-actions button').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().height)))assert(size>=44);
  await page.locator('.home-footer .text-button').click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('.home-footer .text-button')).toBeFocused();
+ const players=page.getByRole('combobox',{name:locale==='zh'?'玩家人数':'Players',exact:true});
+ const cards=page.locator('.home-shell .game-cover');
+ await players.selectOption('2');
+ assert.deepEqual(await cards.evaluateAll(nodes=>nodes.map(n=>n.className.match(/cover-(\w+)/)[1])),['gems','bombs','sushi','century','uno']);
+ await expect(page.locator('.library-result-count')).toHaveText(locale==='zh'?'5 款游戏':'5 games');
+ const libraryBox=await page.locator('.game-library').boundingBox(),firstCard=await cards.first().boundingBox();
+ assert(firstCard.y>=libraryBox.y-1&&firstCard.y+firstCard.height<=libraryBox.y+libraryBox.height+1,`first card clipped at ${locale} ${width}x${height}`);
+ await page.screenshot({path:`${out}/${locale}-${width}x${height}-two-players.png`});
+ await players.selectOption('4');
+ await expect(cards).toHaveCount(11);
+ await expect(page.locator('.cover-doudizhu')).toHaveCount(0);
+ await expect(page.locator('.cover-guandan')).toBeVisible();
+ await players.selectOption('8');
+ await expect(cards).toHaveCount(8);
+ const sushi=page.locator('.cover-sushi');await sushi.click();
+ await expect(page.getByRole('combobox',{name:locale==='zh'?'寿司版本':'Sushi edition',exact:true})).toHaveValue('party');
+ await expect(page.getByRole('combobox',{name:locale==='zh'?'单机总人数':'Local player count',exact:true})).toHaveValue('8');
+ await page.keyboard.press('Escape');await expect(sushi).toBeFocused();await expect(players).toHaveValue('8');
+ await players.selectOption('18');await expect(cards).toHaveCount(1);
+ await page.locator('.cover-werewolf').click();
+ await expect(page.getByRole('combobox',{name:locale==='zh'?'单机总人数':'Local player count',exact:true})).toHaveValue('19');
+ await page.keyboard.press('Escape');
+ await players.selectOption('3');await page.locator('.cover-drawrelay').click();
+ await expect(page.getByRole('combobox',{name:locale==='zh'?'单机总人数':'Local player count',exact:true})).toHaveValue('3');
+ await page.setViewportSize({width:height,height:width});await page.keyboard.press('Escape');
+ await expect(players).toHaveValue('3');await page.setViewportSize({width,height});
+ await page.getByRole('button',{name:locale==='zh'?'Switch to English':'切换为中文',exact:true}).click();
+ await expect(page.locator('.library-filters select')).toHaveValue('3');
+ await page.getByRole('button',{name:locale==='zh'?'切换为中文':'Switch to English',exact:true}).click();
+ const target=await players.boundingBox();assert(target.height>=44&&target.width>=44);
+ await players.focus();await page.keyboard.press('Home');await page.keyboard.press('Enter');
+ await players.selectOption('');await expect(cards).toHaveCount(14);
  const oddWord=page.locator('.home-shell .cover-undercover');await oddWord.click();await expect(page.getByRole('dialog')).toContainText(locale==='zh'?'异词同伴':'Odd Word');await page.setViewportSize({width:height,height:width});await page.keyboard.press('Escape');await expect(oddWord).toBeFocused();await page.setViewportSize({width,height});
- await page.locator('.home-entry-actions button').first().click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('.home-entry-actions button').first()).toBeFocused();await page.close();console.log('PASS home',locale,width,height);
+ await page.locator('.home-entry-actions button').first().click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('.home-entry-actions button').first()).toBeFocused();await page.addInitScript(()=>{
+  const profile=JSON.parse(localStorage.getItem('mocha-profile'));
+  localStorage.setItem('mocha-room-session',JSON.stringify({profile,code:'ABC234',token:'f'.repeat(48),savedAt:Date.now(),expiresAt:Date.now()+3600000}));
+  class OfflineSocket extends EventTarget{static CONNECTING=0;static OPEN=1;static CLOSING=2;static CLOSED=3;readyState=0;send(){}close(){this.readyState=3;}}
+  window.WebSocket=OfflineSocket;
+ });
+ await page.reload();await page.locator('.connecting-overlay .text-button').click();await expect(page.locator('.resume-session')).toBeVisible();
+ await page.locator('.library-filters select').selectOption('2');
+ const resumeLibrary=await page.locator('.game-library').boundingBox(),resumeCard=await page.locator('.game-cover').first().boundingBox();
+ assert(resumeCard.y>=resumeLibrary.y-1&&resumeCard.y+resumeCard.height<=resumeLibrary.y+resumeLibrary.height+1,`resume first card clipped at ${locale} ${width}x${height}`);
+ const caption=await page.locator('.game-cover .cover-caption').first().boundingBox();
+ assert(caption.y>=resumeCard.y&&caption.y+caption.height<=resumeCard.y+resumeCard.height,'resume caption clipped');
+ await page.screenshot({path:`${out}/${locale}-${width}x${height}-resume.png`});
+ await page.close();console.log('PASS home',locale,width,height,'including saved resume entry');
 }}finally{await browser.close();}

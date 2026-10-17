@@ -11,12 +11,13 @@ try{for(const locale of ['zh','en']){
  const label=(zh,en)=>locale==='zh'?zh:en;
  const note=page.locator('.g-card-note'),dialog=page.locator('.g-card-inspector');
  async function checkNote(text,name){
-  await expect(note).toHaveText(text);
+  const explanation=['can-reserve','own-reserved'].includes(name)?dialog.locator('.g-quote-result'):note;
+  if(['can-reserve','own-reserved'].includes(name))await expect(explanation).toContainText(label('筹码缺口','Token shortfall:'));else await expect(note).toHaveText(text);
   for(const [width,height]of sizes){
    await page.setViewportSize({width,height});
    const metrics=await dialog.evaluate(el=>{const box=el.getBoundingClientRect();return {bottom:box.bottom,top:box.top,scroll:el.scrollHeight,client:el.clientHeight};});
    assert(metrics.top>=0&&metrics.bottom<=height+1&&metrics.scroll<=metrics.client+1,`${name}/${locale}/${width}: card and explanation fit`);
-   const box=await note.boundingBox();assert(box&&box.x>=0&&box.x+box.width<=width+1&&box.y+box.height<=height+1);
+   const box=await explanation.boundingBox();assert(box&&box.x>=0&&box.x+box.width<=width+1&&box.y+box.height<=height+1);
    const close=dialog.getByRole('button',{name:label('关闭牌面','Close card'),exact:true});await expect(close).toBeInViewport();
    await page.screenshot({path:`${out}/${name}-${locale}-${width}.png`});
   }
@@ -29,7 +30,7 @@ try{for(const locale of ['zh','en']){
  await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=gems&scenario=inspection`);
  await page.locator('.g-tier-active .development-card').first().click();
  await expect(dialog.getByRole('button',{name:label('预留','Reserve'),exact:true})).toHaveCount(0);
- await checkNote(label('筹码不足，暂时无法购买；预留位置已满','Not enough gems to buy this card yet. All reserve slots are full.'),'full-market');
+ await checkNote(label('预留位置已满','All reserve slots are full.'),'full-market');
  await page.locator('.g-reserved .development-card').first().click();
  await checkNote(label('筹码不足，暂不能购买。永久奖励和黄金已计入。','Not enough tokens to buy. Bonuses and gold are already counted.'),'own-reserved');
  await page.getByRole('button',{name:label('查看我的全部库存','View my full inventory'),exact:true}).click();

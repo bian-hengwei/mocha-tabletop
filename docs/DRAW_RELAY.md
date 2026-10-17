@@ -6,11 +6,13 @@ The text → drawing → text → reveal format follows [Draw & Guess](https://s
 
 Each player starts one album. Albums move in seat order, alternating text and drawing, until every player contributes exactly once to every album. There is no scoring.
 
-New tables default to `relayMode: queue`: each album advances immediately on submission. Different albums can therefore be at different steps. A player may have multiple drawing/text tasks and choose their order. Tasks are untimed, preserve drafts, and wait for the assigned player. Other disconnected players do not pause available tasks. LAN still requires its host. All albums must finish before the reveal.
+New tables default to `relayMode: queue`: each album advances immediately on submission. Different albums can therefore be at different steps. A player may have multiple drawing/text tasks and choose their order. Tasks are untimed, preserve drafts, and wait for the assigned player. Arriving albums do not change the active task; a player switches it explicitly or submits it to move to the next pending task. The active task is retained in checkpoints, including after an older checkpoint with an empty selection map receives its next action. Other disconnected players do not pause available tasks. LAN still requires its host. All albums must finish before the reveal.
 
 `relayMode: rounds` retains synchronized steps. All players submit before advancing; choose unlimited time or 60/90/120 seconds. A trusted deadline saves synchronized drafts, marking blanks incomplete. Disconnects freeze the clock. Old checkpoints without a mode keep the original synchronous behavior.
 
-Before reveal, each player receives only their current draft and the immediately preceding page assigned to them. Other albums and earlier entries are omitted from the projection. Spectators see only step and submission status. At reveal, each player can browse every album independently; spectators follow the host's selected album and page. The LAN host and the shared pass-and-play device necessarily hold the complete state.
+At the opening page, choose one of three suggested prompts or write your own. Suggestions are original Mocha phrases, dealt from the match seed in its initial `GameOptions.language` and stored in `openingPrompts`. Selecting a suggestion only edits the ordinary draft; it can be changed or deselected and still needs an explicit Pass. UI language changes and reconnects do not redeal or translate these saved phrases. Old checkpoints without `openingPrompts` retain free input.
+
+Before reveal, each player receives only their current draft and the immediately preceding page assigned to them. Only the owner of a still-pending opening task receives its three suggestions; they are omitted for spectators, subsequent tasks and the gallery. Other albums and earlier entries are omitted from the projection. Spectators see only step and submission status. At reveal, each player can browse every album independently even when another player disconnects. Gallery browsing still requires the viewer's cloud connection or the LAN host connection; it does not resume a paused unfinished game or permit other commands. Spectators follow the host's selected album and page. The LAN host and the shared pass-and-play device necessarily hold the complete state.
 
 ## Commands and rendering
 
@@ -22,7 +24,7 @@ Each canvas allows 96 strokes with 48 retained points per stroke, sixteen colors
 
 Each stroke has a two-character color/width header plus four characters per point. The configured Durable Objects use SQLite (`new_sqlite_classes` in `wrangler.jsonc`), whose [combined key/value limit is 2 MB](https://developers.cloudflare.com/durable-objects/platform/limits/). The maximum 12-person album set is tested below 1.5 MB of UTF-8 JSON. Restored relay states are validated structurally and against that envelope before projection.
 
-Only one gallery page is transmitted at a time. During play, a view contains at most a previous picture and a current picture; the maximum view is tested below 64 KiB. This avoids relying on large WebRTC DataChannel messages. Ordinary Worker messages retain the 150,000-character limit. Only an authenticated owner of a LAN relay room may submit a larger checkpoint (up to 1,750,000 characters), and only for `switchToCloud`; other message types and identities retain the smaller limit. The handoff must pass the normal room identity/options checks and relay state validation.
+Only one gallery page is transmitted at a time. In short landscape windows, the final page sits beside album and navigation controls so drawings can use the available height; portrait retains the stacked reading layout. During play, a view contains at most a previous picture and a current picture; the maximum view is tested below 64 KiB. This avoids relying on large WebRTC DataChannel messages. Ordinary Worker messages retain the 150,000-character limit. Only an authenticated owner of a LAN relay room may submit a larger checkpoint (up to 1,750,000 characters), and only for `switchToCloud`; other message types and identities retain the smaller limit. The handoff must pass the normal room identity/options checks and relay state validation.
 
 The original cover `public/art/drawrelay.svg` is a geometric vector illustration. This version does not implement scoring, voting, animation modes, external pictures or export.
 
@@ -31,9 +33,14 @@ The original cover `public/art/drawrelay.svg` is a geometric vector illustration
 `tests/feedback-rules.test.ts` also covers independent progress, a two-drawing/one-guess backlog, task switching, private predecessors and restored drafts. `tests/ui/feedback.integration.mjs` exercises the queue and tools in the real App across eight viewports and both languages.
 
 
+- `tests/relay-prompts.test.ts`: deterministic bilingual suggestions, owner-only projection, explicit draft/pass behavior, old-checkpoint compatibility, validation and maximum state/view sizes in both modes.
+- `BASE_URL=<vite> node tests/ui/relay-prompts.integration.mjs`: real App bilingual eight-size selection/custom entry, keyboard/composition, rotation, seat privacy, language stability, reload and legacy drafts; supports WebKit.
 - `tests/draw-relay.test.ts`: complete 3/4/7/12-person rotation, secrets, final browsing, simultaneous actor revisions, duplicate requests, immutability, drawing limits, clocks and maximum payloads.
 - `tests/network/draw-relay-server.test.ts`: authoritative deadline ordering, next-step alarms, disconnect pause, large owner-only handoff and malformed checkpoints.
-- `BASE_URL=<vite> node tests/ui/draw-relay.integration.mjs`: real App in Chinese and English at seven viewport sizes, pointer/keyboard drawing, clear cancellation, rotation, seat privacy, final album navigation and a complete three-person local game. Supports `TEST_BROWSER=webkit`.
+- `BASE_URL=<vite> node tests/ui/draw-relay.integration.mjs`: real App in Chinese and English at eight viewport sizes, pointer/keyboard drawing, clear cancellation, rotation, seat privacy, final album navigation and a complete three-person local game. Supports `TEST_BROWSER=webkit`.
 - `TEST_FRONTEND=<vite-proxied-to-worker> node tests/network/draw-relay.integration.mjs`: four browser contexts against real Worker and WebRTC transports; simultaneous private drafts, full game, spectator views, reconnect and LAN-to-cloud handoff.
 
 Browser tests do not establish iPhone installation, background suspension or a physical multi-device Wi-Fi result.
+
+- `TEST_FRONTEND=<vite-proxied-to-worker> node tests/network/relay-gallery-recovery.integration.mjs`: real cloud/LAN finished-gallery navigation with a missing participant, independent cursors, reconnect, active-game pause and rejected spectator/invalid actions. `TEST_ROOM_MODES=cloud` or `lan` limits the transport.
+- `BASE_URL=<vite> node tests/ui/relay-gallery-recovery.integration.mjs`: real App with isolated offline snapshots, bilingual eight-size gallery navigation, boundaries, reload and dialog rotation; unfinished matches remain paused.

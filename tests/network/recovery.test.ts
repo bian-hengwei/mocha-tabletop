@@ -1,6 +1,6 @@
 import {afterEach,beforeEach,describe,it,expect,vi} from 'vitest';
 import {RoomClient} from '../../src/net/RoomClient';
-import {applyMatch,createMatch,viewMatch,type RoomInfo} from '../../src/core/room';
+import {advanceMatchClock,applyMatch,createMatch,viewMatch,type MatchState,type RoomInfo} from '../../src/core/room';
 const profile={id:'host0000',name:'阿茶',avatar:'🦊'};
 const guest={id:'guest000',name:'阿木',avatar:'🐻'};
 const token='a'.repeat(48);
@@ -131,5 +131,39 @@ describe('pending game commands',()=>{
  });
  it('does not remain locked after a synchronous send failure, room pause, or explicit exit',async()=>{
   const {c,socket,snapshot,command}=await playing();socket.readyState=3;c.action(command);expect(c.state.actionPending).toBe(false);socket.readyState=1;socket.receive(snapshot);c.action(command);socket.receive({...snapshot,paused:true});expect(c.state.actionPending).toBe(false);socket.receive(snapshot);c.action(command);c.leave();expect(c.state.actionPending).toBeFalsy();expect(c.state.status).toBe('idle');
+ });
+});
+
+describe('finished relay gallery transport boundaries',()=>{
+ const third={id:'third000',name:'Third',avatar:'🦊'};
+ function finished(mode:'cloud'|'lan'){
+  const r:RoomInfo={...room(mode,true),kind:'drawrelay',players:[profile,guest,third].map(p=>({...p,ready:true,connected:p.id!==third.id})),options:{relayMode:'rounds',relaySeconds:60}};
+  let match=createMatch('drawrelay',r.players,r.options);
+  for(let i=0;i<4;i++)match=advanceMatchClock(match,'drawrelay',r.players,i*60000);
+  expect(match.game.finished).toBe(true);return{r,match};
+ }
+ it('allows a paused cloud gallery send but still requires its own open connection',async()=>{
+  const {r,match}=finished('cloud'),c=client();await c.join(profile,r.code);const socket=Socket.all.at(-1)!;socket.open();
+  const snapshot={type:'snapshot',room:r,...viewMatch(match,'drawrelay',profile.id),paused:true};socket.receive(snapshot);
+  c.action({action:'page',values:['1']});expect(socket.sent.filter(m=>m.type==='action')).toHaveLength(1);
+  const request=socket.sent.at(-1),next=applyMatch(match,'drawrelay',r.players,profile.id,request.command,request.requestID,request.actionRevision);
+  socket.receive({...snapshot,...viewMatch(next,'drawrelay',profile.id)});socket.readyState=3;
+  c.action({action:'page',values:['2']});expect(c.state.error).toBe('云端连接中断，请重连');expect(socket.sent.filter(m=>m.type==='action')).toHaveLength(1);
+ });
+ it('does not let a guest browse across a missing LAN host channel',async()=>{
+  const {r,match}=finished('lan'),c=client();await c.join(guest,r.code);
+  c.state={...c.state,room:r,...viewMatch(match,'drawrelay',guest.id),paused:true};
+  c.action({action:'page',values:['1']});expect(c.state.error).toBe('与房主的连接已中断');expect(match.game.cursors).toEqual({});
+ });
+ it('keeps LAN actor identity and unfinished-state authorization at the host',async()=>{
+  const {r,match}=finished('lan'),c=client();await c.join(profile,r.code);
+  const host=c as unknown as {localMatch:MatchState;persistLocal:()=>void;broadcastLocal:()=>void;applyLocal:(actor:string,message:{command:{action:string;values:string[]};requestID:string;actionRevision:number;actor?:string})=>void};
+  c.state={...c.state,room:r,...viewMatch(match,'drawrelay',profile.id),paused:true};host.localMatch=match;host.persistLocal=vi.fn();host.broadcastLocal=vi.fn();
+  host.applyLocal(guest.id,{command:{action:'page',values:['1']},requestID:'guest',actionRevision:match.actorRevisions[guest.id],actor:profile.id});
+  expect(host.localMatch.game.cursors[guest.id]).toEqual({book:0,page:1});expect(host.localMatch.game.cursors[profile.id]).toBeUndefined();
+  const before=structuredClone(host.localMatch);
+  expect(()=>host.applyLocal('observer',{command:{action:'page',values:['1']},requestID:'observer',actionRevision:0})).toThrow('不在本局中');expect(host.localMatch).toEqual(before);
+  host.localMatch=createMatch('drawrelay',r.players,r.options);
+  expect(()=>host.applyLocal(profile.id,{command:{action:'page',values:['1']},requestID:'active',actionRevision:0})).toThrow('有玩家掉线');
  });
 });

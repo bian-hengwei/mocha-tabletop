@@ -1,0 +1,42 @@
+.library-filters{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;padding:10px 2px}
+.library-filters label{display:flex;align-items:center;gap:8px;min-width:0;font-size:12px;color:#d9ddcf}
+.library-filters label>svg{color:#c9ba93;flex-shrink:0}
+.library-filters select{appearance:none;min-width:116px;height:44px;min-height:44px;padding:8px 30px 8px 12px;border:1px solid #d8c8a345;border-radius:9px;color:#f1e7cd;background-color:#1c3028;font-size:13px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m2 2 4 4 4-4' fill='none' stroke='%23e8dfca' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.library-filters select:focus-visible{outline:2px solid #f5d990;outline-offset:3px}
+.library-result-count{font-size:12px;white-space:nowrap;color:#b9c3b8;font-variant-numeric:tabular-nums}
+@media(max-width:360px){.library-filters{gap:8px}.library-filters label{gap:6px;font-size:11px}.library-filters label>svg{display:none}.library-filters select{min-width:106px}.library-result-count{font-size:11px}}
+@media(max-height:460px) and (orientation:landscape){
+ .home-shell:has(.library-filters){display:grid;grid-template-columns:minmax(190px,1fr) minmax(0,1.4fr);grid-template-rows:auto auto minmax(0,1fr) auto;column-gap:12px}
+ .home-shell:has(.library-filters) .home-hero{grid-column:2;grid-row:1;padding:4px 0;border-bottom:0;background:none}
+ .home-shell:has(.library-filters) .home-title{display:none}
+ .home-shell:has(.library-filters) .home-entry-actions{justify-content:flex-end;width:100%;flex-wrap:nowrap}
+ .library-filters{grid-column:1;grid-row:1;padding:4px 2px;gap:8px}
+ .library-filters label{gap:8px}
+ .home-shell:has(.library-filters) .resume-session{grid-column:1/-1;grid-row:2}
+ .home-shell:has(.library-filters) .game-library{grid-column:1/-1;grid-row:3}
+ .home-shell:has(.library-filters) .home-footer{grid-column:1/-1;grid-row:4}
+ .home-shell:has(.library-filters):has(.resume-session) .game-library{grid-auto-rows:min(116px,100%)}
+ .home-shell:has(.library-filters):has(.resume-session) .game-cover{min-height:0}
+}
+@media(max-height:460px) and (orientation:landscape) and (max-width:700px){
+ .library-result-count{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+}
+
+/* Keep the readable cover layout within the space left by the filters and recovery entry. */
+.app .home-shell:has(.library-filters) .game-library{grid-auto-rows:min(224px,100%)}
+@media(max-width:700px){
+ .app .home-shell:has(.library-filters) .game-library{grid-auto-rows:min(202px,100%)}
+}
+@media(max-height:460px) and (orientation:landscape){
+ .app .home-shell:has(.library-filters) .home-hero{padding:4px 0;gap:0}
+ .app .home-shell:has(.library-filters) .home-entry-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px}
+ .app .home-shell:has(.library-filters) .resume-session{flex-direction:row;align-items:center;justify-content:space-between;min-height:44px;padding:0;gap:8px}
+ .app .home-shell:has(.library-filters) .game-library{grid-auto-rows:min(104px,100%)}
+ .app .home-shell:has(.library-filters) .home-footer{padding:0;min-height:44px}
+}
+
+@media(max-height:650px) and (orientation:portrait){
+ .app .home-shell:has(.library-filters):has(.resume-session) .home-hero{padding:12px 0 10px;gap:10px}
+ .app .home-shell:has(.library-filters):has(.resume-session) .resume-session{padding:8px 12px;gap:6px}
+ .app .home-shell:has(.library-filters):has(.resume-session) .library-filters{padding-block:6px}
+}

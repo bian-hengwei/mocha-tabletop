@@ -1,4 +1,5 @@
 export const socialText:Record<string,string>={
+ '表决已提交':'Vote submitted','任务牌已提交':'Mission card submitted',
  '表情':'Reaction','选择图片（可多选）':'Choose images (multiple allowed)',
  '支持 GIF / PNG，每张不超过 2 MB、1024 × 1024。动图自动生成静态预览。':'GIF / PNG, up to 2 MB and 1024 × 1024 each. Animated images get an automatic still preview.',
  '静态预览生成失败':'Could not generate a still preview', '上传中':'Uploading','已上传':'Uploaded',

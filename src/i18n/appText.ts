@@ -26,6 +26,8 @@ export const appText:Record<string,string>={
 
 '选择游戏':'Choose a game',
 '游戏列表':'Game library',
+'玩家人数':'Players',
+'全部人数':'Any size',
 '个人资料':'Profile',
 '昵称':'Name',
 '需联网配对':'Internet required to pair',

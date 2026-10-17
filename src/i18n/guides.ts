@@ -5,15 +5,17 @@ import type {Guide} from '../ui/RuleGuide';
 const guide=(edition:string,quick:string[],sections:[string,...string[]][]):Guide=>({edition,quick,sections:sections.map(([title,...text])=>({title,text}))});
 export const guides:Record<GameKind,{zh:Guide;en:Guide}>={...classicGuides,
 drawrelay:{zh:guide('你画我猜（接龙版） · Draw & Guess 传话玩法 · 3–12 人。',[
-'每人开一本画册，写一句开场句。','按座位传递，文字与绘画交替；只看当前任务紧邻的前一页。','默认待办队列：各本画册独立推进，回来后可处理积累的画图或猜图任务。','每人参与每本画册一次，全部完成后一起看画册。'],[
+'每人开一本画册，选一个预设词或自己写开场句。','按座位传递，文字与绘画交替；只看当前任务紧邻的前一页。','默认待办队列：各本画册独立推进，回来后可处理积累的画图或猜图任务。','每人参与每本画册一次，全部完成后一起看画册。'],[
+['开场词','从三个预设词中选一个，或自己写。选择后可编辑，点击传递才提交。候选沿用开局时的语言，切换界面语言不会改变。'],
 ['待办队列','任务不限时。提交一本画册后立即传给下一位，不必等待其他画册；同一人可同时有多项待办，并选择处理顺序。切换任务前等待文字草稿保存。','其他玩家离线不会阻止你处理已有任务；轮到离线玩家的那本画册会等待。局域网仍需要房主在线。'],
 ['同步轮次','开局也可选择同步轮次，所有人交完本步后统一传递。可设不限时或每步 60、90、120 秒；超时保存已同步草稿，空白页记为未完成。断线暂停计时，重连继续。'],
-['画板与隐私','画笔工具提供颜色、五档粗细与橡皮擦；支持撤销和确认清空。每页最多 96 笔，每笔最多 48 点；文字最多 120 字。提交后不能修改。','完成前只发送当前任务的前一页及自己的草稿，任务列表不含其他页内容。换座需重新打开接龙页；所有画册完成后揭晓。局域网房主和同屏设备持有完整牌局。'],
+['画板与隐私','画笔工具提供颜色、五档粗细与橡皮擦；支持撤销和确认清空。每页最多 96 笔，每笔最多 48 点；文字最多 120 字。提交后不能修改。','完成前只发送当前任务的前一页、自己的草稿及开场候选，任务列表不含其他页内容。换座需重新打开接龙页；所有画册完成后揭晓。局域网房主和同屏设备持有完整牌局。'],
 ['范围','采用 Draw & Guess 的文字、画图交替传话方式，另提供独立待办队列。不包含其竞分、投票、动画或外部画库模式。']]),en:guide('Drawing Relay · Draw & Guess telephone format · 3–12 players.',[
-'Each player starts an album with a sentence.','Pass albums in seat order, alternating drawing and text. See only the immediately preceding page.','Task queue is the default: albums advance independently and pending drawings or guesses can accumulate.','Everyone contributes once to every album. Reveal when all albums are complete.'],[
+'Each player starts an album with a suggested prompt or their own sentence.','Pass albums in seat order, alternating drawing and text. See only the immediately preceding page.','Task queue is the default: albums advance independently and pending drawings or guesses can accumulate.','Everyone contributes once to every album. Reveal when all albums are complete.'],[
+['Opening prompts','Choose one of three suggestions or write your own. Edit the text if you wish, then press Pass to submit. Suggestions keep the language used when the game started, even if you change the interface language.'],
 ['Task queue','Tasks have no timer. Submit one album to pass it immediately without waiting for other albums. Choose the order of multiple pending tasks. Wait for text drafts to save before switching.','Other players going offline does not block your available tasks. An album waits when it reaches an offline player. LAN rooms still need the host online.'],
 ['Synchronous rounds','Optionally advance all albums together after everyone submits. Choose unlimited time or 60, 90 or 120 seconds per step. Deadlines save synchronized drafts and mark empty pages incomplete. Disconnects pause the timer until reconnection.'],
-['Canvas and privacy','Drawing tools offer colors, five widths and an eraser, plus undo and confirmed clearing. Each page allows 96 strokes of up to 48 points, or 120 text characters. Submission is final.','Before the reveal, only the active task’s previous page and your draft are sent to you. Task lists contain no page contents. Reopen your page after switching seats. All albums must finish before reveal. LAN hosts and shared devices hold the full match.'],
+['Canvas and privacy','Drawing tools offer colors, five widths and an eraser, plus undo and confirmed clearing. Each page allows 96 strokes of up to 48 points, or 120 text characters. Submission is final.','Before the reveal, you receive only the active task’s previous page, your draft and your opening suggestions. Task lists contain no page contents. Reopen your page after switching seats. All albums must finish before reveal. LAN hosts and shared devices hold the full match.'],
 ['Scope','Uses the alternating text-and-drawing telephone format from Draw & Guess, with an additional independent task queue. Scoring, voting, animation and external image-library modes are not included.']])},
 gems:{zh:guide('晶石商会 · 2–4 人 · 基础 90 张发展牌与 10 张贵族，15 分触发末轮。',[
 '先看市场中便宜的一级牌，决定要收集哪些颜色。','轮到你时，取三种不同颜色的晶石各一枚；或连点同一种颜色取两枚，但该颜色拿取前须至少有四枚。点“拿取”确认；有库存的颜色不足三种时，取所有可用颜色各一枚。','点市场卡片查看费用；买下后获得牌面颜色的永久折扣，之后买牌时少付一枚该色晶石。','想先留住一张牌就预留，通常还会得到一枚万能黄金。','有人达到 15 分后完成这一轮；分数最高者获胜。'],[

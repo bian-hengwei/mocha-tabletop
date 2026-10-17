@@ -1,5 +1,6 @@
 export const classicText:Record<string,string>={
  '横滑看牌 · 长按滑选':'Swipe to browse · Hold to select',
+ '左右滑动':'Swipe',
  '记牌器':'Card counter','记牌器设置无效':'Invalid card counter setting',
  '显示除自己手牌外尚未打出的牌数':'Show unplayed cards outside your hand',
  '未出牌数':'Unplayed cards','上一轮出牌':'Previous trick','本轮出牌':'This trick',

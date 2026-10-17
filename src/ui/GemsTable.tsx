@@ -4,7 +4,7 @@ function tx<T>(value: T): T | string { return typeof value === 'string' ? t(valu
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Check, ChevronLeft, ChevronRight, Crown, Layers3, LockKeyhole, ShoppingBag, X } from 'lucide-react';
 import type { Action, Command, GameView } from '../core/types';
-import { GEM_COLORS } from '../core/games/gems';
+import { GEM_COLORS, type GemCard, type GemPurchaseQuote } from '../core/games/gems';
 import { CardArt, GemArt, GEM_NAMES, GEM_TONES } from './Art';
 import './gems-table.css';
 import { useDialog } from './useDialog';
@@ -31,6 +31,18 @@ function StockNumbers({ tokens, bonuses, labeled=false }: {
     bonuses: number[];
     labeled?:boolean;
 }) { return <div className={`stock-numbers ${labeled?'stock-labeled':''}`} aria-label={t("宝石库存与已购牌数量")}>{tx(tokens.map((n, i) => <div key={i}>{labeled&&<small className="stock-resource-label">{t(GEM_NAMES[i])}</small>}<GemArt color={i}/><b aria-label={`${t(GEM_NAMES[i])} ${n} ${t("枚筹码")}`}>{tx(n)}</b>{tx(i < 5 ? <span aria-label={`${t(GEM_NAMES[i])} ${bonuses[i]} ${t("张发展牌")}`}><Layers3 />{tx(bonuses[i])}{labeled&&<> {t('永久奖励')}</>}</span> : <span className="gold-placeholder"/>)}</div>))}</div>; }
+function PurchasePreview({card, quote}: {card: GemCard; quote: GemPurchaseQuote}) {
+    return <section className="g-purchase-preview" aria-label={t('我的购买费用')}>
+      <h3>{t('我的购买费用')}</h3>
+      <table><thead><tr><th scope="col"><span className="g-quote-sr-only">{t('宝石')}</span></th>{['原价','奖励抵扣','需付','持有','缺色'].map(label => <th scope="col" key={label}>{t(label)}</th>)}</tr></thead>
+      <tbody>{card.cost.map((cost, color) => cost > 0 && <tr key={color}>
+        <th scope="row"><GemArt color={color}/><span className="g-quote-sr-only">{t(GEM_NAMES[color])}</span></th>
+        <td>{cost}</td><td>−{quote.discounts[color]}</td><td>{quote.needed[color]}</td><td>{quote.tokens[color]}</td><td className={quote.shortfall[color] ? 'g-shortfall' : ''}>{quote.shortfall[color]}</td>
+      </tr>)}</tbody></table>
+      <div className="g-quote-gold"><GemArt color={5}/><span>{t('黄金补缺')} <b>{quote.goldNeeded}</b> / {t('持有')} <b>{quote.gold}</b></span></div>
+      <strong className={`g-quote-result ${quote.missing ? 'g-shortfall' : ''}`} role="status">{quote.missing ? <>{t('筹码缺口')} {quote.missing}</> : t(quote.needed.every(value => value === 0) ? '无需筹码' : '筹码充足')}</strong>
+    </section>;
+}
 export function GemsTable({ view, selfID, command, open, onShowResults }: Props) {
     const b = view.board, own = b.players.find((p: any) => p.id === selfID);
     const [tier, setTier] = useState(1);
@@ -91,6 +103,7 @@ export function GemsTable({ view, selfID, command, open, onShowResults }: Props)
     };
     const actFor = (action: string, c: any) => view.actions.find(a => a.id === action && a.choices.some(x => x.id === c.id));
     const reserve = view.actions.find(a => a.id === 'reserve');
+    const quote: GemPurchaseQuote | undefined = !view.spectating && !view.finished && card ? b.purchaseQuotes?.[card.id] : undefined;
     const cardNote = (() => {
         if (!card || actFor('buy', card)) return '';
         if (b.payment?.card.id === card.id) return '在底部确认支付，或取消购买';
@@ -104,7 +117,7 @@ export function GemsTable({ view, selfID, command, open, onShowResults }: Props)
         if (b.phase === 'payment') return '请先确认或取消当前购买';
         if (b.phase !== 'action') return view.instruction;
         const reserveFull = inMarket && own.reservedCount >= 3;
-        return reserveFull ? '筹码不足，暂时无法购买；预留位置已满' : '筹码不足，暂不能购买。永久奖励和黄金已计入。';
+        return quote ? (reserveFull ? '预留位置已满' : '') : reserveFull ? '筹码不足，暂时无法购买；预留位置已满' : '筹码不足，暂不能购买。永久奖励和黄金已计入。';
     })();
     return <div className="g-table">
   <div className="g-merchants">{tx(b.players.map((p: any) => <div className={`g-merchant ${p.id === b.current ? 'active' : ''}`} key={p.id}><button type="button" className="social-seat-hit" aria-label={tx(`查看 ${p.name} 的公开库存`)} onClick={() => setMerchantID(p.id)}/><div className="merchant-head"><PlayerAvatar id={p.id} avatar={p.avatar}/><b>{p.name}{tx(p.id === selfID ? ' · 我' : '')}</b><strong><Crown />{tx(p.score)}</strong><small title={t("已购牌")}><Layers3 />{tx(p.bought.length)}</small><small title={t("预留牌")}><LockKeyhole />{tx(p.reservedCount)}</small><small title={t("贵族")}><Crown />{tx(p.nobles.length)}</small></div><StockNumbers tokens={p.tokens} bonuses={p.bonuses}/></div>))}</div>
@@ -122,7 +135,7 @@ export function GemsTable({ view, selfID, command, open, onShowResults }: Props)
         }}><Check size={14}/>{tx(selectionValid ? `拿取 ${picked.length}` : '拿取')}</button>{tx(<button className="icon" disabled={!picked.length} aria-label={t("清空宝石选择")} onClick={() => setPicked([])}><X size={14}/></button>)}</div>}</div></aside>
   </div>
   {!view.spectating&&<div className="g-own-tray" ref={trayRef}><button className="g-own-stock" aria-label={t("查看我的全部库存")} onClick={() => setMerchantID(selfID)}><span>{t("我的库存")}</span><StockNumbers tokens={own.tokens} bonuses={own.bonuses}/></button><div className="g-reserved"><span><LockKeyhole size={12}/>{tx(b.hand.length)}{t("/3")}</span>{tx(b.hand.map((c: any) => <DevelopmentCard key={c.id} card={c} mini onClick={() => setCard(c)}/>))}</div>{tx(b.payment && <div className="g-payment" aria-label={t("待购买的发展牌和自动支付筹码")}><button type="button" className="icon g-payment-inventory" aria-label={t("查看我的全部库存")} title={t("我的库存")} onClick={() => setMerchantID(selfID)}><ShoppingBag size={18}/></button>{tx(b.payment.auto.every((n: number) => n === 0) ? <span className="g-free-payment">{t("免费")}</span> : <GemCost values={b.payment.auto}/>)}<DevelopmentCard card={b.payment.card} mini onClick={() => setCard(b.payment.card)}/></div>)}</div>}
-  {tx(card && <div className="modal-shade" onClick={() => setCard(null)}><section ref={cardDialog} tabIndex={-1} className="g-card-inspector" role="dialog" aria-modal="true" aria-label={t("发展牌")} onClick={e => e.stopPropagation()}><button className="icon close" aria-label={t("关闭牌面")} onClick={() => setCard(null)}><X /></button><DevelopmentCard card={card}/><div className="g-card-buttons">{tx((['buy', 'reserve'] as const).map(id => { const a = actFor(id, card); return a && <button key={id} className="compact primary" onClick={() => { command({ action: id, values: [card.id] }); setCard(null); }}>{tx(id === 'buy' ? <ShoppingBag size={16}/> : <LockKeyhole size={16}/>)} {tx(id === 'buy' ? '查看支付' : '预留')}</button>; }))}</div>{cardNote && <p className="g-card-note">{t(cardNote)}</p>}</section></div>)}
+  {tx(card && <div className="modal-shade" onClick={() => setCard(null)}><section ref={cardDialog} tabIndex={-1} className={`g-card-inspector ${quote ? 'g-has-quote' : ''}`} role="dialog" aria-modal="true" aria-label={t("发展牌")} onClick={e => e.stopPropagation()}><button className="icon close" aria-label={t("关闭牌面")} onClick={() => setCard(null)}><X /></button><DevelopmentCard card={card}/>{quote && <PurchasePreview card={card} quote={quote}/>}<div className="g-card-buttons">{tx((['buy', 'reserve'] as const).map(id => { const a = actFor(id, card); return a && <button key={id} className="compact primary" onClick={() => { command({ action: id, values: [card.id] }); setCard(null); }}>{tx(id === 'buy' ? <ShoppingBag size={16}/> : <LockKeyhole size={16}/>)} {tx(id === 'buy' ? '查看支付' : '预留')}</button>; }))}</div>{cardNote && <p className="g-card-note">{t(cardNote)}</p>}</section></div>)}
   {tx(merchant && <div className="modal-shade" onClick={() => setMerchantID(null)}><section ref={inventoryDialog} tabIndex={-1} className="g-inventory panel" role="dialog" aria-modal="true" aria-label={tx(`${merchant.name} 的公开库存`)} onClick={e => e.stopPropagation()}><header><h2>{tx(merchant.avatar)} {merchant.name}</h2><span className="inventory-score"><Crown size={17}/>{tx(merchant.score)}</span><button className="icon" aria-label={t("关闭公开库存")} onClick={() => setMerchantID(null)}><X /></button></header><div className="inventory-body"><div className="inventory-summary"><h3>{t("宝石库存")}</h3><StockNumbers tokens={merchant.tokens} bonuses={merchant.bonuses} labeled/><h3>{t("预留牌") + " "}<small>{tx(merchant.reservedCount)}{t("/3")}</small></h3><div className="inventory-reserved">{tx((merchant.id === selfID ? b.hand.map((c: any) => ({ public: true, card: c, id: c.id, tier: c.tier })) : merchant.reservedCards || []).map((r: any) => r.public ? <DevelopmentCard key={r.id} card={r.card} onClick={() => { setCard(r.card); setMerchantID(null); }}/> : <div className="g-hidden-card" key={r.id}><LockKeyhole size={20}/><span>{tx('•'.repeat(r.tier))}</span></div>))}{tx(merchant.reservedCount === 0 && <span className="inventory-empty">{t("—")}</span>)}</div><div className="inventory-nobles"><h3>{t("贵族") + " "}<small>{tx(merchant.nobles.length)}</small></h3>{tx(merchant.nobles.map((n: any) => <div className="g-noble" key={n.id}><Crown /><b>{t("3")}</b><GemCost values={n.cost}/></div>))}</div></div><div className="inventory-purchases"><h3>{t("已购牌") + " "}<small>{tx(merchant.bought.length)}</small></h3><div className="purchased-columns">{tx(GEM_COLORS.slice(0, 5).map((color, i) => <div key={color}><header><GemArt color={i}/><b>{tx(merchant.bonuses[i])}</b></header>{tx(merchant.bought.filter((c: any) => c.bonus === color).map((c: any) => <DevelopmentCard key={c.id} card={c} mini onClick={() => { setCard(c); setMerchantID(null); }}/>))}</div>))}</div></div></div></section></div>)}
  </div>;
 }

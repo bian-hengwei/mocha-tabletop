@@ -6,7 +6,7 @@ import {discoveryNetwork} from './discovery';
 import {applyRoomSocial,emptySocial,forgetSocialActor,socialView,type SocialState} from '../src/core/roomSocial';
 import {botTurnDelay,changeBots,nextBotSeat,stepBot,continueBotRound} from '../src/core/roomBots';
 import {supportsBots} from '../src/core/bots';
-import { advanceMatchClock,pauseMatchClock,resumeMatchClock,applyMatch,createMatch,matchDeadline,validKind,validProfile,viewRoomMatch,MAX_SPECTATORS,normalizeGameOptions,roomLimits,validateMatchForRoom,type MatchState,type RoomInfo,type RoomMode,type RoomCandidate } from '../src/core/room';
+import { isRelayGalleryNavigation,advanceMatchClock,pauseMatchClock,resumeMatchClock,applyMatch,createMatch,matchDeadline,validKind,validProfile,viewRoomMatch,MAX_SPECTATORS,normalizeGameOptions,roomLimits,validateMatchForRoom,type MatchState,type RoomInfo,type RoomMode,type RoomCandidate } from '../src/core/room';
 import type {Player} from '../src/core/types';
 interface Env extends ReactionEnv {ROOMS:DurableObjectNamespace<GameRoom>;DIRECTORY:DurableObjectNamespace<RoomDirectory>;ASSETS:Fetcher;ALLOWED_ORIGINS?:string}
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store'}});
@@ -222,7 +222,7 @@ export class GameRoom extends DurableObject<Env>{
    if(d.controlSeen[id]?.includes(msg.requestID)){this.snapshot(ws);return;}
    if(msg.type==='action'){
     if(r.mode!=='cloud'||!r.started||!d.match)throw new Error('牌局未开始');
-    if(!independentRelay(r)&&r.players.some(p=>!this.connected(p.id)))throw new Error('有玩家掉线，牌局已暂停');
+    if(!independentRelay(r)&&r.players.some(p=>!this.connected(p.id))&&!isRelayGalleryNavigation(r.kind,d.match.game.finished,msg.command))throw new Error('有玩家掉线，牌局已暂停');
     const timed=advanceMatchClock(d.match,r.kind,r.players,now);
     if(timed!==d.match){d.match=timed;r.revision++;await this.save();this.broadcast();}
     d.match=applyMatch(d.match,r.kind,r.players,id,msg.command,msg.requestID,msg.actionRevision);d.match=advanceMatchClock(d.match,r.kind,r.players,now);

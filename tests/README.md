@@ -62,6 +62,8 @@ npx playwright install chromium webkit
 
 | 命令 | 验证范围 |
 | --- | --- |
+| `node tests/ui/home-cover-readability.integration.mjs` | 首页中英八尺寸、含恢复入口：14 个封面及按人数筛选后的完整名称/人数与插画分区、可辨认插画面积、短横屏入口、触控与全部选桌入口、弹窗旋转/关闭/焦点；支持 WebKit |
+| `node tests/ui/gem-purchase-quotes.integration.mjs` | 晶石购买费用：逐色原价/奖励/折后费用/筹码/缺色、黄金统一补缺、免费购买、确认/取消、焦点与中英八尺寸旋转；支持 WebKit |
 | `node tests/ui/gems-inspector.integration.mjs` | 晶石牌详情区分筹码不足、预留满位、自己的预留、他人预留、已购牌、等待及支付阶段；中英八尺寸与旋转，支持 WebKit |
 | `node tests/ui/gems-bank.integration.mjs` | 晶石筹码区中英八尺寸：可见取色数量/同色库存条件、不足三色、满手后归还、六色完整可见、44px 触控、选择/取消与旋转；支持 WebKit |
 | `node tests/ui/classic-assets.integration.mjs` | 90 张本地牌面/底板/背面与三张封面解码，大小王颜色映射；支持 WebKit |
@@ -79,11 +81,12 @@ npx playwright install chromium webkit
 | `node tests/ui/bot-pacing.integration.mjs` | 真实 App 麻将人机完整一圈：每张出牌的时间间隔、动画无积压、双语七尺寸、弹窗旋转、刷新与退出；支持 WebKit。默认需 Vite；生产可用 `BOT_PACING_FIXTURE` 指定本地生成的 fixture.json，`TEST_PACING_COMPACT=1` 仅测 390×844 |
 | `node tests/ui/mahjong-public.integration.mjs` | 麻将中英八尺寸公共牌河/副露浏览、暗杠和观战隐私、选牌后独立确认、旋转/焦点和换座清理，支持 WebKit |
 | `node tests/ui/mahjong-experience.integration.mjs` | 麻将再次点选出牌、桌面/Escape 取消、新摸牌排序、出牌动画、完整牌河弹窗、换牌与自动过；中英七尺寸，支持 WebKit |
+| `node tests/ui/sushi-copy-recovery.integration.mjs` | Party 特别点单与已选特殊牌的权威选择刷新回填、换席/阶段清理；Menu/Spoon/交牌/Takeout/筷子待定选择刷新后继续，实际 App 中英八尺寸旋转与焦点；支持 WebKit |
 | `node tests/ui/sushi-table.integration.mjs` | 寿司双语八尺寸：五人盘面切换、卷数与布丁、料理详情与旋转焦点、筷子选牌顺序和换座隐私；真实 App 三轮完赛、刷新锁定恢复及结算重开，支持 WebKit |
 | `node tests/ui/hand-experience.integration.mjs` | 寿司单张点选/取消与单独确认、快速双触不提交、筷子顺序与取消锁定；商旅固定操作区；猫牌换选/组合与双击；中英八尺寸，支持 WebKit |
 | `node tests/ui/uno-experience.integration.mjs` | UNO 双击/双触、万能牌选色、28 张单行手牌、等待回合的溢出滑动提示、10 人座位、八尺寸与旋转，支持 WebKit |
 | `node tests/ui/mahjong-actions.integration.mjs` | 麻将确定性场景：自摸、血流继续、暗杠、抢杠、胡优先、碰与流局；支持 WebKit |
-| `node tests/network/message-text.integration.mjs` | 真实 Worker 的结构化姓名、投票公开时机、私密狼队计划与断线重连；使用 TEST_API_BASE |
+| `node tests/network/message-text.integration.mjs` | 真实 Worker 的结构化姓名、投票公开时机、本人表决/秘密任务提交回执、私密狼队计划与断线重连；使用 TEST_API_BASE |
 | `node tests/network/uno-mahjong-assistance.integration.mjs` | Uno 罚摸确认/重试去重/恢复、麻将私有助手计数与恢复；使用 TEST_API_BASE，清理测试房间 |
 | `node tests/network/classic-games.integration.mjs` | 六种玩法的真实 Worker WebSocket 指令、私密视图、幂等与重连 |
 | `node tests/ui/language.integration.mjs` | 十二款英文入口与双版本规则，检查未翻译文本 |
@@ -117,6 +120,8 @@ npx playwright install chromium webkit
 | `node tests/ui/cards.integration.mjs` | 晶石商会、喵喵危机的实际界面操作，遍历所有市场层级；支付摘要在中英八尺寸与旋转后可见，取消恢复库存且不购买；支持 WebKit |
 | `node tests/ui/gems-layout.integration.mjs` | 宝石牌桌布局 |
 | `node tests/ui/bombs-table.integration.mjs` | 喵喵危机牌桌布局 |
+| `node tests/ui/avalon-ballot-receipts.integration.mjs` | 迷雾远征本人表决/任务牌提交回执：实际 App 十人操作、刷新恢复、换席与阶段切换清理；身份隐藏与中英八尺寸旋转，支持 WebKit |
+| `node tests/ui/bombs-hand-scroll.integration.mjs` | 喵喵危机中英八尺寸手牌溢出提示、横向滚动到末张及返回、选择清除、换座/观战切换和缩放时提示更新；支持 WebKit。可用 `TEST_BROWSER=webkit`、`TEST_LOCALES=zh` 或 `TEST_LOCALES=en` 单独运行。 |
 | `node tests/ui/social.integration.mjs` | 月夜议会单次闭眼、女巫阶段等待与迷雾远征直接投票、座位操作；支持 WebKit |
 | `node tests/ui/social-hosted.integration.mjs` | 月夜议会法官、发身份界面 |
 | `node tests/ui/social-max.integration.mjs` | 最大人数的身份和座位布局 |
@@ -161,6 +166,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `tests/ui/proactive-new-games.integration.mjs`：手机付款/升级操作无需滚动、短横屏商人市场逐卡可达、UNO无可出牌时抽牌优先、寿司确认状态；中英八尺寸，支持 WebKit。
 - `tests/ui/word-usability.integration.mjs`：异步拒绝保留线索、成功清空、发词确认、换座隐私及移除线上投票/发言流程。
 - `tests/ui/codenames-input.integration.mjs`：线索输入的候选回车、原生 composing 标记、229 兼容、直接表单提交保护、换座清理与正常发送；中英八尺寸，支持 WebKit。输入法事件为浏览器模拟。
+- `tests/ui/codenames-clue-controls.integration.mjs`：真实 App 中英八尺寸的线索输入、数量选择与发送按钮实际 44px 尺寸；0 / 不限 / 普通数量选择、旋转、触控发送及刷新保留。支持 `TEST_BROWSER=webkit`。
 
 输入法回归使用浏览器 DOM 键盘事件覆盖 `isComposing` 和兼容性的 `keyCode=229` 路径，随后用真实键盘事件验证普通 Enter/Escape；这不等同于系统输入法真机验收。事件边界依据 [MDN 的 IME 键盘事件说明](https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event#keydown_events_with_ime)。
 
@@ -233,11 +239,13 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 - `tests/ui/poker-motion.integration.mjs`：双语八尺寸的叫分/等待手牌不透明、飞牌路径与落牌截图、快速连续出牌、换座/旋转/减少动态效果的取消恢复；支持 Chromium/WebKit。
 
-- `tests/ui/home-experience.integration.mjs`：双语七尺寸首页、横屏战绩入口、选游戏/加入弹窗与旋转后的焦点恢复；支持 `TEST_BROWSER=webkit`。
+- `tests/ui/home-experience.integration.mjs`：双语八尺寸首页、人数筛选与游戏集合、寿司派对版/法官席位人数衔接、语言切换保留筛选、保留牌桌恢复入口时的完整首牌、横屏战绩入口、选游戏/加入弹窗与旋转后的焦点恢复；支持 `TEST_BROWSER=webkit`。
 - `BASE_URL=http://127.0.0.1:5174 node tests/ui/undercover-dealer.integration.mjs`：十二人发词工具、旧回合存档兼容、换座隐藏秘密词、语言切换保留词语与帮助弹窗；中英七尺寸和横竖屏切换，可用 `TEST_BROWSER=webkit`。
 
 ## 你画我猜（接龙版）
 
+- `tests/relay-prompts.test.ts`：开场候选的双语种子、私有投影、旧档兼容、结构校验、同步/队列及大小上限。
+- `BASE_URL=<Vite> node tests/ui/relay-prompts.integration.mjs`：真实 App 双语八尺寸预设词/自己写、候选选中/取消、显式传递、IME/键盘、语言不重抽、刷新和换座隐藏；同步/队列与旧档自由输入，支持 WebKit。合成事件不替代系统输入法真机验收。
 - `tests/draw-relay.test.ts` 与 `tests/network/draw-relay-server.test.ts`：完整传递顺序、草稿隐私、超时/暂停、陈旧动作、画册大小及大存档切云权限。
 - `BASE_URL=<Vite> node tests/ui/draw-relay.integration.mjs`：真实 App 双语八尺寸（含 568×320 紧凑横屏）、绘画/键盘/撤销清空确认、换座隐藏、画册和完整同屏对局；支持 `TEST_BROWSER=webkit`。
 - `BASE_URL=<Vite> node tests/ui/relay-feedback.integration.mjs`：接龙 SVG 画板的按住实时笔迹、48 点终点保留、单点可见性、右键/多指归属、取消、失焦/失去 capture/隐藏、权限/换座/清空和键盘笔迹；支持 `TEST_BROWSER=webkit`。
@@ -262,3 +270,9 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 `node tests/network/reaction-storage.integration.mjs` 使用本地 workerd/SQLite 验证跨块图片字节、写入中途失败的事务回滚、并发版本冲突、实例隔离及删除。管理页集成还验证并发上传与服务重启后的持久化。
 
 表情管理集成支持 `TEST_BROWSER=webkit`，并检查无名称的单文件/批量上传、混合有效/无效文件、GIF 首帧像素、原动图字节保持及减少动态效果的静态图片选择。
+
+- `BASE_URL=<vite> node tests/ui/relay-gallery-reading.integration.mjs`：十二人终局画册，中英八尺寸的四边完整画作、保持比例、可达的画册与翻页/重开控件、旋转与焦点；支持 WebKit。
+- `BASE_URL=<vite> node tests/ui/relay-active-task.integration.mjs`：真实 App 配合本地模拟快照，验证新任务到达时输入法文字、焦点与未结束画笔保持；覆盖中英八尺寸、明确切换、刷新恢复和弹窗旋转。真实 Worker/WebRTC 恢复由 `tests/network/draw-relay.integration.mjs` 覆盖。
+- `npx vitest run tests/relay-gallery.test.ts tests/network/draw-relay-server.test.ts tests/network/recovery.test.ts`：终局接龙仅允许画册浏览绕过其他玩家离线暂停；覆盖身份、页码、revision、非终局/其他动作以及本机运输断线边界。
+- `TEST_FRONTEND=<vite-proxied-to-worker> node tests/network/relay-gallery-recovery.integration.mjs`：真实 cloud/LAN 三人同步接龙结束后他人离线，房主/访客翻页、独立游标和重连；拒绝未结束操作、观众和畸形/越界页码。
+- `BASE_URL=<vite> node tests/ui/relay-gallery-recovery.integration.mjs`：真实 App 配合模拟离线快照，中英八尺寸文字/画页、切册、翻页边界、刷新和日志弹窗旋转；新局继续暂停。

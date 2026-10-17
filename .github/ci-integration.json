@@ -7,6 +7,9 @@
       "script": "tests/ui/home-experience.integration.mjs"
     },
     {
+      "script": "tests/ui/home-cover-readability.integration.mjs"
+    },
+    {
       "script": "tests/ui/player-names.integration.mjs"
     },
     {
@@ -145,6 +148,9 @@
       "script": "tests/ui/gems-viewport.integration.mjs"
     },
     {
+      "script": "tests/ui/gem-purchase-quotes.integration.mjs"
+    },
+    {
       "script": "tests/ui/gems-results.integration.mjs"
     },
     {
@@ -154,6 +160,9 @@
       "script": "tests/ui/bombs-experience.integration.mjs"
     },
     {
+      "script": "tests/ui/bombs-hand-scroll.integration.mjs"
+    },
+    {
       "script": "tests/ui/uno-sushi-viewport.integration.mjs"
     },
     {
@@ -161,9 +170,15 @@
     },
     {
       "script": "tests/ui/sushi-party.integration.mjs"
+    },
+    {
+      "script": "tests/ui/sushi-copy-recovery.integration.mjs"
     }
   ],
   "social": [
+    {
+      "script": "tests/ui/avalon-ballot-receipts.integration.mjs"
+    },
     {
       "script": "tests/network/reaction-storage.integration.mjs"
     },
@@ -240,20 +255,39 @@
       "script": "tests/ui/relay-input.integration.mjs"
     },
     {
+      "script": "tests/ui/relay-prompts.integration.mjs"
+    },
+    {
       "script": "tests/ui/relay-feedback.integration.mjs"
+    },
+    {
+      "script": "tests/ui/relay-active-task.integration.mjs"
     },
     {
       "script": "tests/network/draw-relay.integration.mjs",
       "isolated": true
     },
     {
+      "script": "tests/network/relay-gallery-recovery.integration.mjs",
+      "isolated": true
+    },
+    {
+      "script": "tests/ui/relay-gallery-recovery.integration.mjs"
+    },
+    {
       "script": "tests/ui/codenames-input.integration.mjs"
+    },
+    {
+      "script": "tests/ui/codenames-clue-controls.integration.mjs"
     },
     {
       "script": "tests/ui/drawguess-rejection.integration.mjs"
     },
     {
       "script": "tests/ui/feedback.integration.mjs"
+    },
+    {
+      "script": "tests/ui/relay-gallery-reading.integration.mjs"
     }
   ]
 }

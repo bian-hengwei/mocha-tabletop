@@ -17,6 +17,7 @@ describe('independent Draw & Guess queue',()=>{
  });
  it('protects inactive predecessors and rejects stale, foreign, malformed commands atomically',()=>{
   let s=drawrelay.create(players(6),1,{relayMode:'queue'});s=pass(s,0);s=pass(s,5);for(let i=0;i<3;i++)s=pass(s,3);
+  s=drawrelay.apply(s,'feedback_0',{action:'task',values:['3:3']});
   const v=drawrelay.view(s,'feedback_0');expect(v.board.previous.text).toBe('secret-3-2');expect(JSON.stringify(v)).not.toContain('secret-5-0');expect(JSON.stringify(drawrelay.view(s,'',true))).not.toContain('secret-');
   const before=JSON.stringify(s);for(const c of [{action:'draft',values:['0:0'],text:'stale'},{action:'submit',values:['1:0']},{action:'stroke',values:['3:3','bad']},{action:'task',values:['3:3','5:1']}])expect(()=>drawrelay.apply(s,'feedback_0',c)).toThrow();expect(JSON.stringify(s)).toBe(before);
  });

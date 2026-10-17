@@ -24,8 +24,28 @@ try{for(const mode of ['cloud','lan'])for(const relayMode of ['rounds','queue'])
  if(mode==='lan')await Promise.all([host,guest,third,observer].map(p=>p.waitForFunction(()=>client.state.transport==='lan')));
  for(const p of [guest,third])await p.evaluate(()=>client.ready(true));await host.waitForFunction(()=>client.state.room.players.every(p=>p.ready));await host.evaluate(()=>client.start());await Promise.all([host,guest,third,observer].map(ready));
  const pages=[host,guest,third];
+ const openingIdeas=await Promise.all(pages.map(p=>p.evaluate(()=>client.state.view.board.openingPrompts)));
+ for(const [seat,ideas]of openingIdeas.entries()){
+  assert.equal(ideas.length,3);assert.equal(new Set(ideas).size,3);
+  for(const [other,p]of pages.entries())if(other!==seat)for(const idea of ideas)assert(!JSON.stringify(await p.evaluate(()=>client.state.view)).includes(idea),'private candidate leaked to another player');
+ }
+ assert.equal(await observer.evaluate(()=>client.state.view.board.openingPrompts),undefined);
+ await third.evaluate(()=>client.destroy());await host.waitForFunction(()=>client.state.room.players.some(p=>!p.online));
+ await third.evaluate(async()=>{const {RoomClient}=await import('/src/net/client.ts');window.client=new RoomClient();await client.connect();});await Promise.all(pages.map(ready));
+ assert.deepEqual(await third.evaluate(()=>client.state.view.board.openingPrompts),openingIdeas[2],'reconnection must retain the dealt opening ideas');
+
  if(relayMode==='queue'){
-  for(const [i,p] of pages.entries()){const task=`${i}:0`;await action(p,{action:'task',values:[task]});await action(p,{action:'draft',values:[task],text:`PRIVATE ${i}`});await submitQueued(p,task,pages);}
+  await action(guest,{action:'draft',values:['1:0'],text:'Original active task'});
+  for(const [i,p] of pages.entries()){
+   if(i===1){
+    await guest.waitForFunction(()=>client.state.view.board.tasks.some(t=>t.id==='0:1'));
+    assert.equal(await guest.evaluate(()=>client.state.view.board.taskID),'1:0','incoming lower album must not replace the active task');
+    await guest.evaluate(()=>client.destroy());
+    await guest.evaluate(async()=>{const {RoomClient}=await import('/src/net/client.ts');window.client=new RoomClient();await client.connect();});await ready(guest);
+    assert.equal(await guest.evaluate(()=>client.state.view.board.taskID),'1:0');
+    assert.equal(await guest.evaluate(()=>client.state.view.board.draft.text),'Original active task');
+   }
+   const task=`${i}:0`;await action(p,{action:'task',values:[task]});await action(p,{action:'draft',values:[task],text:`PRIVATE ${i}`});await submitQueued(p,task,pages);}
   await Promise.all(pages.map(p=>p.waitForFunction(()=>client.state.view.board.draft?.kind==='drawing')));
   const task=await host.evaluate(()=>client.state.view.board.taskID);await action(host,{action:'stroke',values:[task,'ABAAAAPPPX']});
   await third.evaluate(()=>client.destroy());await host.waitForFunction(()=>client.state.room.players.some(p=>!p.online));

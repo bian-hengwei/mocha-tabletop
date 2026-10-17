@@ -3,7 +3,7 @@ import {NewGameResults} from './NewGameResults';
 import { useDialog } from './useDialog';
 import { t } from '../i18n';
 function tx<T>(value: T): T | string { return typeof value === 'string' ? t(value) : value; }
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ArrowRight, Bomb, Check, ChevronDown, Cloud, Eye, FastForward, Hand, Leaf, Moon, PawPrint, Scissors, Shuffle, Skull, Star, Sun, X, Zap } from 'lucide-react';
 import type { Action, Command, GameView } from '../core/types';
 import { BOMB_TITLES, type BombCard, type BombKind } from '../core/games/bombs';
@@ -60,12 +60,25 @@ export function BombsIllustratedCard({ card, selected = false, onClick, small = 
   </button>;
 }
 export function BombsTable({ view, selfID, command }: Props) {
-    const b = view.board, hand = (b.hand as BombCard[] || []), [selected, setSelected] = useState<string[]>([]), [insertion, setInsertion] = useState(0), [explosionPrompt, setExplosionPrompt] = useState(false);
+    const b = view.board, hand = (b.hand as BombCard[] || []), [selected, setSelected] = useState<string[]>([]), [insertion, setInsertion] = useState(0), [explosionPrompt, setExplosionPrompt] = useState(false), [handOverflow, setHandOverflow] = useState(false);
+    const handRef = useRef<HTMLDivElement>(null);
     const confirmationDialog = useDialog(explosionPrompt, () => setExplosionPrompt(false));
     const [discardOpen, setDiscardOpen] = useState(false);
     const discardDialog = useDialog(discardOpen && !view.finished, () => setDiscardOpen(false));
     const get = (id: string) => view.actions.find(a => a.id === id);
     const handIDs=hand.map(c=>c.id).join('|'),context=[selfID,b.phase,b.current,handIDs,b.discard[0]?.id].join(':');
+    useLayoutEffect(() => {
+        const node = handRef.current;
+        if (!node || view.finished || view.spectating) {
+            setHandOverflow(false);
+            return;
+        }
+        const measure = () => setHandOverflow(node.scrollWidth > node.clientWidth + 2);
+        const observer = new ResizeObserver(measure);
+        observer.observe(node);
+        measure();
+        return () => observer.disconnect();
+    }, [handIDs, view.finished, view.spectating]);
     useEffect(() => { setSelected([]); setInsertion(0); setExplosionPrompt(false); }, [context]);
     useEffect(() => { setDiscardOpen(false); }, [selfID, view.finished]);
     if(view.finished)return <NewGameResults view={view} selfID={selfID}/>;
@@ -132,8 +145,8 @@ export function BombsTable({ view, selfID, command }: Props) {
                     run('target', [p.id]);
             }}/><PlayerAvatar id={p.id} avatar={p.alive ? p.avatar : <Skull size={21}/>} className="bt-avatar"/><span><b>{p.name}{tx(p.id === selfID && <small>{t("我")}</small>)}</b><em>{tx(p.alive ? <><span className="bt-tiny-back"/>{tx(p.count)}</> : '已出局')}</em></span>{tx(p.id === b.current && p.alive && <span className="bt-seat-turn"/>)}</div>))}</div>
     <div className="bt-arena"><div className="bt-piles"><button className={`bt-deck ${draw ? 'available' : ''}`} aria-label={tx(`抽牌，剩余 ${b.deckCount} 张`)} disabled={!draw} onClick={() => run('draw')}><span className="bt-deck-corners">{t("✦")}</span><CatArt kind="bomb"/><b>{tx(draw ? '抽一张' : '抽牌堆')}</b><small>{tx(b.deckCount)}</small></button><div className="bt-discard">{tx(b.discard[0] ? <BombsIllustratedCard card={b.discard[0]} small/> : <span className="bt-empty"><PawPrint size={25}/></span>)}<button type="button" className="bt-discard-open" aria-label={t('最近弃牌')} onClick={() => setDiscardOpen(true)}><Eye size={14}/><small className="bt-pile-caption">{t('最近弃牌')}</small></button></div></div>{tx(focus)}</div>
-    {!view.spectating&&<div className="bt-hand-zone"><div className="bt-hand-label"><span>{t("我的手牌") + " "}<b>{tx(hand.length)}</b></span>{tx(handInteractive && selected.length > 0 ? <button onClick={() => setSelected([])}><X size={12}/>{t("清空选择")}</button> : null)}</div>
-        <div className={`bt-hand ${hand.length > 8 ? 'bt-long-hand' : ''}`} aria-label={t("我的手牌，可左右滑动")}>
+    {!view.spectating&&<div className="bt-hand-zone"><div className="bt-hand-label"><span>{t("我的手牌") + " "}<b>{tx(hand.length)}</b></span>{handOverflow&&<small className="bt-hand-scroll-cue" aria-hidden="true">↔ {t("左右滑动")}</small>}{tx(handInteractive && selected.length > 0 ? <button onClick={() => setSelected([])}><X size={12}/>{t("清空选择")}</button> : null)}</div>
+        <div ref={handRef} className={`bt-hand ${hand.length > 8 ? 'bt-long-hand' : ''}`} aria-label={t("我的手牌，可左右滑动")}>
             {tx(sorted.map((c, i) => <div className="bt-hand-slot" key={c.id} style={{ '--fan': `${Math.max(-5, Math.min(5, (i - (hand.length - 1) / 2) * 1.2))}deg`, '--lift': `${Math.abs(i - (hand.length - 1) / 2) * .35}px` } as CSSProperties}>
                 <BombsIllustratedCard card={c} selected={handInteractive && selected.includes(c.id)} onClick={handInteractive ? () => pick(c) : undefined}/>
             </div>))}
