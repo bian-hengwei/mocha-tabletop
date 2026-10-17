@@ -240,6 +240,8 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 ## 你画我猜（接龙版）
 
+- `tests/relay-prompts.test.ts`：开场候选的双语种子、私有投影、旧档兼容、结构校验、同步/队列及大小上限。
+- `BASE_URL=<Vite> node tests/ui/relay-prompts.integration.mjs`：真实 App 双语八尺寸预设词/自己写、候选选中/取消、显式传递、IME/键盘、语言不重抽、刷新和换座隐藏；同步/队列与旧档自由输入，支持 WebKit。合成事件不替代系统输入法真机验收。
 - `tests/draw-relay.test.ts` 与 `tests/network/draw-relay-server.test.ts`：完整传递顺序、草稿隐私、超时/暂停、陈旧动作、画册大小及大存档切云权限。
 - `BASE_URL=<Vite> node tests/ui/draw-relay.integration.mjs`：真实 App 双语八尺寸（含 568×320 紧凑横屏）、绘画/键盘/撤销清空确认、换座隐藏、画册和完整同屏对局；支持 `TEST_BROWSER=webkit`。
 - `BASE_URL=<Vite> node tests/ui/relay-feedback.integration.mjs`：接龙 SVG 画板的按住实时笔迹、48 点终点保留、单点可见性、右键/多指归属、取消、失焦/失去 capture/隐藏、权限/换座/清空和键盘笔迹；支持 `TEST_BROWSER=webkit`。

@@ -10,7 +10,9 @@ New tables default to `relayMode: queue`: each album advances immediately on sub
 
 `relayMode: rounds` retains synchronized steps. All players submit before advancing; choose unlimited time or 60/90/120 seconds. A trusted deadline saves synchronized drafts, marking blanks incomplete. Disconnects freeze the clock. Old checkpoints without a mode keep the original synchronous behavior.
 
-Before reveal, each player receives only their current draft and the immediately preceding page assigned to them. Other albums and earlier entries are omitted from the projection. Spectators see only step and submission status. At reveal, each player can browse every album independently; spectators follow the host's selected album and page. The LAN host and the shared pass-and-play device necessarily hold the complete state.
+At the opening page, choose one of three suggested prompts or write your own. Suggestions are original Mocha phrases, dealt from the match seed in its initial `GameOptions.language` and stored in `openingPrompts`. Selecting a suggestion only edits the ordinary draft; it can be changed or deselected and still needs an explicit Pass. UI language changes and reconnects do not redeal or translate these saved phrases. Old checkpoints without `openingPrompts` retain free input.
+
+Before reveal, each player receives only their current draft and the immediately preceding page assigned to them. Only the owner of a still-pending opening task receives its three suggestions; they are omitted for spectators, subsequent tasks and the gallery. Other albums and earlier entries are omitted from the projection. Spectators see only step and submission status. At reveal, each player can browse every album independently; spectators follow the host's selected album and page. The LAN host and the shared pass-and-play device necessarily hold the complete state.
 
 ## Commands and rendering
 
@@ -31,9 +33,11 @@ The original cover `public/art/drawrelay.svg` is a geometric vector illustration
 `tests/feedback-rules.test.ts` also covers independent progress, a two-drawing/one-guess backlog, task switching, private predecessors and restored drafts. `tests/ui/feedback.integration.mjs` exercises the queue and tools in the real App across eight viewports and both languages.
 
 
+- `tests/relay-prompts.test.ts`: deterministic bilingual suggestions, owner-only projection, explicit draft/pass behavior, old-checkpoint compatibility, validation and maximum state/view sizes in both modes.
+- `BASE_URL=<vite> node tests/ui/relay-prompts.integration.mjs`: real App bilingual eight-size selection/custom entry, keyboard/composition, rotation, seat privacy, language stability, reload and legacy drafts; supports WebKit.
 - `tests/draw-relay.test.ts`: complete 3/4/7/12-person rotation, secrets, final browsing, simultaneous actor revisions, duplicate requests, immutability, drawing limits, clocks and maximum payloads.
 - `tests/network/draw-relay-server.test.ts`: authoritative deadline ordering, next-step alarms, disconnect pause, large owner-only handoff and malformed checkpoints.
-- `BASE_URL=<vite> node tests/ui/draw-relay.integration.mjs`: real App in Chinese and English at seven viewport sizes, pointer/keyboard drawing, clear cancellation, rotation, seat privacy, final album navigation and a complete three-person local game. Supports `TEST_BROWSER=webkit`.
+- `BASE_URL=<vite> node tests/ui/draw-relay.integration.mjs`: real App in Chinese and English at eight viewport sizes, pointer/keyboard drawing, clear cancellation, rotation, seat privacy, final album navigation and a complete three-person local game. Supports `TEST_BROWSER=webkit`.
 - `TEST_FRONTEND=<vite-proxied-to-worker> node tests/network/draw-relay.integration.mjs`: four browser contexts against real Worker and WebRTC transports; simultaneous private drafts, full game, spectator views, reconnect and LAN-to-cloud handoff.
 
 Browser tests do not establish iPhone installation, background suspension or a physical multi-device Wi-Fi result.

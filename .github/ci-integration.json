@@ -243,6 +243,9 @@
       "script": "tests/ui/relay-input.integration.mjs"
     },
     {
+      "script": "tests/ui/relay-prompts.integration.mjs"
+    },
+    {
       "script": "tests/ui/relay-feedback.integration.mjs"
     },
     {

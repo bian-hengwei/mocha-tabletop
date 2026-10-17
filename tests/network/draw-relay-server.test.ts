@@ -10,6 +10,23 @@ async function message(seat:number,body:any){await server.webSocketMessage(socke
 async function act(seat:number,command:any){await message(seat,{type:'action',command,actionRevision:server.data.match.actorRevisions[`player_${seat}`]});expect(sockets[seat].latest.type).not.toBe('error');}
 beforeEach(()=>{vi.useFakeTimers();setup();});afterEach(()=>vi.useRealTimers());
 describe('drawing relay authoritative lifecycle',()=>{
+ it('sends each player only their own opening candidates while saving selected text as an ordinary private draft',async()=>{
+  server.data.info.options={relayMode:'queue',language:'en'};
+  server.data.match=createMatch('drawrelay',server.data.info.players,{relayMode:'queue',language:'en'});
+  server.data.match.game.openingPrompts=[['Own alpha','Own beta','Own gamma'],['Next alpha','Next beta','Next gamma'],['Other alpha','Other beta','Other gamma']];
+  await act(0,{action:'draft',values:['0:0'],text:'Own alpha, edited'});
+  expect(sockets[0].latest.view.board.openingPrompts).toEqual(['Own alpha','Own beta','Own gamma']);
+  expect(sockets[1].latest.view.board.openingPrompts).toEqual(['Next alpha','Next beta','Next gamma']);
+  expect(JSON.stringify(sockets[1].latest)).not.toContain('Own alpha');
+  expect(JSON.stringify(sockets[2].latest)).not.toContain('edited');
+  expect(server.data.match.game.books[0]).toHaveLength(0);
+  await act(0,{action:'submit',values:['0:0']});
+  expect(sockets[0].latest.view.board.openingPrompts).toBeUndefined();
+  await act(1,{action:'task',values:['0:1']});
+  expect(sockets[1].latest.view.board.openingPrompts).toBeUndefined();
+  expect(sockets[1].latest.view.board.previous.text).toBe('Own alpha, edited');
+ });
+
  it('arms the next step immediately when the last player submits',async()=>{for(let i=0;i<3;i++){await act(i,{action:'draft',values:['0'],text:`private${i}`});await act(i,{action:'submit',values:['0']});}expect(server.data.match.game.step).toBe(1);expect(server.data.match.game.deadlineAt).toBe(Date.now()+60000);expect(alarm).toBe(server.data.match.game.deadlineAt);});
  it('expires before accepting an input arriving behind a delayed alarm',async()=>{const revision=server.data.match.actorRevisions.player_0;vi.setSystemTime(Date.now()+60001);await message(0,{type:'action',actionRevision:revision,command:{action:'draft',values:['0'],text:'late'}});expect(sockets[0].latest.type).toBe('error');expect(server.data.match.game.step).toBe(1);expect(server.data.match.game.books[0][0]).toMatchObject({skipped:true});expect(JSON.stringify(server.data.match.game)).not.toContain('late');expect(sockets[0].messages.some(m=>m.type==='snapshot'&&m.view.board.step===1)).toBe(true);});
  it('freezes on disconnect and schedules no past game alarm',async()=>{vi.setSystemTime(Date.now()+20000);await server.webSocketClose(sockets[2]);expect(server.data.match.game.pausedRemaining).toBe(40000);expect(server.data.match.game.deadlineAt).toBe(0);expect(alarm).toBeGreaterThan(Date.now());vi.setSystemTime(Date.now()+90000);await server.alarm();expect(server.data.match.game.step).toBe(0);expect(server.data.match.game.pausedRemaining).toBe(40000);});
