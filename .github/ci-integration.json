@@ -7,6 +7,9 @@
       "script": "tests/ui/home-experience.integration.mjs"
     },
     {
+      "script": "tests/ui/home-cover-readability.integration.mjs"
+    },
+    {
       "script": "tests/ui/player-names.integration.mjs"
     },
     {
