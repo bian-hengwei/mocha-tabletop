@@ -1,7 +1,7 @@
 import {botTurnDelay,nextBotSeat,stepBot,continueBotRound} from '../core/roomBots';
 import type {BotDifficulty} from '../core/bots/types';
 import {supportsRoomSocial,type SocialCommand,type SocialView} from '../core/roomSocial';
-import {independentRelay,advanceMatchClock,pauseMatchClock,resumeMatchClock,applyMatch,createMatch,matchDeadline,validProfile,viewRoomMatch,optionsKey,validateMatchForRoom,type ClientState,type MatchState,type RoomInfo,type RoomCandidate,type RoomMode} from '../core/room';
+import {isRelayGalleryNavigation,independentRelay,advanceMatchClock,pauseMatchClock,resumeMatchClock,applyMatch,createMatch,matchDeadline,validProfile,viewRoomMatch,optionsKey,validateMatchForRoom,type ClientState,type MatchState,type RoomInfo,type RoomCandidate,type RoomMode} from '../core/room';
 import type {Command,GameKind,Player,GameOptions} from '../core/types';
 export type {ClientState,RoomCandidate,RoomMode} from '../core/room';
 const API=(import.meta.env.VITE_API_BASE||'').replace(/\/$/,'');
@@ -111,7 +111,7 @@ export class RoomClient {
  endGame(){this.control({type:'endGame'});}
  action(command:Command){
   if(this.state.actionPending)return;
-  try{if(this.state.paused)throw new Error('连接恢复后继续');const r=this.state.room;if(!r||!r.started)throw new Error('牌局未开始');if(!r.players.some(p=>p.id===this.session?.profile.id))throw new Error('观众不能操作牌局');
+  try{if(this.state.paused&&!isRelayGalleryNavigation(this.state.view?.kind,this.state.view?.finished,command))throw new Error('连接恢复后继续');const r=this.state.room;if(!r||!r.started)throw new Error('牌局未开始');if(!r.players.some(p=>p.id===this.session?.profile.id))throw new Error('观众不能操作牌局');
    this.patch({actionPending:true});
    const msg={type:'action',command,requestID:crypto.randomUUID(),actionRevision:this.state.actionRevision};
    if(r.mode==='cloud')this.control(msg);else if(this.session?.profile.id===r.hostID)this.applyLocal(r.hostID,msg);else {const p=this.peers.get(r.hostID);if(!p?.proven||p.dc?.readyState!=='open'||p.dc.bufferedAmount>=1000000)throw new Error('与房主的连接已中断');this.sendDC(p,msg);}
@@ -269,7 +269,7 @@ export class RoomClient {
  }
  private sendDC(p:Peer,msg:any){if(p.dc?.readyState==='open'&&p.dc.bufferedAmount<1000000)p.dc.send(JSON.stringify(msg));}
  private localStatus(){const r=this.state.room;if(!r||r.mode!=='lan')return;const connected=this.isHost?independentRelay(r)||r.players.every(p=>p.bot||p.id===r.hostID||this.peers.get(p.id)?.proven):!!this.peers.get(r.hostID)?.proven;this.patch({transport:connected?'lan':'none',paused:r.started&&(!connected||this.isHost&&!this.localMatch)});}
- private applyLocal(actor:string,msg:any){const r=this.state.room;if(!r||!this.localMatch||!r.started||!this.isHost)throw new Error('等待房主开始');if(this.state.paused)throw new Error('有玩家掉线，恢复连接后继续');const timed=advanceMatchClock(this.localMatch,r.kind,r.players,Date.now());if(timed!==this.localMatch){this.localMatch=timed;this.persistLocal();this.broadcastLocal();throw new Error('牌局已变化，请重选');}this.localMatch=applyMatch(this.localMatch,r.kind,r.players,actor,msg.command,msg.requestID,msg.actionRevision);this.persistLocal();this.broadcastLocal();}
+ private applyLocal(actor:string,msg:any){const r=this.state.room;if(!r||!this.localMatch||!r.started||!this.isHost)throw new Error('等待房主开始');if(this.state.paused&&!isRelayGalleryNavigation(r.kind,this.localMatch.game.finished,msg.command))throw new Error('有玩家掉线，恢复连接后继续');const timed=advanceMatchClock(this.localMatch,r.kind,r.players,Date.now());if(timed!==this.localMatch){this.localMatch=timed;this.persistLocal();this.broadcastLocal();throw new Error('牌局已变化，请重选');}this.localMatch=applyMatch(this.localMatch,r.kind,r.players,actor,msg.command,msg.requestID,msg.actionRevision);this.persistLocal();this.broadcastLocal();}
  private broadcastLocal(recipientID?:string){const r=this.state.room;if(!r||r.mode!=='lan'||!this.isHost)return;const now=Date.now(),allConnected=r.players.every(p=>!!p.bot||p.id===r.hostID||!!this.peers.get(p.id)?.proven);if(this.localMatch){let timed=allConnected?resumeMatchClock(this.localMatch,r.kind,r.players,now):pauseMatchClock(this.localMatch,r.kind,r.players,now);if(allConnected)timed=advanceMatchClock(timed,r.kind,r.players,now);if(timed!==this.localMatch){this.localMatch=timed;this.persistLocal();}}this.localStatus();const room={...r,botError:this.localBotError,spectators:(r.spectators||[]).map(p=>({...p,connected:!!this.peers.get(p.id)?.proven})),players:r.players.map(p=>({...p,connected:!!p.bot||p.id===r.hostID||!!this.peers.get(p.id)?.proven}))};
   for(const p of [...room.players.filter(p=>!p.bot),...room.spectators]){if(recipientID&&p.id!==recipientID)continue;const data={type:'lanSnapshot',room:{...room,pending:p.id===r.hostID?room.pending:[]},...(this.localMatch?viewRoomMatch(this.localMatch,r,p.id):{view:undefined,actionRevision:0}),paused:this.state.paused};
    if(p.id===r.hostID)this.patch({room,view:data.view,actionRevision:data.actionRevision});else {const peer=this.peers.get(p.id);if(peer?.proven)this.sendDC(peer,data);}

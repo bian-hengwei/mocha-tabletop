@@ -19,6 +19,13 @@ interface SocialClientState {social?:SocialView;socialPending?:string;socialErro
 export interface ClientState extends SocialClientState {status:'idle'|'connecting'|'lobby'|'playing'|'reconnecting'|'disconnected';mode?:RoomMode;room?:RoomInfo;selfID?:string;view?:GameView;error?:string;transport:'none'|'cloud'|'lan';paused:boolean;inviteURL?:string;actionRevision:number;actionPending?:boolean;waitingApproval?:boolean}
 export interface MatchState {schemaVersion?:2;options?:GameOptions;game:any;revision:number;actorRevisions:Record<string,number>;seen:Record<string,string[]>}
 export const independentRelay=(room:Pick<RoomInfo,'kind'|'options'>)=>room.kind==='drawrelay'&&room.options?.relayMode==='queue';
+/** Only finished relay browsing may pass an otherwise paused room's action gate.
+ * Membership, revision and page bounds still go through the normal authority. */
+export function isRelayGalleryNavigation(kind:GameKind|undefined,finished:unknown,command:unknown):boolean {
+ if(kind!=='drawrelay'||finished!==true||!command||typeof command!=='object')return false;
+ const {action,values,text}=command as Partial<Command>;
+ return (action==='album'||action==='page')&&Array.isArray(values)&&values.length===1&&typeof values[0]==='string'&&/^(0|[1-9]\d*)$/.test(values[0])&&text===undefined;
+}
 export function validProfile(input:any):Player {
  if(!input || typeof input.id!=='string'|| !/^[a-zA-Z0-9_-]{8,80}$/.test(input.id)||input.id.startsWith('bot_')||Object.hasOwn(Object.prototype,input.id))throw new Error('玩家身份无效');
  if(typeof input.name!=='string'||!input.name.trim()||input.name.trim().length>16)throw new Error('昵称限 1–16 个字');

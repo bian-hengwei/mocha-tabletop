@@ -14,6 +14,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { Eye, ArrowLeft, Check, ChevronRight, Cloud, Copy, Crown, Bot, HelpCircle, History, LogOut, Maximize2, Plus, Radio, RefreshCw, RotateCcw, Settings2, Share2, Smartphone, Users, Wifi, X } from 'lucide-react';
 import { AVATARS, GAMES, type Action, type Command, type GameKind, type GameOptions, type Player } from '../core/types';
 import { modules } from '../core/registry';
+import {isRelayGalleryNavigation} from '../core/room';
 import { roomLimits, RoomClient, type ClientState, type RoomCandidate, type RoomMode } from '../net/client';
 import { ActionDock, ActionSheet } from './Boards';
 import { GemsTable } from './GemsTable';
@@ -185,7 +186,7 @@ export function App() {
     catch {
         notify('身份仅在本次打开有效；浏览器不允许保存');
     } };
-    const run = (cmd: Command) => { if (!practice && state.paused) {
+    const run = (cmd: Command) => { if (!practice && state.paused && !isRelayGalleryNavigation(view?.kind,view?.finished,cmd)) {
         notify('正在恢复连接，请稍后再操作');
         return;
     } if (practice) {

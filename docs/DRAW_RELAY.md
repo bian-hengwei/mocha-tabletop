@@ -12,7 +12,7 @@ New tables default to `relayMode: queue`: each album advances immediately on sub
 
 At the opening page, choose one of three suggested prompts or write your own. Suggestions are original Mocha phrases, dealt from the match seed in its initial `GameOptions.language` and stored in `openingPrompts`. Selecting a suggestion only edits the ordinary draft; it can be changed or deselected and still needs an explicit Pass. UI language changes and reconnects do not redeal or translate these saved phrases. Old checkpoints without `openingPrompts` retain free input.
 
-Before reveal, each player receives only their current draft and the immediately preceding page assigned to them. Only the owner of a still-pending opening task receives its three suggestions; they are omitted for spectators, subsequent tasks and the gallery. Other albums and earlier entries are omitted from the projection. Spectators see only step and submission status. At reveal, each player can browse every album independently; spectators follow the host's selected album and page. The LAN host and the shared pass-and-play device necessarily hold the complete state.
+Before reveal, each player receives only their current draft and the immediately preceding page assigned to them. Only the owner of a still-pending opening task receives its three suggestions; they are omitted for spectators, subsequent tasks and the gallery. Other albums and earlier entries are omitted from the projection. Spectators see only step and submission status. At reveal, each player can browse every album independently even when another player disconnects. Gallery browsing still requires the viewer's cloud connection or the LAN host connection; it does not resume a paused unfinished game or permit other commands. Spectators follow the host's selected album and page. The LAN host and the shared pass-and-play device necessarily hold the complete state.
 
 ## Commands and rendering
 
@@ -41,3 +41,6 @@ The original cover `public/art/drawrelay.svg` is a geometric vector illustration
 - `TEST_FRONTEND=<vite-proxied-to-worker> node tests/network/draw-relay.integration.mjs`: four browser contexts against real Worker and WebRTC transports; simultaneous private drafts, full game, spectator views, reconnect and LAN-to-cloud handoff.
 
 Browser tests do not establish iPhone installation, background suspension or a physical multi-device Wi-Fi result.
+
+- `TEST_FRONTEND=<vite-proxied-to-worker> node tests/network/relay-gallery-recovery.integration.mjs`: real cloud/LAN finished-gallery navigation with a missing participant, independent cursors, reconnect, active-game pause and rejected spectator/invalid actions. `TEST_ROOM_MODES=cloud` or `lan` limits the transport.
+- `BASE_URL=<vite> node tests/ui/relay-gallery-recovery.integration.mjs`: real App with isolated offline snapshots, bilingual eight-size gallery navigation, boundaries, reload and dialog rotation; unfinished matches remain paused.

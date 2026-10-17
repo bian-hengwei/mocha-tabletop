@@ -259,6 +259,13 @@
       "isolated": true
     },
     {
+      "script": "tests/network/relay-gallery-recovery.integration.mjs",
+      "isolated": true
+    },
+    {
+      "script": "tests/ui/relay-gallery-recovery.integration.mjs"
+    },
+    {
       "script": "tests/ui/codenames-input.integration.mjs"
     },
     {
