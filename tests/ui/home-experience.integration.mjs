@@ -40,5 +40,18 @@ try{for(const locale of ['zh','en'])for(const [width,height]of [[320,568],[390,8
  await players.focus();await page.keyboard.press('Home');await page.keyboard.press('Enter');
  await players.selectOption('');await expect(cards).toHaveCount(14);
  const oddWord=page.locator('.home-shell .cover-undercover');await oddWord.click();await expect(page.getByRole('dialog')).toContainText(locale==='zh'?'异词同伴':'Odd Word');await page.setViewportSize({width:height,height:width});await page.keyboard.press('Escape');await expect(oddWord).toBeFocused();await page.setViewportSize({width,height});
- await page.locator('.home-entry-actions button').first().click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('.home-entry-actions button').first()).toBeFocused();await page.close();console.log('PASS home',locale,width,height);
+ await page.locator('.home-entry-actions button').first().click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('.home-entry-actions button').first()).toBeFocused();await page.addInitScript(()=>{
+  const profile=JSON.parse(localStorage.getItem('mocha-profile'));
+  localStorage.setItem('mocha-room-session',JSON.stringify({profile,code:'ABC234',token:'f'.repeat(48),savedAt:Date.now(),expiresAt:Date.now()+3600000}));
+  class OfflineSocket extends EventTarget{static CONNECTING=0;static OPEN=1;static CLOSING=2;static CLOSED=3;readyState=0;send(){}close(){this.readyState=3;}}
+  window.WebSocket=OfflineSocket;
+ });
+ await page.reload();await page.locator('.connecting-overlay .text-button').click();await expect(page.locator('.resume-session')).toBeVisible();
+ await page.locator('.library-filters select').selectOption('2');
+ const resumeLibrary=await page.locator('.game-library').boundingBox(),resumeCard=await page.locator('.game-cover').first().boundingBox();
+ assert(resumeCard.y>=resumeLibrary.y-1&&resumeCard.y+resumeCard.height<=resumeLibrary.y+resumeLibrary.height+1,`resume first card clipped at ${locale} ${width}x${height}`);
+ const caption=await page.locator('.game-cover .cover-caption').first().boundingBox();
+ assert(caption.y>=resumeCard.y&&caption.y+caption.height<=resumeCard.y+resumeCard.height,'resume caption clipped');
+ await page.screenshot({path:`${out}/${locale}-${width}x${height}-resume.png`});
+ await page.close();console.log('PASS home',locale,width,height,'including saved resume entry');
 }}finally{await browser.close();}

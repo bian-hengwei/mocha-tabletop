@@ -236,7 +236,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 - `tests/ui/poker-motion.integration.mjs`：双语八尺寸的叫分/等待手牌不透明、飞牌路径与落牌截图、快速连续出牌、换座/旋转/减少动态效果的取消恢复；支持 Chromium/WebKit。
 
-- `tests/ui/home-experience.integration.mjs`：双语八尺寸首页、人数筛选与游戏集合、寿司派对版/法官席位人数衔接、语言切换保留筛选、横屏战绩入口、选游戏/加入弹窗与旋转后的焦点恢复；支持 `TEST_BROWSER=webkit`。
+- `tests/ui/home-experience.integration.mjs`：双语八尺寸首页、人数筛选与游戏集合、寿司派对版/法官席位人数衔接、语言切换保留筛选、保留牌桌恢复入口时的完整首牌、横屏战绩入口、选游戏/加入弹窗与旋转后的焦点恢复；支持 `TEST_BROWSER=webkit`。
 - `BASE_URL=http://127.0.0.1:5174 node tests/ui/undercover-dealer.integration.mjs`：十二人发词工具、旧回合存档兼容、换座隐藏秘密词、语言切换保留词语与帮助弹窗；中英七尺寸和横竖屏切换，可用 `TEST_BROWSER=webkit`。
 
 ## 你画我猜（接龙版）
