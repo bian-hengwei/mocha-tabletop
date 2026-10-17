@@ -121,6 +121,7 @@ npx playwright install chromium webkit
 | `node tests/ui/gems-layout.integration.mjs` | 宝石牌桌布局 |
 | `node tests/ui/bombs-table.integration.mjs` | 喵喵危机牌桌布局 |
 | `node tests/ui/avalon-ballot-receipts.integration.mjs` | 迷雾远征本人表决/任务牌提交回执：实际 App 十人操作、刷新恢复、换席与阶段切换清理；身份隐藏与中英八尺寸旋转，支持 WebKit |
+| `node tests/ui/bombs-hand-scroll.integration.mjs` | 喵喵危机中英八尺寸手牌溢出提示、横向滚动到末张及返回、选择清除、换座/观战切换和缩放时提示更新；支持 WebKit。可用 `TEST_BROWSER=webkit`、`TEST_LOCALES=zh` 或 `TEST_LOCALES=en` 单独运行。 |
 | `node tests/ui/social.integration.mjs` | 月夜议会单次闭眼、女巫阶段等待与迷雾远征直接投票、座位操作；支持 WebKit |
 | `node tests/ui/social-hosted.integration.mjs` | 月夜议会法官、发身份界面 |
 | `node tests/ui/social-max.integration.mjs` | 最大人数的身份和座位布局 |

@@ -160,6 +160,9 @@
       "script": "tests/ui/bombs-experience.integration.mjs"
     },
     {
+      "script": "tests/ui/bombs-hand-scroll.integration.mjs"
+    },
+    {
       "script": "tests/ui/uno-sushi-viewport.integration.mjs"
     },
     {
