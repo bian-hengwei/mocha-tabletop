@@ -7,6 +7,7 @@ import {useDialog} from './useDialog';
 import {DrawRelayCanvas} from './DrawRelayCanvas';
 import {DrawingTools} from './DrawingTools';
 import './draw-relay-table.css';
+import './relay-gallery-reading.css';
 
 type Props={view:GameView;selfID:string;command:(command:Command)=>void;onReplay?:()=>void};
 type Task={id:string;book:number;step:number;kind:'drawing'|'text'};

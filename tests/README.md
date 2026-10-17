@@ -266,3 +266,5 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 `node tests/network/reaction-storage.integration.mjs` 使用本地 workerd/SQLite 验证跨块图片字节、写入中途失败的事务回滚、并发版本冲突、实例隔离及删除。管理页集成还验证并发上传与服务重启后的持久化。
 
 表情管理集成支持 `TEST_BROWSER=webkit`，并检查无名称的单文件/批量上传、混合有效/无效文件、GIF 首帧像素、原动图字节保持及减少动态效果的静态图片选择。
+
+- `BASE_URL=<vite> node tests/ui/relay-gallery-reading.integration.mjs`：十二人终局画册，中英八尺寸的四边完整画作、保持比例、可达的画册与翻页/重开控件、旋转与焦点；支持 WebKit。

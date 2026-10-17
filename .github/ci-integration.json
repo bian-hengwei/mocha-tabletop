@@ -263,6 +263,9 @@
     },
     {
       "script": "tests/ui/feedback.integration.mjs"
+    },
+    {
+      "script": "tests/ui/relay-gallery-reading.integration.mjs"
     }
   ]
 }
