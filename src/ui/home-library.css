@@ -21,3 +21,22 @@
 @media(max-height:460px) and (orientation:landscape) and (max-width:700px){
  .library-result-count{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 }
+
+/* Keep the readable cover layout within the space left by the filters and recovery entry. */
+.app .home-shell:has(.library-filters) .game-library{grid-auto-rows:min(224px,100%)}
+@media(max-width:700px){
+ .app .home-shell:has(.library-filters) .game-library{grid-auto-rows:min(202px,100%)}
+}
+@media(max-height:460px) and (orientation:landscape){
+ .app .home-shell:has(.library-filters) .home-hero{padding:4px 0;gap:0}
+ .app .home-shell:has(.library-filters) .home-entry-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px}
+ .app .home-shell:has(.library-filters) .resume-session{flex-direction:row;align-items:center;justify-content:space-between;min-height:44px;padding:0;gap:8px}
+ .app .home-shell:has(.library-filters) .game-library{grid-auto-rows:min(104px,100%)}
+ .app .home-shell:has(.library-filters) .home-footer{padding:0;min-height:44px}
+}
+
+@media(max-height:650px) and (orientation:portrait){
+ .app .home-shell:has(.library-filters):has(.resume-session) .home-hero{padding:12px 0 10px;gap:10px}
+ .app .home-shell:has(.library-filters):has(.resume-session) .resume-session{padding:8px 12px;gap:6px}
+ .app .home-shell:has(.library-filters):has(.resume-session) .library-filters{padding-block:6px}
+}

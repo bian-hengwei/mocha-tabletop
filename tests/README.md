@@ -62,7 +62,7 @@ npx playwright install chromium webkit
 
 | 命令 | 验证范围 |
 | --- | --- |
-| `node tests/ui/home-cover-readability.integration.mjs` | 首页中英八尺寸、含恢复入口：14 个封面的完整名称/人数与插画分区、短横屏入口、触控与全部选桌入口、弹窗旋转/关闭/焦点；支持 WebKit |
+| `node tests/ui/home-cover-readability.integration.mjs` | 首页中英八尺寸、含恢复入口：14 个封面及按人数筛选后的完整名称/人数与插画分区、可辨认插画面积、短横屏入口、触控与全部选桌入口、弹窗旋转/关闭/焦点；支持 WebKit |
 | `node tests/ui/gem-purchase-quotes.integration.mjs` | 晶石购买费用：逐色原价/奖励/折后费用/筹码/缺色、黄金统一补缺、免费购买、确认/取消、焦点与中英八尺寸旋转；支持 WebKit |
 | `node tests/ui/gems-inspector.integration.mjs` | 晶石牌详情区分筹码不足、预留满位、自己的预留、他人预留、已购牌、等待及支付阶段；中英八尺寸与旋转，支持 WebKit |
 | `node tests/ui/gems-bank.integration.mjs` | 晶石筹码区中英八尺寸：可见取色数量/同色库存条件、不足三色、满手后归还、六色完整可见、44px 触控、选择/取消与旋转；支持 WebKit |

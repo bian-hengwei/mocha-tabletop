@@ -25,6 +25,7 @@ try{for(const locale of ['zh','en'])for(const [width,height]of sizes)for(const s
    if(title.scrollWidth>title.clientWidth+1||title.scrollHeight>title.clientHeight+1)throw Error('Clipped name: '+title.textContent);
    const a=rect(art),c=rect(caption),overlap=Math.max(0,Math.min(a.right,c.right)-Math.max(a.x,c.x))*Math.max(0,Math.min(a.bottom,c.bottom)-Math.max(a.y,c.y));
    if(overlap>1)throw Error('Art and caption overlap: '+title.textContent);
+   if(Math.min(a.width,a.height)<60)throw Error('Artwork too small: '+title.textContent);
    if(parseFloat(getComputedStyle(title).fontSize)<16)throw Error('Small game title');
   }
   const controls=[...document.querySelectorAll('.home-entry-actions button,.home-footer button,.resume-session button')];
@@ -40,6 +41,10 @@ try{for(const locale of ['zh','en'])for(const [width,height]of sizes)for(const s
   await page.keyboard.press('Escape');await expect(card).toBeFocused();
  }
  await cards.first().scrollIntoViewIfNeeded();await checkRects();
+ const players=page.locator('.library-filters select');
+ await players.selectOption('2');await expect(cards).toHaveCount(5);await checkRects();
+ await page.screenshot({path:`${out}/${locale}-${width}x${height}${saved?'-resume':''}-filtered.png`});
+ await players.selectOption('');await expect(cards).toHaveCount(14);
  await page.locator('.home-entry-actions button').first().click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('.home-entry-actions button').first()).toBeFocused();
  await page.locator('.home-footer .install-button').click();await expect(page.locator('.install-panel')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('.home-footer .install-button')).toBeFocused();
  await page.locator('.home-footer .text-button').click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('.home-footer .text-button')).toBeFocused();

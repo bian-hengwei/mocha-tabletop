@@ -44,6 +44,18 @@ describe('relay active task stability',()=>{
   expect(()=>drawrelay.apply(s,'player_4',{action:'stroke',values:['3:1',stroke]})).toThrow('接龙已换页');
   expect(JSON.stringify(drawrelay.view(s,'',true))).not.toContain('Independent guess');
  });
+ it('keeps private opening choices and their saved draft with the pinned task across arrival, restore and switching',()=>{
+  let s=drawrelay.create(players(3),1,{relayMode:'queue',language:'en'});
+  const choices=structuredClone(drawrelay.view(s,'player_1').board.openingPrompts);
+  s=drawrelay.apply(s,'player_1',{action:'draft',values:['1:0'],text:choices[1]});
+  s=pass(s,0);
+  s=JSON.parse(JSON.stringify(s));validateRelayState(s,90,'queue');
+  expect(drawrelay.view(s,'player_1').board).toMatchObject({taskID:'1:0',openingPrompts:choices,draft:{text:choices[1]}});
+  s=drawrelay.apply(s,'player_1',{action:'task',values:['0:1']});
+  expect(drawrelay.view(s,'player_1').board.openingPrompts).toBeUndefined();
+  s=drawrelay.apply(s,'player_1',{action:'task',values:['1:0']});
+  expect(drawrelay.view(s,'player_1').board).toMatchObject({openingPrompts:choices,draft:{text:choices[1]}});
+ });
  it('selects an arriving task only when the recipient has no pending task',()=>{
   let s=drawrelay.create(players(3),1,{relayMode:'queue'});s=pass(s,1);
   expect(drawrelay.view(s,'player_1').board.draft).toBeUndefined();
