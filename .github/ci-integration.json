@@ -61,6 +61,14 @@
         "TEST_ACTION_DELAY_MS": "600",
         "TEST_SKIP_OFFLINE": "1"
       }
+    },
+    {
+      "script": "tests/ui/relay-lobby-players.integration.mjs",
+      "isolated": true
+    },
+    {
+      "script": "tests/network/relay-lobby-players.integration.mjs",
+      "isolated": true
     }
   ],
   "classic": [

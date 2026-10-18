@@ -276,3 +276,5 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `npx vitest run tests/relay-gallery.test.ts tests/network/draw-relay-server.test.ts tests/network/recovery.test.ts`：终局接龙仅允许画册浏览绕过其他玩家离线暂停；覆盖身份、页码、revision、非终局/其他动作以及本机运输断线边界。
 - `TEST_FRONTEND=<vite-proxied-to-worker> node tests/network/relay-gallery-recovery.integration.mjs`：真实 cloud/LAN 三人同步接龙结束后他人离线，房主/访客翻页、独立游标和重连；拒绝未结束操作、观众和畸形/越界页码。
 - `BASE_URL=<vite> node tests/ui/relay-gallery-recovery.integration.mjs`：真实 App 配合模拟离线快照，中英八尺寸文字/画页、切册、翻页边界、刷新和日志弹窗旋转；新局继续暂停。
+
+接龙准备室人数：`npx vitest run tests/relay-lobby.test.ts tests/network/relay-lobby-server.test.ts` 覆盖 3–12 人目标、旧房间兼容、房主权限、人数不足与低于已入座人数时的拒绝、准备状态重置，以及开局和存档人数一致性。`BASE_URL=<Vite> TEST_API_BASE=<Worker> node tests/ui/relay-lobby-players.integration.mjs` 检查真实房间的人数调整、访客只读、刷新和中英八尺寸布局；`TEST_FRONTEND=<Vite> TEST_API_BASE=<Worker> node tests/network/relay-lobby-players.integration.mjs` 检查云端/局域网及两种接龙模式中的同房间增减人数、审批、断线座位和切云恢复。需要 Vite 代理同一 Worker，Worker 使用当前构建资源；两项集成脚本在 CI 的 app 组中各自使用隔离服务。

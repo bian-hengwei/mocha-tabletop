@@ -22,3 +22,5 @@
 .profile-editor .avatar-grid::-webkit-scrollbar{width:8px}
 .profile-editor .avatar-grid::-webkit-scrollbar-track{background:#ffffff12;border-radius:8px}
 .profile-editor .avatar-grid::-webkit-scrollbar-thumb{background:#c9b582;border:2px solid #25362d;border-radius:8px}
+
+.lobby-player-count select{min-height:44px;height:44px}

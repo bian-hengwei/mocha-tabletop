@@ -6,7 +6,7 @@ import {discoveryNetwork} from './discovery';
 import {applyRoomSocial,emptySocial,forgetSocialActor,socialView,type SocialState} from '../src/core/roomSocial';
 import {botTurnDelay,changeBots,nextBotSeat,stepBot,continueBotRound} from '../src/core/roomBots';
 import {supportsBots} from '../src/core/bots';
-import { isRelayGalleryNavigation,advanceMatchClock,pauseMatchClock,resumeMatchClock,applyMatch,createMatch,matchDeadline,validKind,validProfile,viewRoomMatch,MAX_SPECTATORS,normalizeGameOptions,roomLimits,validateMatchForRoom,type MatchState,type RoomInfo,type RoomMode,type RoomCandidate } from '../src/core/room';
+import { isRelayGalleryNavigation,advanceMatchClock,pauseMatchClock,resumeMatchClock,applyMatch,createMatch,matchDeadline,validKind,validProfile,viewRoomMatch,MAX_SPECTATORS,normalizeGameOptions,roomLimits,validateLobbySeats,validateMatchForRoom,type MatchState,type RoomInfo,type RoomMode,type RoomCandidate } from '../src/core/room';
 import type {Player} from '../src/core/types';
 interface Env extends ReactionEnv {ROOMS:DurableObjectNamespace<GameRoom>;DIRECTORY:DurableObjectNamespace<RoomDirectory>;ASSETS:Fetcher;ALLOWED_ORIGINS?:string}
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store'}});
@@ -270,6 +270,7 @@ export class GameRoom extends DurableObject<Env>{
     if(r.started)throw new Error('牌局已开始');r.players=r.players.map(p=>p.id===id?{...p,ready:!!msg.ready}:p);
    }else if(msg.type==='start'){
     if(id!==r.hostID||r.started)throw new Error('只有房主能开始');
+    if(r.kind==='drawrelay'&&r.options?.relayPlayers!==undefined&&r.players.length!==r.options.relayPlayers)throw new Error('入座人数与本局人数不一致，请等待入座或调整本局人数');
     if(r.players.length<roomLimits(r.kind,r.options).min||r.players.length>roomLimits(r.kind,r.options).max)throw new Error(`需要 ${roomLimits(r.kind,r.options).min}–${roomLimits(r.kind,r.options).max} 人`);
     if(r.players.some(p=>!p.ready||!this.connected(p.id)))throw new Error('请等待所有玩家准备');
     if(r.mode==='lan'&&(!Array.isArray(msg.directPeers)||r.players.some(p=>p.id!==id&&!p.bot&&!msg.directPeers.includes(p.id))))throw new Error('等待局域网直连完成');
@@ -278,7 +279,7 @@ export class GameRoom extends DurableObject<Env>{
    }else if(msg.type==='replay'||msg.type==='endGame'){
     if(id!==r.hostID)throw new Error('只有房主能结束本局');r.started=false;delete r.matchID;delete r.botError;delete d.match;r.players=r.players.map(p=>({...p,ready:!!p.bot||p.id===id}));
    }else if(msg.type==='selectGame'){
-    if(id!==r.hostID||r.started)throw new Error('请先回到房间');validKind(msg.kind);if(!supportsBots(msg.kind)&&r.players.some(p=>p.bot))throw new Error('请先移除人机，再切换到此游戏');const options=normalizeGameOptions(msg.kind,msg.options,r.hostID);if(r.players.length>roomLimits(msg.kind,options).max)throw new Error('当前人数超过上限');r.kind=msg.kind;r.options=options;r.players=r.players.map(p=>({...p,ready:!!p.bot||p.id===id}));
+    if(id!==r.hostID||r.started)throw new Error('请先回到房间');validKind(msg.kind);if(!supportsBots(msg.kind)&&r.players.some(p=>p.bot))throw new Error('请先移除人机，再切换到此游戏');const options=normalizeGameOptions(msg.kind,msg.options,r.hostID);validateLobbySeats(msg.kind,options,r.players.length);r.kind=msg.kind;r.options=options;r.players=r.players.map(p=>({...p,ready:!!p.bot||p.id===id}));
    }else if(msg.type==='switchToCloud'){
     if(id!==r.hostID||r.mode!=='lan')throw new Error('仅局域网房主可切换');
     if(r.started)d.match=pauseMatchClock(validateMatchForRoom(msg.match,r),r.kind,r.players,now);

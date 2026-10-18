@@ -1,4 +1,6 @@
 export const appText:Record<string,string>={
+'本局人数':'Players this game','按入座人数（3–12）':'Use seated count (3–12)','本局人数须为 3–12 人':'Choose 3–12 players for this game','本局人数不能少于已入座人数；请让玩家离桌或转为观众，离线座位可由房主移除':'The player count cannot be below the seated count. Players can leave or watch; the host can remove offline seats.','入座人数与本局人数不一致，请等待入座或调整本局人数':'Wait for the planned players to take their seats, or change Players this game.',
+
 "观战席":"Spectators",
 "正在观战":"Watching",
 "观众":"Audience",
