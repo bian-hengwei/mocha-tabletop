@@ -86,6 +86,7 @@ export function App() {
     useEffect(()=>{document.title=locale==='zh'?'Mocha 桌游':'Mocha Tabletop';document.querySelector('link[rel="manifest"]')?.setAttribute('href',locale==='zh'?'/manifest-mocha.webmanifest':'/manifest-mocha-en.webmanifest');},[locale]);
     const [boot] = useState(() => {
         const url = new URL(location.href), roomCode = url.searchParams.get('room')?.toUpperCase() || '', savedSession = client.getSavedSession(), checkpoint = readPractice();
+        if (!checkpoint) try { if (localStorage.getItem('mocha-practice-v1') !== null) writePractice(null); } catch {}
         return {roomCode, savedSession, checkpoint, roomIntent:!!(roomCode || savedSession), showJoin:!!roomCode && roomCode !== savedSession?.code};
     });
     const [practiceRecovery, setPracticeRecovery] = useState<PracticeRecovery>({active:boot.roomIntent ? null : boot.checkpoint, backup:boot.checkpoint});
