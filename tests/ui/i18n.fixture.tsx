@@ -22,6 +22,7 @@ import {ActionSheet,ActionDock} from '../../src/ui/Boards';
 const params=new URLSearchParams(location.search),kind=(params.get('kind')||'gems') as GameKind;
 const players=Array.from({length:params.get("players")==="max"?roomLimits(kind).max:kind==='uno'&&params.get("players")==="10"?10:params.get("scenario")==="challenge"?3:GAMES[kind].min},(_,i)=>({id:`english-player-${i}`,name:['Alex','Blair','Casey','Drew','Eli','Frank','Grace','Hayden','Indigo','Jules'][i]||`Player ${i+1}`,avatar:['🦊','🐼','🐱','🐻'][i%4]}));
 if(params.get('names')==='long')players.forEach((player,i)=>{player.name=`${i+1} Alexandria长名字`;});
+if(kind==='drawguess'&&params.get('names')==='literal')players[1].name='中文 狼人杀 猜对了';
 function initialGame(){
  if(kind==='undercover'&&params.get('scenario')==='late-speaker'){
   const game=modules.undercover;
