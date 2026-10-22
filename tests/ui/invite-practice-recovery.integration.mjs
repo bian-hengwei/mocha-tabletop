@@ -6,10 +6,10 @@ const base=process.env.BASE_URL||'http://127.0.0.1:5250';
 const engine=process.env.TEST_BROWSER==='webkit'?'webkit':'chromium';
 const browser=await(engine==='webkit'?webkit:chromium).launch({headless:true});
 const out=process.env.RECOVERY_SHOTS||`test-results/invite-practice-recovery-${engine}`;
-const sizes=engine==='webkit'?[[320,568]]:[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900],[667,375]];
+const sizes=engine==='webkit'?[[568,320]]:[[320,568],[390,844],[430,932],[568,320],[844,390],[932,430],[768,1024],[1440,900]];
 const labels={
- zh:{dialog:'加入朋友的牌桌',close:'关闭',join:'入桌',cancel:'取消',solo:'单人人机',pass:'同屏试玩',menu:'牌桌菜单',endSolo:'结束单机',endPass:'结束试玩',ready:'准备好了'},
- en:{dialog:'Join a friend’s table',close:'Close',join:'Join',cancel:'Cancel',solo:'Solo vs bots',pass:'Pass & play',menu:'Table menu',endSolo:'End solo game',endPass:'End practice',ready:'Ready'},
+ zh:{dialog:'加入朋友的牌桌',close:'关闭',join:'入桌',cancel:'取消',discover:'发现附近',nearby:'附近的牌桌',enterCode:'输入房间码',solo:'单人人机',pass:'同屏试玩',menu:'牌桌菜单',endSolo:'结束单机',endPass:'结束试玩',ready:'准备好了'},
+ en:{dialog:'Join a friend’s table',close:'Close',join:'Join',cancel:'Cancel',discover:'Discover nearby',nearby:'Nearby tables',enterCode:'Enter room code',solo:'Solo vs bots',pass:'Pass & play',menu:'Table menu',endSolo:'End solo game',endPass:'End practice',ready:'Ready'},
 };
 const raw=page=>page.evaluate(()=>localStorage.getItem('mocha-practice-v1'));
 const checkpoint=async page=>JSON.parse(await raw(page)||'null')?.practice;
@@ -60,7 +60,7 @@ try{
  {
   const h=await host('pending'),g=await context('zh'),saved=await seed(g,'zh',{suffix:'pending'});
   try{
-   await invite(g,h.room.code,{other:true});const beforePending=await raw(g);await g.getByRole('dialog').getByRole('button',{name:labels.zh.join,exact:true}).click();await h.page.waitForFunction(id=>client.state.room.pending.some(p=>p.id===id),saved.profile.id);await expect(g.getByText('等待房主同意',{exact:true})).toBeVisible();assert.equal(await raw(g),beforePending);await g.locator('.connecting-overlay').getByRole('button',{name:labels.zh.cancel,exact:true}).click();await restored(g,saved.id);await expectCleanURL(g);assert.equal(await g.evaluate(()=>sessionStorage.getItem('mocha-room-session')),null);
+   await invite(g,'ZZZZZ2',{other:true});const beforePending=await raw(g);await g.getByRole('dialog',{name:labels.zh.dialog}).getByRole('button',{name:labels.zh.discover,exact:true}).click();await g.getByRole('dialog',{name:labels.zh.nearby}).waitFor();await g.getByRole('button').filter({hasText:'Host pending'}).click();await h.page.waitForFunction(id=>client.state.room.pending.some(p=>p.id===id),saved.profile.id);await expect(g.getByText('等待房主同意',{exact:true})).toBeVisible();assert.equal(await raw(g),beforePending);await g.locator('.connecting-overlay').getByRole('button',{name:labels.zh.cancel,exact:true}).click();await restored(g,saved.id);await expectCleanURL(g);assert.equal(await g.evaluate(()=>sessionStorage.getItem('mocha-room-session')),null);
   }finally{await closeHost(h);}
  }
 
@@ -106,7 +106,7 @@ try{
    for(let i=0;i<12&&!pmod.hasPracticeBotTurn(p);i++){const cmd=b.chooseBotCommand(pmod.practiceView(p),p.players[0].id,'easy',p.revision||1);if(!cmd)break;p=pmod.applyPractice(p,cmd);}
    if(!pmod.hasPracticeBotTurn(p))throw Error('No bot turn fixture');pmod.writePractice(p);return{id:p.id,revision:p.revision,raw:localStorage.getItem('mocha-practice-v1')};
   });
-  await invite(page,'ZZZZZ2',{token:'lifecycle'});await page.waitForTimeout(1800);assert.equal(await raw(page),saved.raw);await page.getByRole('dialog').getByRole('button',{name:labels.zh.close,exact:true}).click();await restored(page,saved.id);await page.waitForFunction(({id,revision})=>{const p=JSON.parse(localStorage.getItem('mocha-practice-v1')||'null')?.practice;return p?.id===id&&p.revision>revision;},{id:saved.id,revision:saved.revision});
+  await invite(page,'ZZZZZ2',{token:'lifecycle'});await page.waitForTimeout(900);assert.equal(await raw(page),saved.raw);await page.getByRole('dialog',{name:labels.zh.dialog}).getByRole('button',{name:labels.zh.discover,exact:true}).click();await page.getByRole('dialog',{name:labels.zh.nearby}).waitFor();assert.equal(await raw(page),saved.raw);await page.getByRole('button',{name:labels.zh.enterCode,exact:true}).click();await page.getByRole('dialog',{name:labels.zh.dialog}).waitFor();assert.equal(await raw(page),saved.raw);await page.getByRole('dialog',{name:labels.zh.dialog}).getByRole('button',{name:labels.zh.close,exact:true}).click();await restored(page,saved.id);await page.waitForFunction(({id,revision})=>{const p=JSON.parse(localStorage.getItem('mocha-practice-v1')||'null')?.practice;return p?.id===id&&p.revision>revision;},{id:saved.id,revision:saved.revision});
  }
  {
   const page=await context('en');

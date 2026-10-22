@@ -45,6 +45,7 @@ function tx(value: ReactNode): ReactNode { return typeof value === 'string' ? t(
 const client = new RoomClient();
 const kinds = Object.keys(GAMES) as GameKind[];
 interface PracticeRecovery {active: Practice | null; backup: Practice | null}
+type RoomIntent = 'none' | 'deferred' | 'connecting';
 function withoutParameter(raw: string, name: string) {
     return raw.split('&').filter(part => {
         const rawKey = part.split('=', 1)[0];
@@ -79,6 +80,7 @@ export function App() {
         return {roomCode, savedSession, checkpoint, roomIntent:!!(roomCode || savedSession), showJoin:!!roomCode && roomCode !== savedSession?.code};
     });
     const [practiceRecovery, setPracticeRecovery] = useState<PracticeRecovery>({active:boot.roomIntent ? null : boot.checkpoint, backup:boot.checkpoint});
+    const [roomIntent, setRoomIntent] = useState<RoomIntent>(boot.roomIntent ? 'deferred' : 'none');
     const practice = practiceRecovery.active;
     const [profile, setProfile] = useState<Player | null>(() => readProfile() || boot.savedSession?.profile || null), [state, setState] = useState<ClientState>(client.state), [selectedGame, setSelectedGame] = useState<GameKind | null>(null), [sheet, setSheet] = useState<Sheet>(boot.showJoin ? 'join' : null), [mode, setMode] = useState<RoomMode>('lan'), [action, setAction] = useState<{
         a: Action;
@@ -90,6 +92,7 @@ export function App() {
     const practiceBackupRef = useRef(practiceRecovery.backup);
     const setRecovery = (active: Practice | null, backup = practiceBackupRef.current) => { practiceRef.current = active; practiceBackupRef.current = backup; setPracticeRecovery({active, backup}); };
     const updatePractice = (next: Practice) => { setRecovery(next, next); };
+    const beginRoomAttempt = () => { if (practiceRef.current) setRecovery(null, practiceRef.current); setRoomIntent('connecting'); };
     const restorePractice = () => { if (practiceRef.current) return; const backup = practiceBackupRef.current || readPractice(); if (backup) setRecovery(backup, backup); };
     const clearStoredPractice = () => { try { writePractice(null); } catch { setMessage('浏览器无法清除本地试玩存档'); } };
     const discardPractice = () => { const current = practiceRef.current || practiceBackupRef.current; let stored: Practice | null = null; try { stored = readPractice(); } catch {} setRecovery(null, null); if (!current || !stored || stored.id === current.id) clearStoredPractice(); };
@@ -116,8 +119,10 @@ export function App() {
     const soloRoundWaiting = !!practice && practiceBotRoundWaiting(practice);
     useEffect(() => client.subscribe(setState), []);
     useEffect(() => {
-        if (!boot.showJoin && boot.roomIntent && client.state.status === 'idle')
+        if (!boot.showJoin && boot.roomIntent && client.state.status === 'idle') {
+            setRoomIntent('connecting');
             void client.connect();
+        }
     }, []);
     useEffect(() => {
         if (!practice) return;
@@ -126,6 +131,7 @@ export function App() {
     }, [practice]);
     useEffect(() => {
         if (room) {
+            setRoomIntent('none');
             if (!practiceRef.current && !practiceBackupRef.current) return;
             const backup = practiceBackupRef.current || practiceRef.current;
             let stored: Practice | null = null;
@@ -134,13 +140,16 @@ export function App() {
             if (!backup || !stored || stored.id === backup.id) clearStoredPractice();
             return;
         }
-        if (practiceRef.current || sheet === 'join')
+        if (roomIntent === 'none' || practiceRef.current)
             return;
         if (['connecting', 'reconnecting', 'disconnected'].includes(client.state.status))
             return;
+        if (sheet)
+            return;
+        setRoomIntent('none');
         if (practiceBackupRef.current) restorePractice();
         clearInviteLocation();
-    }, [room?.code, state.status, state.error, sheet]);
+    }, [room?.code, state.status, state.error, sheet, roomIntent]);
     // The browser is the trusted host for pass-and-play. Restore and schedule the persisted deadline;
     // player commands themselves never carry a time-advance action.
     useEffect(() => {
@@ -251,11 +260,12 @@ export function App() {
     const findRooms = async () => { setSheet('nearby'); setFinding(true); setRooms(await client.discover()); setFinding(false); };
     const join = (c = code) => { if (!profile)
         return; const saved = client.getSavedSession(); if (saved?.code === c) {
+        beginRoomAttempt();
         void client.connect();
         setSheet(null);
         return;
     } if (saved && !confirm(t('加入另一张牌桌会替换本机的快捷恢复记录，继续？')))
-        return; const invite = new URLSearchParams(location.hash.slice(1)).get('invite') || undefined; void client.join(profile, c, invite,joinAsSpectator); setSheet(null); setSelectedGame(null); };
+        return; beginRoomAttempt(); const invite = new URLSearchParams(location.hash.slice(1)).get('invite') || undefined; void client.join(profile, c, invite,joinAsSpectator); setSheet(null); setSelectedGame(null); };
     const share = async () => { const url = state.inviteURL || `${location.origin}/?room=${room?.code}`; try {
         if (navigator.share)
             await navigator.share({ title: t('Mocha 桌游'), text: `${t('一起来玩')} ${t(GAMES[room!.kind].name)}`, url });
