@@ -61,12 +61,18 @@
         "TEST_ACTION_DELAY_MS": "600",
         "TEST_SKIP_OFFLINE": "1"
       }
-    }
-  ],
-  "classic": [
+    },
     {
       "script": "tests/ui/bot-pacing.integration.mjs"
     },
+    {
+      "script": "tests/ui/social-app-viewport.integration.mjs"
+    },
+    {
+      "script": "tests/ui/room-social.integration.mjs"
+    }
+  ],
+  "classic": [
     {
       "script": "tests/ui/mahjong-actions.integration.mjs"
     },
@@ -120,14 +126,14 @@
     },
     {
       "script": "tests/ui/poker-expanded-hand.integration.mjs"
+    },
+    {
+      "script": "tests/ui/uno-experience.integration.mjs"
     }
   ],
   "cards": [
     {
       "script": "tests/ui/room-social-games.integration.mjs"
-    },
-    {
-      "script": "tests/ui/uno-experience.integration.mjs"
     },
     {
       "script": "tests/ui/uno-penalty.integration.mjs"
@@ -189,9 +195,6 @@
       "script": "tests/network/room-social.integration.mjs"
     },
     {
-      "script": "tests/ui/room-social.integration.mjs"
-    },
-    {
       "script": "tests/ui/room-social-boundaries.integration.mjs"
     },
     {
@@ -220,9 +223,6 @@
     },
     {
       "script": "tests/ui/social-viewport.integration.mjs"
-    },
-    {
-      "script": "tests/ui/social-app-viewport.integration.mjs"
     },
     {
       "script": "tests/ui/word-usability.integration.mjs"
