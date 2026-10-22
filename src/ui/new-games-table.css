@@ -361,3 +361,9 @@
 
 .ng-century .ng-century-hand-panel>.ng-century-hand-heading{gap:2px 5px}
 .ng-century .ng-century-scroll-cue{font-size:10px;line-height:14px;font-weight:400;color:#c8c7aa;letter-spacing:normal;white-space:nowrap}
+
+/* Give compact market effects more room while preserving price and bonus rows. */
+@media(max-height:650px) and (orientation:portrait), (max-height:500px) and (orientation:landscape){
+ .ng-century .ng-century-page .ng-merchant-card>b{font-size:13px}
+ .ng-century .ng-century-page .ng-merchant-card>b .ng-spice-cube{width:17px;height:19px}
+}
