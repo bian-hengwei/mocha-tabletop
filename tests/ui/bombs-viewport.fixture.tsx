@@ -11,14 +11,21 @@ function initial(){let s=bombs.create(players,9);s.hands.p0=['defuse','attack','
  if(scenario==='target')s.phase={kind:'target',cards:[card('favor')]};
  if(scenario==='request')s.phase={kind:'request',cards:combo,target:'p1'};
  if(scenario==='response'){s.hands.p1=[card('attack','blair-attack'),card('nope','blair-nope')];s.current='p1';s=bombs.apply(s,'p1',{action:'play',values:['blair-attack']});}
- if(scenario==='give')s.phase={kind:'give',actor:'p1',target:'p0'};
+ if(scenario==='give'){
+  s.hands.p0=[card('favor')];
+  s.hands.p1=[card('defuse')];
+  s.current='p0';
+  s=bombs.apply(s,'p0',{action:'play',values:['favor']});
+  s=bombs.apply(s,'p0',{action:'target',values:['p1']});
+  for(const player of players)if(player.id!=='p0')s=bombs.apply(s,player.id,{action:'pass',values:[]});
+ }
  if(scenario==='future')s.phase={kind:'future',cards:s.deck.slice(0,3)};
  if(scenario==='bomb')s.phase={kind:'bomb',card:card('bomb')};
  if(scenario==='insert')s.phase={kind:'insert',card:card('bomb')};
- if(scenario==='spectator'){s.alive=s.alive.filter(id=>id!=='p0');s.current='p4';s.hands.p0=[];}
+ if(scenario==='spectator')s.current='p4';
  if(scenario==='finished'){s.alive=['p0'];s.hands.p1=[];}
  if(scenario==='discard')s.discard=['favor','shuffle','skip','attack','nope','moonCat','cloudCat','leafCat','starCat','sunCat','future','defuse','skip','attack'].map((kind,i)=>card(kind as BombKind,`discard-${i}`));
  return s;
 }
-function Fixture(){const [state,setState]=useState(initial),[viewer,setViewer]=useState('p0'),locale=useLocale();const view=bombs.view(state,viewer,viewer==='spectator');if(viewer==='spectator')view.spectating=true;return <main className="app in-game game-bombs"><header className="topbar"><b>{t('喵喵危机')}</b><div className="top-tools"><select aria-label="Seat" value={viewer} onChange={e=>setViewer(e.target.value)}>{players.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}<option value="spectator">Spectator</option></select><button onClick={()=>setLocale(locale==='zh'?'en':'zh')}>{locale==='zh'?'English':'中文'}</button></div></header><div className="game-surface"><BombsTable view={view} selfID={viewer} command={c=>setState(s=>bombs.apply(s,viewer,c))}/></div></main>}
+function Fixture(){const [state,setState]=useState(initial),[viewer,setViewer]=useState(scenario==='spectator'?'spectator':'p0'),locale=useLocale();const view=bombs.view(state,viewer,viewer==='spectator');if(viewer==='spectator')view.spectating=true;return <main className="app in-game game-bombs"><header className="topbar"><b>{t('喵喵危机')}</b><div className="top-tools"><select aria-label="Seat" value={viewer} onChange={e=>setViewer(e.target.value)}>{players.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}<option value="spectator">Spectator</option></select><button onClick={()=>setLocale(locale==='zh'?'en':'zh')}>{locale==='zh'?'English':'中文'}</button></div></header><div className="game-surface"><BombsTable view={view} selfID={viewer} command={c=>setState(s=>bombs.apply(s,viewer,c))}/></div></main>}
 createRoot(document.getElementById('root')!).render(<Fixture/>);

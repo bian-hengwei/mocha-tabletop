@@ -9,11 +9,11 @@ try{for(const locale of ['zh','en'])for(const [width,height] of [[320,568],[390,
  const seats=await page.locator(scenario==='finished'?'.ng-final-player':'.bt-seat').evaluateAll(xs=>xs.map(x=>{const r=x.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {width:r.width,height:r.height,left:r.left,right:r.right,hit:x.contains(hit)}}));
  assert.equal(seats.length,5);assert(seats.every(r=>r.width>=44&&r.height>=44&&r.left>=0&&r.right<=width&&r.hit),JSON.stringify({locale,width,scenario,seats}));
  assert(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+1&&document.documentElement.scrollWidth<=innerWidth+1));const actions=await page.locator('.bt-focus button,.bt-deck,.bt-hand-label button').evaluateAll(xs=>xs.map(x=>x.getBoundingClientRect().toJSON()).filter(r=>r.height&&r.width));assert(actions.every(r=>r.y>=0&&r.bottom<=height+1),'action vertical bounds');};
- const waiting=async(name,action)=>{await expect(page.locator('.bt-focus h2')).toHaveText(name);await expect(page.locator('.bt-focus p')).toHaveText(locale==='zh'?action.zh:action.en);};
+ const waiting=async(name,action,scenario,seat='p1')=>{await page.getByRole('combobox',{name:'Seat'}).selectOption(seat);await expect(page.locator('.bt-focus h2')).toHaveText(name);await expect(page.locator('.bt-focus p')).toHaveText(locale==='zh'?action.zh:action.en);await fit(`${scenario}-waiting`);if(width===320||width===844||width===568)await page.screenshot({path:`${out}/${locale}-${width}-waiting-${scenario}.png`,animations:'disabled'});};
  for(const scenario of ['turn','selected','response','target','request','give','future','bomb','insert','spectator','finished']){
  await page.goto(`${base}/tests/ui/bombs-viewport.fixture.html?scenario=${scenario}`);await page.locator(scenario==='finished'?'.ng-final-bombs':'.bt-table').waitFor();if(scenario==='selected')await page.locator('.bt-hand .bt-card').filter({hasText:locale==='zh'?'攻击':'Attack'}).first().click();await fit(scenario);
  if(width===320||width===844||width===568)await page.screenshot({path:`${out}/${locale}-${width}-${scenario}.png`,animations:'disabled'});
- if(scenario==='spectator'){await expect(page.locator('.bt-focus h2')).toHaveText('Ellie');await expect(page.locator('.bt-empty-hand')).toHaveText(locale==='zh'?'已出局':'Eliminated');await expect(page.locator('.bt-hand .bt-card')).toHaveCount(0);}
+ if(scenario==='spectator'){await expect(page.locator('.bt-focus h2')).toHaveText('Ellie');await expect(page.locator('.bt-hand-zone')).toHaveCount(0);await expect(page.locator('.bt-hand .bt-card')).toHaveCount(0);}
  if(scenario==='turn'){await page.locator('.bt-deck').click();await expect(page.locator('.bt-danger')).toBeVisible();await fit('draw-bomb');}
  if(scenario==='selected'){
   await page.locator('.bt-focus .bt-primary').click();await expect(page.locator('.bt-response')).toBeVisible();
@@ -37,16 +37,15 @@ try{for(const locale of ['zh','en'])for(const [width,height] of [[320,568],[390,
   }
   await expect(page.locator('.bt-phase-turn')).toBeVisible();await fit('counter-resolved');
  }
- if(scenario==='target'){await page.getByRole('combobox',{name:'Seat'}).selectOption('p1');await waiting('Alex',{zh:'选择目标',en:'Choose a player'});await page.getByRole('combobox',{name:'Seat'}).selectOption('p0');await page.locator('.bt-seat.targetable').last().click();await expect(page.locator('.bt-response')).toBeVisible();}
- if(scenario==='request'){await page.getByRole('combobox',{name:'Seat'}).selectOption('p1');await waiting('Alex',{zh:'指定牌名',en:'Name a card'});await page.getByRole('combobox',{name:'Seat'}).selectOption('p0');await page.locator('.bt-request button').last().scrollIntoViewIfNeeded();await fit('last-request');await page.locator('.bt-request button').last().click();await expect(page.locator('.bt-response')).toBeVisible();}
- if(scenario==='give'){await page.getByRole('combobox',{name:'Seat'}).selectOption('p1');await waiting('Alex',{zh:'挑选手牌',en:'Choosing a card'});await expect(page.locator('.bt-focus h2')).not.toHaveText(locale==='zh'?'你的回合':'Your turn');await page.getByRole('combobox',{name:'Seat'}).selectOption('p0');await page.locator('.bt-hand .bt-card').first().click();await page.locator('.bt-focus .bt-primary').click();await expect(page.locator('.bt-phase-turn')).toBeVisible();}
+ if(scenario==='target'){await waiting('Alex',{zh:'选择目标',en:'Choose a player'},scenario);await page.getByRole('combobox',{name:'Seat'}).selectOption('p0');await page.locator('.bt-seat.targetable').last().click();await expect(page.locator('.bt-response')).toBeVisible();}
+ if(scenario==='request'){await waiting('Alex',{zh:'指定牌名',en:'Name a card'},scenario);await page.getByRole('combobox',{name:'Seat'}).selectOption('p0');await page.locator('.bt-request button').last().scrollIntoViewIfNeeded();await fit('last-request');await page.locator('.bt-request button').last().click();await expect(page.locator('.bt-response')).toBeVisible();}
+ if(scenario==='give'){await waiting('Blair',{zh:'挑选手牌',en:'Choosing a card'},scenario,'p0');await page.getByRole('combobox',{name:'Seat'}).selectOption('p1');await expect(page.locator('.bt-focus .bt-eyebrow')).toHaveText(locale==='zh'?'交牌给 Alex':'Give a card to Alex');await page.locator('.bt-hand .bt-card').first().click();await page.locator('.bt-focus .bt-primary').click();await expect(page.locator('.bt-phase-turn')).toBeVisible();}
  if(scenario==='future'){
   await expect(page.locator('.bt-hand .bt-card:enabled')).toHaveCount(0);
   await expect(page.locator('.bt-hand .bt-selected')).toHaveCount(0);
-  await page.getByRole('combobox',{name:'Seat'}).selectOption('p1');
+  await waiting('Alex',{zh:'偷瞄牌堆',en:'Sneak peek'},scenario);
   await expect(page.locator('.bt-future-cards')).toHaveCount(0);
   await expect(page.locator('.bt-hand .bt-card:enabled')).toHaveCount(0);
-  await waiting('Alex',{zh:'偷瞄牌堆',en:'Sneak peek'});
   await page.getByRole('combobox',{name:'Seat'}).selectOption('p0');
   await page.locator('.bt-focus .bt-primary').click();
   await expect(page.locator('.bt-phase-turn')).toBeVisible();
@@ -54,11 +53,11 @@ try{for(const locale of ['zh','en'])for(const [width,height] of [[320,568],[390,
   await shuffle.click();await expect(shuffle).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('.bt-focus .bt-primary')).toHaveText(locale==='zh'?'打出这张':'Play this card');
  }
- if(scenario==='bomb'){await page.getByRole('combobox',{name:'Seat'}).selectOption('p1');await waiting('Alex',{zh:'处理爆炸牌',en:'Resolving Bomb'});await page.getByRole('combobox',{name:'Seat'}).selectOption('p0');await page.locator('.bt-danger .bt-quiet').click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await page.locator('.bt-danger .bt-primary').click();await expect(page.locator('.bt-insert')).toBeVisible();await fit('defused');}
+ if(scenario==='bomb'){await waiting('Alex',{zh:'处理爆炸牌',en:'Resolving Bomb'},scenario);await page.getByRole('combobox',{name:'Seat'}).selectOption('p0');await page.locator('.bt-danger .bt-quiet').click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await page.locator('.bt-danger .bt-primary').click();await expect(page.locator('.bt-insert')).toBeVisible();await fit('defused');}
  if(scenario==='insert'){
   const endpoints=await page.locator('.bt-insert').evaluate(x=>{const range=x.querySelector('.bt-insert-range').getBoundingClientRect(),buttons=[...x.querySelectorAll('.bt-quiet')].map(b=>b.getBoundingClientRect());return {left:Math.abs(buttons[0].left-range.left),right:Math.abs(buttons[1].right-range.right),sizes:buttons.map(b=>({width:b.width,height:b.height}))}});
   assert(endpoints.left<=1&&endpoints.right<=1&&endpoints.sizes.every(b=>b.width>=44&&b.height>=44),'range shortcuts align with their ends and are touchable');
- await page.getByRole('combobox',{name:'Seat'}).selectOption('p1');await waiting('Alex',{zh:'秘密放回爆炸牌',en:'Secretly returning Bomb'});await page.getByRole('combobox',{name:'Seat'}).selectOption('p0');
+ await waiting('Alex',{zh:'秘密放回爆炸牌',en:'Secretly returning Bomb'},scenario);await page.getByRole('combobox',{name:'Seat'}).selectOption('p0');
   await page.locator('.bt-insert .bt-quiet').last().click();await page.locator('.bt-insert .bt-primary').click();await expect(page.locator('.bt-phase-turn')).toBeVisible();}
  }
  assert.deepEqual(errors,[]);await context.close();console.log(`PASS bombs ${locale} ${width}x${height}`);
