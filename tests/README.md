@@ -91,6 +91,7 @@ npx playwright install chromium webkit
 | `node tests/ui/sushi-table.integration.mjs` | 寿司双语八尺寸：五人盘面切换、卷数与布丁、料理详情与旋转焦点、筷子选牌顺序和换座隐私；真实 App 三轮完赛、刷新锁定恢复及结算重开，支持 WebKit |
 | `node tests/ui/hand-experience.integration.mjs` | 寿司单张点选/取消与单独确认、快速双触不提交、筷子顺序与取消锁定；商旅固定操作区；猫牌换选/组合与双击；中英八尺寸，支持 WebKit |
 | `node tests/ui/uno-experience.integration.mjs` | UNO 双击/双触、万能牌选色、28 张单行手牌、等待回合的溢出滑动提示、10 人座位、八尺寸与旋转，支持 WebKit |
+| `node tests/ui/mahjong-response.integration.mjs` | 麻将仅本人已接受的过/碰/杠/胡/吃响应确认；双语八尺寸、换座、语言、旋转与公共牌面弹窗，支持 WebKit |
 | `node tests/ui/mahjong-actions.integration.mjs` | 麻将确定性场景：自摸、血流继续、暗杠、抢杠、胡优先、碰与流局；支持 WebKit |
 | `node tests/network/message-text.integration.mjs` | 真实 Worker 的结构化姓名、投票公开时机、本人表决/秘密任务提交回执、私密狼队计划与断线重连；使用 TEST_API_BASE |
 | `node tests/network/uno-mahjong-assistance.integration.mjs` | Uno 罚摸确认/重试去重/恢复、麻将私有助手计数与恢复；使用 TEST_API_BASE，清理测试房间 |

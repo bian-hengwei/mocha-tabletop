@@ -8,6 +8,11 @@ export const classicText:Record<string,string>={
 
  '呼叫转移':'Kong payment transfer',
  '等待响应':'Waiting for claims',
+ '已过 · 等待响应':'Passed · waiting for claims',
+ '胡牌已提交 · 等待响应':'Win submitted · waiting for claims',
+ '碰已提交 · 等待响应':'Pung submitted · waiting for claims',
+ '杠已提交 · 等待响应':'Kong submitted · waiting for claims',
+ '吃已提交 · 等待响应':'Chow submitted · waiting for claims',
  '血流 · 任意换':'Blood Flow · Any exchange',
  '血流 · 任意换三张':'Blood Flow · Any three',
  '红中血流':'Red Dragon Blood Flow',
