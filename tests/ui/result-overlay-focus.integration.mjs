@@ -7,6 +7,8 @@ const browser=await({chromium,webkit}[engine]).launch(),out=`test-results/result
 await fs.mkdir(out,{recursive:true});
 const sizes=[[320,568],[390,844],[430,932],[568,320],[844,390],[932,430],[768,1024],[1440,900]];
 const counts={gems:4,century:5,sushi:5,bombs:5,uno:10,codenames:4,avalon:5,werewolf:9,drawguess:3,doudizhu:3,mahjong:4};
+const games=process.env.TEST_GAME?[process.env.TEST_GAME]:Object.keys(counts);
+assert(games.every(kind=>Object.hasOwn(counts,kind)),'TEST_GAME must name a supported result endpoint');
 async function seed(page,kind,locale){
  await page.goto(`${base}/manifest-mocha.webmanifest`);
  return page.evaluate(async({kind,locale,count})=>{
@@ -16,7 +18,7 @@ async function seed(page,kind,locale){
   const p=createPractice(kind,count,profile,{language:locale,...(kind==='werewolf'?{werewolfMode:'standard'}:{})},undefined,11),g=p.game;
   // Explicit terminal UI fixtures: no claim of complete rule simulation.
   if(kind==='avalon')g.winner='正义获胜 · 梅林幸存';
-  else if(kind==='werewolf')g.winner='好人获胜';
+  else if(kind==='werewolf')g.winner='好人获胜 · 狼人全部出局';
   else if(kind==='bombs'){g.alive=[p.players[0].id];g.current=p.players[0].id;g.phase={kind:'turn'};}
   else if(kind==='doudizhu'){g.finished=true;g.winners=[p.players[0].id];}
   else if(kind==='mahjong'){g.finished=true;g.winners=[];}
@@ -32,13 +34,14 @@ async function seed(page,kind,locale){
 async function focusInside(page){assert(await page.evaluate(()=>!!document.activeElement?.closest('.end-banner')),'result owns focus');}
 async function dismiss(page){await page.keyboard.press('Escape');await expect(page.locator('.end-banner')).toHaveCount(0);await expect(page.locator('.topbar .brand button')).toBeFocused();}
 try{
- for(const locale of ['zh','en'])for(const kind of Object.keys(counts)){
+ for(const locale of ['zh','en'])for(const kind of games){
   const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'}),page=await context.newPage();page.setDefaultTimeout(7000);
   const errors=[];page.on('pageerror',e=>errors.push(e.message));const fixture=await seed(page,kind,locale);await page.goto(base);
   const banner=page.locator('.end-banner');await expect(banner).toBeVisible();
   if(kind==='mahjong'){await expect(banner).not.toHaveAttribute('role','dialog');assert.equal(await banner.evaluate(el=>getComputedStyle(el).position),'static');await page.getByRole('button',{name:locale==='zh'?'牌桌菜单':'Table menu',exact:true}).click();await expect(page.locator('.app-modal')).toBeVisible();await page.keyboard.press('Escape');}
   else{
    await expect(banner).toHaveAttribute('role','dialog');await expect(banner).toHaveAttribute('aria-modal','true');await expect(banner).toHaveAccessibleName(/.+/);await focusInside(page);
+   if(kind==='werewolf')await expect(banner).toHaveAccessibleName(locale==='zh'?'好人获胜 · 狼人全部出局':'Council wins · All Werewolves have left');
    for(let i=0;i<5;i++){await page.keyboard.press('Tab');await focusInside(page);}await page.keyboard.press('Shift+Tab');await focusInside(page);
    assert(await page.locator('.topbar').evaluate(el=>!!el.closest('[inert]')));
    const representative=['codenames','avalon','gems','century','sushi'].includes(kind);
@@ -58,7 +61,7 @@ try{
   }
   assert.deepEqual(errors,[]);await context.close();console.log('PASS result endpoint',engine,locale,kind,'focus/Tab/Escape/replay or unchanged inline');
  }
- for(const role of ['host','guest'])for(const existing of ['menu','word-help','none']){
+ for(const role of process.env.TEST_GAME?[]:['host','guest'])for(const existing of ['menu','word-help','none']){
   const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});let socket,lastSnapshot;const messages=[];
   await context.routeWebSocket('**/api/rooms/**',ws=>{socket=ws;ws.onMessage(raw=>{const message=JSON.parse(String(raw));messages.push(message);if(message.type==='hello'&&lastSnapshot)ws.send(JSON.stringify(lastSnapshot));});});
   await context.addInitScript(()=>{localStorage.setItem('mocha-locale','en');sessionStorage.setItem('mocha-room-session',JSON.stringify({profile:{id:'result-player-0',name:'Mocha',avatar:'🦊'},code:'ABC234',token:'a'.repeat(48),savedAt:Date.now(),expiresAt:Date.now()+3600000}));});
