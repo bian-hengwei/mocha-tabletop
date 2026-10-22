@@ -28,7 +28,7 @@ npm run check
 
 基础检查只构建一次，将通过检查的 `dist/` 作为当前运行的临时 artifact 交给四个集成组，保留一天。各组随后并行启动独立 runner、Vite 和本地 Worker，组内顺序执行。虽然界面脚本通过 Vite 读取源码，Worker 的资源绑定仍需要 `dist/`；不能省略或用其他提交的构建替代。每个脚本输出名称、结果、耗时，并写入 Actions job summary。一组失败后该组剩余脚本标记为未运行，其他组继续完成以提供独立诊断。服务启动失败会及时终止并输出服务日志。
 
-最终 `check` 只有在基础检查和所有集成组成功时通过；失败、取消或跳过均不能视为通过。同一 PR 的新提交会取消其过期运行。该优化保留每个 PR 的完整既有覆盖，不按文件路径跳过 UI 检查；跨组启动和浏览器安装会增加一些总 runner 开销，实际等待时间以 Actions 记录为准。
+最终 `check` 只有在基础检查和所有集成组成功时通过；失败、取消或跳过均不能视为通过。同一 PR 的新提交会取消其过期运行。该优化保留每个 PR 的完整既有覆盖，不按文件路径跳过 UI 检查；跨组启动和容器拉取会增加一些总 runner 开销，实际等待时间以 Actions 记录为准。
 
 本地可查看或复现分组。先运行 `npm run build` 准备 Worker 需要的资源，再按下一节启动所需服务：
 
@@ -45,7 +45,7 @@ BASE_URL=http://127.0.0.1:5174 TEST_API_BASE=http://127.0.0.1:8787 node scripts/
 
 全游戏接入脚本会创建 12 个房间，放在 `cards` 隔离 runner；其余房间通信脚本放在 `social`。接龙联机的四种完整对局在清单中标记 `isolated: true`，由 `scripts/isolated-integration.mjs` 启动独立的本地 Worker、Vite、临时配置与存储，并使用空闲端口，避免累计建房触发其他脚本的限流窗口。包装器保留脚本参数、全部场景和退出状态，失败时输出服务日志，并清理自己启动的进程和临时目录；不修改产品限流。可直接运行 `node scripts/isolated-integration.mjs tests/network/draw-relay.integration.mjs` 复现（需要当前 `dist/`）。
 
-CI 浏览器依赖安装保留完整字体和系统库，设置 APT 网络超时及更新失败检查，整个安装步骤最多五分钟；测试组另有二十分钟上限。软件源故障会明确失败，不自动重试或跳过依赖。
+CI 集成组使用与锁定的 Playwright 1.55.1 匹配的[官方 Noble 容器](https://playwright.dev/docs/docker)，按版本和镜像 digest 固定浏览器、字体与系统库，不在运行时通过 APT 安装。`npm ci` 仍安装项目依赖，Node.js 保持 22；浏览器启动检查最多一分钟，测试组另有二十分钟上限。更新 Playwright 时需同步核验镜像版本和 digest；镜像拉取或浏览器启动故障会明确失败，不自动重试或跳过检查。
 
 `npx vitest run tests/network/social-client.test.ts tests/network/server-recovery.test.ts` 校验发送确认、超时不自动重发、旧确认过滤、时钟偏差、断线、解散清理，以及旧连接回包不能污染新房间；服务端回归检查解散时持久化数据不再含聊天，后续关闭回调不能重建记录。`node tests/ui/room-social-boundaries.integration.mjs` 使用固定传输快照覆盖 80 条记录与滚动位置、关闭弹窗后恢复气泡、失败/超时保留草稿、输入法、双语七尺寸与焦点、观众只读/换席清理、奶牛动图实际逐帧变化及减少动态效果的静态替代图；支持 WebKit，不替代真实联机验收。
 
@@ -217,7 +217,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 ## 单机模式
 
 - `npx vitest run tests/drawguess.test.ts tests/practice.test.ts`：Mocha Sketch 的每人完整作画轮次、提示/答案隐私、受信任时钟、掉线剩余时间冻结、同屏试玩恢复与操作边界。
-- `BASE_URL=http://127.0.0.1:5311 node tests/ui/drawguess.integration.mjs`：Mocha Sketch 中英八种横竖屏尺寸（含 568×320）的私密选词、画布下边缘真实指针绘画、清空确认/取消、旋转、猜词、完整画布可达性与截图。可用 `TEST_BROWSER=webkit` 检查 WebKit。
+- `BASE_URL=http://127.0.0.1:5311 node tests/ui/drawguess.integration.mjs`：Mocha Sketch 中英八种横竖屏尺寸（含 568×320）的私密选词、画布下边缘真实指针绘画、清空确认/取消、旋转、猜词、完整画布可达性与截图；实际 App 还核对相同 seed 的后轮稳定、不同 seed 的后轮差异及旧存档 fallback。可用 `TEST_BROWSER=webkit` 检查 WebKit；`TEST_VIEWPORT_SCOPE=compact` 只跑 320×568 与 568×320。
 - `BASE_URL=http://127.0.0.1:5344 node tests/ui/drawing-feedback.integration.mjs`：真实浏览器按住时的本地笔迹、长笔划终点、一次提交、落点、右键、失焦、权限/换座/清空、双指归属与取消。可用 `TEST_BROWSER=webkit` 检查 WebKit；使用组件 fixture，不连接房间。
 - `BASE_URL=http://127.0.0.1:5311 node tests/ui/drawguess-input.integration.mjs`：Mocha Sketch 猜词输入在中英界面保留输入法候选草稿，兼容 `isComposing` 和 `keyCode=229` 的 Enter 路径；合成结束后普通 Enter 仍提交。可用 `TEST_BROWSER=webkit` 检查 WebKit；合成事件覆盖浏览器事件边界，不等同于系统输入法真机验收。
 - `BASE_URL=http://127.0.0.1:5311 node tests/ui/drawguess-rejection.integration.mjs`：本地延迟回执 fixture 覆盖拒绝保留草稿、权威猜词确认后清空、全角 NFKC 归一、等待时编辑代际、正确揭晓、换座与输入法保护；不连接真实房间。fixture 直接向组件注入 pending，真实联机界面在 `actionPending` 期间仍沿用既有的全局交互锁；拒绝解除后草稿保留并可继续提交。可用 `TEST_BROWSER=webkit` 检查 WebKit。

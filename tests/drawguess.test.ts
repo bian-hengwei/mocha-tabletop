@@ -8,6 +8,15 @@ const players:Player[]=[
  {id:'draw-player-1',name:'Birch',avatar:'🐼'},
  {id:'draw-player-2',name:'Cedar',avatar:'🐱'}
 ];
+function completeTurn(game:ReturnType<typeof drawguess.create>,now:number){
+ game=advanceDrawGuessClock(game,now);const word=drawguess.view(game,players[game.drawer].id).actions.find(a=>a.id==='choose')!.choices[0];game=drawguess.apply(game,players[game.drawer].id,{action:'choose',values:[word.id]});game=advanceDrawGuessClock(game,now+1);game=advanceDrawGuessClock(game,game.deadlineAt+1);return advanceDrawGuessClock(game,game.revealUntil+1);
+}
+function promptRounds(seed:number,language:'zh'|'en',legacy=false){
+ let game=drawguess.create(players,seed,{language,drawRounds:2,drawSeconds:45});if(legacy)delete game.seed;
+ const rounds=[];let now=1000;
+ while(!game.finished){const view=drawguess.view(game,players[game.drawer].id);rounds.push(view.actions.find(a=>a.id==='choose')!.choices.map(c=>c.title));game=completeTurn(game,now);now+=100000;}
+ return rounds;
+}
 describe('you draw, I guess',()=>{
  it('keeps prompts and answers out of other players and spectator views',()=>{
   let game=drawguess.create(players,7,{language:'en'});game=advanceDrawGuessClock(game,100);
@@ -57,5 +66,21 @@ describe('you draw, I guess',()=>{
   match=advanceMatchClock(match,'drawguess',players,match.game.deadlineAt+1);
   expect(match.game.phase).toBe('draw');
   expect(()=>applyMatch(match,'drawguess',players,players[0].id,{action:'choose',values:[choose.id]},'expired-choice',oldRevision)).toThrow('牌局已变化');
+ });
+ it('keeps later prompts tied to the match seed while preserving legacy fixed fallback',()=>{
+  expect(promptRounds(11,'en')).toEqual(promptRounds(11,'en'));
+  expect(promptRounds(11,'en')[1]).not.toEqual(promptRounds(137,'en')[1]);
+  expect(promptRounds(11,'zh')[1]).not.toEqual(promptRounds(137,'zh')[1]);
+  expect(promptRounds(11,'en',true)[1]).toEqual(['airplane','coffee','tree']);
+  const english=promptRounds(29,'en'),chinese=promptRounds(29,'zh');expect(english).toHaveLength(6);expect(chinese).toHaveLength(6);expect(new Set(english[0])).not.toEqual(new Set(chinese[0]));
+ });
+ it('stores the seed only in authority state and keeps every prompt private to its drawer',()=>{
+  let game=drawguess.create(players,29,{language:'en',drawRounds:2});expect(game.seed).toBe(29);
+  const checkPrivatePrompts=()=>{const drawerID=players[game.drawer].id,words=game.choices.flatMap(c=>[c.en,c.zh]),views=players.map(p=>drawguess.view(game,p.id)).concat(drawguess.view(game,'',true));
+   for(const view of views){expect(view).not.toHaveProperty('seed');expect(JSON.stringify(view)).not.toContain('"seed"');}
+   for(const [i,view] of views.entries())if(i!==game.drawer)for(const word of words)expect(JSON.stringify(view)).not.toContain(word);
+   expect(drawguess.view(game,drawerID).actions[0].choices).toHaveLength(3);
+  };
+  checkPrivatePrompts();game=completeTurn(game,1000);expect(game.round).toBe(2);expect(game.seed).toBe(29);checkPrivatePrompts();
  });
 });
