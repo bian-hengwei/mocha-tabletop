@@ -71,6 +71,7 @@ npx playwright install chromium webkit
 | `node tests/ui/gem-purchase-quotes.integration.mjs` | 晶石购买费用：逐色原价/奖励/折后费用/筹码/缺色、黄金统一补缺、免费购买、确认/取消、焦点与中英八尺寸旋转；支持 WebKit |
 | `node tests/ui/gems-inspector.integration.mjs` | 晶石牌详情区分筹码不足、预留满位、自己的预留、他人预留、已购牌、等待及支付阶段；中英八尺寸与旋转，支持 WebKit |
 | `node tests/ui/gems-bank.integration.mjs` | 晶石筹码区中英八尺寸：可见取色数量/同色库存条件、不足三色、满手后归还、六色完整可见、44px 触控、选择/取消与旋转；支持 WebKit |
+| `node tests/ui/gems-scarce-tokens.integration.mjs` | 真实试玩 App：仅两种颜色有库存时可取一枚或两枚，只余一种时取一枚；中英八尺寸的选择、取消、确认、库存转移、回合切换与布局；支持 WebKit，`TEST_VIEWPORT_SCOPE=compact` 只跑 320×568 与 568×320 |
 | `node tests/ui/classic-assets.integration.mjs` | 90 张本地牌面/底板/背面与三张封面解码，大小王颜色映射；支持 WebKit |
 | `node tests/ui/classic-orientation.integration.mjs` | 六种新玩法，中英文九种尺寸、手牌滚动到末张、44px 触控与旋转保留选择；支持 WebKit |
 | `node tests/ui/table-layout.integration.mjs` | 麻将四方座位/牌河、换座方位盘、对手仅背面、斗地主出牌方向与叫分/不出标记；中英八尺寸，支持 WebKit |

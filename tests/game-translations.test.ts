@@ -13,6 +13,9 @@ describe('engine translation coverage',()=>{
  it.each([
   ['0 张','0 cards'],['1 张','1 card'],['2 张','2 cards'],
   ['1 种颜色','1 color'],['2 种颜色','2 colors'],['3 种颜色','3 colors'],['或同色 2 枚','or 2 same'],
+  ['取 1 色，各 1 枚','1 color, 1 token'],['取 1–2 色，各 1 枚','1-2 colors, 1 token each'],['取 3 色，各 1 枚','3 colors, 1 each'],
+  ['拿取 1 种宝石','Take 1 color'],['拿取 1–2 种宝石','Take 1-2 different colors'],['拿取 3 种宝石','Take 3 different colors'],
+  ['取 1 种不同颜色，各取 1 枚','Take one token of the available color'],['取 1 或 2 种不同颜色，各取 1 枚','Take one token from each of 1 or 2 different colors'],['取 3 种不同颜色，各取 1 枚','Take one token from each of 3 different colors'],
   ['需要 3 位不同玩家','Needs 3 distinct players'],['需要 4 位不同玩家','Needs 4 distinct players'],['需要 2–4 位不同玩家','Needs 2–4 distinct players'],
   ['支付 1 枚任选香料','Pay any 1 spice cube'],['支付 2 枚任选香料','Pay any 2 spice cubes'],
   ['归还 1 枚香料','Return 1 spice'],['归还 2 枚香料','Return 2 spices'],
