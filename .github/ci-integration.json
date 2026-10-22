@@ -243,6 +243,9 @@
       "script": "tests/ui/spectators-live.integration.mjs"
     },
     {
+      "script": "tests/ui/spectator-capacity.integration.mjs"
+    },
+    {
       "script": "tests/ui/drawguess.integration.mjs"
     },
     {

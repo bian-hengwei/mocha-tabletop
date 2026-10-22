@@ -63,6 +63,7 @@ export function normalizeGameOptions(kind:GameKind,input:unknown,hostID:string):
  return {werewolfMode:mode as 'judge'|'deal',moderatorID:hostID,...language,...rules};
 }
 export function roomLimits(kind:GameKind,options?:GameOptions):{min:number;max:number}{if(kind==='sushi')return {min:options?.sushiEdition==='party'&&(options.sushiMenu?.appetizers.includes('edamame')||options.sushiMenu?.specials.includes('spoon'))?3:2,max:options?.sushiEdition!=='party'?5:options.sushiMenu?.specials.some(k=>k==='menu'||k==='order')?6:8};if(kind!=='werewolf')return {min:GAMES[kind].min,max:GAMES[kind].max};const extra=options?.werewolfMode==='judge'?1:0,{min,max}=werewolfPresetLimits(options?.werewolfPreset);return {min:min+extra,max:max+extra};}
+export function hasOpenPlayerSeat(room:RoomInfo):boolean{return room.players.length<roomLimits(room.kind,room.options).max;}
 export function optionsKey(kind:GameKind,options:GameOptions|undefined,hostID:string){return JSON.stringify(normalizeGameOptions(kind,options,hostID)||{});}
 export function createMatch(kind:GameKind,players:Player[],options?:GameOptions):MatchState {
  const canonical=normalizeGameOptions(kind,options,players[0]?.id||'');

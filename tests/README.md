@@ -196,6 +196,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `TEST_API_BASE=http://127.0.0.1:8799 node tests/network/spectators.integration.mjs`：真实云端加入、跨开局审批、链接/房间号观战、操作拒绝、断线不暂停、重连与关闭后凭据撤销。
 - `BASE_URL=http://127.0.0.1:5199 node tests/ui/spectators-live.integration.mjs`：真实 App 的云端及 WebRTC 观战流程、房主开关、准备室切换、对局中批准、公开库存、刷新和离开；默认测试两种模式，可用 `TEST_MODES=cloud` 或 `lan` 选测。
 - `BASE_URL=http://127.0.0.1:5199 node tests/ui/spectators.integration.mjs`：模拟已认证快照，在真实 App 中检查十二款观战桌面、中英七尺寸、二十位观众名单、弹窗旋转和焦点恢复；可用 `TEST_GAMES=mahjong,werewolf` 选测。此项不替代真实联机验证。
+- `BASE_URL=http://127.0.0.1:5199 node tests/ui/spectator-capacity.integration.mjs`：真实 App 的满员观战席：满员时禁用转换并显示座位已满；房主移除离线座位或普通离席释放座位后恢复，覆盖两种转换入口、中英 390×844/568×320、键盘焦点与截图。服务端满员拒绝仍由 `tests/network/server-recovery.test.ts` 覆盖。
 
 以上浏览器测试使用 Chromium，截图写入忽略的 `test-results/`。两个端口必须指向同一份代码，并按上方独立副本说明配置 Worker 来源与 Vite 代理。
 - `tests/ui/century-viewport.integration.mjs`：商旅双语八尺寸，市场/订单/商队/已用商人切换、费用完整、末张牌横向可达、付款、五人密集手牌与空手牌说明；订单详情显示香料名称及所需/持有/差额，覆盖可交单、材料不足、等待回合、旋转、Escape 与焦点恢复；支持 WebKit。
