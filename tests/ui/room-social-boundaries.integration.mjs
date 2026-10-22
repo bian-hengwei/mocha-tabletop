@@ -108,6 +108,8 @@ try{
    throw Error('finished social fixture did not finish');
   },[host,guest,{...guest,id:'social-third',name:'Third player'}]);
   snapshot={...snapshot,room:{...snapshot.room,kind:'doudizhu',players:[host,guest,{...guest,id:'social-third',name:'Third player'}],started:true,matchID:'finished-social'},view:finished,serverNow:Date.now()};socket.send(JSON.stringify(snapshot));
+  await expect(page.locator('.end-banner[role="dialog"]')).toBeVisible();
+  await page.keyboard.press('Escape');await expect(page.locator('.end-banner')).toHaveCount(0);
   for(const [width,height] of sizes){await page.setViewportSize({width,height});await expect(page.locator('.classic-results .social-avatar-button')).toBeVisible();await page.locator('.classic-results .social-avatar-button').click();await expect(page.locator('.social-sticker-grid')).toBeVisible();await page.keyboard.press('Escape');await page.screenshot({path:`${out}/${locale}-${width}-finished.png`,animations:'disabled'});}
   await page.locator('.classic-results .social-avatar-button').click();await page.locator('.social-sticker-grid button').click();await expect(page.locator('.social-dialog')).toHaveCount(0);await expect(page.locator('.classic-results .social-avatar-reaction')).toHaveCount(1);await expect(page.locator('.topbar .social-avatar-button,.topbar .social-avatar-reaction')).toHaveCount(0);
   assert.deepEqual(errors,[]);await context.close();
