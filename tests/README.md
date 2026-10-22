@@ -41,6 +41,8 @@ BASE_URL=http://127.0.0.1:5174 TEST_API_BASE=http://127.0.0.1:8787 node scripts/
 
 ## 浏览器与联机回归
 
+`node tests/ui/connection-overlays.integration.mjs` 用隔离的 API/WebSocket 快照检查等待房主批准、断线恢复、取消/重连/菜单、Escape、Tab/Shift+Tab、背景隔离与嵌套弹窗焦点恢复。覆盖中英双语八种尺寸（包含 568×320）及弹窗旋转；支持 `TEST_BROWSER=webkit` 和 `TEST_OUTPUT`。仅需 Vite，不创建真实 Worker 房间；此项在 app CI 组单独注册，不重复全游戏联机覆盖。
+
 房间聊天与头像表情的新增验收：`npx vitest run tests/room-social.test.ts` 校验输入、授权、禁用游戏、限流、去重、上限和过期；`node tests/network/room-social.integration.mjs` 使用真实 Worker 覆盖 cloud/LAN 房间、重连、换局与换游戏保留记录、解散后不再广播和新房间隔离。`node tests/ui/room-social.integration.mjs` 用两个浏览器验证聊天、头像动画、IME、焦点、双语七尺寸、刷新、LAN 转云端，以及解散时清空聊天/草稿/恢复入口；支持 `TEST_BROWSER=webkit` 与 `TEST_MODES=cloud,lan`。`node tests/ui/room-social-games.integration.mjs` 覆盖八款游戏最大人数与四款禁用游戏，逐尺寸检查右上角头像仍打开资料编辑、只有自己的座位头像能发表情；支持 `TEST_GAMES` 选择游戏。联机脚本用 `BASE_URL` / `TEST_API_BASE` 指定隔离服务，批量运行时避免与其他脚本共用限流窗口；不得因此放宽产品限流。
 
 全游戏接入脚本会创建 12 个房间，放在 `cards` 隔离 runner；其余房间通信脚本放在 `social`。接龙联机的四种完整对局在清单中标记 `isolated: true`，由 `scripts/isolated-integration.mjs` 启动独立的本地 Worker、Vite、临时配置与存储，并使用空闲端口，避免累计建房触发其他脚本的限流窗口。包装器保留脚本参数、全部场景和退出状态，失败时输出服务日志，并清理自己启动的进程和临时目录；不修改产品限流。可直接运行 `node scripts/isolated-integration.mjs tests/network/draw-relay.integration.mjs` 复现（需要当前 `dist/`）。

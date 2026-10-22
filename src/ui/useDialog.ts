@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react';
 
-type DialogEntry = { element: HTMLElement; close: () => void };
+type DialogEntry = { element: HTMLElement; close: () => void; restoreFocus?: () => HTMLElement | null };
+type DialogOptions = { behindDialogs?: boolean; restoreFocus?: () => HTMLElement | null };
 const dialogs: DialogEntry[] = [];
 const inertBefore = new Map<HTMLElement, boolean>();
 let lastActivator: HTMLElement | null = null;
@@ -42,20 +43,24 @@ function updateBackground() {
 }
 
 /** Attach the returned ref to a dialog; add role="dialog", aria-modal and tabIndex={-1}. */
-export function useDialog<T extends HTMLElement = HTMLElement>(open: boolean, onClose: () => void) {
+export function useDialog<T extends HTMLElement = HTMLElement>(open: boolean, onClose: () => void, options: DialogOptions = {}) {
     const ref = useRef<T>(null);
     const closeRef = useRef(onClose);
     closeRef.current = onClose;
+    const optionsRef = useRef(options);
+    optionsRef.current = options;
     useLayoutEffect(() => {
         const element = ref.current;
         if (!open || !element) return;
         const opener = lastActivator?.isConnected && !lastActivator.closest('[inert]') ? lastActivator :
             document.activeElement instanceof HTMLElement ? document.activeElement : null;
         lastActivator = null;
-        const entry = { element, close: () => closeRef.current() };
-        dialogs.push(entry);
+        const entry: DialogEntry = { element, close: () => closeRef.current(),
+            restoreFocus: optionsRef.current.restoreFocus ? () => optionsRef.current.restoreFocus?.() || null : undefined };
+        if (optionsRef.current.behindDialogs) dialogs.unshift(entry);
+        else dialogs.push(entry);
         updateBackground();
-        if (!element.contains(document.activeElement)) focusDialog(element);
+        if (dialogs.at(-1) === entry && !element.contains(document.activeElement)) focusDialog(element);
         const onKey = (event: KeyboardEvent) => {
             if (dialogs.at(-1) !== entry) return;
             // Escape/Tab can cancel or navigate IME candidates without leaving the field.
@@ -86,12 +91,21 @@ export function useDialog<T extends HTMLElement = HTMLElement>(open: boolean, on
             document.removeEventListener('focusin', onFocus, true);
             const wasTop = dialogs.at(-1) === entry;
             const index = dialogs.indexOf(entry);
+            // Recovery may remove a menu's opener while the menu remains open.
+            if (!wasTop && index >= 0 && dialogs[index + 1]) {
+                const above = dialogs[index + 1];
+                above.restoreFocus ||= entry.restoreFocus;
+            }
             if (index >= 0) dialogs.splice(index, 1);
             updateBackground();
             if (wasTop) {
                 const top = dialogs.at(-1)?.element;
-                if (opener?.isConnected && !opener.closest('[inert]') && (!top || top.contains(opener))) opener.focus({ preventScroll: true });
+                if (opener?.isConnected && opener !== document.body && opener.tabIndex >= 0 && !opener.closest('[inert]') && (!top || top.contains(opener))) opener.focus({ preventScroll: true });
                 else if (top) focusDialog(top);
+                else {
+                    const fallback = entry.restoreFocus?.();
+                    if (fallback?.isConnected && !fallback.closest('[inert]')) fallback.focus({ preventScroll: true });
+                }
             }
         };
     }, [open]);
