@@ -81,6 +81,7 @@ npx playwright install chromium webkit
 | `node tests/ui/classic-cloud.integration.mjs` | 四个独立浏览器上下文，全部麻将模式、访客只读规则、刷新重连和两款扑克云端出牌；可对实际部署运行 |
 | `node tests/ui/poker-expanded-hand.integration.mjs` | 斗地主/掼蛋中英八尺寸完整手牌网格、点数/花色整理、选中/取消/无效组合、明确出牌、嵌套牌型确认、旋转/焦点、回合变化关闭、观战隐私与真实 App 刷新恢复，支持 WebKit |
 | `node tests/ui/poker-declaration.integration.mjs` | 掼蛋同花顺默认解释与手动宣告普通顺子；27 张手牌领出/跟牌、双语八尺寸、牌型弹窗旋转与焦点、清空重选及实际出牌；支持 WebKit |
+| `node tests/ui/guandan-actual-a.integration.mjs` | 真实试玩 App：使用合法的 seed-2 升级赛检查点，从错误的 level-10 终局恢复为本轮结算并进入实际 A 局；中英八尺寸、最终轮次/隐私/历史及紧凑 WebKit；`TEST_VIEWPORT_SCOPE=compact` 只跑 320×568 与 568×320 |
 | `node tests/ui/poker-feedback.integration.mjs` | 掼蛋级牌与斗地主跟牌：区分无效牌型和无法压过、改选后正常出牌；满手牌且无法压过时按钮文字完整、无需纵向滚动并实际不出；双语八尺寸与旋转，支持 WebKit |
 | `node tests/ui/poker-caption.integration.mjs` | 上一手扑克的牌型与点数，掼蛋级牌、2、大小王映射及单张数量文案、出完手牌后等待具体玩家；中英八尺寸，支持 WebKit |
 | `node tests/ui/classic-games.integration.mjs` | 六种新玩法，中英文四尺寸、点选/取消/换座、刷新恢复、扑克完整一轮与跨轮进贡；支持 WebKit |
