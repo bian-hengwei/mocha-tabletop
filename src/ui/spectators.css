@@ -7,10 +7,14 @@
 .spectator-setting{display:flex!important;flex-direction:row!important;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
 .spectator-setting>span{display:flex;align-items:center;gap:8px}
 .spectator-setting input[type=checkbox]{width:44px;height:44px;flex:0 0 44px;accent-color:#84bda4;margin:0}
+.join-form .join-spectator-setting{cursor:pointer}
+.join-form .join-spectator-control{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px}
+.join-form .join-spectator-control input[type=checkbox]{width:22px;height:22px;flex:none;padding:0;cursor:pointer}
 .spectator-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .spectator-list li{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 10px;background:#ffffff06;border-radius:9px}
 .spectator-list b{flex:1;overflow-wrap:anywhere;min-width:0}
 .spectator-list small{color:#b8b5a9;flex-shrink:0}
+.seat-capacity-note{color:#b8b5a9;font-size:11px;line-height:1.4}
 .spectating-label{color:#dccba4}
 .spectator-surface .classic-table{grid-template-rows:auto minmax(0,1fr)}
 .spectator-surface .ng-table:is(.ng-sushi,.ng-uno){grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}

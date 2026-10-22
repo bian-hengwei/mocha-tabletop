@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 const base=process.env.BASE_URL||'http://127.0.0.1:5174',engine=process.env.TEST_BROWSER||'chromium';
 const browser=await(engine==='webkit'?webkit.launch():chromium.launch({executablePath:process.env.CHROME_PATH||undefined}));
-const out=`test-results/century-viewport-${engine}`;await fs.mkdir(out,{recursive:true});
+const out=process.env.TEST_OUTPUT||`test-results/century-viewport-${engine}`;await fs.mkdir(out,{recursive:true});
 const errors=[],sizes=[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900],[568,320]];
 try{
  for(const language of ['zh','en'])for(const [width,height] of sizes){
@@ -25,6 +25,33 @@ try{
     assert(await cue.evaluate(n=>{const r=n.getBoundingClientRect(),parent=n.parentElement.getBoundingClientRect();return r.x>=parent.x-1&&r.right<=parent.right+1&&r.y>=0&&r.bottom<=innerHeight;}),'Hand scroll cue remains readable inside its heading');
    }
   }
+  await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=century&scenario=market-refill`);
+  const refillCards=page.locator('.ng-century-page:not([hidden]) .ng-merchant-card');
+  await expect(refillCards).toHaveCount(6);
+  const acquired=await refillCards.nth(1).locator('b').textContent();
+  await refillCards.nth(1).click();await page.locator('.action-sheet footer button').click();
+  await page.getByRole('button',{name:language==='zh'?/^支付给第/:/^Pay merchant/}).click();
+  await page.setViewportSize({width:height,height:width});
+  const refillDialog=await page.locator('.action-sheet').boundingBox();assert(refillDialog&&refillDialog.y>=0&&refillDialog.y+refillDialog.height<=width+1);
+  await page.setViewportSize({width,height});
+  await page.locator('.action-sheet .choice').first().click();await page.locator('.action-sheet footer button').click();
+  await expect(page.locator('.action-sheet')).toHaveCount(0);
+  await expect(refillCards).toHaveCount(6);
+  await expect(refillCards.first().locator('.ng-merchant-bonus')).toHaveText(caption('附赠： 1','Bonus: 1'));
+  await expect(refillCards.first().locator('.ng-merchant-bonus>span')).toHaveAttribute('aria-label',new RegExp(caption('姜黄','Turmeric')));
+  await expect(refillCards.first().locator('.ng-route-price')).toHaveText(caption('免费招募','Recruit for free'));
+  await page.getByRole('combobox',{name:'Seat',exact:true}).selectOption('english-player-0');
+  await expect(page.locator('.ng-century-hand-panel .ng-merchant-card b')).toContainText([acquired]);
+  const refillMarket=page.locator('.ng-century-page:not([hidden])>.ng-market');
+  await refillMarket.focus();await expect(refillMarket).toBeFocused();
+  await refillMarket.evaluate(n=>n.scrollTo({left:0,behavior:'instant'}));
+  await expect(refillCards.first()).toBeInViewport({ratio:1});
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  assert(await refillCards.first().evaluate(n=>{const r=n.getBoundingClientRect();return n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}),'Longest trade remains reachable after replenishment');
+  await fits();await handCue();
+  await page.screenshot({path:`${out}/market-refill-${language}-${width}.png`});
+  await page.setViewportSize({width:height,height:width});await fits();
+  await page.setViewportSize({width,height});await fits();
   await page.goto(base);await page.locator('.cover-century').click();await page.getByRole('button',{name:caption('同屏试玩','Pass & play'),exact:true}).click();
   const tabs=page.locator('.ng-century-tabs');await tabs.waitFor();
   await handCue();await fits();

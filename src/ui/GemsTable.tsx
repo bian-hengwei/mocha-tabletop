@@ -80,9 +80,9 @@ export function GemsTable({ view, selfID, command, open, onShowResults }: Props)
     const distinct = view.actions.find(a => a.id === 'take_distinct'), pair = view.actions.find(a => a.id === 'take_pair');
     const isPair = picked.length === 2 && picked[0] === picked[1];
     const selectedAction = isPair ? pair : distinct;
-    const selectionValid = !!selectedAction && (isPair || picked.length === selectedAction.min && new Set(picked).size === picked.length);
+    const selectionValid = !!selectedAction && (isPair || picked.length >= selectedAction.min && picked.length <= selectedAction.max && new Set(picked).size === picked.length);
     const showTakeOptions = !!distinct && !selectionValid;
-    const distinctRule = distinct ? t(`取 ${distinct.min} 色，各 1 枚`) : '';
+    const distinctRule = distinct ? t(distinct.min===distinct.max ? `取 ${distinct.min} 色，各 1 枚` : '取 1–2 色，各 1 枚') : '';
     const pairRule = pair ? t('或同色连点取 2（库存 ≥4）') : '';
     const takeOptionsLabel = distinct ? `${t('选择宝石')}: ${distinctRule}${pairRule ? ` · ${pairRule}` : ''}` : undefined;
     useEffect(() => { setPicked([]); setCard(null); setMerchantID(null); }, [b.current, b.phase, selfID, view.finished]);

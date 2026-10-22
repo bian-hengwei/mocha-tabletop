@@ -2,6 +2,7 @@ import {beforeEach,expect,it} from 'vitest';
 import {makeRecord,saveRecord,readHistory,deleteRecord,readProfile} from '../src/local/storage';
 import type {GameView,Player} from '../src/core/types';
 import { standardWerewolf } from '../src/core/games/werewolf';
+import {drawguess,advanceDrawGuessClock} from '../src/core/games/drawguess';
 const entries=new Map<string,string>();
 const storage={getItem:(k:string)=>entries.get(k)||null,setItem:(k:string,v:string)=>entries.set(k,v),removeItem:(k:string)=>entries.delete(k)};
 const player:Player={id:'player-0001',name:'小猫',avatar:'🐱'};
@@ -14,6 +15,42 @@ it('handles teams, shared winners, and moderator records',()=>{expect(makeRecord
 it('reports storage failures rather than claiming success',()=>{Object.defineProperty(globalThis,'localStorage',{value:{...storage,setItem:()=>{throw Error('quota');}},configurable:true});expect(()=>saveRecord(makeRecord(view({}),'a',player.id,player,'cloud')!)).toThrow('quota');});
 
 it('records a shared team victory as a win rather than a draw',()=>{for(const kind of ['codenames','undercover'] as const)expect(makeRecord(view({winners:[player.id,'teammate']},kind),'team',player.id,player,'cloud')?.result).toBe('win');});
+
+it('records legal DrawGuess winners, other participants and shared highest scores',()=>{
+ const scenarios=[
+  {guessers:[1,0,0],scores:[5,3,1],results:['win','loss','loss']},
+  {guessers:[1,2,1],scores:[1,5,3],results:['loss','win','loss']},
+  {guessers:[1,2,0],scores:[3,3,3],results:['draw','draw','draw']},
+  {guessers:[1,0,0,1],scores:[5,5,1,1],results:['draw','draw','loss','loss']}
+ ];
+ for(const [index,scenario] of scenarios.entries()){
+  const roster=scenario.guessers.map((_,i)=>({...player,id:`history-draw-${i}`}));
+  let game=drawguess.create(roster,17,{language:'en',drawRounds:1});
+  for(const guesser of scenario.guessers){
+   const drawer=roster[game.drawer].id,choice=drawguess.view(game,drawer).actions[0].choices[0];
+   game=drawguess.apply(game,drawer,{action:'choose',values:[choice.id]});
+   game=drawguess.apply(game,roster[guesser].id,{action:'guess',values:[],text:choice.title});
+   game=advanceDrawGuessClock(game,100);game=advanceDrawGuessClock(game,game.revealUntil+1);
+  }
+  expect(game.finished).toBe(true);expect(game.scores).toEqual(scenario.scores);
+  for(const [seat,p] of roster.entries()){
+   const terminal=drawguess.view(game,p.id),record=makeRecord(terminal,`draw-${index}-${seat}`,p.id,p,'cloud')!;
+   expect(record.result).toBe(scenario.results[seat]);expect(record.score).toBe(scenario.scores[seat]);
+   expect(record.playerCount).toBe(roster.length);expect(JSON.stringify(record)).not.toContain('answer');
+   expect(saveRecord(record)).toBe(true);expect(saveRecord(record)).toBe(false);
+   deleteRecord(record.id);expect(saveRecord(record)).toBe(false);
+  }
+  expect(makeRecord(drawguess.view(game,'not-a-participant'),`draw-${index}-outsider`,'not-a-participant',player,'lan')?.result).toBe('completed');
+ }
+});
+
+it('does not infer DrawGuess results from missing winners or an absent participant',()=>{
+ const roster=[player,{...player,id:'history-draw-other'}];
+ for(const winnerIDs of [undefined,[],['history-draw-other']])expect(makeRecord(view({players:[],winnerIDs,winners:[player.id]},'drawguess'),'absent',player.id,player,'practice')?.result).toBe('completed');
+ for(const winnerIDs of [undefined,[]])expect(makeRecord(view({players:roster,winnerIDs},'drawguess'),'missing',player.id,player,'cloud')?.result).toBe('completed');
+ expect(makeRecord(view({isModerator:true,players:roster,winnerIDs:[player.id]},'drawguess'),'moderator',player.id,player,'cloud')?.result).toBe('host');
+ expect(makeRecord(view({players:roster,winnerIDs:[player.id]},'drawrelay'),'relay',player.id,player,'practice')?.result).toBe('completed');
+});
 
 it('records Wolf King team results correctly for current views and legacy views without role keys',()=>{
  const roster=Array.from({length:12},(_,i)=>({...player,id:`history-wolf-${i}`,name:`玩家${i}`}));

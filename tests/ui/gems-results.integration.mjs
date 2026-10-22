@@ -33,7 +33,7 @@ try{
   send(fixture.active);await page.locator('.g-bank-gem').first().click();await expect(page.locator('.gem-picked')).toHaveCount(1);
   await page.locator('.g-tier-active .development-card').first().click();await expect(page.getByRole('dialog')).toBeVisible();
   // Same current player and phase: completion itself must clear transient choices.
-  send(fixture.finished);await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.locator('.gem-picked')).toHaveCount(0);
+  send(fixture.finished);await expect(page.getByRole('dialog').filter({hasNot:page.locator('.gems-results')})).toHaveCount(0);await expect(page.locator('.gem-picked')).toHaveCount(0);
   await expect(page.locator('.g-take')).toHaveCount(0);await expect(page.locator('.action-dock')).toHaveCount(0);
   const table=page.locator('.gems-results table');await expect(table).toHaveAccessibleName(locale==='zh'?'得分明细':'Score breakdown');
   const rows=table.locator('tbody tr');
@@ -60,8 +60,8 @@ try{
   await page.setViewportSize({width:390,height:844});
   await page.getByRole('button',{name:locale==='zh'?'得分明细':'Score breakdown',exact:true}).click();await expect(table).toBeVisible();
   // Language round-trip keeps names, winner and numbers unchanged.
-  await page.getByRole('button',{name:locale==='zh'?'Switch to English':'切换为中文',exact:true}).click();await expect(rows.nth(0).locator('th')).toContainText('梅林');
-  await page.getByRole('button',{name:locale==='zh'?'切换为中文':'Switch to English',exact:true}).click();await expect(rows.nth(0).locator('small')).toHaveText(locale==='zh'?'胜者':'Winner');
+  await page.keyboard.press('Escape');await page.getByRole('button',{name:locale==='zh'?'Switch to English':'切换为中文',exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'Score breakdown':'得分明细',exact:true}).click();await expect(rows.nth(0).locator('th')).toContainText('梅林');
+  await page.keyboard.press('Escape');await page.getByRole('button',{name:locale==='zh'?'切换为中文':'Switch to English',exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'得分明细':'Score breakdown',exact:true}).click();await expect(rows.nth(0).locator('small')).toHaveText(locale==='zh'?'胜者':'Winner');
   await page.reload();await expect(table).toBeVisible();
   // A fresh match restores controls and cannot retain the result panel.
   fixture.room={...fixture.room,matchID:'gems-next-match',revision:2};send(fixture.active);await expect(table).toHaveCount(0);await expect(page.locator('.g-take')).toBeVisible();

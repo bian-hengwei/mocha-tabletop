@@ -1,4 +1,5 @@
 import {RoomAudience, JoinRequests} from './RoomAudience';
+import './discovery.css';
 import {RoomSocial,SocialControls,PlayerAvatar} from './RoomSocial';
 import {supportsBots} from '../core/bots';
 import type {BotDifficulty} from '../core/bots/types';
@@ -15,7 +16,7 @@ import { Eye, ArrowLeft, Check, ChevronRight, Cloud, Copy, Crown, Bot, HelpCircl
 import { AVATARS, GAMES, type Action, type Command, type GameKind, type GameOptions, type Player } from '../core/types';
 import { modules } from '../core/registry';
 import {isRelayGalleryNavigation} from '../core/room';
-import { roomLimits, RoomClient, type ClientState, type RoomCandidate, type RoomMode } from '../net/client';
+import { roomLimits, hasOpenPlayerSeat, RoomClient, type ClientState, type RoomCandidate, type RoomMode } from '../net/client';
 import { ActionDock, ActionSheet } from './Boards';
 import { GemsTable } from './GemsTable';
 import { BombsTable } from './BombsTable';
@@ -27,6 +28,7 @@ import { NewGamesTable } from './NewGamesTable';
 import { SushiResults } from './SushiResults';
 import { GemsResults } from './GemsResults';
 import { CenturyResults } from './CenturyResults';
+import { ResultBanner } from './ResultOverlay';
 import { t, useLocale, setLocale } from '../i18n';
 import { RuleGuide } from './RuleGuide';
 import { werewolfPresetLimits } from '../core/werewolfPresets';
@@ -44,6 +46,22 @@ function LanguageToggle() {
 function tx(value: ReactNode): ReactNode { return typeof value === 'string' ? t(value) : value; }
 const client = new RoomClient();
 const kinds = Object.keys(GAMES) as GameKind[];
+interface PracticeRecovery {active: Practice | null; backup: Practice | null}
+type RoomIntent = 'none' | 'deferred' | 'connecting';
+function withoutParameter(raw: string, name: string) {
+    return raw.split('&').filter(part => {
+        const rawKey = part.split('=', 1)[0];
+        let key = rawKey;
+        try { key = decodeURIComponent(rawKey.replace(/\+/g, ' ')); } catch {}
+        return key !== name;
+    }).join('&');
+}
+function clearInviteLocation() {
+    const url = new URL(location.href);
+    const search = withoutParameter(withoutParameter(url.search.slice(1), 'room'), 'invite');
+    const hash = withoutParameter(url.hash.slice(1), 'invite');
+    history.replaceState(history.state, '', `${url.pathname}${search ? `?${search}` : ''}${hash ? `#${hash}` : ''}`);
+}
 type Sheet = 'addSeat' | 'profile' | 'join' | 'nearby' | 'help' | 'log' | 'menu' | 'history' | 'audience' | null;
 function Modal({ title, children, onClose, wide = false, dismissible = true, className = '' }: {
     title: string;
@@ -56,17 +74,41 @@ function Modal({ title, children, onClose, wide = false, dismissible = true, cla
     const panel = useDialog<HTMLElement>(true, onClose);
     return <div className="modal-shade" onClick={onClose}><section ref={panel} tabIndex={-1} role="dialog" aria-modal="true" aria-label={t(title)} className={`panel app-panel app-modal ${wide ? 'wide' : ''} ${className}`} onClick={e => e.stopPropagation()}><header><h2>{tx(title)}</h2>{dismissible ? <button className="icon" aria-label={t("关闭")} onClick={onClose}><X /></button> : <LanguageToggle/>}</header><div className="panel-content modal-body" tabIndex={0} role="region" aria-label={t(title)}>{tx(children)}</div></section></div>;
 }
+function ConnectionOverlay({ children, title, onEscape, className }: { children: ReactNode; title: string; onEscape: () => void; className: string }) {
+    const panel = useDialog<HTMLDivElement>(true, onEscape, {
+        behindDialogs: true,
+        restoreFocus: () => document.querySelector<HTMLButtonElement>('.topbar button:not([disabled])'),
+    });
+    return <div ref={panel} className={`${className} managed-connection-overlay`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}>{children}</div>;
+}
 export function App() {
     const locale = useLocale();
     useEffect(()=>{document.title=locale==='zh'?'Mocha 桌游':'Mocha Tabletop';document.querySelector('link[rel="manifest"]')?.setAttribute('href',locale==='zh'?'/manifest-mocha.webmanifest':'/manifest-mocha-en.webmanifest');},[locale]);
-    const [profile, setProfile] = useState<Player | null>(() => readProfile() || client.getSavedSession()?.profile || null), [state, setState] = useState<ClientState>(client.state), [selectedGame, setSelectedGame] = useState<GameKind | null>(null), [sheet, setSheet] = useState<Sheet>(null), [mode, setMode] = useState<RoomMode>('lan'), [practice, setPractice] = useState<Practice | null>(readPractice), [action, setAction] = useState<{
+    const [boot] = useState(() => {
+        const url = new URL(location.href), roomCode = url.searchParams.get('room')?.toUpperCase() || '', savedSession = client.getSavedSession(), checkpoint = readPractice();
+        if (!checkpoint) try { if (localStorage.getItem('mocha-practice-v1') !== null) writePractice(null); } catch {}
+        return {roomCode, savedSession, checkpoint, roomIntent:!!(roomCode || savedSession), showJoin:!!roomCode && roomCode !== savedSession?.code};
+    });
+    const [practiceRecovery, setPracticeRecovery] = useState<PracticeRecovery>({active:boot.roomIntent ? null : boot.checkpoint, backup:boot.checkpoint});
+    const [roomIntent, setRoomIntent] = useState<RoomIntent>(boot.roomIntent ? 'deferred' : 'none');
+    const practice = practiceRecovery.active;
+    const [profile, setProfile] = useState<Player | null>(() => readProfile() || boot.savedSession?.profile || null), [state, setState] = useState<ClientState>(client.state), [selectedGame, setSelectedGame] = useState<GameKind | null>(null), [sheet, setSheet] = useState<Sheet>(boot.showJoin ? 'join' : null), [mode, setMode] = useState<RoomMode>('lan'), [action, setAction] = useState<{
         a: Action;
         values: string[];
-    } | null>(null), [message, setMessage] = useState(''), [rooms, setRooms] = useState<RoomCandidate[]>([]), [finding, setFinding] = useState(false), [code, setCode] = useState(''), [name, setName] = useState(profile?.name || ''), [avatar, setAvatar] = useState(profile?.avatar || AVATARS[0]), [wolfMode, setWolfMode] = useState<NonNullable<GameOptions['werewolfMode']>>('judge');
+    } | null>(null), [message, setMessage] = useState(''), [rooms, setRooms] = useState<RoomCandidate[]>([]), [finding, setFinding] = useState(false), [code, setCode] = useState(boot.roomCode), [name, setName] = useState(profile?.name || ''), [avatar, setAvatar] = useState(profile?.avatar || AVATARS[0]), [wolfMode, setWolfMode] = useState<NonNullable<GameOptions['werewolfMode']>>('judge');
     const [joinAsSpectator,setJoinAsSpectator]=useState(false);
+    const [discoveryFailed,setDiscoveryFailed]=useState(false);
+    const discoveryRequest=useRef(0);
+    useEffect(()=>{if(sheet!=='nearby'){discoveryRequest.current++;setFinding(false);}},[sheet]);
     const [records, setRecords] = useState(readHistory), [dismissedResult, setDismissedResult] = useState<string | null>(null);
     const practiceRef = useRef(practice);
-    const updatePractice = (next: Practice | null) => { practiceRef.current = next; setPractice(next); };
+    const practiceBackupRef = useRef(practiceRecovery.backup);
+    const setRecovery = (active: Practice | null, backup = practiceBackupRef.current) => { practiceRef.current = active; practiceBackupRef.current = backup; setPracticeRecovery({active, backup}); };
+    const updatePractice = (next: Practice) => { setRecovery(next, next); };
+    const beginRoomAttempt = () => { if (practiceRef.current) setRecovery(null, practiceRef.current); setRoomIntent('connecting'); };
+    const restorePractice = () => { if (practiceRef.current) return; const backup = practiceBackupRef.current || readPractice(); if (backup) setRecovery(backup, backup); };
+    const clearStoredPractice = () => { try { writePractice(null); } catch { setMessage('浏览器无法清除本地试玩存档'); } };
+    const discardPractice = () => { const current = practiceRef.current || practiceBackupRef.current; let stored: Practice | null = null; try { stored = readPractice(); } catch {} setRecovery(null, null); if (!current || !stored || stored.id === current.id) clearStoredPractice(); };
     const [localCounts, setLocalCounts] = useState<Partial<Record<GameKind, number>>>({});
     const [localDifficulty, setLocalDifficulty] = useState<BotDifficulty>('normal');
     const connectionTarget = client.getConnectionTarget();
@@ -78,6 +120,7 @@ export function App() {
     const host = room?.hostID === selfID;
     const spectating=!practice&&!!room?.spectators?.some(p=>p.id===selfID);
     const limits = room ? roomLimits(room.kind, room.options) : null;
+    const playerSeatOpen = !!room && hasOpenPlayerSeat(room);
     const botRoundWaiting = !!(host&&room&&view&&!view.finished&&view.board.phase==="roundEnd"&&room.players.some(p=>p.bot&&p.id===view.board.current)&&!view.actions.some(a=>a.id==="nextRound"));
     const wolfLabels = { standard: '玩家操作', judge: '法官主持', deal: '只发身份' };
     const [ruleOptions,setRuleOptions]=useState<GameOptions>({werewolfPreset:'auto',werewolfWin:'sides',unoMode:'match',unoChallenge:true});
@@ -89,19 +132,38 @@ export function App() {
     const localCount = Math.min(localLimits.max, Math.max(localLimits.min, (selectedGame && localCounts[selectedGame]) ?? defaultLocalCount));
     const soloRoundWaiting = !!practice && practiceBotRoundWaiting(practice);
     useEffect(() => client.subscribe(setState), []);
-    useEffect(() => { const u = new URL(location.href), roomCode = u.searchParams.get('room')?.toUpperCase(), saved = client.getSavedSession(); if (roomCode && roomCode !== saved?.code) {
-        setCode(roomCode);
-        setSheet('join');
-    }
-    else if (!practice)
-        void client.connect(); }, []);
-    useEffect(() => { try {
-        writePractice(practice);
-    }
-    catch {
-        if (practice)
-            setMessage('浏览器无法保存试玩，关闭网页后可能无法恢复');
-    } }, [practice]);
+    useEffect(() => {
+        if (!boot.showJoin && boot.roomIntent && client.state.status === 'idle') {
+            setRoomIntent('connecting');
+            void client.connect();
+        }
+    }, []);
+    useEffect(() => {
+        if (!practice) return;
+        try { writePractice(practice); }
+        catch { setMessage('浏览器无法保存试玩，关闭网页后可能无法恢复'); }
+    }, [practice]);
+    useEffect(() => {
+        if (room) {
+            setRoomIntent('none');
+            if (!practiceRef.current && !practiceBackupRef.current) return;
+            const backup = practiceBackupRef.current || practiceRef.current;
+            let stored: Practice | null = null;
+            try { stored = readPractice(); } catch {}
+            setRecovery(null, null);
+            if (!backup || !stored || stored.id === backup.id) clearStoredPractice();
+            return;
+        }
+        if (roomIntent === 'none' || practiceRef.current)
+            return;
+        if (['connecting', 'reconnecting', 'disconnected'].includes(client.state.status))
+            return;
+        if (sheet)
+            return;
+        setRoomIntent('none');
+        if (practiceBackupRef.current) restorePractice();
+        clearInviteLocation();
+    }, [room?.code, state.status, state.error, sheet, roomIntent]);
     // The browser is the trusted host for pass-and-play. Restore and schedule the persisted deadline;
     // player commands themselves never carry a time-advance action.
     useEffect(() => {
@@ -159,7 +221,7 @@ export function App() {
         client.resetIdentity();
         localStorage.removeItem('mocha-profile');
         localStorage.removeItem('mocha-history-v1');
-        localStorage.removeItem('mocha-practice-v1');
+        discardPractice();
         setProfile(null);
         setName('');
         setAvatar(AVATARS[0]);
@@ -209,14 +271,26 @@ export function App() {
             setSelectedGame(null);
         } catch (e) { notify((e as Error).message); }
     };
-    const findRooms = async () => { setSheet('nearby'); setFinding(true); setRooms(await client.discover()); setFinding(false); };
+    const findRooms = async () => {
+        const request=++discoveryRequest.current;
+        setSheet('nearby');setFinding(true);setDiscoveryFailed(false);setRooms([]);
+        try {
+            const candidates=await client.discover();
+            if(request===discoveryRequest.current)setRooms(candidates);
+        } catch {
+            if(request===discoveryRequest.current)setDiscoveryFailed(true);
+        } finally {
+            if(request===discoveryRequest.current)setFinding(false);
+        }
+    };
     const join = (c = code) => { if (!profile)
         return; const saved = client.getSavedSession(); if (saved?.code === c) {
+        beginRoomAttempt();
         void client.connect();
         setSheet(null);
         return;
     } if (saved && !confirm(t('加入另一张牌桌会替换本机的快捷恢复记录，继续？')))
-        return; const invite = new URLSearchParams(location.hash.slice(1)).get('invite') || undefined; void client.join(profile, c, invite,joinAsSpectator); setSheet(null); setSelectedGame(null); };
+        return; beginRoomAttempt(); const invite = new URLSearchParams(location.hash.slice(1)).get('invite') || undefined; void client.join(profile, c, invite,joinAsSpectator); setSheet(null); setSelectedGame(null); };
     const share = async () => { const url = state.inviteURL || `${location.origin}/?room=${room?.code}`; try {
         if (navigator.share)
             await navigator.share({ title: t('Mocha 桌游'), text: `${t('一起来玩')} ${t(GAMES[room!.kind].name)}`, url });
@@ -233,7 +307,7 @@ export function App() {
         webkitRequestFullscreen?: () => Promise<void>;
     }; void (el.requestFullscreen?.() || el.webkitRequestFullscreen?.())?.catch(() => { }); };
     const leave = () => { if (practice) {
-        updatePractice(null);
+        discardPractice();
         setSheet(null);
         return;
     } client.leave(); setSheet(null); };
@@ -265,20 +339,20 @@ export function App() {
         }}/><footer className="home-footer"><button className="text-button" onClick={() => setSheet('history')}><History size={15}/>{t("\u4E2A\u4EBA\u6218\u7EE9")}</button><InstallButton /></footer></section>)}
 
     {tx(usableRoom && !view && <section className="lobby"><div className="lobby-art">{coverArt(room.kind)}<div><h1>{tx(GAMES[room.kind].name)}</h1><span>{limits!.min===limits!.max?limits!.min:`${limits!.min}–${limits!.max}`}{' '}{t("\u4EBA")}{tx(room.kind === 'werewolf' ? ` · ${wolfLabels[room.options?.werewolfMode || 'standard']}` : '')}{t("\u00B7")}{tx(room.mode === 'lan' ? '同 Wi-Fi 直连' : '云端联机')}</span></div></div><div className="lobby-content"><div className="lobby-heading"><div><small>{t("房间码")}</small><button className="room-code" aria-label={t("复制房间码")} onClick={() => void navigator.clipboard?.writeText(room.code).then(() => notify('房间码已复制')).catch(() => notify(room.code))}>{tx(room.code)}<Copy size={14}/></button></div><button className="compact glass" onClick={() => void share()}><Share2 size={15}/>{t("\u9080\u8BF7")}</button></div><div className="lobby-seats">{tx(room.players.map(p => <div className={`lobby-seat ${p.ready ? 'ready' : ''} ${p.bot ? 'bot-seat' : ''}`} key={p.id}><PlayerAvatar id={p.id} avatar={p.avatar}/><b>{p.name}{tx(p.id === room.hostID && <Crown size={13}/>)}</b><small>{p.bot ? (host?t('人机'):`${t('人机')} · ${botDifficultyLabel(p.bot.difficulty)}`) : tx(!p.connected ? '离线' : p.id === room.hostID ? (room.options?.werewolfMode === 'judge' ? '法官 · 房主' : '房主') : p.ready ? '已准备' : '等待准备')}</small>{p.bot&&host&&<BotSeatControls player={p} onDifficulty={(id,difficulty)=>client.setBotDifficulty(id,difficulty)} onRemove={id=>client.removeBot(id)}/>} {tx(host && !p.connected && p.id !== room.hostID && <button className="text-button remove-seat" aria-label={t(`移除离线玩家${p.name}`)} onClick={() => { if (confirm(t(`移除 ${p.name} 的离线座位？他们需要重新申请加入。`)))
-        client.removePlayer(p.id); }}>{t("\u79FB\u9664")}</button>)}</div>))}{tx(room.players.length < limits!.max && <button className="lobby-seat vacant" aria-label={t(host&&supportsBots(room.kind)?"添加玩家":"邀请朋友")} onClick={() => host&&supportsBots(room.kind)?setSheet("addSeat"):void share()}><Plus size={24}/><small>{t(host&&supportsBots(room.kind)?"添加玩家":"邀请朋友")}</small></button>)}</div><BotRosterSummary players={room.players}/>{host&&room.pending.length>0&&<JoinRequests room={room} client={client}/>}<div className="lobby-audience"><button className="text-button" onClick={()=>setSheet('audience')}><Eye size={16}/>{t('观战席')} · {room.spectators?.length||0}</button>{!host&&!room.started&&(spectating||room.allowSpectators!==false)&&<button className="compact" onClick={()=>client.setSeat(!spectating)}>{t(spectating?'转为玩家':'进入观战席')}</button>}</div><RuleOptions kind={room.kind} options={room.options||{}} playerCount={room.players.length-(room.options?.werewolfMode==='judge'?1:0)} disabled={!host} onChange={next=>client.selectGame(room.kind,next)}/><div className="lobby-start"><p className="lobby-start-status" role="status">{waitingToStart}</p><footer className="lobby-controls">{tx(host ? <><select aria-label={t("更换游戏")} value={room.kind} onChange={e => client.selectGame(e.target.value as GameKind, gameOptions(e.target.value as GameKind))}>{tx(kinds.map(k => <option key={k} value={k}>{tx(GAMES[k].name)}</option>))}</select>{tx(room.kind === 'werewolf' && <select className="lobby-mode" aria-label={t("狼人杀模式")} value={room.options?.werewolfMode || 'standard'} onChange={e => client.selectGame('werewolf', { ...room.options, moderatorID:undefined, language:locale, werewolfMode: e.target.value as GameOptions['werewolfMode'] })}>{tx(Object.entries(wolfLabels).map(([v, label]) => <option key={v} value={v}>{tx(label)}</option>))}</select>)}<button className="compact primary" disabled={room.players.length < limits!.min || room.players.length > limits!.max || room.players.some(p => !p.connected || p.id !== room.hostID && !p.ready) || state.mode === 'lan' && state.transport !== 'lan'} onClick={() => client.start()}>{t("\u5F00\u5C40")}<ChevronRight size={16}/></button></> : spectating ? <span className="spectating-label">{t("正在观战")}</span> : <button className="compact primary" onClick={() => client.ready(!room.players.find(p => p.id === selfID)?.ready)}>{tx(room.players.find(p => p.id === selfID)?.ready ? '取消准备' : '准备好了')}<Check size={16}/></button>)}{tx(host && room.mode === 'lan' && <button className="text-button" onClick={() => client.switchToCloud()}><Cloud size={14}/>{t("\u6539\u7528\u4E91\u7AEF")}</button>)}</footer></div></div></section>)}
+        client.removePlayer(p.id); }}>{t("\u79FB\u9664")}</button>)}</div>))}{tx(room.players.length < limits!.max && <button className="lobby-seat vacant" aria-label={t(host&&supportsBots(room.kind)?"添加玩家":"邀请朋友")} onClick={() => host&&supportsBots(room.kind)?setSheet("addSeat"):void share()}><Plus size={24}/><small>{t(host&&supportsBots(room.kind)?"添加玩家":"邀请朋友")}</small></button>)}</div><BotRosterSummary players={room.players}/>{host&&room.pending.length>0&&<JoinRequests room={room} client={client}/>}<div className="lobby-audience"><button className="text-button" onClick={()=>setSheet('audience')}><Eye size={16}/>{t('观战席')} · {room.spectators?.length||0}</button>{!host&&!room.started&&(spectating||room.allowSpectators!==false)&&<>{<button className="compact" disabled={spectating&&!playerSeatOpen} aria-describedby={spectating&&!playerSeatOpen?'player-seat-capacity':undefined} onClick={()=>client.setSeat(!spectating)}>{t(spectating?'转为玩家':'进入观战席')}</button>}{spectating&&!playerSeatOpen&&<small id="player-seat-capacity" className="seat-capacity-note">{t('玩家座位已满')}</small>}</>}</div><RuleOptions kind={room.kind} options={room.options||{}} playerCount={room.players.length-(room.options?.werewolfMode==='judge'?1:0)} disabled={!host} onChange={next=>client.selectGame(room.kind,next)}/><div className="lobby-start"><p className="lobby-start-status" role="status">{waitingToStart}</p><footer className="lobby-controls">{tx(host ? <><select aria-label={t("更换游戏")} value={room.kind} onChange={e => client.selectGame(e.target.value as GameKind, gameOptions(e.target.value as GameKind))}>{tx(kinds.map(k => <option key={k} value={k}>{tx(GAMES[k].name)}</option>))}</select>{tx(room.kind === 'werewolf' && <select className="lobby-mode" aria-label={t("狼人杀模式")} value={room.options?.werewolfMode || 'standard'} onChange={e => client.selectGame('werewolf', { ...room.options, moderatorID:undefined, language:locale, werewolfMode: e.target.value as GameOptions['werewolfMode'] })}>{tx(Object.entries(wolfLabels).map(([v, label]) => <option key={v} value={v}>{tx(label)}</option>))}</select>)}<button className="compact primary" disabled={room.players.length < limits!.min || room.players.length > limits!.max || room.players.some(p => !p.connected || p.id !== room.hostID && !p.ready) || state.mode === 'lan' && state.transport !== 'lan'} onClick={() => client.start()}>{t("\u5F00\u5C40")}<ChevronRight size={16}/></button></> : spectating ? <span className="spectating-label">{t("正在观战")}</span> : <button className="compact primary" onClick={() => client.ready(!room.players.find(p => p.id === selfID)?.ready)}>{tx(room.players.find(p => p.id === selfID)?.ready ? '取消准备' : '准备好了')}<Check size={16}/></button>)}{tx(host && room.mode === 'lan' && <button className="text-button" onClick={() => client.switchToCloud()}><Cloud size={14}/>{t("\u6539\u7528\u4E91\u7AEF")}</button>)}</footer></div></div></section>)}
     {tx(usableRoom && disconnected.length > 0 && !view?.finished && <div className="presence-notice" role="status"><span>{disconnected.map(p => p.name).join('、')}{' '}{t(disconnected.length===1?'暂时离线 · 座位已保留':'暂时离线 · 所有座位已保留')}</span><span>{tx(room.started ? '等待重连后继续；房主可从菜单结束本局' : '房主可移除离线座位')}</span></div>)}
     {view&&room&&(room.botError||botRoundWaiting)&&<div className="bot-match-status" role={room.botError?"alert":undefined}>{botRoundWaiting&&<button className="compact primary" onClick={()=>client.continueBotRound()}>{t("开始下一轮")}</button>}{room.botError&&<><span>{t(room.botError)}</span>{host&&<button className="compact" onClick={()=>client.retryBot()}>{t("重试人机")}</button>}</>}</div>}
     {practice && (practice.botError || soloRoundWaiting) && <div className="bot-match-status" role={practice.botError ? 'alert' : undefined}>{soloRoundWaiting && <button className="compact primary" onClick={() => { try { if (practiceRef.current) updatePractice(continuePracticeRound(practiceRef.current)); } catch (e) { notify((e as Error).message); } }}>{t('开始下一轮')}</button>}{practice.botError && <><span>{t('人机暂时无法行动，请重试')}</span><button className="compact" onClick={() => { if (practiceRef.current) updatePractice({...practiceRef.current,botError:false}); }}>{t('重试人机')}</button></>}</div>}
-    {tx(view && <><div className={`game-surface ${spectating?'spectator-surface':''}`} inert={!practice&&state.actionPending} aria-busy={!practice&&!!state.actionPending}>{tx(view.kind==='drawrelay'?<DrawRelayTable key={`${matchKey}:${selfID}:${view.board.mode==='queue'?'queue':view.board.step}`} view={view} selfID={selfID} command={run} onReplay={practice?()=>startPractice(practice.kind):host?()=>client.replay():undefined}/>:['doudizhu','guandan','mahjong'].includes(view.kind)?<ClassicTable key={matchKey} view={view} selfID={selfID} command={run} open={openAction} onReplay={practice?()=>startPractice(practice.kind):host?()=>client.replay():undefined} replayLabel={practice?'再来一局':'返回准备'}/>:view.kind === 'gems' ? <GemsTable view={view} selfID={selfID} command={run} open={openAction} onShowResults={()=>setDismissedResult(null)}/> : view.kind === 'bombs' ? <BombsTable view={view} selfID={selfID} command={run} open={openAction}/> : ['sushi', 'century', 'uno'].includes(view.kind) ? <NewGamesTable view={view} selfID={selfID} command={run} open={openAction} onShowResults={()=>setDismissedResult(null)}/> : ['codenames', 'undercover'].includes(view.kind) ? <WordGamesTable key={matchKey} view={view} selfID={selfID} command={run} open={openAction}/> : <SocialTable key={practice?.id || room?.code} view={view} selfID={selfID} command={run} commandPending={!practice&&!!state.actionPending} open={openAction}/>)}</div>{tx(!spectating&&!['drawrelay','doudizhu','guandan','mahjong','bombs', 'sushi', 'century', 'uno', 'codenames', 'undercover'].includes(view.kind) && !(view.kind==='gems'&&view.finished) && <ActionDock busy={!practice&&!!state.actionPending} view={view} command={run} open={openAction}/>)}{tx(view.finished && view.kind!=='drawrelay' && view.kind!=='guandan' && dismissedResult !== resultKey && <div className={`end-banner ${view.kind==='sushi'?'end-banner-sushi':view.kind==='gems'?'end-banner-gems':view.kind==='century'?'end-banner-century':''}`}><Crown size={23}/><b>{tx(typeof view.board.winner === 'string' ? view.board.winner : view.instruction)}</b>{view.kind==='century'&&<CenturyResults players={view.board.players} winners={view.board.winners} selfID={selfID} goalTarget={view.board.goalTarget}/>} {view.kind==='gems'&&<GemsResults players={view.board.players} winners={view.board.winners} selfID={selfID}/>} {view.kind==='sushi'&&<SushiResults party={view.board.edition==='party'} players={view.board.players} roundScores={view.board.roundScores} winners={view.board.winners} selfID={selfID}/>} {tx(practice ? <button className="compact primary" onClick={() => startPractice(practice.kind)}>{t("\u518D\u6765\u4E00\u5C40")}</button> : host ? <button className="compact primary" onClick={() => client.replay()}>{t("\u8FD4\u56DE\u51C6\u5907")}</button> : <small>{t("\u7B49\u5F85\u623F\u4E3B\u518D\u5F00\u4E00\u5C40")}</small>)}<button className="icon dismiss-result" aria-label={t("收起结算")} onClick={() => setDismissedResult(resultKey)}><X size={18}/></button></div>)}</>)}
-    {tx(['connecting', 'reconnecting'].includes(state.status) && !room && !practice && <div className="connecting-overlay"><div className="spinner"/><h2>{tx(state.waitingApproval ? '等待房主同意' : state.status === 'reconnecting' ? '正在恢复连接' : '正在寻找牌桌')}</h2>{connectionTarget && <div className="connection-target" role="status"><p>{t('房间码')} <strong>{connectionTarget.code}</strong></p><p>{connectionTarget.profile.avatar} {connectionTarget.profile.name}</p>{state.waitingApproval && <small>{t('已连接，申请已送达')}</small>}</div>}<button className="text-button" onClick={() => client.cancelConnection()}>{t("\u53D6\u6D88")}</button></div>)}
+    {tx(view && <><div className={`game-surface ${spectating?'spectator-surface':''}`} inert={!practice&&state.actionPending} aria-busy={!practice&&!!state.actionPending}>{tx(view.kind==='drawrelay'?<DrawRelayTable key={`${matchKey}:${selfID}:${view.board.mode==='queue'?'queue':view.board.step}`} view={view} selfID={selfID} command={run} onReplay={practice?()=>startPractice(practice.kind):host?()=>client.replay():undefined}/>:['doudizhu','guandan','mahjong'].includes(view.kind)?<ClassicTable key={matchKey} view={view} selfID={selfID} command={run} open={openAction} onReplay={practice?()=>startPractice(practice.kind):host?()=>client.replay():undefined} replayLabel={practice?'再来一局':'返回准备'}/>:view.kind === 'gems' ? <GemsTable view={view} selfID={selfID} command={run} open={openAction} onShowResults={()=>setDismissedResult(null)}/> : view.kind === 'bombs' ? <BombsTable view={view} selfID={selfID} command={run} open={openAction}/> : ['sushi', 'century', 'uno'].includes(view.kind) ? <NewGamesTable view={view} selfID={selfID} command={run} open={openAction} onShowResults={()=>setDismissedResult(null)}/> : ['codenames', 'undercover'].includes(view.kind) ? <WordGamesTable key={matchKey} view={view} selfID={selfID} command={run} open={openAction}/> : <SocialTable key={practice?.id || room?.code} view={view} selfID={selfID} command={run} commandPending={!practice&&!!state.actionPending} open={openAction}/>)}</div>{tx(!spectating&&!['drawrelay','doudizhu','guandan','mahjong','bombs', 'sushi', 'century', 'uno', 'codenames', 'undercover'].includes(view.kind) && !(view.kind==='gems'&&view.finished) && <ActionDock busy={!practice&&!!state.actionPending} view={view} command={run} open={openAction}/>)}{tx(view.finished && view.kind!=='drawrelay' && view.kind!=='guandan' && dismissedResult !== resultKey && <ResultBanner inline={view.kind==='mahjong'} title={t(typeof view.board.winner === 'string' ? view.board.winner : view.instruction)} onClose={()=>setDismissedResult(resultKey)} className={`end-banner ${view.kind==='sushi'?'end-banner-sushi':view.kind==='gems'?'end-banner-gems':view.kind==='century'?'end-banner-century':''}`}><Crown size={23}/><b>{tx(typeof view.board.winner === 'string' ? view.board.winner : view.instruction)}</b>{view.kind==='century'&&<CenturyResults players={view.board.players} winners={view.board.winners} selfID={selfID} goalTarget={view.board.goalTarget}/>} {view.kind==='gems'&&<GemsResults players={view.board.players} winners={view.board.winners} selfID={selfID}/>} {view.kind==='sushi'&&<SushiResults party={view.board.edition==='party'} players={view.board.players} roundScores={view.board.roundScores} winners={view.board.winners} selfID={selfID}/>} {tx(practice ? <button className="compact primary" onClick={() => startPractice(practice.kind)}>{t("\u518D\u6765\u4E00\u5C40")}</button> : host ? <button className="compact primary" onClick={() => client.replay()}>{t("\u8FD4\u56DE\u51C6\u5907")}</button> : <small>{t("\u7B49\u5F85\u623F\u4E3B\u518D\u5F00\u4E00\u5C40")}</small>)}<button className="icon dismiss-result" aria-label={t("收起结算")} onClick={() => setDismissedResult(resultKey)}><X size={18}/></button></ResultBanner>)}</>)}
+    {tx(['connecting', 'reconnecting'].includes(state.status) && !room && !practice && <ConnectionOverlay className="connecting-overlay" title={t(state.waitingApproval ? '等待房主同意' : state.status === 'reconnecting' ? '正在恢复连接' : '正在寻找牌桌')} onEscape={() => client.cancelConnection()}><div className="spinner"/><h2>{tx(state.waitingApproval ? '等待房主同意' : state.status === 'reconnecting' ? '正在恢复连接' : '正在寻找牌桌')}</h2>{connectionTarget && <div className="connection-target" role="status"><p>{t('房间码')} <strong>{connectionTarget.code}</strong></p><p>{connectionTarget.profile.avatar} {connectionTarget.profile.name}</p>{state.waitingApproval && <small>{t('已连接，申请已送达')}</small>}</div>}<button className="text-button" onClick={() => client.cancelConnection()}>{t("\u53D6\u6D88")}</button></ConnectionOverlay>)}
     {!practice&&state.actionPending&&<div className="action-pending" role="status">{t("正在提交…")}</div>}
-    {tx((state.paused || ['reconnecting', 'disconnected'].includes(state.status)) && room && !practice && !view?.finished && <div className="pause-overlay"><Cloud size={28}/><b>{t("\u8FDE\u63A5\u6062\u590D\u540E\uFF0C\u7EE7\u7EED\u8FD9\u4E00\u5C40")}</b><div className="inline-actions"><button className="compact primary" onClick={() => void client.connect()}><RefreshCw size={15}/>{t("\u91CD\u8FDE")}</button>{tx(host && state.mode === 'lan' && <button className="compact" onClick={() => client.switchToCloud()}>{t("\u5207\u6362\u4E91\u7AEF")}</button>)}<button className="compact" onClick={() => setSheet('menu')}>{t("\u724C\u684C\u83DC\u5355")}</button></div></div>)}
+    {tx((state.paused || ['reconnecting', 'disconnected'].includes(state.status)) && room && !practice && !view?.finished && <ConnectionOverlay className="pause-overlay" title={t('连接恢复后，继续这一局')} onEscape={() => setSheet('menu')}><Cloud size={28}/><b>{t("\u8FDE\u63A5\u6062\u590D\u540E\uFF0C\u7EE7\u7EED\u8FD9\u4E00\u5C40")}</b><div className="inline-actions"><button className="compact primary" onClick={() => void client.connect()}><RefreshCw size={15}/>{t("\u91CD\u8FDE")}</button>{tx(host && state.mode === 'lan' && <button className="compact" onClick={() => client.switchToCloud()}>{t("\u5207\u6362\u4E91\u7AEF")}</button>)}<button className="compact" onClick={() => setSheet('menu')}>{t("\u724C\u684C\u83DC\u5355")}</button></div></ConnectionOverlay>)}
     {sheet==='addSeat'&&host&&room&&!room.started&&supportsBots(room.kind)&&<Modal title={t("添加玩家")} onClose={()=>setSheet(null)}><AddSeatChoices count={room.players.length} capacity={limits!.max} onInvite={()=>{setSheet(null);void share();}} onAdd={difficulty=>{setSheet(null);client.addBot(difficulty);}}/></Modal>}
     {tx(selectedGame && !room && !practice && <Modal title={t(GAMES[selectedGame].name)} className="setup-panel" onClose={() => setSelectedGame(null)}><div className="create-body"><div className="setup-options" tabIndex={0} aria-label={t("开桌选项")}>{supportsBots(selectedGame)&&<p className="setup-bot-note">{t("建房后可添加人机")}</p>}<button className="text-button setup-rules" onClick={()=>setSheet('help')}><HelpCircle size={16}/>{t('规则与教程')}</button>{(selectedGame==='codenames'||selectedGame==='undercover')&&<p className="word-language-note">{t('词库语言')}：{locale==='zh'?'中文':'English'}</p>}{tx(selectedGame === 'werewolf' && <><div className="wolf-mode-picker">{tx(Object.entries(wolfLabels).map(([v, label]) => <button key={v} className={wolfMode === v ? 'selected' : ''} aria-pressed={wolfMode === v} onClick={() => setWolfMode(v as NonNullable<GameOptions['werewolfMode']>)}><b>{tx(label)}</b><small>{tx(wolfCountLabel(v === 'judge'))}</small></button>))}</div><p className="wolf-mode-description">{tx(wolfMode === 'judge' ? '房主担任法官，统一记录技能、死讯和现场投票；玩家只看身份。' : wolfMode === 'deal' ? '随机发身份牌，之后完全线下主持；房主也参与游戏。' : '每位玩家在自己的手机上执行技能和投票。')}</p></>)}<RuleOptions kind={selectedGame} options={{...ruleOptions,werewolfMode:wolfMode}} playerCount={localCount-(selectedGame==='werewolf'&&wolfMode==='judge'?1:0)} onChange={setRuleOptions}/><LocalPlayOptions kind={selectedGame} count={localCount} limits={localLimits} moderator={selectedGame==='werewolf'&&wolfMode==='judge'} difficulty={localDifficulty} onCount={count=>setLocalCounts({...localCounts,[selectedGame]:count})} onDifficulty={setLocalDifficulty} onStart={difficulty=>startPractice(selectedGame,difficulty)}/><div className="mode-picker"><button className={mode === 'lan' ? 'selected' : ''} aria-pressed={mode === 'lan'} onClick={() => setMode('lan')}><Wifi size={23}/><b>{t("\u540C Wi-Fi")}</b><small>{t("需联网配对")}</small></button><button className={mode === 'cloud' ? 'selected' : ''} aria-pressed={mode === 'cloud'} onClick={() => setMode('cloud')}><Cloud size={23}/><b>{t("\u4E91\u7AEF\u8054\u673A")}</b><small>{t("需联网")}</small></button></div></div><footer><button className="compact primary" onClick={() => { void client.create(profile!, selectedGame, mode, gameOptions(selectedGame)); setSelectedGame(null); }}>{t("\u521B\u5EFA\u724C\u684C")}<ChevronRight size={16}/></button></footer></div></Modal>)}
     {tx((!profile || sheet === 'profile') && <Modal title={t("个人资料")} dismissible={!!profile} onClose={() => { if (profile)
         setSheet(null); }}><div className="profile-editor"><div className="avatar-preview">{tx(avatar)}</div><label>{t("昵称")}<input autoComplete="nickname" maxLength={16} value={name} onChange={e => setName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) { e.preventDefault(); saveProfile(); } }} placeholder={t("你的昵称")} autoFocus/></label><div className="avatar-grid" role="group" aria-label={t("选择头像")}>{tx(AVATARS.map(a => <button key={a} aria-label={t(`选择头像${a}`)} aria-pressed={a === avatar} className={a === avatar ? 'selected' : ''} onClick={() => setAvatar(a)}>{tx(a)}</button>))}</div><footer><small>{tx(room ? '昵称和头像将在下次入桌时使用' : '保存在当前浏览器，无需登录')}</small><button className="compact primary" disabled={!name.trim()} onClick={saveProfile}>{t("\u5165\u5EA7")}<ChevronRight size={16}/></button></footer>{tx(profile && !room && !practice && !['connecting', 'reconnecting'].includes(state.status) && <button className="text-button reset-user" onClick={resetUser}><RotateCcw size={14}/>{t("\u91CD\u7F6E\u672C\u673A\u7528\u6237\u4E0E\u6218\u7EE9")}</button>)}</div></Modal>)}
-    {tx(sheet === 'join' && profile && <Modal title={t("加入朋友的牌桌")} onClose={() => setSheet(null)}><form className="join-form" onSubmit={e => { e.preventDefault(); join(); }}><label>{t("\u516D\u4F4D\u623F\u95F4\u7801")}<input aria-label={t("房间码")} className="code-input" autoCapitalize="characters" autoComplete="off" maxLength={6} placeholder={t("ABC234")} value={code} onChange={e => setCode(e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, ''))}/></label><label className="spectator-setting"><span>{t("以观众身份加入")}</span><input type="checkbox" checked={joinAsSpectator} onChange={e=>setJoinAsSpectator(e.target.checked)}/></label><p className="panel-note">{t("开局后自动进入观战席；房间号加入需房主同意")}</p><footer><button type="button" className="text-button" onClick={() => void findRooms()}><Radio size={15}/>{t("\u53D1\u73B0\u9644\u8FD1")}</button><button className="compact primary" disabled={code.length !== 6}>{t("\u5165\u684C")}<ChevronRight size={16}/></button></footer></form></Modal>)}
-    {tx(sheet === 'nearby' && <Modal title={t("附近的牌桌")} onClose={() => setSheet(null)}><p className="panel-note">{t("入桌需房主同意。")}</p><div className="nearby-list">{tx(finding ? <div className="empty-state"><div className="spinner"/>{t("\u5BFB\u627E\u4E2D")}</div> : rooms.length ? rooms.map(r => <button key={r.code} onClick={() => join(r.code)}>{coverArt(r.kind)}<span><b>{r.hostName}{t("\u7684\u724C\u684C")}</b><small>{tx(GAMES[r.kind].name)}{t("\u00B7")}{tx(r.count)}{t("/")}{tx(r.max)}{t("\u4EBA \u00B7")}{tx(r.mode === 'lan' ? 'Wi-Fi' : '云端')}</small></span><ChevronRight size={18}/></button>) : <div className="empty-state"><Radio size={28}/><p>{t("\u9644\u8FD1\u8FD8\u6CA1\u6709\u5F00\u684C")}</p><small>{t("\u4E5F\u53EF\u4EE5\u8BA9\u670B\u53CB\u5206\u4EAB\u516D\u4F4D\u623F\u95F4\u7801")}</small></div>)}</div><footer><button className="text-button" onClick={() => setSheet('join')}>{t("\u8F93\u5165\u623F\u95F4\u7801")}</button><button className="compact" disabled={finding} onClick={() => void findRooms()}><RefreshCw size={14}/>{t("\u5237\u65B0")}</button></footer></Modal>)}
+    {tx(sheet === 'join' && profile && <Modal title={t("加入朋友的牌桌")} onClose={() => setSheet(null)}><form className="join-form" onSubmit={e => { e.preventDefault(); join(); }}><label>{t("\u516D\u4F4D\u623F\u95F4\u7801")}<input aria-label={t("房间码")} className="code-input" autoCapitalize="characters" autoComplete="off" maxLength={6} placeholder={t("ABC234")} value={code} onChange={e => setCode(e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, ''))}/></label><label className="spectator-setting join-spectator-setting"><span>{t("以观众身份加入")}</span><span className="join-spectator-control"><input type="checkbox" checked={joinAsSpectator} onChange={e=>setJoinAsSpectator(e.target.checked)}/></span></label><p className="panel-note">{t("开局后自动进入观战席；房间号加入需房主同意")}</p><footer><button type="button" className="text-button" onClick={() => void findRooms()}><Radio size={15}/>{t("\u53D1\u73B0\u9644\u8FD1")}</button><button className="compact primary" disabled={code.length !== 6}>{t("\u5165\u684C")}<ChevronRight size={16}/></button></footer></form></Modal>)}
+    {tx(sheet === 'nearby' && <Modal className="discovery-panel" title={t("附近的牌桌")} onClose={() => setSheet(null)}><p className="panel-note">{t("入桌需房主同意。")}</p><div className="nearby-list">{tx(finding ? <div className="empty-state"><div className="spinner"/>{t("\u5BFB\u627E\u4E2D")}</div> : discoveryFailed ? <div className="empty-state" role="alert"><Radio size={28}/><p>{t('暂时无法发现牌桌')}</p><small>{t('请检查网络后重试，或输入朋友的房间码。')}</small></div> : rooms.length ? rooms.map(r => <button key={r.code} onClick={() => join(r.code)}>{coverArt(r.kind)}<span><b>{r.hostName}{t("\u7684\u724C\u684C")}</b><small>{tx(GAMES[r.kind].name)}{t("\u00B7")}{tx(r.count)}{t("/")}{tx(r.max)}{t("\u4EBA \u00B7")}{tx(r.mode === 'lan' ? 'Wi-Fi' : '云端')}</small></span><ChevronRight size={18}/></button>) : <div className="empty-state"><Radio size={28}/><p>{t("\u9644\u8FD1\u8FD8\u6CA1\u6709\u5F00\u684C")}</p><small>{t("\u4E5F\u53EF\u4EE5\u8BA9\u670B\u53CB\u5206\u4EAB\u516D\u4F4D\u623F\u95F4\u7801")}</small></div>)}</div><footer><button className="text-button" onClick={() => setSheet('join')}>{t("\u8F93\u5165\u623F\u95F4\u7801")}</button><button className="compact" disabled={finding} onClick={() => void findRooms()}><RefreshCw size={14}/>{t(discoveryFailed?'重试':'刷新')}</button></footer></Modal>)}
     {tx(sheet === 'help' && <Modal title={t(kind ? `${GAMES[kind].name} · 玩法` : '使用帮助')} onClose={() => setSheet(null)} wide><div className="help-content">{tx(kind ? <RuleGuide kind={kind} mahjongMode={view?.kind==='mahjong'?view.board.mode:room?.options?.mahjongMode||ruleOptions.mahjongMode} legacy={view?.kind==='mahjong'&&!view.board.rulesVersion}/> : <><h3>{t("\u6DFB\u52A0\u5230\u4E3B\u5C4F\u5E55")}</h3><p>{t("\u652F\u6301\u5B89\u88C5\u7684\u6D4F\u89C8\u5668\u53EF\u4EE5\u4ECE\u9996\u9875\u76F4\u63A5\u6253\u5F00\u7CFB\u7EDF\u786E\u8BA4\u3002iPhone \u8BF7\u7528 Safari \u7684\u5206\u4EAB\u83DC\u5355\u6DFB\u52A0\u3002")}</p><h3>{t("\u8EAB\u4EFD\u3001\u6218\u7EE9\u4E0E\u6062\u590D")}</h3><p>{t("\u6635\u79F0\u3001\u5934\u50CF\u548C\u5DF2\u5B8C\u6210\u6218\u7EE9\u4FDD\u5B58\u5728\u672C\u673A\uFF0C\u4E2A\u4EBA\u6218\u7EE9\u652F\u6301\u5355\u6761\u5220\u9664\u6216\u5168\u90E8\u5220\u9664\u3002\u5173\u95ED\u7F51\u9875\u540E\u91CD\u65B0\u6253\u5F00\uFF0C\u53EF\u6062\u590D\u5C1A\u672A\u8FC7\u671F\u7684\u724C\u684C\uFF1B\u4E3B\u52A8\u79BB\u5F00\u6216\u623F\u4E3B\u5173\u95ED\u540E\u65E0\u6CD5\u6062\u590D\u3002")}</p><h3>{t("\u548C\u670B\u53CB\u8054\u673A")}</h3><p>{t("\u521B\u5EFA\u724C\u684C\u540E\u5206\u4EAB\u9080\u8BF7\u94FE\u63A5\uFF0C\u6216\u8BA9\u670B\u53CB\u8F93\u5165\u623F\u95F4\u7801\u3002\u540C Wi-Fi \u6A21\u5F0F\u5148\u8054\u7F51\u914D\u5BF9\uFF0C\u518D\u76F4\u63A5\u4F20\u8F93\u6E38\u620F\u64CD\u4F5C\uFF1B\u76F4\u8FDE\u5931\u8D25\u65F6\u623F\u4E3B\u53EF\u6539\u7528\u4E91\u7AEF\u3002")}</p><h3>{t("\u9644\u8FD1\u724C\u684C\u4E0E\u79BB\u7EBF")}</h3><p>{t("\u9644\u8FD1\u5217\u8868\u4F9D\u636E\u7F51\u7EDC\u51FA\u53E3\uFF0C\u4E0D\u80FD\u4FDD\u8BC1\u786E\u5B9E\u5904\u4E8E\u540C\u4E00 Wi-Fi\u3002\u9875\u9762\u8D44\u6E90\u7F13\u5B58\u5B8C\u6210\u540E\uFF0C\u540C\u5C4F\u8BD5\u73A9\u53EF\u79BB\u7EBF\u4F7F\u7528\uFF1B\u8054\u673A\u5EFA\u623F\u4ECD\u9700\u8054\u7F51\u3002")}</p></>)}<button className="text-button" onClick={fullscreen}><Maximize2 size={15}/>{t("\u5C1D\u8BD5\u5168\u5C4F")}</button></div></Modal>)}
     {sheet==='audience'&&room&&<Modal title={t('观战席')} onClose={()=>setSheet(null)}><RoomAudience room={room} selfID={selfID} client={client}/></Modal>}
     {tx(sheet === 'history' && <Modal title={t("个人战绩")} onClose={() => setSheet(null)}><HistoryPanel records={records} onDelete={removeHistory}/></Modal>)}

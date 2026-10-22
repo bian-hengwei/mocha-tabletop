@@ -40,6 +40,9 @@
       "script": "tests/ui/local-play.integration.mjs"
     },
     {
+      "script": "tests/ui/practice-corrupt-recovery.integration.mjs"
+    },
+    {
       "script": "tests/ui/language.integration.mjs"
     },
     {
@@ -61,12 +64,36 @@
         "TEST_ACTION_DELAY_MS": "600",
         "TEST_SKIP_OFFLINE": "1"
       }
-    }
-  ],
-  "classic": [
+    },
     {
       "script": "tests/ui/bot-pacing.integration.mjs"
     },
+    {
+      "script": "tests/ui/social-app-viewport.integration.mjs"
+    },
+    {
+      "script": "tests/ui/room-social.integration.mjs"
+    },
+    {
+      "script": "tests/ui/result-overlay-focus.integration.mjs"
+    },
+    {
+      "script": "tests/ui/discovery-error.integration.mjs"
+    },
+    {
+      "script": "tests/ui/join-spectator-toggle.integration.mjs"
+    },
+    {
+      "script": "tests/ui/connection-overlays.integration.mjs"
+    },
+    {
+      "script": "tests/ui/invite-practice-recovery.integration.mjs"
+    },
+    {
+      "script": "tests/ui/drawguess-history.integration.mjs"
+    }
+  ],
+  "classic": [
     {
       "script": "tests/ui/mahjong-actions.integration.mjs"
     },
@@ -78,6 +105,9 @@
     },
     {
       "script": "tests/ui/poker-declaration.integration.mjs"
+    },
+    {
+      "script": "tests/ui/guandan-actual-a.integration.mjs"
     },
     {
       "script": "tests/ui/poker-feedback.integration.mjs"
@@ -120,14 +150,17 @@
     },
     {
       "script": "tests/ui/poker-expanded-hand.integration.mjs"
+    },
+    {
+      "script": "tests/ui/uno-experience.integration.mjs"
+    },
+    {
+      "script": "tests/ui/mahjong-response.integration.mjs"
     }
   ],
   "cards": [
     {
       "script": "tests/ui/room-social-games.integration.mjs"
-    },
-    {
-      "script": "tests/ui/uno-experience.integration.mjs"
     },
     {
       "script": "tests/ui/uno-penalty.integration.mjs"
@@ -146,6 +179,9 @@
     },
     {
       "script": "tests/ui/gems-viewport.integration.mjs"
+    },
+    {
+      "script": "tests/ui/gems-scarce-tokens.integration.mjs"
     },
     {
       "script": "tests/ui/gem-purchase-quotes.integration.mjs"
@@ -173,6 +209,9 @@
     },
     {
       "script": "tests/ui/sushi-copy-recovery.integration.mjs"
+    },
+    {
+      "script": "tests/ui/uno-challenge-evidence.integration.mjs"
     }
   ],
   "social": [
@@ -187,9 +226,6 @@
     },
     {
       "script": "tests/network/room-social.integration.mjs"
-    },
-    {
-      "script": "tests/ui/room-social.integration.mjs"
     },
     {
       "script": "tests/ui/room-social-boundaries.integration.mjs"
@@ -220,9 +256,6 @@
     },
     {
       "script": "tests/ui/social-viewport.integration.mjs"
-    },
-    {
-      "script": "tests/ui/social-app-viewport.integration.mjs"
     },
     {
       "script": "tests/ui/word-usability.integration.mjs"
@@ -288,6 +321,9 @@
     },
     {
       "script": "tests/ui/relay-gallery-reading.integration.mjs"
+    },
+    {
+      "script": "tests/ui/spectator-capacity.integration.mjs"
     }
   ]
 }

@@ -71,15 +71,24 @@ try{
   for(const [scenario,colors]of [['bank-scarce',[1,2]],['bank-one',[3]],['bank-no-pair',[0,1,2]],['bank-full-hand',[0,1,2]]]){
    await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=gems&players=max&scenario=${scenario}`);
    await expect(rules).toHaveText(locale==='zh'?'拿取':'Take');
+   if(scenario==='bank-scarce')await expect(rules).toHaveAccessibleName(locale==='zh'?'选择宝石: 取 1–2 色，各 1 枚':'Choose gems: 1-2 colors, 1 token each');
+   if(scenario==='bank-one')await expect(rules).toHaveAccessibleName(locale==='zh'?'选择宝石: 取 1 色，各 1 枚':'Choose gems: 1 color, 1 token');
    if(scenario!=='bank-full-hand'){
     await expect(rules).toHaveText(locale==='zh'?'拿取':'Take');
     await gems.nth(colors[0]).click();await gems.nth(colors[0]).click();
     await expect(gems.nth(colors[0])).toHaveAttribute('aria-pressed','false');
    }
+   if(scenario==='bank-scarce'){
+    await gems.nth(colors[0]).click();await expect(take).toBeEnabled();await expect(take).toHaveText(locale==='zh'?'拿取 1':'Take 1');
+    await page.getByRole('button',{name:locale==='zh'?'清空宝石选择':'Clear gem selection',exact:true}).click();await expect(take).toBeDisabled();
+    for(const i of colors)await gems.nth(i).click();await expect(take).toHaveText(locale==='zh'?'拿取 2':'Take 2');
+    await page.getByRole('button',{name:locale==='zh'?'清空宝石选择':'Clear gem selection',exact:true}).click();
+    await gems.nth(colors[0]).click();await expect(take).toBeEnabled();await take.click();await expect(page.locator('.g-merchant.active')).toContainText('Blair');await expect(take).toBeDisabled();continue;
+   }
    for(const i of colors)await gems.nth(i).click();
    await expect(take).toBeEnabled();await take.click();
    if(scenario==='bank-full-hand')await expect(page.locator('.action-dock')).toContainText(locale==='zh'?'归还':'Return');
-   else await expect(take).toBeDisabled();
+   else {await expect(page.locator('.g-merchant.active')).toContainText('Blair');await expect(take).toBeDisabled();}
   }
   await context.close();
  }

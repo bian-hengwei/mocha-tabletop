@@ -79,6 +79,19 @@ describe('redacted card bots', () => {
     expect(cardsBot(gems.view(remote, 'bot-0'), 'bot-0', 'hard', seeded(3))?.action).toBe('take_distinct');
   });
 
+  it('uses the scarce Gem minimum while preserving the exact normal three-color action', () => {
+    const scarce = gems.create(players(4), 23), target = [1, 1, 0, 0, 0, 5];
+    scarce.bank.forEach((count, color) => { for (let n = 0; n < count - target[color]; n++) { const seat = Array.from({length:4},(_,offset)=>(color+offset)%4).find(index => scarce.merchants[index].tokens.reduce((sum, value) => sum + value, 0) < (index === 0 ? 8 : 10)); expect(seat).toBeDefined(); scarce.merchants[seat!].tokens[color]++; } });
+    scarce.bank = target; scarce.market = [[], [], []]; scarce.decks = [[], [], []]; scarce.nobles = [];
+    const scarceChoice = cardsBot(gems.view(scarce, 'bot-0'), 'bot-0', 'hard', seeded(8));
+    expect(scarceChoice?.action).toBe('take_distinct');expect(scarceChoice?.values).toHaveLength(1);
+    expect(['white', 'blue']).toContain(scarceChoice?.values[0]);
+
+    const normal = gems.create(players(4), 24);normal.market = [[], [], []];normal.decks = [[], [], []];normal.nobles = [];
+    const normalChoice = cardsBot(gems.view(normal, 'bot-0'), 'bot-0', 'hard', seeded(9));
+    expect(normalChoice?.action).toBe('take_distinct');expect(normalChoice?.values).toHaveLength(3);expect(new Set(normalChoice?.values).size).toBe(3);
+  });
+
   it('chooses real UNO color majorities and ordered hard Sushi wasabi-nigiri picks', () => {
     const unoState = uno.create(players(2), 6, { unoMode: 'single' });
     unoState.current = 0;
