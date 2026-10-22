@@ -31,7 +31,7 @@ export function HistoryPanel({ records, onDelete }: {
                     <option value="solo">{t('单人人机')}</option><option value="practice">{t('同屏试玩')}</option>
                 </select></label>
             </div>
-            <div className="history-filter-status"><span role="status">{t(`${filtered.length} / ${records.length} 条战绩`)}</span>{(game !== 'all' || mode !== 'all') && <button className="text-button" onClick={resetFilters}>{t('重置筛选')}</button>}</div>
+            <div className={`history-filter-status${game !== 'all' || mode !== 'all' ? ' has-action' : ''}`}><span role="status">{t(`${filtered.length} / ${records.length} 条战绩`)}</span>{(game !== 'all' || mode !== 'all') && <button className="text-button" onClick={resetFilters}>{t('重置筛选')}</button>}</div>
         </>}
         {competitive.length > 0 && <div className="history-summary"><Trophy size={20}/><b>{competitive.length} {t('局联机')}</b><span>{competitive.filter(record => record.result === 'win' || record.result === 'draw').length} {t('局获胜 / 并列')}</span></div>}
         {filtered.length > 0 ? <ul className="personal-records">{filtered.map(record => <li key={record.id}>

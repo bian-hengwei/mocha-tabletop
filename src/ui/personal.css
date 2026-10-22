@@ -21,4 +21,14 @@
 .profile-editor .avatar-grid{scrollbar-gutter:stable;scrollbar-color:auto}
 .profile-editor .avatar-grid::-webkit-scrollbar{width:8px}
 .profile-editor .avatar-grid::-webkit-scrollbar-track{background:#ffffff12;border-radius:8px}
+
+/* Compact history top controls and records without shrinking type. */
+.history-panel .history-filters{gap:8px;margin:10px 0 0}
+.history-panel .history-filters label{gap:4px}
+.history-panel .history-filter-status{margin:6px 0 5px;min-height:auto}
+.history-panel .history-filter-status.has-action{min-height:44px;margin:3px 0 7px}
+.history-panel .history-summary{gap:10px;padding:9px 11px}
+.history-panel .personal-records li{padding:10px 0;gap:7px}
+.history-panel .personal-records small,.history-panel .personal-records time{margin-top:2px}
+.history-panel .personal-records p{margin:4px 0}
 .profile-editor .avatar-grid::-webkit-scrollbar-thumb{background:#c9b582;border:2px solid #25362d;border-radius:8px}
