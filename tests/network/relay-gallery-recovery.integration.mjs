@@ -7,7 +7,19 @@ assert(modes.every(mode=>['cloud','lan'].includes(mode)),'unknown room mode');
 const browser=await chromium.launch(),out='test-results/relay-gallery-recovery';await fs.mkdir(out,{recursive:true});
 async function player(name){const context=await browser.newContext(),page=await context.newPage();await page.goto(base+'/manifest-mocha.webmanifest');await page.evaluate(async name=>{const {RoomClient}=await import('/src/net/client.ts');window.client=new RoomClient();window.profile={id:crypto.randomUUID(),name,avatar:'🦊'};},name);return page;}
 async function action(page,command){const before=await page.evaluate(()=>client.state.actionRevision);await page.evaluate(command=>{client.clearError();client.action(command);},command);await page.waitForFunction(before=>client.state.actionRevision!==before||client.state.error,before);assert.equal(await page.evaluate(()=>client.state.error),undefined,JSON.stringify(command));}
-async function rejected(page,command,error){await page.evaluate(command=>{client.clearError();client.action(command);},command);await page.waitForFunction(()=>!!client.state.error);assert.equal(await page.evaluate(()=>client.state.error),error);await page.evaluate(()=>client.clearError());}
+async function rejected(page,command,error){
+ const observed=await page.evaluate(async command=>{
+  client.clearError();
+  let unsubscribe,timer;
+  // Capture the rejection before a later room snapshot can clear the error.
+  try{return await new Promise((resolve,reject)=>{
+   timer=setTimeout(()=>reject(new Error('No rejection emitted within 30000ms')),30000);
+   unsubscribe=client.subscribe(state=>{if(state.error)resolve(state.error);});
+   client.action(command);
+  });}finally{clearTimeout(timer);unsubscribe?.();}
+ },command);
+ assert.equal(observed,error);await page.evaluate(()=>client.clearError());
+}
 async function ready(page){await page.waitForFunction(()=>client.state.view&&!client.state.paused&&!client.state.error);}
 try{for(const mode of modes){
  const pages=await Promise.all(['Host','Guest','Third','Observer'].map(player)),[host,guest,third,observer]=pages;
