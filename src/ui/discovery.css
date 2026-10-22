@@ -1,0 +1,3 @@
+.app .app-modal.discovery-panel>header .icon,.app .app-modal.discovery-panel .modal-body>footer button{min-width:44px;min-height:44px}
+.app .app-modal.discovery-panel .empty-state[role=alert] p{color:#e3dac4;font-weight:600}
+.app .app-modal.discovery-panel .empty-state[role=alert] small{color:#bac6b9;line-height:1.5}
