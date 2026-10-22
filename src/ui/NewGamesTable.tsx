@@ -2,7 +2,7 @@ import {PlayerAvatar} from './RoomSocial';
 import {NewGameResults} from './NewGameResults';
 import { t } from '../i18n';
 function tx<T>(value: T): T | string { return typeof value === 'string' ? t(value) : value; }
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
 import type { Action, Command, GameView } from '../core/types';
 import type { SushiCard } from '../core/games/sushi';
 import { SushiTable } from './SushiTable';
@@ -73,8 +73,14 @@ function UnoTable(props: Props) {
   choose(card.id);
  };
  const playerName=(id:string)=>b.players.find((p:any)=>p.id===id)?.name||id;
+ const scrollEvidence=(event:KeyboardEvent<HTMLDivElement>)=>{
+  if(event.nativeEvent.isComposing||event.keyCode===229||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+  event.preventDefault();const rail=event.currentTarget;
+  if(event.key==='Home'||event.key==='End')rail.scrollTo({left:event.key==='Home'?0:rail.scrollWidth});
+  else rail.scrollBy({left:event.key==='ArrowLeft'?-100:100});
+ };
  return <div className={`ng-table ng-uno ${challenge?'ng-reviewing':''}`}><div className="ng-uno-overview"><Header view={view} selfID={selfID}/><Scoreboard view={view} selfID={selfID}/><div className="ng-edition"><span>{t(`第 ${b.roundNumber} 轮`)}</span><span>{b.mode==='single'?t('单局竞速'):t('累计 500 分获胜')}</span><span>{t(b.challengeEnabled===false?'+4 质疑已关闭':'+4 质疑已开启')}</span></div>
-  {challenge&&<section className="ng-panel ng-challenge" aria-label={t('质疑核验 · 仅你可见')}><h3>{t('质疑核验 · 仅你可见')}</h3><p className="ng-hint">{playerName(challenge.actor)} · {t('出 +4 时的手牌')} · {t('原颜色')} {t(UNO_LABEL[challenge.previousColor])}</p><strong className="ng-challenge-result">{t(challenge.wasLegal?'出牌合法，质疑失败':'持有原颜色，质疑成功')}</strong><p className="ng-hint">{t(challenge.wasLegal?'你已抽 6 张，确认后跳过。':'对方已抽 4 张，你继续正常回合。')}</p><div className="ng-hand">{(challenge.hand as UnoCard[]).map(c=><UnoFace key={c.id} card={c}/>)}</div><div className="ng-controls"><button className="ng-action" onClick={()=>command({action:'confirmChallenge',values:[]})}>{t('看完了，继续')}</button></div></section>}
+  {challenge&&<section className="ng-panel ng-challenge" aria-label={t('质疑核验 · 仅你可见')}><div className="ng-challenge-summary"><h3>{t('质疑核验 · 仅你可见')}</h3><p className="ng-hint">{playerName(challenge.actor)} · {t('出 +4 时的手牌')} · {t('原颜色')} {t(UNO_LABEL[challenge.previousColor])}</p><strong className="ng-challenge-result">{t(challenge.wasLegal?'出牌合法，质疑失败':'持有原颜色，质疑成功')}</strong><p className="ng-hint">{t(challenge.wasLegal?'你已抽 6 张，确认后跳过。':'对方已抽 4 张，你继续正常回合。')}</p></div><div className="ng-hand" tabIndex={0} aria-label={t('出 +4 时的手牌')} onKeyDown={scrollEvidence}>{(challenge.hand as UnoCard[]).map(c=><UnoFace key={c.id} card={c}/>)}</div><div className="ng-controls"><button className="ng-action" onClick={()=>command({action:'confirmChallenge',values:[]})}>{t('看完了，继续')}</button></div></section>}
   {(b.phase==='roundEnd'||view.finished)&&b.roundWinner&&<section className="ng-panel ng-round-result"><h3>{t('本轮结算')}</h3><strong>{playerName(b.roundWinner)} · +{b.roundPoints} {t('分')}</strong></section>}
   <section className="ng-uno-center ng-panel"><div><h3>{t('当前弃牌')}</h3><UnoFace card={b.top}/></div><div className="ng-uno-status"><span className="ng-color-badge" style={{background:unoColors[b.color]}}>{t(UNO_LABEL[b.color])}</span><strong>{t(b.direction===1?'顺时针 →':'← 逆时针')}</strong><small>{t('抽牌堆')} {t(`${b.deckCount} 张`)}</small><Controls {...props} omit={['play','confirmChallenge','draw','pass']}/></div></section>
 

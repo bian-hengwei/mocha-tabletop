@@ -142,6 +142,9 @@
       "script": "tests/ui/uno-penalty.integration.mjs"
     },
     {
+      "script": "tests/ui/uno-challenge-evidence.integration.mjs"
+    },
+    {
       "script": "tests/ui/hand-experience.integration.mjs"
     },
     {
