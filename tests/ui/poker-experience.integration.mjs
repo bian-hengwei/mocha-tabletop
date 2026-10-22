@@ -59,4 +59,17 @@ try{
   await page.close();
  }
  console.log('PASS mouse drag selection and deselection');
+ // Compact Guandan and Doudizhu hands accept first/middle/last taps and keyboard focus.
+ for(const [kind,locale] of [['guandan','zh'],['doudizhu','en']]){
+  const context=await browser.newContext({viewport:{width:kind==='guandan'?320:568,height:kind==='guandan'?568:320},hasTouch:true});await context.addInitScript(l=>localStorage.setItem('mocha-locale',l),locale);
+  const page=await context.newPage();await page.goto(`${base}/tests/ui/poker.fixture.html?kind=${kind}&dense&long&counter=off`);
+  const hand=page.locator('.classic-hand .classic-card'),count=await hand.count();
+  for(const index of [0,Math.floor((count-1)/2),count-1]){
+   const card=hand.nth(index);await card.scrollIntoViewIfNeeded();await card.tap();await expect(card).toHaveAttribute('aria-pressed','true');
+   await expect(page.locator('.classic-hand .selected')).toHaveCount(1);await card.tap();await expect(card).toHaveAttribute('aria-pressed','false');await expect(page.locator('.classic-hand .selected')).toHaveCount(0);
+  }
+  const first=hand.first();await first.focus();await page.keyboard.press('Enter');await expect(first).toHaveAttribute('aria-pressed','true');
+  await page.keyboard.press('Enter');await expect(first).toHaveAttribute('aria-pressed','false');await context.close();
+  console.log(`PASS compact first/middle/last tap and keyboard selection ${kind} ${locale}`);
+ }
 }finally{await browser.close();}

@@ -172,9 +172,9 @@
 .poker-table .classic-card:focus-visible{z-index:2}
 .poker-table .card-selected-mark{right:auto;left:0;border-radius:5px 0 5px 0;width:15px;height:15px;top:-8px;font-size:10px}
 .poker-table .classic-hand-scroll{padding-top:14px;padding-bottom:8px}
-@media(max-width:740px){.poker-table .classic-hand{--poker-step:28px;--poker-width:62px}}
-@media(max-height:650px) and (orientation:portrait){.poker-table .classic-hand{--poker-step:26px;--poker-width:44px}.poker-table .classic-hand-scroll{padding-top:12px;padding-bottom:5px}}
-@media(max-height:500px) and (orientation:landscape){.poker-table .classic-hand{--poker-step:28px;--poker-width:44px}.poker-table .classic-hand-scroll{padding-top:12px;padding-bottom:4px}}
+@media(max-width:740px){.poker-table .classic-hand{--poker-step:36px;--poker-width:62px}}
+@media(max-height:650px) and (orientation:portrait){.poker-table .classic-hand{--poker-step:36px;--poker-width:44px}.poker-table .classic-hand-scroll{padding-top:12px;padding-bottom:5px}}
+@media(max-height:500px) and (orientation:landscape){.poker-table .classic-hand{--poker-step:36px;--poker-width:44px}.poker-table .classic-hand-scroll{padding-top:12px;padding-bottom:4px}}
 /* The button owns its exposed strip; the face can paint underneath the next card.
    This keeps keyboard and pointer targets aligned with the rank users can see. */
 .poker-table .classic-card{width:var(--poker-step);min-width:var(--poker-step);max-width:var(--poker-step);box-shadow:none}
