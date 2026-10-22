@@ -25,6 +25,9 @@
       "script": "tests/ui/discovery-error.integration.mjs"
     },
     {
+      "script": "tests/ui/join-spectator-toggle.integration.mjs"
+    },
+    {
       "script": "tests/ui/history-filters.integration.mjs"
     },
     {

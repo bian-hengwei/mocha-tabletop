@@ -63,6 +63,7 @@ npx playwright install chromium webkit
 | 命令 | 验证范围 |
 | --- | --- |
 | `node tests/ui/discovery-error.integration.mjs` | 发现牌桌失败与真正空列表区分：网络失败、503、重试成功、有房间、关闭重开、输入房间码切换、过期请求；中英八尺寸、焦点与旋转，支持 WebKit |
+| `node tests/ui/join-spectator-toggle.integration.mjs` | 入桌观众选项：原生复选框、44px 点击范围、标签/键盘、选中与取消、房间码校验、关闭重开、提交观众/玩家身份；中英八尺寸及旋转，支持 WebKit |
 | `node tests/ui/home-cover-readability.integration.mjs` | 首页中英八尺寸、含恢复入口：14 个封面及按人数筛选后的完整名称/人数与插画分区、可辨认插画面积、短横屏入口、触控与全部选桌入口、弹窗旋转/关闭/焦点；支持 WebKit |
 | `node tests/ui/gem-purchase-quotes.integration.mjs` | 晶石购买费用：逐色原价/奖励/折后费用/筹码/缺色、黄金统一补缺、免费购买、确认/取消、焦点与中英八尺寸旋转；支持 WebKit |
 | `node tests/ui/gems-inspector.integration.mjs` | 晶石牌详情区分筹码不足、预留满位、自己的预留、他人预留、已购牌、等待及支付阶段；中英八尺寸与旋转，支持 WebKit |
