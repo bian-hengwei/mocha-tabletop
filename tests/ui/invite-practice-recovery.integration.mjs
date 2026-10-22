@@ -56,33 +56,26 @@ try{
   await invite(page,'ZZZZZ2',{token:'local-audit'});await fitDialog(page,width,height);assert.equal(await raw(page),saved.raw);await page.getByRole('dialog').getByRole('button',{name:labels[locale].close,exact:true}).click();await restored(page,saved.id);assert.equal((await checkpoint(page)).id,saved.id);await expectCleanURL(page);await page.screenshot({path:`${out}/${locale}-${width}x${height}-restored.png`});
  }
 
- // Pending approval is not acceptance: cancel restores practice and clears the unconfirmed recovery hint.
+ // Reuse one local room to keep the CI group below its room-creation rate limit.
  {
-  const h=await host('pending'),g=await context('zh'),saved=await seed(g,'zh',{suffix:'pending'});
+  const h=await host('shared');
   try{
-   await invite(g,'ZZZZZ2',{other:true});const beforePending=await raw(g);await g.getByRole('dialog',{name:labels.zh.dialog}).getByRole('button',{name:labels.zh.discover,exact:true}).click();await g.getByRole('dialog',{name:labels.zh.nearby}).waitFor();await g.getByRole('button').filter({hasText:'Host pending'}).click();await h.page.waitForFunction(id=>client.state.room.pending.some(p=>p.id===id),saved.profile.id);await expect(g.getByText('等待房主同意',{exact:true})).toBeVisible();assert.equal(await raw(g),beforePending);await g.locator('.connecting-overlay').getByRole('button',{name:labels.zh.cancel,exact:true}).click();await restored(g,saved.id);await expectCleanURL(g);assert.equal(await g.evaluate(()=>sessionStorage.getItem('mocha-room-session')),null);
-  }finally{await closeHost(h);}
- }
+   const pending=await context('zh'),pendingSave=await seed(pending,'zh',{suffix:'pending'});
+   await invite(pending,'ZZZZZ2',{other:true});const beforePending=await raw(pending);await pending.getByRole('dialog',{name:labels.zh.dialog}).getByRole('button',{name:labels.zh.discover,exact:true}).click();await pending.getByRole('dialog',{name:labels.zh.nearby}).waitFor();await pending.getByRole('button').filter({hasText:'Host shared'}).click();await h.page.waitForFunction(id=>client.state.room.pending.some(p=>p.id===id),pendingSave.profile.id);await expect(pending.getByText('等待房主同意',{exact:true})).toBeVisible();assert.equal(await raw(pending),beforePending);await pending.locator('.connecting-overlay').getByRole('button',{name:labels.zh.cancel,exact:true}).click();await restored(pending,pendingSave.id);await expectCleanURL(pending);assert.equal(await pending.evaluate(()=>sessionStorage.getItem('mocha-room-session')),null);
 
- // Rejection and authoritative 404 both fall back to the untouched checkpoint.
- {
-  const h=await host('reject'),g=await context('zh'),saved=await seed(g,'zh',{suffix:'reject'});
-  try{
-   await invite(g,h.room.code,{other:true});await g.getByRole('dialog').getByRole('button',{name:labels.zh.join,exact:true}).click();await h.page.waitForFunction(id=>client.state.room.pending.some(p=>p.id===id),saved.profile.id);await h.page.evaluate(id=>client.approve(id,false),saved.profile.id);await g.locator('.toast').waitFor();await restored(g,saved.id);await expectCleanURL(g);
-  }finally{await closeHost(h);}
- }
- {
-  const g=await context('en'),saved=await seed(g,'en',{suffix:'notfound'});await invite(g,'ZZZZZ2',{other:true});assert.equal(await raw(g),saved.raw);await g.getByRole('dialog').getByRole('button',{name:labels.en.join,exact:true}).click();await g.locator('.toast').waitFor();await restored(g,saved.id);await expectCleanURL(g);
- }
+   const reject=await context('zh'),rejectSave=await seed(reject,'zh',{suffix:'reject'});
+   await invite(reject,h.room.code,{other:true});await reject.getByRole('dialog').getByRole('button',{name:labels.zh.join,exact:true}).click();await h.page.waitForFunction(id=>client.state.room.pending.some(p=>p.id===id),rejectSave.profile.id);await h.page.evaluate(id=>client.approve(id,false),rejectSave.profile.id);await reject.locator('.toast').waitFor();await restored(reject,rejectSave.id);await expectCleanURL(reject);
 
- // Confirmed snapshots clear a matching checkpoint; reload and saved-session-plus-practice both resume room-first.
- {
-  const h=await host('accepted'),g=await context('en'),saved=await seed(g,'en',{suffix:'accepted'});
-  try{
+   const g=await context('en'),saved=await seed(g,'en',{suffix:'accepted'});
    await invite(g,h.room.code,{token:h.room.invite,other:true});assert.equal(await raw(g),saved.raw);await g.evaluate(()=>{const remove=Storage.prototype.removeItem;Storage.prototype.removeItem=function(key){if(key==='mocha-practice-v1')throw new DOMException('denied','SecurityError');return remove.call(this,key);};});await g.getByRole('dialog').getByRole('button',{name:labels.en.join,exact:true}).click();await g.getByRole('button',{name:labels.en.ready,exact:true}).waitFor();assert.notEqual(await raw(g),null);assert.deepEqual(g.__errors,[]);assert.match(await g.evaluate(()=>location.href),/[?&]room=/);
    await g.reload();await g.getByRole('button',{name:labels.en.ready,exact:true}).waitFor();assert.equal(await raw(g),null);assert.deepEqual(g.__errors,[]);
    await seed(g,'en',{suffix:'both',clear:false});const combined=await raw(g);assert.match(combined,/Recovery both/);await g.goto(base);await g.getByRole('button',{name:labels.en.ready,exact:true}).waitFor();assert.equal(await raw(g),null);assert.equal(await g.locator('.game-surface').count(),0);
   }finally{await closeHost(h);}
+ }
+
+ // Authoritative 404 also falls back to the untouched checkpoint.
+ {
+  const g=await context('en'),saved=await seed(g,'en',{suffix:'notfound'});await invite(g,'ZZZZZ2',{other:true});assert.equal(await raw(g),saved.raw);await g.getByRole('dialog').getByRole('button',{name:labels.en.join,exact:true}).click();await g.locator('.toast').waitFor();await restored(g,saved.id);await expectCleanURL(g);
  }
 
  // Stale invite metadata is removed even when no practice checkpoint exists.
