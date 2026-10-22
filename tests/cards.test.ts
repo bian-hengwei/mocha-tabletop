@@ -9,6 +9,19 @@ const b=(s:BombsState,action:string,values:string[]=[],id=s.current)=>bombs.appl
 const json=(v:unknown)=>JSON.stringify(v);
 function gc(id:string,cost:number[],bonus='white',points=0):GemCard{return{id,tier:1,bonus,points,cost};}
 function gemFixture(){const s=gems.create(players(2),7);s.market=[[],[],[]];s.decks=[[],[],[]];s.nobles=[];return s;}
+function redistributeSupply(s:GemsState,target:number[],seats=[0,1,2,3],limits=[8,10,10,10]){
+  s.bank.forEach((count,color)=>{
+    const total=count+s.merchants.reduce((sum,merchant)=>sum+merchant.tokens[color],0),remaining=total-target[color]-s.merchants[0].tokens[color];
+    for(let n=0;n<remaining;n++){
+      const index=Array.from({length:seats.length},(_,offset)=>seats[(color+offset)%seats.length]).find(seat=>s.merchants[seat].tokens.reduce((sum,value)=>sum+value,0)<limits[seat]);
+      if(index===undefined)throw Error('fixture token capacity exceeded');s.merchants[index].tokens[color]++;
+    }
+  });
+  s.bank=[...target];
+}
+function scarceTokenFixture(colors:1|2){
+  const s=gems.create(players(4),7),target=[1,colors===2?1:0,0,0,0,5];redistributeSupply(s,target);gemConservation(s);expect(s.merchants.every(m=>m.tokens.reduce((a,b)=>a+b,0)<=10)).toBe(true);return s;
+}
 let serial=1000;
 function bc(kind:BombKind):BombCard{return{id:`fixture-${serial++}`,kind,title:kind};}
 function bombFixture(n=3){const s=bombs.create(players(n),19);s.hands=Object.fromEntries(s.players.map(p=>[p.id,[]]));s.deck=[bc('moonCat'),bc('cloudCat'),bc('leafCat'),bc('bomb'),bc('bomb')];s.discard=[];s.eliminatedCards=[];return s;}
@@ -29,7 +42,19 @@ describe('宝石商人 catalog/setup',()=>{
 });
 describe('宝石商人 rules',()=>{
   it('requires all 3 different colors when available and four bank tokens before pairs',()=>{let s=gems.create(players(2),3);expect(()=>g(s,'take_distinct',['white','blue'])).toThrow();s=g(s,'take_pair',['white']);expect(s.bank[0]).toBe(2);expect(gems.view(s,'p1').actions.find(a=>a.id==='take_pair')?.choices.some(c=>c.id==='white')).toBe(false);});
-  it('takes fewer colors only if supply lacks 3',()=>{const s=gemFixture();s.bank=[0,2,1,0,0,0];const next=g(s,'take_distinct',['blue','green']);expect(next.merchants[0].tokens).toEqual([0,1,1,0,0,0]);});
+  it('allows one or two colors while exactly two remain, conserving every token',()=>{
+    const s=scarceTokenFixture(2),action=gems.view(s,'p0').actions.find(a=>a.id==='take_distinct')!;
+    expect(action).toMatchObject({title:'拿取 1–2 种宝石',min:1,max:2,help:'取 1 或 2 种不同颜色，各取 1 枚'});
+    expect(action.choices.map(c=>c.id)).toEqual(['white','blue']);
+    const before=[...s.merchants[0].tokens],one=g(s,'take_distinct',['white']);expect(one.merchants[0].tokens).toEqual([before[0]+1,before[1],...before.slice(2)]);expect(one.bank).toEqual([0,1,0,0,0,5]);expect(one.current).toBe(1);gemConservation(one);
+    const two=g(s,'take_distinct',['white','blue']);expect(two.merchants[0].tokens).toEqual([before[0]+1,before[1]+1,...before.slice(2)]);expect(two.bank).toEqual([0,0,0,0,0,5]);expect(two.current).toBe(1);gemConservation(two);
+  });
+  it('takes one when only one color remains and offers no distinct action at zero',()=>{
+    const s=scarceTokenFixture(1),action=gems.view(s,'p0').actions.find(a=>a.id==='take_distinct')!;
+    expect(action).toMatchObject({title:'拿取 1 种宝石',min:1,max:1});expect(action.choices.map(c=>c.id)).toEqual(['white']);
+    const before=[...s.merchants[0].tokens],next=g(s,'take_distinct',['white']);expect(next.merchants[0].tokens).toEqual([before[0]+1,...before.slice(1)]);expect(next.bank).toEqual([0,0,0,0,0,5]);gemConservation(next);
+    const zero=gemFixture();zero.bank=[0,0,0,0,0,5];expect(gems.view(zero,'p0').actions.some(a=>a.id==='take_distinct')).toBe(false);
+  });
   it('records face-up reservations, grants gold, refills, and caps at 3',()=>{let s=gems.create(players(2),2);const old=s.market[0][0];s=g(s,'reserve',[old.id]);expect(s.market[0]).toHaveLength(4);expect(s.merchants[0].tokens[5]).toBe(1);expect(s.merchants[0].reserved[0]).toEqual(old);expect(gems.view(s,'p1').board.players[0].reservedCards).toEqual([{id:old.id,tier:old.tier,public:true,card:old}]);s.current=0;s.bank[5]=0;s=g(s,'reserve',['deck:1']);expect(s.merchants[0].reserved).toHaveLength(2);s.current=0;s=g(s,'reserve',['deck:2']);s.current=0;expect(gems.view(s,'p0').actions.some(a=>a.id==='reserve')).toBe(false);});
   it('enforces 10-token end-of-turn limit including gold',()=>{let s=gems.create(players(2),4);s.merchants[0].tokens=[2,2,2,2,1,0];s=g(s,'reserve',['deck:1']);expect(s.current).toBe(1);s.current=0;s=g(s,'reserve',['deck:1']);expect(s.phase).toBe('discard');expect(s.current).toBe(0);expect(()=>g(s,'discard',[])).toThrow();s=g(s,'discard',['gold:0']);expect(s.merchants[0].tokens.reduce((a,b)=>a+b)).toBe(10);expect(s.current).toBe(1);});
   it('buys using discounts and gold, paying only after confirmation',()=>{let s=gemFixture();const c=gc('buy',[2,1,0,0,0]);s.market[0]=[c];s.merchants[0].bought=[gc('discount',[0,0,0,0,0])];s.merchants[0].tokens=[1,0,0,0,0,1];s=g(s,'buy',[c.id]);expect(s.phase).toBe('payment');expect(s.merchants[0].tokens).toEqual([1,0,0,0,0,1]);expect(gems.view(s,'p0').board.payment.needed).toEqual([1,1,0,0,0]);s=g(s,'pay_auto');expect(s.merchants[0].tokens).toEqual([0,0,0,0,0,0]);expect(s.merchants[0].bought).toHaveLength(2);});
@@ -41,6 +66,14 @@ describe('宝石商人 rules',()=>{
   it('allows shared victory after both tie-breakers',()=>{let s=gemFixture();s.merchants.forEach((m,i)=>m.bought=[gc(`win-${i}`,[0,0,0,0,0],'white',15)]);s=g(s,'take_pair',['white']);s=g(s,'take_pair',['blue']);expect(s.winners).toEqual(['p0','p1']);});
   it('does not leak a private reserved purchase to opponents',()=>{let s=gemFixture();s.merchants[0].reserved=[gc('secret-reserve',[0,0,0,0,0])];s=g(s,'buy',['secret-reserve']);expect(json(gems.view(s,'p1'))).not.toContain('secret-reserve');expect(gems.view(s,'p1').actions).toEqual([]);});
   it('settles token overflow before a noble and final round',()=>{let s=gemFixture();s.merchants[0].tokens=[2,2,2,2,2,0];s.merchants[0].bought=[gc('points',[0,0,0,0,0],'white',12)];s.nobles=[{id:'visitor',cost:[1,0,0,0,0]}];s=g(s,'take_pair',['white']);expect(s.phase).toBe('discard');expect(s.finalRound).toBe(false);expect(s.merchants[0].nobles).toHaveLength(0);s=g(s,'discard',['white:0','white:1']);expect(s.merchants[0].nobles).toHaveLength(1);expect(s.finalRound).toBe(true);expect(s.current).toBe(1);});
+  it('keeps scarcity, overflow return, noble and turn boundaries in sequence',()=>{
+    const s=gems.create(players(4),5);s.merchants[0].tokens=[2,2,2,2,2,0];s.bank=s.bank.map((count,color)=>count-s.merchants[0].tokens[color]);redistributeSupply(s,[1,0,0,0,0,5],[1,2,3]);
+    const ids=['white-L3-01','white-L3-02','white-L3-03','red-L3-01','red-L3-02','red-L3-03','black-L3-01','black-L3-02','black-L3-03'];
+    const take=(id:string)=>{for(const pile of [...s.market,...s.decks]){const index=pile.findIndex(card=>card.id===id);if(index>=0)return pile.splice(index,1)[0];}throw Error(`Missing catalog card ${id}`);};
+    s.merchants[0].bought=ids.map(take);s.nobles=[{id:'visitor',cost:[3,0,0,3,3]},{id:'noble-blue-green',cost:[0,3,3,3,0]},{id:'noble-green-red-black',cost:[0,0,3,3,3]},{id:'noble-white-blue-red',cost:[3,3,0,0,3]},{id:'noble-blue-red-black',cost:[0,3,0,3,3]}];gemConservation(s);
+    const taken=g(s,'take_distinct',['white']);expect(taken.merchants[0].tokens.reduce((a,b)=>a+b,0)).toBe(11);expect(taken.phase).toBe('discard');expect(taken.current).toBe(0);expect(taken.finalRound).toBe(false);
+    const settled=g(taken,'discard',['white:0']);expect(settled.merchants[0].tokens.reduce((a,b)=>a+b,0)).toBe(10);expect(settled.merchants[0].nobles.map(n=>n.id)).toEqual(['visitor']);expect(settled.finalRound).toBe(true);expect(settled.current).toBe(1);gemConservation(settled);
+  });
   it('views cannot mutate authoritative state, invalid actors and duplicate values reject',()=>{const s=gems.create(players(2),9),before=json(s);gems.view(s,'p0').board.bank[0]=999;expect(json(s)).toBe(before);expect(()=>gems.apply(s,'p1',{action:'take_pair',values:['blue']})).toThrow();expect(()=>g(s,'take_distinct',['blue','blue','white'])).toThrow();expect(json(s)).toBe(before);});
 });
 
@@ -154,8 +187,11 @@ describe('宝石商人 public reservation memory',()=>{
     let s=gemFixture();const card=gc('public-free',[0,0,0,0,0]);s.market[0]=[card];s=g(s,'reserve',[card.id]);s.current=0;s=g(s,'buy',[card.id]);s=g(s,'pay_auto');
     expect(s.merchants[0].publicReserved).toEqual([]);const p=gems.view(s,'p1').board.players[0];expect(p.reservedCards).toEqual([]);expect(p.bought).toEqual([card]);
   });
-  it('does not allow voluntary under-taking or reservation discard',()=>{
-    const s=gems.create(players(2),12);expect(()=>g(s,'take_distinct',['white'])).toThrow();expect(()=>g(s,'take_distinct',['white','blue'])).toThrow();expect(()=>g(s,'discard',['deck:1'])).toThrow();
-    s.bank=[0,2,0,1,0,0];expect(()=>g(s,'take_distinct',['blue'])).toThrow();expect(g(s,'take_distinct',['blue','red']).merchants[0].tokens).toEqual([0,1,0,1,0,0]);
+  it('keeps the normal action exact, rejects partial, duplicate and gold choices atomically',()=>{
+    const s=gemFixture();s.bank=[2,2,2,0,0,5];const action=gems.view(s,'p0').actions.find(a=>a.id==='take_distinct')!,before=json(s);
+    expect(action).toMatchObject({min:3,max:3});expect(action.choices.map(c=>c.id)).toEqual(['white','blue','green']);
+    expect(()=>g(s,'take_distinct',['white'])).toThrow();expect(()=>g(s,'take_distinct',['white','blue'])).toThrow();
+    expect(()=>g(s,'take_distinct',['white','white','blue'])).toThrow();expect(()=>g(s,'take_distinct',['white','blue','gold'])).toThrow();
+    expect(json(s)).toBe(before);expect(()=>g(s,'discard',['deck:1'])).toThrow();
   });
 });

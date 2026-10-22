@@ -148,6 +148,9 @@
       "script": "tests/ui/gems-viewport.integration.mjs"
     },
     {
+      "script": "tests/ui/gems-scarce-tokens.integration.mjs"
+    },
+    {
       "script": "tests/ui/gem-purchase-quotes.integration.mjs"
     },
     {

@@ -48,7 +48,11 @@ function actions(s:GemsState):Action[] {
   if(s.phase==='payment')return [action('pay_auto','确认购买',[],0,0,`支付 ${describe(payment(s,s.payment!)!)}`),action('pay_custom','选择筹码',tokenChoices(s),sum(needs(s,s.payment!)),sum(needs(s,s.payment!))),action('cancel_buy','取消')];
   const result:Action[]=[];
   const different=GEM_COLORS.slice(0,5).filter((_,i)=>s.bank[i]>0), n=Math.min(3,different.length);
-  if(n)result.push(action('take_distinct',`拿取 ${n} 种宝石`,different.map(c=>({id:c,title:LABELS[GEM_COLORS.indexOf(c)]})),n,n));
+  if(n){
+    const min=n===3?3:1, max=n===2?2:n, title=n===2?'拿取 1–2 种宝石':`拿取 ${n} 种宝石`;
+    const help=n===2?'取 1 或 2 种不同颜色，各取 1 枚':`取 ${n} 种不同颜色，各取 1 枚`;
+    result.push(action('take_distinct',title,different.map(c=>({id:c,title:LABELS[GEM_COLORS.indexOf(c)]})),min,max,help));
+  }
   const pairs=GEM_COLORS.slice(0,5).filter((_,i)=>s.bank[i]>=4);
   if(pairs.length)result.push(action('take_pair','拿取同色 ×2',pairs.map(c=>({id:c,title:LABELS[GEM_COLORS.indexOf(c)]})),1,1));
   const buyable=available(s).filter(c=>payment(s,c)!==null);

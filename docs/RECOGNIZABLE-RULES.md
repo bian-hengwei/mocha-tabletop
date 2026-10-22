@@ -12,11 +12,11 @@
 
 ## 规则版本与逐项核对
 
-核对日期：2026-09-20。以下来源用于核对规则与数值，应用内说明为自行编写，未加入官方卡面、标志或规则书扫描件。
+核对日期：2026-10-22。以下来源用于核对规则与数值，应用内说明为自行编写，未加入官方卡面、标志或规则书扫描件。
 
 | 游戏 | 明确的规则范围 | 核对项目与回归 |
 | --- | --- | --- |
-| 晶石商会 | Splendor 基础版 | 90 张发展牌与 10 贵族；2/3/4 人各色筹码 4/5/7，黄金 5；拿取、预留、支付、10 枚容量、贵族、15 分末轮与同分比较。`cards.test.ts` 的独立牌表、守恒和完整牌局。 |
+| 晶石商会 | Splendor 基础版 | 90 张发展牌与 10 贵族；2/3/4 人各色筹码 4/5/7，黄金 5；三种以上颜色有库存时异色取筹码固定取三种，只有两种时可取一种或两种，只有一种时取一种；预留、支付、10 枚容量、贵族、15 分末轮与同分比较。`cards.test.ts` 的独立牌表、守恒和完整牌局。 |
 | 喵喵危机 | Exploding Kittens Original Edition 2025 规则，启用两张与三张组合 | 7 普通牌 + 1 拆弹起手；N−1 爆炸；额外两张拆弹（5 人时一张）；功能牌 4/4/4/4/5/5，五种猫咪各 4。逐个完成攻击叠加、跳过、索取、洗牌、预知、否决链、组合、拆弹放回和淘汰。`cards.test.ts`、`recognizable-rules.test.ts`、猫牌完整 UI 牌局。此版不含旧版五张不同牌回收弃牌，不启用快速删牌变体。 |
 | 月夜议会 | 中文常见狼人桌规，保留并展示本桌选项 | 自动与灵活人数配置、固定九人预女猎、十二人预女猎白/预女猎守/狼王守卫、屠边/人数胜利；女巫不可自救、守救同死、毒死猎人不开枪、警长 1.5 票。三种主持方式与 6–18 人边界见 `werewolf-presets.test.ts`、`werewolf-hosted.test.ts` 和 `social.test.ts`。该类游戏没有覆盖所有版本的统一规则。 |
 | 迷雾远征 | Avalon 基础任务，加入 Percival 与 Morgana 角色组合 | 5–10 人阵营和任务人数、过半通过、连续五否决、7 人起第四任务双失败、三成功后刺杀。`social.test.ts`、`game-identities.test.ts`、`recognizable-rules.test.ts`。不启用其他角色或湖中仙女。 |
@@ -28,7 +28,7 @@
 
 原始规则来源：
 
-- [Splendor 出版方规则](https://cdn.svc.asmodee.net/production-spacecowboys/uploads/2025/10/SCSPL01EN_SPLENDOR_RULES_LIGHT.pdf)；2026-10-17 复核第 2 页购买与奖励章节。发展牌详情的个人费用预览和权威支付共用计算：奖励逐色减价且不低于零，黄金只统一覆盖一次缺色合计；`gem-purchase-quotes.test.ts` 检查多色缺口、免费购买、实际支付与接收者隐私。
+- [Splendor 出版方规则](https://cdn.svc.asmodee.net/production-spacecowboys/uploads/2025/10/SCSPL01EN_SPLENDOR_RULES_LIGHT.pdf)；2026-10-22 复核第 2 页异色取筹码、回合末筹码上限与贵族章节。异色取筹码在不足三种有库存颜色时允许少取；发展牌详情使用逐色永久折扣与黄金补缺，具体实现另由规则与购买报价测试核对。
 - [Exploding Kittens 规则入口](https://www.explodingkittens.com/pages/rules-kittens)与[2025 英文规则](https://cdn.shopify.com/s/files/1/0345/9180/1483/files/ekoe-instructions-english.pdf?v=1743802429)
 - [Avalon 出版方验证规则](https://rules.dized.com/game/rZluqS52QmGdpoVxcmVLtg/the-resistance-avalon)，包括角色替换、任务与刺杀章节
 - [Gamewright Sushi Go!](https://www.gamewright.com/product/Sushi-Go)；[出版方 2014 规则](https://gamewright.com/pdfs/Rules/SushiGoTM-RULES.pdf)

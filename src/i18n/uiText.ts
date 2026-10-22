@@ -377,6 +377,7 @@ export const uiPatterns: [RegExp,string,number[]?][] = [
  [/^确认 (\d+) 张$/, 'Confirm $1 cards'],
  [/^已选 1 张$/, '1 card selected'],
  [/^取 1 色，各 1 枚$/, '1 color, 1 token'],
+    [/^取 1–2 色，各 1 枚$/, '1-2 colors, 1 token each'],
  [/^取 (\d+) 色，各 1 枚$/, '$1 colors, 1 each'],
  [/^1 单 · 金 (\d+) \/ 银 (\d+)$/, '1 order · Gold $1 / Silver $2'],
  [/^(\d+) 单 · 金 (\d+) \/ 银 (\d+)$/, '$1 orders · Gold $2 / Silver $3'],
