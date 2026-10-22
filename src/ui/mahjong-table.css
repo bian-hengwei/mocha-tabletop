@@ -226,3 +226,8 @@
  .mj-table .river-right .mj-river-count{position:absolute;left:calc(100% + 87px);top:0}
  .mj-table :is(.river-left,.river-right) .mj-river-count{min-height:44px}
 }
+
+/* Keep the acknowledged private response readable beside winning waits. */
+.mj-response-acknowledged .mj-hints{flex-wrap:wrap}
+.mj-response-acknowledged .mj-status{flex:1 0 100%;overflow-wrap:anywhere}
+@media(max-height:350px) and (orientation:landscape){.mj-hand-panel .mj-response-acknowledged.mj-hand-toolbar{grid-template-columns:minmax(0,1fr)}}

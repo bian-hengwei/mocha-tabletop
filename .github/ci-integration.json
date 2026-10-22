@@ -120,6 +120,9 @@
     },
     {
       "script": "tests/ui/poker-expanded-hand.integration.mjs"
+    },
+    {
+      "script": "tests/ui/mahjong-response.integration.mjs"
     }
   ],
   "cards": [

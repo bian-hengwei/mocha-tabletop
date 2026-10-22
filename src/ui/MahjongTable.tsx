@@ -12,7 +12,7 @@ import {useDialog} from './useDialog';
 import './mahjong-table.css';
 
 type Seat=Player&{count:number;score:number;won:boolean;missing?:number;discards:Tile[];melds:Meld[];hand?:Tile[]};
-type Board={exchangeRule?:'none'|'sameThree'|'anyThree'|'any';locked?:boolean;indicator?:Tile;rulesVersion?:number;assistance?:MahjongAssistance|null;hand:Tile[];players:Seat[];current:string;phase:string;mode:MahjongMode;wallCount:number;drawn:string|null;wildValue:number;turn:number;pending:{tile:Tile;from:number;rob:boolean}|null;wins:{player:number;tile:Tile;points:number;selfDraw:boolean;gained?:number;patterns?:{name:string;multiplier:number}[]}[]};
+type Board={selfResponse?:'pass'|'hu'|'pong'|'kong'|'chow';exchangeRule?:'none'|'sameThree'|'anyThree'|'any';locked?:boolean;indicator?:Tile;rulesVersion?:number;assistance?:MahjongAssistance|null;hand:Tile[];players:Seat[];current:string;phase:string;mode:MahjongMode;wallCount:number;drawn:string|null;wildValue:number;turn:number;pending:{tile:Tile;from:number;rob:boolean}|null;wins:{player:number;tile:Tile;points:number;selfDraw:boolean;gained?:number;patterns?:{name:string;multiplier:number}[]}[]};
 type Props={view:GameView;selfID:string;command:(c:Command)=>void;open:(a:Action,selected?:string[])=>void};
 type Discard={tile:Tile;player:number};
 const directions=['self','right','across','left'];
@@ -82,6 +82,7 @@ export function MahjongTable({view,selfID,command,open}:Props){
  const selectedTile=b.hand.find(tile=>tile.id===selected[0]);
  const claims=view.actions.filter(a=>a!==selectAction);
  const readyTiles=new Set(b.assistance?.discards.filter(option=>option.waits.length>0).map(option=>option.tile.id));
+ const responseNotice=!view.spectating&&!view.finished&&b.phase==='respond'&&b.pending&&b.selfResponse?{pass:'已过 · 等待响应',hu:'胡牌已提交 · 等待响应',pong:'碰已提交 · 等待响应',kong:'杠已提交 · 等待响应',chow:'吃已提交 · 等待响应'}[b.selfResponse]:'';
  const instruction=b.phase==='exchange'?(b.exchangeRule==='any'?'任意张数':b.exchangeRule==='anyThree'?'任意三张':'同花色三张'):b.phase==='que'?'选择定缺':me.won&&(b.locked||b.mode==='bloodflow')?'已胡牌：只打新摸牌':'';
  return <div className={`classic-table mj-table game-table-mahjong ${view.spectating?'mj-spectating':''} ${view.finished?'mj-finished':''}`} onKeyDown={e=>{if(e.key==='Escape'&&!historyOpen&&riverSeat===null)clear();}}>
   <header className="mj-edition"><span className="mj-mode-name">{t(MAHJONG_MODES[b.mode])}</span>{b.wildValue>=0&&<span className="mj-wild-indicator" title={b.indicator?`${t('指示牌')} · ${t(tileTitle(b.indicator))}`:undefined}>{t('鬼牌')}<TileFace tile={{id:'wild',value:b.wildValue}}/></span>}<button type="button" className="mj-public-button" aria-label={t('公共牌面')} aria-haspopup="dialog" onClick={()=>setRiverSeat(meIndex)}><Layers size={17}/><span>{t('牌河')}</span></button><button className="mj-history" aria-label={`${t('胡牌记录')} (${b.wins.length})`} onClick={()=>setHistoryOpen(true)}><History size={16}/><span>{b.wins.length}</span></button></header>
@@ -96,7 +97,7 @@ export function MahjongTable({view,selfID,command,open}:Props){
    {flight&&<DiscardFlight key={flight.tile.id} discard={flight} position={position(flight.player)} name={b.players[flight.player].name}/>}
   </div>
   {!view.spectating&&<section className="mj-hand-panel">
-   <div className="mj-hand-toolbar"><div className="mj-hints"><div className="mj-status" aria-live="polite">{selectAction?.id==='discard'?(selectedTile?t(tileTitle(selectedTile)):t(instruction||'选择一张牌')):t(instruction)}</div>{b.assistance&&<MahjongAssist key={context} data={b.assistance} selected={selected[0]}/>}</div><div className="mj-actions">
+   <div className={`mj-hand-toolbar ${responseNotice?'mj-response-acknowledged':''}`}><div className="mj-hints"><div className="mj-status" aria-live="polite">{selectAction?.id==='discard'?(selectedTile?t(tileTitle(selectedTile)):t(instruction||'选择一张牌')):t(responseNotice||instruction)}</div>{b.assistance&&<MahjongAssist key={context} data={b.assistance} selected={selected[0]}/>}</div><div className="mj-actions">
     {selectAction?.id==='discard'&&<button type="button" className="mj-action mj-discard-confirm" disabled={!discardValid} onClick={()=>{if(discardValid)send({action:'discard',values:selected});}}><Check size={16} aria-hidden="true"/>{t('打出')}</button>}
     {selectAction?.id==='exchange'&&<button className="mj-action" disabled={!exchangeValid} onClick={()=>send({action:'exchange',values:selected})}>{t('确认换牌')} {selected.length}{b.exchangeRule==='any'?'':'/3'}</button>}
     {claims.map(a=>a.id==='que'?a.choices.map(c=><button className="mj-action mj-suit" key={c.id} onClick={()=>send({action:a.id,values:[c.id]})}><MahjongArt value={Number(c.id)*9}/><span>{t(c.title)}</span></button>):<button className={`mj-action ${a.id==='hu'?'mj-win':''} ${a.id==='pass'?'mj-pass':''}`} key={a.id} onClick={()=>a.choices.length?open(a):send({action:a.id,values:[]})}>{t(a.title)}</button>)}

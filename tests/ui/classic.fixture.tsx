@@ -15,6 +15,7 @@ function initial(){const mode=(params.get('mode')||'guangdong') as MahjongMode,s
  if(scenario==='hu')s.hands[0]=tiles([...waiting,6]);
  if(scenario==='kong')s.hands[0]=tiles([6,6,6,6,0,1,2,3,4,5,9,10,11,12]);
  if(scenario==='rob'){s.hands[0]=tiles([6,0,1,2,3,4,5,9,10,11,12]);s.melds[0]=[{type:'pong',tiles:tiles([6,6,6],'m'),from:2}];s.hands[1]=tiles(waiting,'b');}
+ if(scenario==='claim-chow'){s.hands[0]=tiles([6,0,1,2,3,4,5,9,10,11,12,13,14,18]);s.hands[1]=tiles([4,5,0,1,8,9,11,13,15,17,18,20,22],'b');s.hands[2]=tiles([6,6,6,0,1,2,3,4,5,9,10,11,12],'c');s.hands[3]=tiles([0,2,4,8,9,11,13,15,17,18,20,22,24],'d');}
  if(scenario==='claims'){s.hands[0]=tiles([6,0,1,2,3,4,5,9,10,11,12,13,14,18]);s.hands[1]=tiles(waiting,'b');s.hands[2]=tiles([6,6,6,0,1,2,3,4,5,9,10,11,12],'c');}
  if(scenario==='dense'){s.discards=players.map((_,i)=>tiles(Array.from({length:24},(_,j)=>(i*7+j)%27),'river'+i));s.melds[1]=[{type:'pong',tiles:tiles([22,22,22],'meld'),from:2}];s.melds[2]=[{type:'concealed',tiles:tiles([31,31,31,31],'hidden'),from:2}];s.hands[0]=tiles([...waiting,6]);s.won=[0];s.selfWon=true;s.wins=[{player:0,from:0,tile:s.hands[0].at(-1)!,points:6,selfDraw:true}];}
  if(scenario==='max-melds'){s.hands=players.map((_,i)=>tiles([3,4],`hand${i}`));s.melds=players.map((_,i)=>Array.from({length:4},(_,j)=>({type:'pong' as const,tiles:tiles([j,j,j],`meld${i}-${j}`),from:(i+1)%4})));s.discards=players.map((_,i)=>tiles(Array.from({length:24},(_,j)=>j%27),`river${i}`));}
