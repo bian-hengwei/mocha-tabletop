@@ -35,6 +35,13 @@ jobs:
     needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    container:
+      # Keep the browser image aligned with the locked Playwright version.
+      image: mcr.microsoft.com/playwright:v1.55.1-noble@sha256:2f29369043d81d6d69a815ceb80760f55e85f5020371ad06a4d996f18503ad1c
+      options: --init --ipc=host
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
@@ -52,15 +59,24 @@ jobs:
         with:
           name: integration-dist
           path: dist/
-      - name: Install browser for integration tests
-        timeout-minutes: 5
+      - name: Verify the bundled Chromium browser
+        timeout-minutes: 1
         run: |
-          sudo tee /etc/apt/apt.conf.d/99-mocha-ci-timeouts > /dev/null <<'EOF'
-          Acquire::http::Timeout "30";
-          Acquire::https::Timeout "30";
-          APT::Update::Error-Mode "any";
+          node --input-type=module <<'EOF'
+          import assert from 'node:assert/strict';
+          import {createRequire} from 'node:module';
+          import {chromium} from '@playwright/test';
+          const require = createRequire(import.meta.url);
+          assert.equal(require('@playwright/test/package.json').version, '1.55.1');
+          assert.equal(process.env.PLAYWRIGHT_BROWSERS_PATH, '/ms-playwright');
+          console.log(`Node ${process.version}; Chromium ${chromium.executablePath()}`);
+          const browser = await chromium.launch({timeout: 30000});
+          try {
+            console.log(`Chromium ${browser.version()}`);
+          } finally {
+            await browser.close();
+          }
           EOF
-          npx playwright install --with-deps chromium
       - name: Run integration group
         timeout-minutes: 20
         env:
