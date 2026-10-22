@@ -4,7 +4,7 @@ import {chromium,webkit,expect} from '@playwright/test';
 
 const base=process.env.BASE_URL||'http://127.0.0.1:5311';
 const engine=process.env.TEST_BROWSER||'chromium';
-const out=engine==='chromium'?'test-results/drawguess':`test-results/drawguess-${engine}`;
+const out=process.env.DRAWGUESS_ARTIFACTS||(engine==='chromium'?'test-results/drawguess':`test-results/drawguess-${engine}`);
 const viewports=[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900],[568,320]];
 await fs.mkdir(out,{recursive:true});
 const browser=await(engine==='webkit'?webkit.launch():chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||undefined}));
@@ -44,6 +44,7 @@ try {
   assert.equal(await page.locator('.dg-private-choice button').count(),3);
   await assertLayout(page);
   await page.screenshot({path:`${out}/${language}-${width}x${height}-choice.png`});
+  const answer=await page.locator('.dg-private-choice button').first().innerText();
   await page.locator('.dg-private-choice button').first().click();
   assert.equal(await page.locator('.dg-private-answer').count(),1);
   assert.equal(await page.locator('.dg-canvas').getAttribute('tabindex'),'0');
@@ -78,7 +79,21 @@ try {
   assert.equal(await page.getByRole('dialog').count(),0,'Seat changes reset clear confirmation');
   await page.getByRole('button',{name:/^(清空画布|Clear canvas)$/}).click();await page.getByRole('button',{name:/^(确认清空画布|Confirm clear canvas)$/}).click();
   await expect.poll(()=>bottomInk(page.locator('.dg-canvas'))).toBe(0);
+  await page.getByLabel('Seat').selectOption('english-player-1');
+  await expect(page.locator('.dg-private-answer')).toHaveCount(0);
+  await page.locator('.dg-guess-form input').fill(answer);await page.locator('.dg-guess-form input').press('Enter');
+  await expect(page.locator('.dg-guesses .correct')).toHaveText(language==='en'?'Blair guessed correctly':'Blair 猜对了');
+  await expect(page.locator('.dg-reveal')).toContainText(answer);
+  await page.screenshot({path:`${out}/${language}-${width}x${height}-correct.png`});
+  await page.getByRole('button',{name:'Toggle language'}).click();await expect(page.locator('.dg-guesses .correct')).toHaveText(language==='zh'?'Blair guessed correctly':'Blair 猜对了');
+  await page.getByRole('button',{name:'Toggle language'}).click();await expect(page.locator('.dg-guesses .correct')).toHaveText(language==='en'?'Blair guessed correctly':'Blair 猜对了');
   await context.close();console.log('PASS drawguess',engine,language,width,height);
  }
- assert.deepEqual(errors,[],'Drawing interactions produce no browser errors');
+ const literal=await browser.newPage({viewport:{width:390,height:844}});
+ await literal.goto(`${base}/tests/ui/i18n.fixture.html?kind=drawguess&names=literal`);
+ const answer=await literal.locator('.dg-private-choice button').first().innerText();await literal.locator('.dg-private-choice button').first().click();await literal.getByLabel('Seat').selectOption('english-player-1');
+ for(const guess of ['狼人杀','Blair 猜对了','中文 猜对了 狼人杀']){await literal.locator('.dg-guess-form input').fill(guess);await literal.locator('.dg-guess-form input').press('Enter');}
+ const before=await literal.locator('.dg-guesses p').allTextContents();assert.deepEqual(before,['中文 狼人杀 猜对了：狼人杀','中文 狼人杀 猜对了：Blair 猜对了','中文 狼人杀 猜对了：中文 猜对了 狼人杀']);await literal.locator('.dg-guess-form input').fill(answer);await literal.locator('.dg-guess-form input').press('Enter');
+ for(const expected of ['中文 狼人杀 猜对了 猜对了','中文 狼人杀 猜对了 guessed correctly','中文 狼人杀 猜对了 猜对了']){await expect(literal.locator('.dg-guesses .correct')).toHaveText(expected);assert.deepEqual((await literal.locator('.dg-guesses p').allTextContents()).slice(0,3),before);for(const [width,height]of viewports){await literal.setViewportSize({width,height});const feedback=literal.locator('.dg-guesses .correct');assert(await feedback.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'wrapped feedback stays inside log');await literal.screenshot({path:`${out}/${expected.endsWith('correctly')?'en':'zh'}-${width}x${height}-literal.png`});}await literal.getByRole('button',{name:'Toggle language'}).click();}
+ await literal.close();assert.deepEqual(errors,[],'Drawing interactions produce no browser errors');
 } finally {await browser.close();}
