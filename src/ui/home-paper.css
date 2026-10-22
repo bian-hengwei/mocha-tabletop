@@ -1,0 +1,51 @@
+/* Optional home-only paper-and-ink treatment. No geometry or markup changes. */
+.app.game-home{
+  color:#203128;
+  color-scheme:light;
+  background:
+    radial-gradient(ellipse at 12% -10%,#fffaf0 0,transparent 42%),
+    repeating-linear-gradient(0deg,#3d503e08 0 1px,transparent 1px 5px),
+    linear-gradient(145deg,#f4edde 0%,#e8deca 58%,#efe5d2 100%);
+}
+.game-home .topbar{border-bottom-color:#667b692e;background:#fbf6ebd9;color:#26382f}
+.game-home .brand b{color:#1f3329}
+.game-home .brand small,.game-home .connection{color:#5b6c60}
+.game-home .top-tools .compact,.game-home .top-tools .language-toggle{border-color:#8b9c8b66;background:#fffaf1c7;color:#274033;box-shadow:0 1px 0 #fff inset}
+.game-home .top-tools .compact:hover,.game-home .top-tools .language-toggle:hover{background:#fffdf8;border-color:#5872608c}
+.game-home .top-tools button:focus-visible,.game-home .top-tools select:focus-visible{outline:2px solid #2d6a50;outline-offset:3px}
+.game-home .home-hero{border-bottom-color:#7f917a3b;background:radial-gradient(ellipse 54% 130% at 10% 10%,#fffaf1bf,transparent 76%)}
+.game-home .home-title h1{color:#1f352a;text-shadow:0 1px 0 #fff9ef}
+.game-home .home-title p,.game-home .subtle{color:#5e6d62}
+.game-home .home-entry-actions .primary{border-color:#244f3e;background:linear-gradient(145deg,#315e4c,#234837);color:#fffaf0;box-shadow:0 5px 14px #2e513f30}
+.game-home .home-entry-actions .compact:not(.primary){border-color:#7d8f7e66;background:#fbf7edcc;color:#294134;box-shadow:0 2px 8px #3d4c3f12}
+.game-home .home-entry-actions .compact:not(.primary):hover{background:#fffdf8;border-color:#5e75656f}
+.game-home .library-filters{color:#34483c}
+.game-home .library-filters label,.game-home .library-result-count{color:#45594d}
+.game-home .library-filters label>svg{color:#557866}
+.game-home .library-filters select{border-color:#8b9a876b;background-color:#fffaf0;color:#24382e;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m2 2 4 4 4-4' fill='none' stroke='%23394f42' stroke-width='1.5'/%3E%3C/svg%3E")}
+.game-home .library-filters select option{background:#fffaf0;color:#24382e}
+.game-home .library-filters select:focus-visible{outline-color:#2d6a50}
+.app.game-home .home-shell .game-library{scrollbar-color:#75887966 #ffffff00}
+.app.game-home .home-shell .game-cover{border-color:#b7ad986b;background:#fbf7ee;box-shadow:0 5px 14px #4d554718}
+.app.game-home .home-shell .game-cover:hover{border-color:#6f8c796e;box-shadow:0 7px 18px #4d554722}
+.app.game-home .home-shell .game-cover:focus-visible{outline:3px solid #245a45;outline-offset:3px}
+.app.game-home .home-shell .cover-caption{border-top-color:#b8ab9254;background:linear-gradient(120deg,#fffaf0,#f3ead9)}
+.app.game-home .home-shell .cover-caption strong{color:#21352b;text-shadow:none}
+.app.game-home .home-shell .cover-caption>span,.app.game-home .home-shell .cover-caption small{color:#52645a}
+.app.game-home .home-shell .cover-caption b{border-color:#8fa18f55;background:#e7dfcd;color:#264d3b}
+.app.game-home .home-shell .home-footer{border-top-color:#84927c3d;background:#f5eddea8;color:#4a5e51}
+.app.game-home .home-shell .home-footer button,.app.game-home .home-shell .install-button{border-color:#82948166;background:#fffaf0c7;color:#294334}
+.app.game-home .home-shell .home-footer button:hover,.app.game-home .home-shell .install-button:hover{background:#fffdf8;border-color:#57725f7a}
+.app.game-home .home-shell .home-footer button:focus-visible,.app.game-home .home-shell .install-button:focus-visible{outline:2px solid #245a45;outline-offset:3px}
+.app.game-home .home-shell .resume-session{border-color:#8d9b8669;background:#fffaf0b8;color:#2c4236}
+.app.game-home .home-shell .resume-session small{color:#5d6c61}
+.app.game-home .home-shell .resume-session .text-button{color:#315944}
+
+/* Keep shared dialogs on their existing dark surfaces and preserve table themes. */
+.game-home>.modal-shade,.game-home>.connecting-overlay{color:#f4eddf;color-scheme:dark}
+.game-home .top-tools>.icon{color:#365b46}
+.game-home .top-tools>.icon:hover{background:#365b4614}
+.game-home .home-entry-actions .compact.primary:hover{background:linear-gradient(145deg,#254f3d,#1c3c2e);border-color:#1c3c2e;color:#fffaf0}
+.game-home .home-entry-actions button:focus-visible{outline:2px solid #2d6a50;outline-offset:3px}
+
+.game-home .resume-session button:focus-visible{outline:2px solid #2d6a50;outline-offset:3px}
