@@ -57,6 +57,7 @@ DataChannel 在 nonce 验证完成前不接收游戏快照。非房主在验证�
 | 七彩接龙 | 基础 108 张牌，默认累计 500 分，可选单轮；开局可选 +4 诈出与质疑（关闭时自动校验、手动确认罚牌）、私密证据、手动喊牌与抓漏喊；禁止叠加罚牌。 |
 | 密语行动 | 双队词语线索、秘密密钥、零/不限猜词、违规线索补偿 |
 | 异词同伴 | 相近词语、顺序描述、秘密投票、平票辩护与复投 |
+| 你画我猜 | 3–12 人；每局权威状态保存随机 seed，后续选词继续由比赛 seed、回合和画手共同决定；旧存档缺少 seed 时保留原固定序列。选词与作画阶段的候选词、答案仅向当前画手投影，揭晓时按原流程公开答案；计时与计分由既有权威流程处理。 |
 
 规则依据：[Splendor 官方规则](https://cdn.svc.asmodee.net/production-spacecowboys/uploads/2025/10/SCSPL01EN_SPLENDOR_RULES_LIGHT.pdf)、[Exploding Kittens 官方规则](https://www.explodingkittens.com/pages/rules-kittens)、[Avalon 出版方](https://indieboardsandcards.com/our-games/the-resistance-avalon/)。月夜议会存在不同桌规，以本项目界面和上述实现为准。
 
