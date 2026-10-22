@@ -87,7 +87,7 @@ export function BombsTable({ view, selfID, command }: Props) {
     const combo = cards.length >= 2 && cards.length <= 3 && cards.every(c => c.kind === first.kind) ? get(cards.length === 2 ? 'pair' : 'triple') : undefined;
     const validCombo = combo?.choices.some(c => c.id === first?.kind) ? combo : undefined;
     const sorted = [...hand].sort((a, c) => kinds.indexOf(a.kind) - kinds.indexOf(c.kind));
-    const target = get('target'), request = get('request'), give = get('give'), response = b.response, draw = get('draw'), mine = b.current === selfID;
+    const target = get('target'), request = get('request'), give = get('give'), response = b.response, draw = get('draw');
     const handInteractive = b.phase !== 'future';
     const nope = get('nope');
     const lastResponseActor = response?.lastNopeBy || response?.actor;
@@ -97,6 +97,15 @@ export function BombsTable({ view, selfID, command }: Props) {
     const run = (action: string, values: string[] = []) => { command({ action, values }); setSelected([]); };
     const pick = (card: BombCard) => setSelected(old => old.includes(card.id) ? old.filter(id => id !== card.id) : give || get('nope') ? [card.id] : old.length >= 3 || old.some(id=>hand.find(c=>c.id===id)?.kind!==card.kind) ? [card.id] : [...old, card.id]);
     const actionTitle = single?.id === 'give' ? '交给对方' : single?.id === 'nope' ? (response?.cancelled ? '恢复效果' : '否决这张') : single ? '打出这张' : validCombo ? (cards.length === 2 ? '随机拿一张' : '指定牌名') : '';
+    const waitingAction: Record<string, string> = {
+        target: '选择目标',
+        request: '指定牌名',
+        give: '挑选手牌',
+        future: '偷瞄牌堆',
+        bomb: '处理爆炸牌',
+        insert: '秘密放回爆炸牌',
+    };
+    const waitingFor = b.phase === 'give' ? b.give.target : b.current;
     const play = () => {
         const a = single || validCombo;
         if (a)
@@ -130,7 +139,7 @@ export function BombsTable({ view, selfID, command }: Props) {
     else if (give)
         focus = <div className="bt-focus"><span className="bt-eyebrow">{t("交牌给") + " "}{displayName(b.give.actor)}</span><h2>{tx(first ? titles[first.kind] : '你决定交哪张')}</h2>{tx(single && <button className="bt-primary" onClick={play}>{t("交出这张")}<ArrowRight size={15}/></button>)}</div>;
     else if (b.phase === 'future')
-        focus = b.privateFuture ? <div className="bt-focus bt-future"><span className="bt-eyebrow"><Eye size={13}/>{" " + t("只有你能看到 · 从顶端起")}</span><div className="bt-future-cards">{tx(b.privateFuture.map((c: BombCard, i: number) => <BombsIllustratedCard key={c.id} card={c} small order={i + 1}/>))}</div><button className="bt-primary" onClick={() => run('done')}>{t("看好了")}<Check size={14}/></button></div> : <div className="bt-focus"><Eye className="bt-focus-icon"/><p>{displayName(b.current)}{t("正在偷瞄牌堆")}</p></div>;
+        focus = b.privateFuture ? <div className="bt-focus bt-future"><span className="bt-eyebrow"><Eye size={13}/>{" " + t("只有你能看到 · 从顶端起")}</span><div className="bt-future-cards">{tx(b.privateFuture.map((c: BombCard, i: number) => <BombsIllustratedCard key={c.id} card={c} small order={i + 1}/>))}</div><button className="bt-primary" onClick={() => run('done')}>{t("看好了")}<Check size={14}/></button></div> : <div className="bt-focus"><span className="bt-eyebrow">{t('等待中')}</span><h2>{displayName(b.current)}</h2><p>{t('偷瞄牌堆')}</p></div>;
     else if (get('defuse'))
         focus = <div className="bt-focus bt-danger"><span className="bt-eyebrow">{t("抽到爆炸牌！")}</span><h2>{t("使用拆弹牌，否则立即出局。")}</h2><div className="bt-action-row"><button className="bt-primary" onClick={() => run('defuse')}><Scissors size={18}/>{t("使用拆弹")}</button><button className="bt-quiet" onClick={() => setExplosionPrompt(true)}>{t("放弃拆弹")}</button></div></div>;
     else if (get('insert'))
@@ -138,7 +147,9 @@ export function BombsTable({ view, selfID, command }: Props) {
     else if (first)
         focus = <div className="bt-focus"><span className="bt-eyebrow">{tx(cards.length > 1 ? `已选 ${cards.length} 张` : '选中的手牌')}</span><h2>{tx(cards.length > 1 && cards.every(c => c.kind === first.kind) ? `${titles[first.kind]} ×${cards.length}` : titles[first.kind])}</h2><p>{tx(cards.length > 1 && !cards.every(c => c.kind === first.kind) ? '组合需要同名牌' : details[first.kind])}</p><div className="bt-action-row">{tx(actionTitle && <button className="bt-primary" onClick={play}>{tx(actionTitle)}<ArrowRight size={15}/></button>)}<button className="bt-quiet" onClick={() => setSelected([])}>{t("收起")}</button></div></div>;
     else
-        focus = <div className="bt-focus">{!mine&&<span className="bt-eyebrow">{t('轮到')}</span>}<h2>{mine ? t('你的回合') : displayName(b.current)}</h2><p>{tx(b.phase === 'give' ? `${displayName(b.give.target)} 正在挑选手牌` : b.phase === 'insert' ? '正在秘密放回爆炸牌' : '')}</p>{tx(b.turnsRemaining > 1 && <span className="bt-debt"><Zap size={14}/>{" " + t("还需结束") + " "}{tx(b.turnsRemaining)}{" " + t("个回合")}</span>)}</div>;
+        focus = waitingFor !== selfID
+            ? <div className="bt-focus"><span className="bt-eyebrow">{t('等待中')}</span><h2>{displayName(waitingFor)}</h2><p>{tx(waitingAction[b.phase] || '出牌，或抽一张')}</p>{tx(b.turnsRemaining > 1 && <span className="bt-debt"><Zap size={14}/>{" " + t("还需结束") + " "}{tx(b.turnsRemaining)}{" " + t("个回合")}</span>)}</div>
+            : <div className="bt-focus"><h2>{t('你的回合')}</h2>{tx(b.turnsRemaining > 1 && <span className="bt-debt"><Zap size={14}/>{" " + t("还需结束") + " "}{tx(b.turnsRemaining)}{" " + t("个回合")}</span>)}</div>;
     return <div className={`bt-table ${['request','future','bomb','insert'].includes(b.phase)?'bt-focused-phase ':''}bt-phase-${b.phase}`} style={{'--bt-seat-count': b.players.length} as CSSProperties}>
     <div className="bt-seats">{tx(b.players.map((p: any) => <div key={p.id} className={`bt-seat ${p.id === b.current ? 'current' : ''} ${p.id === selfID ? 'self' : ''} ${!p.alive ? 'eliminated' : ''} ${target?.choices.some(c => c.id === p.id) ? 'targetable' : ''}`}><button type="button" className="social-seat-hit" aria-label={`${p.name}${p.id === selfID ? ` · ${t("我")}` : ""} · ${p.alive ? t(`${p.count} 张手牌`) : t("已出局")}${target?.choices.some(c => c.id === p.id) ? ` · ${t("可选为目标")}` : ""}`} onClick={() => {
                 if (target?.choices.some(c => c.id === p.id))

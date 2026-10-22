@@ -36,7 +36,7 @@ try{
   await page.getByRole('combobox',{name:'Seat'}).selectOption('spectator');await expect(page.locator('.bt-hand-zone')).toHaveCount(0);await expect(page.locator('.bt-focus button')).toHaveCount(0);await opener.click();await expect(page.locator('.bt-discard-list li')).toHaveCount(12);await fit();await close.click();
   await go('turn');await opener.click();await expect(page.locator('.bt-discard-empty')).toHaveText(locale==='zh'?'还没有弃牌':'No discards yet');await page.keyboard.press('Escape');
   for(const [scenario,zh,en] of [['give','拆弹','Defuse'],['response','否决','Nope']]){
-   await go(scenario);const card=byKind(zh,en),before=await hand.count();await card.dblclick();await expect(hand).toHaveCount(before);await expect(selected).toHaveCount(0);await expect(page.locator(`.bt-phase-${scenario}`)).toBeVisible();
+   await go(scenario);if(scenario==='give')await page.getByRole('combobox',{name:'Seat'}).selectOption('p1');const card=byKind(zh,en),before=await hand.count();await card.dblclick();await expect(hand).toHaveCount(before);await expect(selected).toHaveCount(0);await expect(page.locator(`.bt-phase-${scenario}`)).toBeVisible();
    await card.click();await expect(selected).toHaveCount(1);await page.locator(scenario==='give'?'.bt-focus .bt-primary':'.bt-nope-action').click();await expect(hand).toHaveCount(before-1);
   }
   await go('turn');const cats=hand.filter({hasText:locale==='zh'?'月亮猫':'Moon Kitten'});await cats.nth(0).click();await cats.nth(1).click();await cats.nth(1).dblclick();await expect(selected).toHaveCount(2);await expect(page.locator('.bt-phase-turn')).toBeVisible();
