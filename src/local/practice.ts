@@ -6,12 +6,19 @@ import {continueBotRound, nextBotSeat, stepBot} from '../core/roomBots';
 import {supportsBots, validBotDifficulty} from '../core/bots';
 import {validateRelayState} from '../core/games/drawrelay';
 import type {BotDifficulty} from '../core/bots/types';
+import type {PokerState} from '../core/games/poker';
 
 export interface Practice {
  id:string; kind:GameKind; players:Player[]; game:unknown; viewer:string; options?:GameOptions;
  mode?:'pass'|'solo'; difficulty?:BotDifficulty; revision?:number; botError?:boolean;
 }
 const KEY='mocha-practice-v1';
+function validPokerCheckpoint(kind:GameKind,game:unknown,playerCount:number):boolean {
+ if(kind!=='doudizhu'&&kind!=='guandan')return true;
+ const poker=game as Partial<PokerState>;
+ if(kind==='doudizhu')return Array.isArray(poker.bids)&&poker.bids.length===playerCount&&poker.bids.every(bid=>bid===null||Number.isInteger(bid)&&bid>=0&&bid<=3);
+ return Array.isArray(poker.levels)&&poker.levels.length===2&&poker.levels.every(level=>Number.isInteger(level)&&level>=2&&level<=14);
+}
 export function createPractice(kind:GameKind,count:number,profile:Player,options?:GameOptions,difficulty?:BotDifficulty,seed=crypto.getRandomValues(new Uint32Array(1))[0]):Practice {
  const canonical=normalizeGameOptions(kind,options,'practice-0'),limits=roomLimits(kind,canonical);
  if(!Number.isInteger(count)||count<limits.min||count>limits.max)throw new Error('单机人数不符合当前规则');
@@ -52,6 +59,7 @@ export function readPractice():Practice|null {
   if(p.players.some(player=>typeof player.id!=='string'||typeof player.name!=='string'||typeof player.avatar!=='string'))return null;
   const roster=(p.game as {players?:Player[]}|null)?.players,limits=roomLimits(p.kind,p.options);
   if(p.players.length<limits.min||p.players.length>limits.max||new Set(p.players.map(player=>player.id)).size!==p.players.length||!Array.isArray(roster)||roster.length!==p.players.length||roster.some((player,i)=>player.id!==p.players[i].id||JSON.stringify(player.bot??null)!==JSON.stringify(p.players[i].bot??null)))return null;
+  if(!validPokerCheckpoint(p.kind,p.game,p.players.length))return null;
   if(p.mode==='solo'){
    if(!supportsBots(p.kind)||validBotDifficulty(p.difficulty)!==p.difficulty||p.players[0].bot||p.players.slice(1).some(player=>player.bot?.difficulty!==p.difficulty))return null;
    p.viewer=p.players[0].id;

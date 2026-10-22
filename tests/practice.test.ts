@@ -60,6 +60,22 @@ it('rejects corrupt or expired saves and reports storage failure',()=>{
  writePractice(null);expect(readPractice()).toBeNull();
  Object.defineProperty(globalThis,'localStorage',{configurable:true,get(){throw new Error('denied');}});expect(readPractice()).toBeNull();expect(()=>writePractice(p)).toThrow('denied');
 });
+it('rejects corrupt poker arrays that would crash restored tables',()=>{
+ const cases=[
+  ['doudizhu','bids',null],['doudizhu','bids',[]],['doudizhu','bids',[null,null]],['doudizhu','bids',[null,null,null,null]],
+  ['doudizhu','bids',[null,'1',null]],['doudizhu','bids',[null,4,null]],
+  ['guandan','levels',null],['guandan','levels',[]],['guandan','levels',[2]],['guandan','levels',[2,10,14]],
+  ['guandan','levels',['2',10]],['guandan','levels',[1,10]],['guandan','levels',[15,10]],
+ ] as const;
+ for(const [kind,field,value] of cases){const p=createPractice(kind,kind==='guandan'?4:3,human,undefined,undefined,7);(p.game as Record<string,unknown>)[field]=value;writePractice(p);expect(readPractice()).toBeNull();}
+});
+it('keeps valid poker phases and legacy practice fields while preserving profile and history',()=>{
+ const doudizhu=createPractice('doudizhu',3,human,undefined,undefined,8);writePractice(doudizhu);expect(readPractice()).not.toBeNull();(doudizhu.game as {bids:unknown}).bids=null;writePractice(doudizhu);expect(readPractice()).toBeNull();
+ const playing=createPractice('doudizhu',3,human,undefined,undefined,9);(playing.game as {bids:unknown;phase:string}).bids=[3,null,null];(playing.game as {phase:string}).phase='play';writePractice(playing);expect(readPractice()).not.toBeNull();
+ const guandan=createPractice('guandan',4,human,undefined,undefined,10);(guandan.game as {levels:unknown}).levels=[14,10];writePractice(guandan);expect(readPractice()).not.toBeNull();
+ const legacy=createPractice('gems',2,human,undefined,undefined,11);legacy.viewer=legacy.players[1].id;delete legacy.mode;delete legacy.revision;writePractice(legacy);expect(readPractice()).not.toBeNull();
+ const profile=JSON.stringify(human),history=JSON.stringify({records:[{id:'saved-history',kind:'gems',at:1,name:'Human',avatar:'🦊',mode:'practice',result:'draw',summary:'keep',playerCount:2}],seen:['saved-history']});localStorage.setItem('mocha-profile',profile);localStorage.setItem('mocha-history-v1',history);const broken=createPractice('doudizhu',3,human,undefined,undefined,12);(broken.game as {bids:unknown}).bids=null;writePractice(broken);expect(readPractice()).toBeNull();expect(localStorage.getItem('mocha-profile')).toBe(profile);expect(localStorage.getItem('mocha-history-v1')).toBe(history);
+});
 it('pauses bot-owned round continuation for human acknowledgement and allows retry',()=>{
  const p=createPractice('guandan',4,human,undefined,'normal',15);
  const game=p.game as {phase:string;current:number;previousOrder:number[];round:number};game.phase='roundEnd';game.current=1;game.previousOrder=[0,2,1,3];
