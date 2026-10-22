@@ -48,6 +48,11 @@ it('resumes legacy pass & play and switches its inspected seat',()=>{
  expect(readPractice()).toEqual(p);expect(practiceView(p)).toEqual(modules.gems.view(p.game,p.players[1].id));
  expect(hasPracticeBotTurn(p)).toBe(false);expect(stepPracticeBot(p)).toBe(p);
 });
+it('loads a valid practice checkpoint independently of an invite URL',()=>{
+ const p=createPractice('gems',2,human,undefined,'easy',31);writePractice(p);
+ Object.defineProperty(globalThis,'location',{configurable:true,value:{href:'https://table.test/?keep=1&room=ABC234#invite=token&anchor=value'}});
+ expect(readPractice()).toEqual(p);
+});
 it('resumes and replays solo with the same roster, difficulty and rules',()=>{
  const p=createPractice('uno',7,human,{unoMode:'single',unoChallenge:false,language:'en'},'hard',91);p.viewer=p.players[2].id;writePractice(p);
  const saved=readPractice()!;expect(saved.viewer).toBe(saved.players[0].id);

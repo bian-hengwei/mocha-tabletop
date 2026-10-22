@@ -39,6 +39,8 @@ BASE_URL=http://127.0.0.1:5174 TEST_API_BASE=http://127.0.0.1:8787 node scripts/
 
 新回归加入清单时应明确覆盖范围、服务需求和参数，同一个脚本只属于一个组；调整组名时同步工作流矩阵。根据耗时汇总平衡分组。定位失败应修复行为或无效 fixture，不能靠删断言、放宽规则、无条件重试或把未执行项计为通过来加速。保存的游戏 fixture 应使用合法选项，并立即核验恢复结果。
 
+邀请链接与本地存档同时存在时，`tests/ui/invite-practice-recovery.integration.mjs` 覆盖双语八尺寸的打开/取消、待审批后取消、拒绝、房间不存在、确认入桌、确认牌桌与本地存档同时恢复、显式结束单机/试玩，以及人机和计时试玩在邀请期间的暂停边界。未确认的房间请求不能删除本地存档；只有确认房间快照或用户主动结束本地牌局才清除它。支持 `TEST_BROWSER=webkit` 的 320×568 窄屏复测。
+
 ## 浏览器与联机回归
 
 房间聊天与头像表情的新增验收：`npx vitest run tests/room-social.test.ts` 校验输入、授权、禁用游戏、限流、去重、上限和过期；`node tests/network/room-social.integration.mjs` 使用真实 Worker 覆盖 cloud/LAN 房间、重连、换局与换游戏保留记录、解散后不再广播和新房间隔离。`node tests/ui/room-social.integration.mjs` 用两个浏览器验证聊天、头像动画、IME、焦点、双语七尺寸、刷新、LAN 转云端，以及解散时清空聊天/草稿/恢复入口；支持 `TEST_BROWSER=webkit` 与 `TEST_MODES=cloud,lan`。`node tests/ui/room-social-games.integration.mjs` 覆盖八款游戏最大人数与四款禁用游戏，逐尺寸检查右上角头像仍打开资料编辑、只有自己的座位头像能发表情；支持 `TEST_GAMES` 选择游戏。联机脚本用 `BASE_URL` / `TEST_API_BASE` 指定隔离服务，批量运行时避免与其他脚本共用限流窗口；不得因此放宽产品限流。

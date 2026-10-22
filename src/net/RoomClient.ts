@@ -80,7 +80,7 @@ export class RoomClient {
  /** Forget a previous room without sending any room mutation. */
  forgetSession(){this.clearSavedSession();if(this.state.status==='idle'||this.state.status==='disconnected'){this.reset();this.patch(initial());}}
  /** Withdraw a known pending request; retain admitted or legacy room recovery. */
- cancelConnection(){if(this.session?.pendingApproval===true){if(this.ws?.readyState===WebSocket.OPEN)this.control({type:'leave'});this.clearSavedSession();}this.reset();this.patch(initial());}
+ cancelConnection(){const confirmed=!!this.state.room;if(this.session?.pendingApproval===true&&this.ws?.readyState===WebSocket.OPEN)this.control({type:'leave'});if(!confirmed)this.clearSavedSession();this.reset();this.patch(initial());}
  /** Only available outside a room; affects this browser's identity, never other players. */
  resetIdentity(){if(this.state.room||this.state.status==='connecting'||this.state.status==='reconnecting')throw new Error('请先离开牌桌，再重置本机用户');this.clearSavedSession();this.reset();this.networkToken=undefined;for(const storage of availableStorage())try{storage.removeItem('mocha-network-token');for(let i=storage.length-1;i>=0;i--){const key=storage.key(i);if(key?.startsWith('mocha-host-'))storage.removeItem(key);}}catch{}this.patch(initial());}
  /** Restore the last room even after closing the tab, or retry a dropped connection. */

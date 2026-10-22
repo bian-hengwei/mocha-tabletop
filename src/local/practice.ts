@@ -43,7 +43,6 @@ export function continuePracticeRound(p:Practice):Practice{if(p.mode!=='solo')th
 export function writePractice(p:Practice|null){if(p)localStorage.setItem(KEY,JSON.stringify({at:Date.now(),practice:p}));else localStorage.removeItem(KEY);}
 export function readPractice():Practice|null {
  try{
-  if(typeof location!=='undefined'&&new URL(location.href).searchParams.has('room'))return null;
   const saved=JSON.parse(localStorage.getItem(KEY)||'null'),p=saved?.practice as Practice|undefined;
   if(!p||typeof p.id!=='string'||!Number.isFinite(saved.at)||Date.now()-saved.at>7*86400000||!Object.hasOwn(GAMES,p.kind)||!Array.isArray(p.players)||!p.players.length||!p.players.some(player=>player.id===p.viewer))return null;
   if(p.mode!==undefined&&p.mode!=='pass'&&p.mode!=='solo')return null;

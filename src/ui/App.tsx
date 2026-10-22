@@ -44,6 +44,21 @@ function LanguageToggle() {
 function tx(value: ReactNode): ReactNode { return typeof value === 'string' ? t(value) : value; }
 const client = new RoomClient();
 const kinds = Object.keys(GAMES) as GameKind[];
+interface PracticeRecovery {active: Practice | null; backup: Practice | null}
+function withoutParameter(raw: string, name: string) {
+    return raw.split('&').filter(part => {
+        const rawKey = part.split('=', 1)[0];
+        let key = rawKey;
+        try { key = decodeURIComponent(rawKey.replace(/\+/g, ' ')); } catch {}
+        return key !== name;
+    }).join('&');
+}
+function clearInviteLocation() {
+    const url = new URL(location.href);
+    const search = withoutParameter(withoutParameter(url.search.slice(1), 'room'), 'invite');
+    const hash = withoutParameter(url.hash.slice(1), 'invite');
+    history.replaceState(history.state, '', `${url.pathname}${search ? `?${search}` : ''}${hash ? `#${hash}` : ''}`);
+}
 type Sheet = 'addSeat' | 'profile' | 'join' | 'nearby' | 'help' | 'log' | 'menu' | 'history' | 'audience' | null;
 function Modal({ title, children, onClose, wide = false, dismissible = true, className = '' }: {
     title: string;
@@ -59,14 +74,25 @@ function Modal({ title, children, onClose, wide = false, dismissible = true, cla
 export function App() {
     const locale = useLocale();
     useEffect(()=>{document.title=locale==='zh'?'Mocha 桌游':'Mocha Tabletop';document.querySelector('link[rel="manifest"]')?.setAttribute('href',locale==='zh'?'/manifest-mocha.webmanifest':'/manifest-mocha-en.webmanifest');},[locale]);
-    const [profile, setProfile] = useState<Player | null>(() => readProfile() || client.getSavedSession()?.profile || null), [state, setState] = useState<ClientState>(client.state), [selectedGame, setSelectedGame] = useState<GameKind | null>(null), [sheet, setSheet] = useState<Sheet>(null), [mode, setMode] = useState<RoomMode>('lan'), [practice, setPractice] = useState<Practice | null>(readPractice), [action, setAction] = useState<{
+    const [boot] = useState(() => {
+        const url = new URL(location.href), roomCode = url.searchParams.get('room')?.toUpperCase() || '', savedSession = client.getSavedSession(), checkpoint = readPractice();
+        return {roomCode, savedSession, checkpoint, roomIntent:!!(roomCode || savedSession), showJoin:!!roomCode && roomCode !== savedSession?.code};
+    });
+    const [practiceRecovery, setPracticeRecovery] = useState<PracticeRecovery>({active:boot.roomIntent ? null : boot.checkpoint, backup:boot.checkpoint});
+    const practice = practiceRecovery.active;
+    const [profile, setProfile] = useState<Player | null>(() => readProfile() || boot.savedSession?.profile || null), [state, setState] = useState<ClientState>(client.state), [selectedGame, setSelectedGame] = useState<GameKind | null>(null), [sheet, setSheet] = useState<Sheet>(boot.showJoin ? 'join' : null), [mode, setMode] = useState<RoomMode>('lan'), [action, setAction] = useState<{
         a: Action;
         values: string[];
-    } | null>(null), [message, setMessage] = useState(''), [rooms, setRooms] = useState<RoomCandidate[]>([]), [finding, setFinding] = useState(false), [code, setCode] = useState(''), [name, setName] = useState(profile?.name || ''), [avatar, setAvatar] = useState(profile?.avatar || AVATARS[0]), [wolfMode, setWolfMode] = useState<NonNullable<GameOptions['werewolfMode']>>('judge');
+    } | null>(null), [message, setMessage] = useState(''), [rooms, setRooms] = useState<RoomCandidate[]>([]), [finding, setFinding] = useState(false), [code, setCode] = useState(boot.roomCode), [name, setName] = useState(profile?.name || ''), [avatar, setAvatar] = useState(profile?.avatar || AVATARS[0]), [wolfMode, setWolfMode] = useState<NonNullable<GameOptions['werewolfMode']>>('judge');
     const [joinAsSpectator,setJoinAsSpectator]=useState(false);
     const [records, setRecords] = useState(readHistory), [dismissedResult, setDismissedResult] = useState<string | null>(null);
     const practiceRef = useRef(practice);
-    const updatePractice = (next: Practice | null) => { practiceRef.current = next; setPractice(next); };
+    const practiceBackupRef = useRef(practiceRecovery.backup);
+    const setRecovery = (active: Practice | null, backup = practiceBackupRef.current) => { practiceRef.current = active; practiceBackupRef.current = backup; setPracticeRecovery({active, backup}); };
+    const updatePractice = (next: Practice) => { setRecovery(next, next); };
+    const restorePractice = () => { if (practiceRef.current) return; const backup = practiceBackupRef.current || readPractice(); if (backup) setRecovery(backup, backup); };
+    const clearStoredPractice = () => { try { writePractice(null); } catch { setMessage('浏览器无法清除本地试玩存档'); } };
+    const discardPractice = () => { const current = practiceRef.current || practiceBackupRef.current; let stored: Practice | null = null; try { stored = readPractice(); } catch {} setRecovery(null, null); if (!current || !stored || stored.id === current.id) clearStoredPractice(); };
     const [localCounts, setLocalCounts] = useState<Partial<Record<GameKind, number>>>({});
     const [localDifficulty, setLocalDifficulty] = useState<BotDifficulty>('normal');
     const connectionTarget = client.getConnectionTarget();
@@ -89,19 +115,32 @@ export function App() {
     const localCount = Math.min(localLimits.max, Math.max(localLimits.min, (selectedGame && localCounts[selectedGame]) ?? defaultLocalCount));
     const soloRoundWaiting = !!practice && practiceBotRoundWaiting(practice);
     useEffect(() => client.subscribe(setState), []);
-    useEffect(() => { const u = new URL(location.href), roomCode = u.searchParams.get('room')?.toUpperCase(), saved = client.getSavedSession(); if (roomCode && roomCode !== saved?.code) {
-        setCode(roomCode);
-        setSheet('join');
-    }
-    else if (!practice)
-        void client.connect(); }, []);
-    useEffect(() => { try {
-        writePractice(practice);
-    }
-    catch {
-        if (practice)
-            setMessage('浏览器无法保存试玩，关闭网页后可能无法恢复');
-    } }, [practice]);
+    useEffect(() => {
+        if (!boot.showJoin && boot.roomIntent && client.state.status === 'idle')
+            void client.connect();
+    }, []);
+    useEffect(() => {
+        if (!practice) return;
+        try { writePractice(practice); }
+        catch { setMessage('浏览器无法保存试玩，关闭网页后可能无法恢复'); }
+    }, [practice]);
+    useEffect(() => {
+        if (room) {
+            if (!practiceRef.current && !practiceBackupRef.current) return;
+            const backup = practiceBackupRef.current || practiceRef.current;
+            let stored: Practice | null = null;
+            try { stored = readPractice(); } catch {}
+            setRecovery(null, null);
+            if (!backup || !stored || stored.id === backup.id) clearStoredPractice();
+            return;
+        }
+        if (practiceRef.current || sheet === 'join')
+            return;
+        if (['connecting', 'reconnecting', 'disconnected'].includes(client.state.status))
+            return;
+        if (practiceBackupRef.current) restorePractice();
+        clearInviteLocation();
+    }, [room?.code, state.status, state.error, sheet]);
     // The browser is the trusted host for pass-and-play. Restore and schedule the persisted deadline;
     // player commands themselves never carry a time-advance action.
     useEffect(() => {
@@ -159,7 +198,7 @@ export function App() {
         client.resetIdentity();
         localStorage.removeItem('mocha-profile');
         localStorage.removeItem('mocha-history-v1');
-        localStorage.removeItem('mocha-practice-v1');
+        discardPractice();
         setProfile(null);
         setName('');
         setAvatar(AVATARS[0]);
@@ -233,7 +272,7 @@ export function App() {
         webkitRequestFullscreen?: () => Promise<void>;
     }; void (el.requestFullscreen?.() || el.webkitRequestFullscreen?.())?.catch(() => { }); };
     const leave = () => { if (practice) {
-        updatePractice(null);
+        discardPractice();
         setSheet(null);
         return;
     } client.leave(); setSheet(null); };
