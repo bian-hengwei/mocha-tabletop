@@ -243,6 +243,7 @@ export const uiText: Record<string,string> = {
   "即将公布": "About to announce",
   "平安夜": "Nobody died tonight",
   "毒药": "Poison",
+  "刀口": "Attack target",
   "解药已用，不提示刀口": "Antidote used; the attack target stays hidden.",
   "· 你": " · You",
   "已结算": "Scored",
