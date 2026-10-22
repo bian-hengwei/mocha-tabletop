@@ -21,8 +21,8 @@ npm run check
 
 | 分组 | 范围 |
 | --- | --- |
-| `app` | 入口、姓名、弹窗、存储、PWA、单机、语言、全游戏布局和真实 Worker 联机 |
-| `classic` | 麻将、扑克操作与结算、经典牌面和桌面布局 |
+| `app` | 入口、姓名、弹窗、存储、PWA、单机、语言、全游戏布局、房间聊天和社交桌面，以及真实 Worker 联机 |
+| `classic` | 麻将、扑克和 UNO 操作与结算、经典牌面和桌面布局 |
 | `cards` | 接龙、寿司、商旅、晶石和猫牌操作、状态与布局，以及全游戏聊天头像接入 |
 | `social` | 房间通信、聊天边界、表情离线素材、身份插画、词语隐私与回合、狼人板型、社交游戏状态与布局 |
 
@@ -45,7 +45,7 @@ BASE_URL=http://127.0.0.1:5174 TEST_API_BASE=http://127.0.0.1:8787 node scripts/
 
 房间聊天与头像表情的新增验收：`npx vitest run tests/room-social.test.ts` 校验输入、授权、禁用游戏、限流、去重、上限和过期；`node tests/network/room-social.integration.mjs` 使用真实 Worker 覆盖 cloud/LAN 房间、重连、换局与换游戏保留记录、解散后不再广播和新房间隔离。`node tests/ui/room-social.integration.mjs` 用两个浏览器验证聊天、头像动画、IME、焦点、双语七尺寸、刷新、LAN 转云端，以及解散时清空聊天/草稿/恢复入口；支持 `TEST_BROWSER=webkit` 与 `TEST_MODES=cloud,lan`。`node tests/ui/room-social-games.integration.mjs` 覆盖八款游戏最大人数与四款禁用游戏，逐尺寸检查右上角头像仍打开资料编辑、只有自己的座位头像能发表情；支持 `TEST_GAMES` 选择游戏。联机脚本用 `BASE_URL` / `TEST_API_BASE` 指定隔离服务，批量运行时避免与其他脚本共用限流窗口；不得因此放宽产品限流。
 
-全游戏接入脚本会创建 12 个房间，放在 `cards` 隔离 runner；其余房间通信脚本放在 `social`。接龙联机的四种完整对局在清单中标记 `isolated: true`，由 `scripts/isolated-integration.mjs` 启动独立的本地 Worker、Vite、临时配置与存储，并使用空闲端口，避免累计建房触发其他脚本的限流窗口。包装器保留脚本参数、全部场景和退出状态，失败时输出服务日志，并清理自己启动的进程和临时目录；不修改产品限流。可直接运行 `node scripts/isolated-integration.mjs tests/network/draw-relay.integration.mjs` 复现（需要当前 `dist/`）。
+全游戏接入脚本会创建 12 个房间，放在 `cards` 组；房间通信的网络与边界脚本留在 `social`，共享房间聊天 UI 回归放在 `app`。接龙联机的四种完整对局在清单中标记 `isolated: true`，由 `scripts/isolated-integration.mjs` 启动独立的本地 Worker、Vite、临时配置与存储，并使用空闲端口，避免累计建房触发其他脚本的限流窗口。包装器保留脚本参数、全部场景和退出状态，失败时输出服务日志，并清理自己启动的进程和临时目录；不修改产品限流。可直接运行 `node scripts/isolated-integration.mjs tests/network/draw-relay.integration.mjs` 复现（需要当前 `dist/`）。
 
 CI 集成组使用与锁定的 Playwright 1.55.1 匹配的[官方 Noble 容器](https://playwright.dev/docs/docker)，按版本和镜像 digest 固定浏览器、字体与系统库，不在运行时通过 APT 安装。`npm ci` 仍安装项目依赖，Node.js 保持 22；浏览器启动检查最多一分钟，测试组另有二十分钟上限。更新 Playwright 时需同步核验镜像版本和 digest；镜像拉取或浏览器启动故障会明确失败，不自动重试或跳过检查。
 
