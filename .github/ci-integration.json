@@ -88,6 +88,9 @@
     },
     {
       "script": "tests/ui/invite-practice-recovery.integration.mjs"
+    },
+    {
+      "script": "tests/ui/drawguess-history.integration.mjs"
     }
   ],
   "classic": [
