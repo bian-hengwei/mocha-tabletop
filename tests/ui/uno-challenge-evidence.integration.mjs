@@ -57,6 +57,7 @@ async function readable(page,evidence){
   assert(bounds.x>=region.x-1&&bounds.x+bounds.width<=region.x+region.width+1,`First and last evidence cards are reachable: ${JSON.stringify({bounds,region,viewport:await page.viewportSize()})}`);
  }
  const button=page.locator('.ng-challenge .ng-action');
+ assert(await page.locator('.ng-challenge-summary').evaluate(el=>el.scrollHeight<=el.clientHeight+1),'Complete outcome text fits before continuing');
  const box=await button.boundingBox();
  assert(box.height>=44&&box.y>=0&&box.y+box.height<=await page.evaluate(()=>innerHeight),'Continue is reachable without scrolling');
  assert(await button.evaluate(el=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}),'Continue is unobscured');
