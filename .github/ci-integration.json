@@ -80,6 +80,9 @@
       "script": "tests/ui/poker-declaration.integration.mjs"
     },
     {
+      "script": "tests/ui/guandan-actual-a.integration.mjs"
+    },
+    {
       "script": "tests/ui/poker-feedback.integration.mjs"
     },
     {

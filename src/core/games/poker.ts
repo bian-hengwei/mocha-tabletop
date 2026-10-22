@@ -114,7 +114,8 @@ function next(s:PokerState,from:number){for(let step=1;step<=s.players.length;st
 function endDdz(s:PokerState,me:number){const landlordWin=me===s.landlord;const spring=landlordWin?s.plays.every((n,i)=>i===s.landlord||n===0):s.plays[s.landlord]===1;if(spring){s.multiplier*=2;s.history.push('春天 ×2');}const base=s.bid*s.multiplier;s.scores=s.players.map((_,i)=>(i===s.landlord?2:-1)*base*(landlordWin?1:-1));s.winners=s.players.filter((_,i)=>landlordWin?i===s.landlord:i!==s.landlord).map(p=>p.id);s.finished=true;}
 function endGd(s:PokerState){const team=s.order[0]%2,partner=(s.order[0]+2)%4,pos=s.order.indexOf(partner),advance=pos===1?3:pos===2?2:1;
  s.previousOrder=[...s.order];s.scores=s.players.map((_,i)=>i%2===team?advance:0);
- if(s.levels[team]===14&&pos!==3){s.finished=true;s.winners=s.players.filter((_,i)=>i%2===team).map(p=>p.id);}else{s.levels[team]=Math.min(14,s.levels[team]+advance);s.level=s.levels[team];s.phase='roundEnd';}
+ const actualA=s.level===14&&s.levels[team]===14;
+ if(actualA&&(pos===1||pos===2)){s.finished=true;s.winners=s.players.filter((_,i)=>i%2===team).map(p=>p.id);}else{s.levels[team]=Math.min(14,s.levels[team]+advance);s.level=s.levels[team];s.phase='roundEnd';}
  s.history.push(`升级 +${advance}`);
 }
 function setupTribute(s:PokerState){const order=s.previousOrder,first=order[0],double=order[1]%2===first%2,losers=double?[order[2],order[3]]:[order[3]];s.lead=first;

@@ -1,0 +1,1660 @@
+{
+  "seed": 2,
+  "steps": 1065,
+  "command": {
+    "action": "play",
+    "values": [
+      "p0-23"
+    ]
+  },
+  "before": {
+    "kind": "guandan",
+    "counterEnabled": false,
+    "players": [
+      {
+        "id": "audit-player-0",
+        "name": "Player 0",
+        "avatar": "🐱"
+      },
+      {
+        "id": "audit-player-1",
+        "name": "Player 1",
+        "avatar": "🐱"
+      },
+      {
+        "id": "audit-player-2",
+        "name": "Player 2",
+        "avatar": "🐱"
+      },
+      {
+        "id": "audit-player-3",
+        "name": "Player 3",
+        "avatar": "🐱"
+      }
+    ],
+    "hands": [
+      [],
+      [],
+      [
+        {
+          "id": "p0-23",
+          "rank": 8,
+          "suit": 3
+        }
+      ],
+      [
+        {
+          "id": "p0-26",
+          "rank": 9,
+          "suit": 2
+        },
+        {
+          "id": "p1-35",
+          "rank": 11,
+          "suit": 3
+        },
+        {
+          "id": "p1-40",
+          "rank": 13,
+          "suit": 0
+        },
+        {
+          "id": "p1-36",
+          "rank": 12,
+          "suit": 0
+        },
+        {
+          "id": "p0-15",
+          "rank": 6,
+          "suit": 3
+        },
+        {
+          "id": "p1-7",
+          "rank": 4,
+          "suit": 3
+        }
+      ]
+    ],
+    "bottom": [],
+    "played": [
+      {
+        "id": "p0-44",
+        "rank": 14,
+        "suit": 0
+      },
+      {
+        "id": "p1-46",
+        "rank": 14,
+        "suit": 2
+      },
+      {
+        "id": "p0-45",
+        "rank": 14,
+        "suit": 1
+      },
+      {
+        "id": "p0-50",
+        "rank": 15,
+        "suit": 2
+      },
+      {
+        "id": "p1-51",
+        "rank": 15,
+        "suit": 3
+      },
+      {
+        "id": "p1-49",
+        "rank": 15,
+        "suit": 1
+      },
+      {
+        "id": "p1-8",
+        "rank": 5,
+        "suit": 0
+      },
+      {
+        "id": "p1-9",
+        "rank": 5,
+        "suit": 1
+      },
+      {
+        "id": "p1-11",
+        "rank": 5,
+        "suit": 3
+      },
+      {
+        "id": "p1-14",
+        "rank": 6,
+        "suit": 2
+      },
+      {
+        "id": "p1-15",
+        "rank": 6,
+        "suit": 3
+      },
+      {
+        "id": "p1-12",
+        "rank": 6,
+        "suit": 0
+      },
+      {
+        "id": "p0-22",
+        "rank": 8,
+        "suit": 2
+      },
+      {
+        "id": "p0-20",
+        "rank": 8,
+        "suit": 0
+      },
+      {
+        "id": "p1-21",
+        "rank": 8,
+        "suit": 1
+      },
+      {
+        "id": "p1-24",
+        "rank": 9,
+        "suit": 0
+      },
+      {
+        "id": "p0-27",
+        "rank": 9,
+        "suit": 3
+      },
+      {
+        "id": "p0-24",
+        "rank": 9,
+        "suit": 0
+      },
+      {
+        "id": "p1-28",
+        "rank": 10,
+        "suit": 0
+      },
+      {
+        "id": "p0-30",
+        "rank": 10,
+        "suit": 2
+      },
+      {
+        "id": "p0-29",
+        "rank": 10,
+        "suit": 1
+      },
+      {
+        "id": "p0-35",
+        "rank": 11,
+        "suit": 3
+      },
+      {
+        "id": "p1-33",
+        "rank": 11,
+        "suit": 1
+      },
+      {
+        "id": "p1-29",
+        "rank": 10,
+        "suit": 1
+      },
+      {
+        "id": "p1-37",
+        "rank": 12,
+        "suit": 1
+      },
+      {
+        "id": "p1-38",
+        "rank": 12,
+        "suit": 2
+      },
+      {
+        "id": "p0-37",
+        "rank": 12,
+        "suit": 1
+      },
+      {
+        "id": "p0-38",
+        "rank": 12,
+        "suit": 2
+      },
+      {
+        "id": "p1-48",
+        "rank": 15,
+        "suit": 0
+      },
+      {
+        "id": "p0-51",
+        "rank": 15,
+        "suit": 3
+      },
+      {
+        "id": "p0-2",
+        "rank": 3,
+        "suit": 2
+      },
+      {
+        "id": "p1-1",
+        "rank": 3,
+        "suit": 1
+      },
+      {
+        "id": "p0-7",
+        "rank": 4,
+        "suit": 3
+      },
+      {
+        "id": "p0-5",
+        "rank": 4,
+        "suit": 1
+      },
+      {
+        "id": "p0-18",
+        "rank": 7,
+        "suit": 2
+      },
+      {
+        "id": "p1-19",
+        "rank": 7,
+        "suit": 3
+      },
+      {
+        "id": "p0-25",
+        "rank": 9,
+        "suit": 1
+      },
+      {
+        "id": "p1-26",
+        "rank": 9,
+        "suit": 2
+      },
+      {
+        "id": "p0-32",
+        "rank": 11,
+        "suit": 0
+      },
+      {
+        "id": "p0-33",
+        "rank": 11,
+        "suit": 1
+      },
+      {
+        "id": "p0-39",
+        "rank": 12,
+        "suit": 3
+      },
+      {
+        "id": "p1-39",
+        "rank": 12,
+        "suit": 3
+      },
+      {
+        "id": "p0-41",
+        "rank": 13,
+        "suit": 1
+      },
+      {
+        "id": "p1-41",
+        "rank": 13,
+        "suit": 1
+      },
+      {
+        "id": "p1-47",
+        "rank": 14,
+        "suit": 3
+      },
+      {
+        "id": "p1-44",
+        "rank": 14,
+        "suit": 0
+      },
+      {
+        "id": "p1-30",
+        "rank": 10,
+        "suit": 2
+      },
+      {
+        "id": "p0-28",
+        "rank": 10,
+        "suit": 0
+      },
+      {
+        "id": "p0-49",
+        "rank": 15,
+        "suit": 1
+      },
+      {
+        "id": "p0-3",
+        "rank": 3,
+        "suit": 3
+      },
+      {
+        "id": "p1-6",
+        "rank": 4,
+        "suit": 2
+      },
+      {
+        "id": "p0-10",
+        "rank": 5,
+        "suit": 2
+      },
+      {
+        "id": "p1-13",
+        "rank": 6,
+        "suit": 1
+      },
+      {
+        "id": "p0-17",
+        "rank": 7,
+        "suit": 1
+      },
+      {
+        "id": "p1-23",
+        "rank": 8,
+        "suit": 3
+      },
+      {
+        "id": "p1-27",
+        "rank": 9,
+        "suit": 3
+      },
+      {
+        "id": "p1-32",
+        "rank": 11,
+        "suit": 0
+      },
+      {
+        "id": "p0-40",
+        "rank": 13,
+        "suit": 0
+      },
+      {
+        "id": "p0-31",
+        "rank": 10,
+        "suit": 3
+      },
+      {
+        "id": "p1-52",
+        "rank": 16,
+        "suit": 4
+      },
+      {
+        "id": "p1-53",
+        "rank": 17,
+        "suit": 4
+      },
+      {
+        "id": "p1-50",
+        "rank": 15,
+        "suit": 2
+      },
+      {
+        "id": "p0-48",
+        "rank": 15,
+        "suit": 0
+      },
+      {
+        "id": "p0-12",
+        "rank": 6,
+        "suit": 0
+      },
+      {
+        "id": "p0-14",
+        "rank": 6,
+        "suit": 2
+      },
+      {
+        "id": "p0-47",
+        "rank": 14,
+        "suit": 3
+      },
+      {
+        "id": "p1-45",
+        "rank": 14,
+        "suit": 1
+      },
+      {
+        "id": "p1-0",
+        "rank": 3,
+        "suit": 0
+      },
+      {
+        "id": "p1-3",
+        "rank": 3,
+        "suit": 3
+      },
+      {
+        "id": "p0-0",
+        "rank": 3,
+        "suit": 0
+      },
+      {
+        "id": "p1-4",
+        "rank": 4,
+        "suit": 0
+      },
+      {
+        "id": "p1-5",
+        "rank": 4,
+        "suit": 1
+      },
+      {
+        "id": "p0-19",
+        "rank": 7,
+        "suit": 3
+      },
+      {
+        "id": "p1-18",
+        "rank": 7,
+        "suit": 2
+      },
+      {
+        "id": "p1-16",
+        "rank": 7,
+        "suit": 0
+      },
+      {
+        "id": "p1-10",
+        "rank": 5,
+        "suit": 2
+      },
+      {
+        "id": "p0-8",
+        "rank": 5,
+        "suit": 0
+      },
+      {
+        "id": "p1-43",
+        "rank": 13,
+        "suit": 3
+      },
+      {
+        "id": "p0-42",
+        "rank": 13,
+        "suit": 2
+      },
+      {
+        "id": "p1-42",
+        "rank": 13,
+        "suit": 2
+      },
+      {
+        "id": "p1-17",
+        "rank": 7,
+        "suit": 1
+      },
+      {
+        "id": "p0-16",
+        "rank": 7,
+        "suit": 0
+      },
+      {
+        "id": "p1-2",
+        "rank": 3,
+        "suit": 2
+      },
+      {
+        "id": "p1-20",
+        "rank": 8,
+        "suit": 0
+      },
+      {
+        "id": "p1-34",
+        "rank": 11,
+        "suit": 2
+      },
+      {
+        "id": "p0-36",
+        "rank": 12,
+        "suit": 0
+      },
+      {
+        "id": "p0-53",
+        "rank": 17,
+        "suit": 4
+      },
+      {
+        "id": "p1-25",
+        "rank": 9,
+        "suit": 1
+      },
+      {
+        "id": "p0-43",
+        "rank": 13,
+        "suit": 3
+      },
+      {
+        "id": "p0-52",
+        "rank": 16,
+        "suit": 4
+      },
+      {
+        "id": "p0-1",
+        "rank": 3,
+        "suit": 1
+      },
+      {
+        "id": "p1-22",
+        "rank": 8,
+        "suit": 2
+      },
+      {
+        "id": "p0-34",
+        "rank": 11,
+        "suit": 2
+      },
+      {
+        "id": "p0-46",
+        "rank": 14,
+        "suit": 2
+      },
+      {
+        "id": "p0-6",
+        "rank": 4,
+        "suit": 2
+      },
+      {
+        "id": "p0-4",
+        "rank": 4,
+        "suit": 0
+      },
+      {
+        "id": "p0-9",
+        "rank": 5,
+        "suit": 1
+      },
+      {
+        "id": "p0-11",
+        "rank": 5,
+        "suit": 3
+      },
+      {
+        "id": "p0-13",
+        "rank": 6,
+        "suit": 1
+      },
+      {
+        "id": "p0-21",
+        "rank": 8,
+        "suit": 1
+      },
+      {
+        "id": "p1-31",
+        "rank": 10,
+        "suit": 3
+      }
+    ],
+    "current": 2,
+    "phase": "play",
+    "rng": 13,
+    "round": 11,
+    "bid": 0,
+    "bidder": -1,
+    "bids": [
+      null,
+      null,
+      null,
+      null
+    ],
+    "landlord": -1,
+    "multiplier": 1,
+    "plays": [
+      10,
+      14,
+      14,
+      13
+    ],
+    "last": null,
+    "passed": [],
+    "order": [
+      0,
+      1
+    ],
+    "previousOrder": [
+      3,
+      1,
+      0,
+      2
+    ],
+    "levels": [
+      14,
+      10
+    ],
+    "level": 10,
+    "scores": [
+      0,
+      3,
+      0,
+      3
+    ],
+    "returns": [],
+    "lead": 0,
+    "finished": false,
+    "winners": [],
+    "history": [
+      "Player 1 · 单张",
+      "Player 2 · 单张",
+      "Player 0 · 单张",
+      "Player 1 · 单张",
+      "升级 +3",
+      "Player 0 → Player 3 · 小王",
+      "Player 2 → Player 1 · 小王",
+      "Player 3 → Player 0 · ♣5",
+      "Player 1 → Player 2 · ♣9",
+      "Player 0 · 钢板",
+      "Player 1 · 钢板",
+      "Player 2 · 钢板",
+      "Player 0 · 钢板",
+      "Player 2 · 炸弹",
+      "Player 2 · 对子",
+      "Player 3 · 对子",
+      "Player 0 · 对子",
+      "Player 1 · 对子",
+      "Player 2 · 对子",
+      "Player 3 · 对子",
+      "Player 0 · 对子",
+      "Player 1 · 对子",
+      "Player 3 · 对子",
+      "Player 1 · 对子",
+      "Player 1 · 单张",
+      "Player 2 · 单张",
+      "Player 3 · 单张",
+      "Player 0 · 单张",
+      "Player 1 · 单张",
+      "Player 2 · 单张",
+      "Player 3 · 单张",
+      "Player 0 · 单张",
+      "Player 1 · 单张",
+      "Player 2 · 单张",
+      "Player 3 · 单张",
+      "Player 1 · 单张",
+      "Player 3 · 单张",
+      "Player 3 · 对子",
+      "Player 0 · 对子",
+      "Player 1 · 对子",
+      "Player 1 · 三带二",
+      "Player 3 · 三带二",
+      "Player 0 · 三带二",
+      "Player 0 · 单张",
+      "Player 1 · 单张",
+      "Player 2 · 单张",
+      "Player 3 · 单张",
+      "Player 1 · 单张",
+      "Player 1 · 单张",
+      "Player 2 · 单张",
+      "Player 3 · 单张",
+      "Player 3 · 单张",
+      "Player 0 · 单张",
+      "Player 1 · 单张",
+      "Player 2 · 单张",
+      "Player 2 · 对子",
+      "Player 2 · 对子",
+      "Player 2 · 单张",
+      "Player 3 · 单张",
+      "Player 2 · 单张"
+    ],
+    "tablePlays": [
+      {
+        "player": 2,
+        "cards": [
+          {
+            "id": "p1-31",
+            "rank": 10,
+            "suit": 3
+          }
+        ],
+        "combo": {
+          "type": "单张",
+          "power": 17,
+          "size": 1,
+          "bomb": 0
+        },
+        "serial": 83
+      },
+      {
+        "player": 3,
+        "cards": [],
+        "combo": null,
+        "serial": 84
+      }
+    ],
+    "playSerial": 84
+  },
+  "after": {
+    "kind": "guandan",
+    "counterEnabled": false,
+    "players": [
+      {
+        "id": "audit-player-0",
+        "name": "Player 0",
+        "avatar": "🐱"
+      },
+      {
+        "id": "audit-player-1",
+        "name": "Player 1",
+        "avatar": "🐱"
+      },
+      {
+        "id": "audit-player-2",
+        "name": "Player 2",
+        "avatar": "🐱"
+      },
+      {
+        "id": "audit-player-3",
+        "name": "Player 3",
+        "avatar": "🐱"
+      }
+    ],
+    "hands": [
+      [],
+      [],
+      [],
+      [
+        {
+          "id": "p0-26",
+          "rank": 9,
+          "suit": 2
+        },
+        {
+          "id": "p1-35",
+          "rank": 11,
+          "suit": 3
+        },
+        {
+          "id": "p1-40",
+          "rank": 13,
+          "suit": 0
+        },
+        {
+          "id": "p1-36",
+          "rank": 12,
+          "suit": 0
+        },
+        {
+          "id": "p0-15",
+          "rank": 6,
+          "suit": 3
+        },
+        {
+          "id": "p1-7",
+          "rank": 4,
+          "suit": 3
+        }
+      ]
+    ],
+    "bottom": [],
+    "played": [
+      {
+        "id": "p0-44",
+        "rank": 14,
+        "suit": 0
+      },
+      {
+        "id": "p1-46",
+        "rank": 14,
+        "suit": 2
+      },
+      {
+        "id": "p0-45",
+        "rank": 14,
+        "suit": 1
+      },
+      {
+        "id": "p0-50",
+        "rank": 15,
+        "suit": 2
+      },
+      {
+        "id": "p1-51",
+        "rank": 15,
+        "suit": 3
+      },
+      {
+        "id": "p1-49",
+        "rank": 15,
+        "suit": 1
+      },
+      {
+        "id": "p1-8",
+        "rank": 5,
+        "suit": 0
+      },
+      {
+        "id": "p1-9",
+        "rank": 5,
+        "suit": 1
+      },
+      {
+        "id": "p1-11",
+        "rank": 5,
+        "suit": 3
+      },
+      {
+        "id": "p1-14",
+        "rank": 6,
+        "suit": 2
+      },
+      {
+        "id": "p1-15",
+        "rank": 6,
+        "suit": 3
+      },
+      {
+        "id": "p1-12",
+        "rank": 6,
+        "suit": 0
+      },
+      {
+        "id": "p0-22",
+        "rank": 8,
+        "suit": 2
+      },
+      {
+        "id": "p0-20",
+        "rank": 8,
+        "suit": 0
+      },
+      {
+        "id": "p1-21",
+        "rank": 8,
+        "suit": 1
+      },
+      {
+        "id": "p1-24",
+        "rank": 9,
+        "suit": 0
+      },
+      {
+        "id": "p0-27",
+        "rank": 9,
+        "suit": 3
+      },
+      {
+        "id": "p0-24",
+        "rank": 9,
+        "suit": 0
+      },
+      {
+        "id": "p1-28",
+        "rank": 10,
+        "suit": 0
+      },
+      {
+        "id": "p0-30",
+        "rank": 10,
+        "suit": 2
+      },
+      {
+        "id": "p0-29",
+        "rank": 10,
+        "suit": 1
+      },
+      {
+        "id": "p0-35",
+        "rank": 11,
+        "suit": 3
+      },
+      {
+        "id": "p1-33",
+        "rank": 11,
+        "suit": 1
+      },
+      {
+        "id": "p1-29",
+        "rank": 10,
+        "suit": 1
+      },
+      {
+        "id": "p1-37",
+        "rank": 12,
+        "suit": 1
+      },
+      {
+        "id": "p1-38",
+        "rank": 12,
+        "suit": 2
+      },
+      {
+        "id": "p0-37",
+        "rank": 12,
+        "suit": 1
+      },
+      {
+        "id": "p0-38",
+        "rank": 12,
+        "suit": 2
+      },
+      {
+        "id": "p1-48",
+        "rank": 15,
+        "suit": 0
+      },
+      {
+        "id": "p0-51",
+        "rank": 15,
+        "suit": 3
+      },
+      {
+        "id": "p0-2",
+        "rank": 3,
+        "suit": 2
+      },
+      {
+        "id": "p1-1",
+        "rank": 3,
+        "suit": 1
+      },
+      {
+        "id": "p0-7",
+        "rank": 4,
+        "suit": 3
+      },
+      {
+        "id": "p0-5",
+        "rank": 4,
+        "suit": 1
+      },
+      {
+        "id": "p0-18",
+        "rank": 7,
+        "suit": 2
+      },
+      {
+        "id": "p1-19",
+        "rank": 7,
+        "suit": 3
+      },
+      {
+        "id": "p0-25",
+        "rank": 9,
+        "suit": 1
+      },
+      {
+        "id": "p1-26",
+        "rank": 9,
+        "suit": 2
+      },
+      {
+        "id": "p0-32",
+        "rank": 11,
+        "suit": 0
+      },
+      {
+        "id": "p0-33",
+        "rank": 11,
+        "suit": 1
+      },
+      {
+        "id": "p0-39",
+        "rank": 12,
+        "suit": 3
+      },
+      {
+        "id": "p1-39",
+        "rank": 12,
+        "suit": 3
+      },
+      {
+        "id": "p0-41",
+        "rank": 13,
+        "suit": 1
+      },
+      {
+        "id": "p1-41",
+        "rank": 13,
+        "suit": 1
+      },
+      {
+        "id": "p1-47",
+        "rank": 14,
+        "suit": 3
+      },
+      {
+        "id": "p1-44",
+        "rank": 14,
+        "suit": 0
+      },
+      {
+        "id": "p1-30",
+        "rank": 10,
+        "suit": 2
+      },
+      {
+        "id": "p0-28",
+        "rank": 10,
+        "suit": 0
+      },
+      {
+        "id": "p0-49",
+        "rank": 15,
+        "suit": 1
+      },
+      {
+        "id": "p0-3",
+        "rank": 3,
+        "suit": 3
+      },
+      {
+        "id": "p1-6",
+        "rank": 4,
+        "suit": 2
+      },
+      {
+        "id": "p0-10",
+        "rank": 5,
+        "suit": 2
+      },
+      {
+        "id": "p1-13",
+        "rank": 6,
+        "suit": 1
+      },
+      {
+        "id": "p0-17",
+        "rank": 7,
+        "suit": 1
+      },
+      {
+        "id": "p1-23",
+        "rank": 8,
+        "suit": 3
+      },
+      {
+        "id": "p1-27",
+        "rank": 9,
+        "suit": 3
+      },
+      {
+        "id": "p1-32",
+        "rank": 11,
+        "suit": 0
+      },
+      {
+        "id": "p0-40",
+        "rank": 13,
+        "suit": 0
+      },
+      {
+        "id": "p0-31",
+        "rank": 10,
+        "suit": 3
+      },
+      {
+        "id": "p1-52",
+        "rank": 16,
+        "suit": 4
+      },
+      {
+        "id": "p1-53",
+        "rank": 17,
+        "suit": 4
+      },
+      {
+        "id": "p1-50",
+        "rank": 15,
+        "suit": 2
+      },
+      {
+        "id": "p0-48",
+        "rank": 15,
+        "suit": 0
+      },
+      {
+        "id": "p0-12",
+        "rank": 6,
+        "suit": 0
+      },
+      {
+        "id": "p0-14",
+        "rank": 6,
+        "suit": 2
+      },
+      {
+        "id": "p0-47",
+        "rank": 14,
+        "suit": 3
+      },
+      {
+        "id": "p1-45",
+        "rank": 14,
+        "suit": 1
+      },
+      {
+        "id": "p1-0",
+        "rank": 3,
+        "suit": 0
+      },
+      {
+        "id": "p1-3",
+        "rank": 3,
+        "suit": 3
+      },
+      {
+        "id": "p0-0",
+        "rank": 3,
+        "suit": 0
+      },
+      {
+        "id": "p1-4",
+        "rank": 4,
+        "suit": 0
+      },
+      {
+        "id": "p1-5",
+        "rank": 4,
+        "suit": 1
+      },
+      {
+        "id": "p0-19",
+        "rank": 7,
+        "suit": 3
+      },
+      {
+        "id": "p1-18",
+        "rank": 7,
+        "suit": 2
+      },
+      {
+        "id": "p1-16",
+        "rank": 7,
+        "suit": 0
+      },
+      {
+        "id": "p1-10",
+        "rank": 5,
+        "suit": 2
+      },
+      {
+        "id": "p0-8",
+        "rank": 5,
+        "suit": 0
+      },
+      {
+        "id": "p1-43",
+        "rank": 13,
+        "suit": 3
+      },
+      {
+        "id": "p0-42",
+        "rank": 13,
+        "suit": 2
+      },
+      {
+        "id": "p1-42",
+        "rank": 13,
+        "suit": 2
+      },
+      {
+        "id": "p1-17",
+        "rank": 7,
+        "suit": 1
+      },
+      {
+        "id": "p0-16",
+        "rank": 7,
+        "suit": 0
+      },
+      {
+        "id": "p1-2",
+        "rank": 3,
+        "suit": 2
+      },
+      {
+        "id": "p1-20",
+        "rank": 8,
+        "suit": 0
+      },
+      {
+        "id": "p1-34",
+        "rank": 11,
+        "suit": 2
+      },
+      {
+        "id": "p0-36",
+        "rank": 12,
+        "suit": 0
+      },
+      {
+        "id": "p0-53",
+        "rank": 17,
+        "suit": 4
+      },
+      {
+        "id": "p1-25",
+        "rank": 9,
+        "suit": 1
+      },
+      {
+        "id": "p0-43",
+        "rank": 13,
+        "suit": 3
+      },
+      {
+        "id": "p0-52",
+        "rank": 16,
+        "suit": 4
+      },
+      {
+        "id": "p0-1",
+        "rank": 3,
+        "suit": 1
+      },
+      {
+        "id": "p1-22",
+        "rank": 8,
+        "suit": 2
+      },
+      {
+        "id": "p0-34",
+        "rank": 11,
+        "suit": 2
+      },
+      {
+        "id": "p0-46",
+        "rank": 14,
+        "suit": 2
+      },
+      {
+        "id": "p0-6",
+        "rank": 4,
+        "suit": 2
+      },
+      {
+        "id": "p0-4",
+        "rank": 4,
+        "suit": 0
+      },
+      {
+        "id": "p0-9",
+        "rank": 5,
+        "suit": 1
+      },
+      {
+        "id": "p0-11",
+        "rank": 5,
+        "suit": 3
+      },
+      {
+        "id": "p0-13",
+        "rank": 6,
+        "suit": 1
+      },
+      {
+        "id": "p0-21",
+        "rank": 8,
+        "suit": 1
+      },
+      {
+        "id": "p1-31",
+        "rank": 10,
+        "suit": 3
+      },
+      {
+        "id": "p0-23",
+        "rank": 8,
+        "suit": 3
+      }
+    ],
+    "current": 2,
+    "phase": "play",
+    "rng": 13,
+    "round": 11,
+    "bid": 0,
+    "bidder": -1,
+    "bids": [
+      null,
+      null,
+      null,
+      null
+    ],
+    "landlord": -1,
+    "multiplier": 1,
+    "plays": [
+      10,
+      14,
+      15,
+      13
+    ],
+    "last": {
+      "player": 2,
+      "cards": [
+        {
+          "id": "p0-23",
+          "rank": 8,
+          "suit": 3
+        }
+      ],
+      "combo": {
+        "type": "单张",
+        "power": 8,
+        "size": 1,
+        "bomb": 0
+      }
+    },
+    "passed": [],
+    "order": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "previousOrder": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "levels": [
+      14,
+      10
+    ],
+    "level": 10,
+    "scores": [
+      2,
+      0,
+      2,
+      0
+    ],
+    "returns": [],
+    "lead": 0,
+    "finished": true,
+    "winners": [
+      "audit-player-0",
+      "audit-player-2"
+    ],
+    "history": [
+      "Player 1 · 单张",
+      "Player 2 · 单张",
+      "Player 0 · 单张",
+      "Player 1 · 单张",
+      "升级 +3",
+      "Player 0 → Player 3 · 小王",
+      "Player 2 → Player 1 · 小王",
+      "Player 3 → Player 0 · ♣5",
+      "Player 1 → Player 2 · ♣9",
+      "Player 0 · 钢板",
+      "Player 1 · 钢板",
+      "Player 2 · 钢板",
+      "Player 0 · 钢板",
+      "Player 2 · 炸弹",
+      "Player 2 · 对子",
+      "Player 3 · 对子",
+      "Player 0 · 对子",
+      "Player 1 · 对子",
+      "Player 2 · 对子",
+      "Player 3 · 对子",
+      "Player 0 · 对子",
+      "Player 1 · 对子",
+      "Player 3 · 对子",
+      "Player 1 · 对子",
+      "Player 1 · 单张",
+      "Player 2 · 单张",
+      "Player 3 · 单张",
+      "Player 0 · 单张",
+      "Player 1 · 单张",
+      "Player 2 · 单张",
+      "Player 3 · 单张",
+      "Player 0 · 单张",
+      "Player 1 · 单张",
+      "Player 2 · 单张",
+      "Player 3 · 单张",
+      "Player 1 · 单张",
+      "Player 3 · 单张",
+      "Player 3 · 对子",
+      "Player 0 · 对子",
+      "Player 1 · 对子",
+      "Player 1 · 三带二",
+      "Player 3 · 三带二",
+      "Player 0 · 三带二",
+      "Player 0 · 单张",
+      "Player 1 · 单张",
+      "Player 2 · 单张",
+      "Player 3 · 单张",
+      "Player 1 · 单张",
+      "Player 1 · 单张",
+      "Player 2 · 单张",
+      "Player 3 · 单张",
+      "Player 3 · 单张",
+      "Player 0 · 单张",
+      "Player 1 · 单张",
+      "Player 2 · 单张",
+      "Player 2 · 对子",
+      "Player 2 · 对子",
+      "Player 2 · 单张",
+      "Player 3 · 单张",
+      "Player 2 · 单张",
+      "Player 2 · 单张",
+      "升级 +2"
+    ],
+    "tablePlays": [
+      {
+        "player": 2,
+        "cards": [
+          {
+            "id": "p0-23",
+            "rank": 8,
+            "suit": 3
+          }
+        ],
+        "combo": {
+          "type": "单张",
+          "power": 8,
+          "size": 1,
+          "bomb": 0
+        },
+        "serial": 85
+      }
+    ],
+    "playSerial": 85
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "playedLevel": 2,
+      "levelsBefore": [
+        2,
+        2
+      ],
+      "order": [
+        1,
+        0,
+        2,
+        3
+      ],
+      "finished": false,
+      "levelsAfter": [
+        2,
+        3
+      ]
+    },
+    {
+      "round": 2,
+      "playedLevel": 3,
+      "levelsBefore": [
+        2,
+        3
+      ],
+      "order": [
+        2,
+        0,
+        1,
+        3
+      ],
+      "finished": false,
+      "levelsAfter": [
+        5,
+        3
+      ]
+    },
+    {
+      "round": 3,
+      "playedLevel": 5,
+      "levelsBefore": [
+        5,
+        3
+      ],
+      "order": [
+        1,
+        2,
+        3,
+        0
+      ],
+      "finished": false,
+      "levelsAfter": [
+        5,
+        5
+      ]
+    },
+    {
+      "round": 4,
+      "playedLevel": 5,
+      "levelsBefore": [
+        5,
+        5
+      ],
+      "order": [
+        0,
+        3,
+        1,
+        2
+      ],
+      "finished": false,
+      "levelsAfter": [
+        6,
+        5
+      ]
+    },
+    {
+      "round": 5,
+      "playedLevel": 6,
+      "levelsBefore": [
+        6,
+        5
+      ],
+      "order": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "finished": false,
+      "levelsAfter": [
+        8,
+        5
+      ]
+    },
+    {
+      "round": 6,
+      "playedLevel": 8,
+      "levelsBefore": [
+        8,
+        5
+      ],
+      "order": [
+        2,
+        1,
+        3,
+        0
+      ],
+      "finished": false,
+      "levelsAfter": [
+        9,
+        5
+      ]
+    },
+    {
+      "round": 7,
+      "playedLevel": 9,
+      "levelsBefore": [
+        9,
+        5
+      ],
+      "order": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "finished": false,
+      "levelsAfter": [
+        9,
+        7
+      ]
+    },
+    {
+      "round": 8,
+      "playedLevel": 7,
+      "levelsBefore": [
+        9,
+        7
+      ],
+      "order": [
+        2,
+        1,
+        0,
+        3
+      ],
+      "finished": false,
+      "levelsAfter": [
+        11,
+        7
+      ]
+    },
+    {
+      "round": 9,
+      "playedLevel": 11,
+      "levelsBefore": [
+        11,
+        7
+      ],
+      "order": [
+        2,
+        0,
+        1,
+        3
+      ],
+      "finished": false,
+      "levelsAfter": [
+        14,
+        7
+      ]
+    },
+    {
+      "round": 10,
+      "playedLevel": 14,
+      "levelsBefore": [
+        14,
+        7
+      ],
+      "order": [
+        3,
+        1,
+        0,
+        2
+      ],
+      "finished": false,
+      "levelsAfter": [
+        14,
+        10
+      ]
+    },
+    {
+      "round": 11,
+      "playedLevel": 10,
+      "levelsBefore": [
+        14,
+        10
+      ],
+      "order": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "finished": true,
+      "levelsAfter": [
+        14,
+        10
+      ]
+    }
+  ]
+}
