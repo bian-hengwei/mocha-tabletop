@@ -9,6 +9,7 @@ export const appText:Record<string,string>={
 "观战已关闭":"Spectating is disabled",
 "进入观战席":"Watch this table",
 "转为玩家":"Take a player seat",
+"玩家座位已满":"Player seats are full",
 "暂无观众":"No spectators yet",
 "加入申请":"Join requests",
 "申请观战":"Wants to watch",

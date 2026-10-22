@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {createMatch,normalizeGameOptions,optionsKey,roomLimits,validateMatchForRoom,type RoomInfo} from '../../src/core/room';
+import {createMatch,hasOpenPlayerSeat,normalizeGameOptions,optionsKey,roomLimits,validateMatchForRoom,type RoomInfo} from '../../src/core/room';
 const players=Array.from({length:7},(_,i)=>({id:'player00'+i,name:'玩家'+i,avatar:'🦊',ready:true,connected:true}));
 const room=(mode:'standard'|'judge'|'deal'='standard'):RoomInfo=>({code:'ABC234',kind:'werewolf',mode:'lan',hostID:players[0].id,players,pending:[],started:true,revision:1,options:normalizeGameOptions('werewolf',{werewolfMode:mode},players[0].id)});
 describe('room game options',()=>{
@@ -8,6 +8,15 @@ describe('room game options',()=>{
  it.each([null,[],{werewolfMode:'evil'},{werewolfMode:'judge',moderatorID:'player001'},{werewolfMode:'deal',moderatorID:'player001'},{werewolfMode:'standard',moderatorID:'player000'},{extra:'option'}])('rejects invalid/forged options %j',options=>{expect(()=>normalizeGameOptions('werewolf',options,players[0].id)).toThrow();});
  it('does not permit werewolf-only options on other games',()=>{expect(()=>normalizeGameOptions('gems',{werewolfMode:'judge'},players[0].id)).toThrow();});
  it('adds one nonplaying judge seat, without changing standard/deal limits',()=>{expect(roomLimits('werewolf',{werewolfMode:'judge'})).toEqual({min:7,max:19});expect(roomLimits('werewolf',{werewolfMode:'deal'})).toEqual({min:6,max:18});expect(roomLimits('werewolf')).toEqual({min:6,max:18});expect(roomLimits('gems')).toEqual({min:2,max:4});});
+ it('derives open player seats from the authoritative game-specific limits',()=>{
+  const seat=(kind:RoomInfo['kind'],options:RoomInfo['options'],count:number):RoomInfo=>({code:'ABC234',kind,mode:'cloud',hostID:'player000',players:Array.from({length:count},(_,i)=>({...players[i],id:`player-${i}`,ready:true,connected:true})),pending:[],started:false,revision:1,options});
+  expect(hasOpenPlayerSeat(seat('gems',undefined,3))).toBe(true);
+  expect(hasOpenPlayerSeat(seat('gems',undefined,4))).toBe(false);
+  expect(hasOpenPlayerSeat(seat('werewolf',undefined,17))).toBe(true);
+  expect(hasOpenPlayerSeat(seat('werewolf',undefined,18))).toBe(false);
+  expect(hasOpenPlayerSeat(seat('werewolf',{werewolfMode:'judge'},18))).toBe(true);
+  expect(hasOpenPlayerSeat(seat('werewolf',{werewolfMode:'judge'},19))).toBe(false);
+ });
  it('accepts a compatible legacy standard match and rejects metadata/roster tampering',()=>{const r=room();const match=createMatch(r.kind,r.players);delete match.options;delete match.schemaVersion;expect(validateMatchForRoom(match,r).game).toEqual(match.game);expect(()=>validateMatchForRoom({...match,options:{werewolfMode:'judge',moderatorID:r.hostID}},r)).toThrow();const invalid=structuredClone(match);invalid.game.players[0].id='intruder';expect(()=>validateMatchForRoom(invalid,r)).toThrow('玩家');expect(()=>validateMatchForRoom({...match,schemaVersion:99},r)).toThrow('版本');});
  it('rejects handoff which changes only the engine moderator/mode despite correct envelope',()=>{const r=room(),match=createMatch(r.kind,r.players);match.game.options={werewolfMode:'judge',moderatorID:players[1].id};expect(()=>validateMatchForRoom(match,r)).toThrow();});
 });

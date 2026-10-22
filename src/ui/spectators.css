@@ -11,6 +11,7 @@
 .spectator-list li{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 10px;background:#ffffff06;border-radius:9px}
 .spectator-list b{flex:1;overflow-wrap:anywhere;min-width:0}
 .spectator-list small{color:#b8b5a9;flex-shrink:0}
+.seat-capacity-note{color:#b8b5a9;font-size:11px;line-height:1.4}
 .spectating-label{color:#dccba4}
 .spectator-surface .classic-table{grid-template-rows:auto minmax(0,1fr)}
 .spectator-surface .ng-table:is(.ng-sushi,.ng-uno){grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
