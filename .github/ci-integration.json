@@ -82,6 +82,9 @@
     },
     {
       "script": "tests/ui/connection-overlays.integration.mjs"
+    },
+    {
+      "script": "tests/ui/invite-practice-recovery.integration.mjs"
     }
   ],
   "classic": [

@@ -7,7 +7,7 @@ export type {ClientState,RoomCandidate,RoomMode} from '../core/room';
 const API=(import.meta.env.VITE_API_BASE||'').replace(/\/$/,'');
 const randomToken=()=>Array.from(crypto.getRandomValues(new Uint8Array(24)),b=>b.toString(16).padStart(2,'0')).join('');
 const initial=():ClientState=>({status:'idle',transport:'none',paused:false,actionRevision:0});
-interface Session {spectator?:boolean;profile:Player;code:string;invite?:string;token:string;savedAt?:number;expiresAt?:number;pendingApproval?:boolean}
+interface Session {spectator?:boolean;profile:Player;code:string;invite?:string;token:string;savedAt?:number;expiresAt?:number;pendingApproval?:boolean;unconfirmed?:boolean}
 export interface SavedSession {profile:Player;code:string;savedAt:number;expiresAt:number}
 const SESSION_KEY='mocha-room-session';
 const SESSION_TTL=6*60*60*1000;
@@ -71,7 +71,7 @@ export class RoomClient {
   this.reset();const generation=this.connectGeneration;try{this.patch({status:'connecting',selfID:profile.id,mode});const result=await this.http('/api/create',{profile,kind,mode,options,token:this.token});if(generation!==this.connectGeneration)return;await this.join(profile,result.code,result.invite);}catch(e){if(generation!==this.connectGeneration)return;this.patch({status:'idle'});this.fail(e);}
  }
  async join(profile:Player,code:string,invite?:string,spectator=false){
-  try{code=code.toUpperCase().trim();if(!/^[A-Z2-9]{6}$/.test(code))throw new Error('请输入六位房间码');this.reset();this.session={spectator,profile:validProfile(profile),code,invite,token:this.token,savedAt:Date.now(),expiresAt:Date.now()+SESSION_TTL};this.saveSession();this.stopped=false;this.patch({status:'connecting',selfID:profile.id});this.openSocket();}catch(e){if(!this.state.room)this.terminal(e instanceof Error?e.message:String(e));else this.fail(e);}
+  try{code=code.toUpperCase().trim();if(!/^[A-Z2-9]{6}$/.test(code))throw new Error('请输入六位房间码');this.reset();this.session={spectator,profile:validProfile(profile),code,invite,token:this.token,savedAt:Date.now(),expiresAt:Date.now()+SESSION_TTL,unconfirmed:true};this.saveSession();this.stopped=false;this.patch({status:'connecting',selfID:profile.id});this.openSocket();}catch(e){if(!this.state.room)this.terminal(e instanceof Error?e.message:String(e));else this.fail(e);}
  }
  /** Public details of this attempt, including when browser storage is unavailable. */
  getConnectionTarget(){const s=this.session;return s?{code:s.code,profile:s.profile}:undefined;}
@@ -80,7 +80,7 @@ export class RoomClient {
  /** Forget a previous room without sending any room mutation. */
  forgetSession(){this.clearSavedSession();if(this.state.status==='idle'||this.state.status==='disconnected'){this.reset();this.patch(initial());}}
  /** Withdraw a known pending request; retain admitted or legacy room recovery. */
- cancelConnection(){if(this.session?.pendingApproval===true){if(this.ws?.readyState===WebSocket.OPEN)this.control({type:'leave'});this.clearSavedSession();}this.reset();this.patch(initial());}
+ cancelConnection(){const pending=this.session?.pendingApproval===true;if(pending&&this.ws?.readyState===WebSocket.OPEN)this.control({type:'leave'});if(pending||this.session?.unconfirmed===true)this.clearSavedSession();this.reset();this.patch(initial());}
  /** Only available outside a room; affects this browser's identity, never other players. */
  resetIdentity(){if(this.state.room||this.state.status==='connecting'||this.state.status==='reconnecting')throw new Error('请先离开牌桌，再重置本机用户');this.clearSavedSession();this.reset();this.networkToken=undefined;for(const storage of availableStorage())try{storage.removeItem('mocha-network-token');for(let i=storage.length-1;i>=0;i--){const key=storage.key(i);if(key?.startsWith('mocha-host-'))storage.removeItem(key);}}catch{}this.patch(initial());}
  /** Restore the last room even after closing the tab, or retry a dropped connection. */
@@ -192,7 +192,7 @@ export class RoomClient {
   if(msg.type==='pending'){this.reconnects=0;if(this.session)this.session.pendingApproval=true;this.patch({waitingApproval:true,status:'connecting',error:undefined});this.saveSession();return;}
   if(msg.type==='signal'){void this.signal(msg.from,msg.data);return;}
   if(msg.type!=='snapshot')return;
-  this.reconnects=0;const room=msg.room as RoomInfo;if(this.session){this.session.pendingApproval=false;this.session.expiresAt=room.expiresAt||this.session.expiresAt;}const old=this.state.room;const host=room.hostID===this.session?.profile.id;
+  this.reconnects=0;const room=msg.room as RoomInfo;if(this.session){this.session.pendingApproval=false;this.session.unconfirmed=false;this.session.expiresAt=room.expiresAt||this.session.expiresAt;}const old=this.state.room;const host=room.hostID===this.session?.profile.id;
   this.patch({room,mode:room.mode,selfID:this.session?.profile.id,waitingApproval:false,status:room.started?'playing':'lobby',error:undefined,inviteURL:msg.invite?`${location.origin}${location.pathname}?room=${room.code}#invite=${msg.invite}`:this.state.inviteURL});
   if(msg.social){this.receiveSocial(msg.social,msg.serverNow);this.patch({socialOnline:true});}
   this.saveSession();
