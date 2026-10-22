@@ -23,9 +23,9 @@
 }
 
 /* Keep the readable cover layout within the space left by the filters and recovery entry. */
-.app .home-shell:has(.library-filters) .game-library{grid-auto-rows:min(224px,100%)}
+.app .home-shell:has(.library-filters) .game-library{grid-auto-rows:min(184px,100%)}
 @media(max-width:700px){
- .app .home-shell:has(.library-filters) .game-library{grid-auto-rows:min(202px,100%)}
+ .app .home-shell:has(.library-filters) .game-library{grid-auto-rows:min(164px,100%)}
 }
 @media(max-height:460px) and (orientation:landscape){
  .app .home-shell:has(.library-filters) .home-hero{padding:4px 0;gap:0}
