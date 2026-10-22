@@ -78,6 +78,7 @@ npx playwright install chromium webkit
 | `node tests/ui/classic-games.integration.mjs` | 六种新玩法，中英文四尺寸、点选/取消/换座、刷新恢复、扑克完整一轮与跨轮进贡；支持 WebKit |
 | `node tests/ui/mahjong-assistance.integration.mjs` | 可听弃牌高亮、选牌自动显示听牌、已听自动显示、无说明段落、双语八尺寸、详情/焦点/旋转/换座与零张/多种听牌；需 Vite，支持 WebKit |
 | `node tests/ui/uno-penalty.integration.mjs` | +2/+4 手动确认罚摸、双语七尺寸按钮可达性；需 Vite |
+| `node tests/ui/uno-challenge-evidence.integration.mjs` | 真实 App 的 +4 私人核验卡牌完整可读、首末张可达、双语八尺寸与旋转；合法抽牌生成大手牌、十人、换座隐私、刷新和键盘继续，支持 WebKit；需 Vite |
 | `node tests/ui/bot-pacing.integration.mjs` | 真实 App 麻将人机完整一圈：每张出牌的时间间隔、动画无积压、双语七尺寸、弹窗旋转、刷新与退出；支持 WebKit。默认需 Vite；生产可用 `BOT_PACING_FIXTURE` 指定本地生成的 fixture.json，`TEST_PACING_COMPACT=1` 仅测 390×844 |
 | `node tests/ui/mahjong-public.integration.mjs` | 麻将中英八尺寸公共牌河/副露浏览、暗杠和观战隐私、选牌后独立确认、旋转/焦点和换座清理，支持 WebKit |
 | `node tests/ui/mahjong-experience.integration.mjs` | 麻将再次点选出牌、桌面/Escape 取消、新摸牌排序、出牌动画、完整牌河弹窗、换牌与自动过；中英七尺寸，支持 WebKit |
