@@ -63,7 +63,7 @@ try{
  for(const [kind,locale] of [['guandan','zh'],['doudizhu','en']]){
   const context=await browser.newContext({viewport:{width:kind==='guandan'?320:568,height:kind==='guandan'?568:320},hasTouch:true});await context.addInitScript(l=>localStorage.setItem('mocha-locale',l),locale);
   const page=await context.newPage();await page.goto(`${base}/tests/ui/poker.fixture.html?kind=${kind}&dense&long&counter=off`);
-  const hand=page.locator('.classic-hand .classic-card'),count=await hand.count();
+  const hand=page.locator('.classic-hand .classic-card');await expect(hand).toHaveCount(kind==='guandan'?27:20);const count=await hand.count();
   for(const index of [0,Math.floor((count-1)/2),count-1]){
    const card=hand.nth(index);await card.scrollIntoViewIfNeeded();await card.tap();await expect(card).toHaveAttribute('aria-pressed','true');
    await expect(page.locator('.classic-hand .selected')).toHaveCount(1);await card.tap();await expect(card).toHaveAttribute('aria-pressed','false');await expect(page.locator('.classic-hand .selected')).toHaveCount(0);
