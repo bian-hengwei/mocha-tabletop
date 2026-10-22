@@ -22,6 +22,9 @@
       "script": "tests/ui/history-names.integration.mjs"
     },
     {
+      "script": "tests/ui/discovery-error.integration.mjs"
+    },
+    {
       "script": "tests/ui/history-filters.integration.mjs"
     },
     {

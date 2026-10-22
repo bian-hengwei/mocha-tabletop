@@ -94,7 +94,7 @@ export class RoomClient {
  }
  private saveSession(){if(!this.session)return;const raw=JSON.stringify(this.session);let saved=false;for(const storage of availableStorage())try{storage.setItem(SESSION_KEY,raw);saved=true;}catch{}if(!saved)this.fail('浏览器无法保存房间；关闭网页后可能无法恢复');}
  private clearSavedSession(){for(const storage of availableStorage())try{const raw=storage.getItem(SESSION_KEY);if(!this.session||!raw||JSON.parse(raw).code===this.session.code)storage.removeItem(SESSION_KEY);}catch{}}
- async discover():Promise<RoomCandidate[]>{try{return await this.http('/api/discover');}catch(e){this.fail(e);return [];}}
+ async discover():Promise<RoomCandidate[]>{return await this.http('/api/discover');}
  setSpectators(allowed:boolean){this.control({type:'setSpectators',allowed});}
  setSeat(spectator:boolean){this.control({type:'setSeat',spectator});}
  addBot(difficulty:BotDifficulty){this.control({type:'addBot',difficulty});}
