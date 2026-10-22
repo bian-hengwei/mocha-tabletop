@@ -364,6 +364,8 @@
 
 /* Give compact market effects more room while preserving price and bonus rows. */
 @media(max-height:650px) and (orientation:portrait), (max-height:500px) and (orientation:landscape){
- .ng-century .ng-century-page .ng-merchant-card>b{font-size:13px}
+ .ng-century .ng-century-page .ng-merchant-card{padding-bottom:3px}
+ .ng-century .ng-century-page .ng-merchant-card>.ng-route-price{margin:1px 3px}
+ .ng-century .ng-century-page .ng-merchant-card>b{font-size:13px;padding:2px 5px}
  .ng-century .ng-century-page .ng-merchant-card>b .ng-spice-cube{width:17px;height:19px}
 }

@@ -11,7 +11,7 @@ import {BombsTable} from '../../src/ui/BombsTable';
 import {SocialTable} from '../../src/ui/SocialTable';
 import {uno} from '../../src/core/games/uno';
 import {bombs} from '../../src/core/games/bombs';
-import {century} from '../../src/core/games/century';
+import {century,SPICE_CATALOG,type CenturyState} from '../../src/core/games/century';
 import {gems} from '../../src/core/games/gems';
 import {codenames} from '../../src/core/games/codenames';
 import {WordGamesTable} from '../../src/ui/WordGamesTable';
@@ -23,6 +23,11 @@ const params=new URLSearchParams(location.search),kind=(params.get('kind')||'gem
 const players=Array.from({length:params.get("players")==="max"?roomLimits(kind).max:kind==='uno'&&params.get("players")==="10"?10:params.get("scenario")==="challenge"?3:GAMES[kind].min},(_,i)=>({id:`english-player-${i}`,name:['Alex','Blair','Casey','Drew','Eli','Frank','Grace','Hayden','Indigo','Jules'][i]||`Player ${i+1}`,avatar:['🦊','🐼','🐱','🐻'][i%4]}));
 if(params.get('names')==='long')players.forEach((player,i)=>{player.name=`${i+1} Alexandria长名字`;});
 if(kind==='drawguess'&&params.get('names')==='literal')players[1].name='中文 狼人杀 猜对了';
+function checkRefillMerchants(state:CenturyState){
+ const ids=[...state.deck,...state.market.map(slot=>slot.card),...state.caravans.flatMap(caravan=>[...caravan.hand,...caravan.played])].map(card=>card.id).sort();
+ const expected=[...SPICE_CATALOG.map(card=>card.id),...players.flatMap(player=>[`start-gain-${player.id}`,`start-upgrade-${player.id}`])].sort();
+ if(new Set(ids).size!==ids.length||JSON.stringify(ids)!==JSON.stringify(expected))throw new Error('market-refill must conserve every merchant exactly once');
+}
 function initialGame(){
  if(kind==='undercover'&&params.get('scenario')==='late-speaker'){
   const game=modules.undercover;
@@ -89,6 +94,17 @@ function initialGame(){
   state.market.forEach(slot=>{slot.bonus=[1,1,1,1];});
   state.caravans[0].hand.push(...state.deck.splice(0,20));
   state.caravans[0].played.push(...state.deck.splice(0,10));
+  return state;
+ }
+ if(kind==='century'&&params.get('scenario')==='market-refill'){
+  // Paying for slot 2 adds a bonus to the longest trade before replenishment.
+  const state=century.create(players,11),at=state.market.findIndex(slot=>slot.card.id==='trade-27');
+  if(at>=0)[state.market[0],state.market[at]]=[state.market[at],state.market[0]];
+  else{
+   const long=state.deck.splice(state.deck.findIndex(card=>card.id==='trade-27'),1)[0];
+   state.deck.push(state.market[0].card);state.market[0].card=long;
+  }
+  checkRefillMerchants(state);
   return state;
  }
  if(kind==='sushi'&&params.get('scenario')==='full-plates'){const state=modules.sushi.create(players,11);state.table=players.map((_,i)=>Array.from({length:9},(_,j)=>({id:`plate-${i}-${j}`,kind:(['tempura','sashimi','dumpling','maki1','maki2','maki3','egg','salmon','squid'] as const)[j]})));return state;}
