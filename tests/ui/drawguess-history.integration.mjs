@@ -53,6 +53,11 @@ try{
    console.log(`PASS ${engine}/${locale} legal ${scenario}: final App choose/guess and reveal timer -> ${record.result}, ${record.score} points`);
   }
   const open=async()=>{
+   // Results own focus until dismissed; reach the table menu through the real keyboard path.
+   if(await page.locator('.end-banner').count()){
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.end-banner')).toHaveCount(0);
+   }
    await page.getByRole('button',{name:locale==='zh'?'牌桌菜单':'Table menu',exact:true}).click();
    await page.getByRole('button',{name:locale==='zh'?'个人战绩':'My results',exact:true}).click();
    await expect(page.locator('.history-panel')).toBeVisible();
