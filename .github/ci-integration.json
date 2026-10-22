@@ -43,6 +43,9 @@
       "script": "tests/ui/dialog-boundaries.integration.mjs"
     },
     {
+      "script": "tests/ui/connection-overlays.integration.mjs"
+    },
+    {
       "script": "tests/ui/storage-boundaries.integration.mjs"
     },
     {
