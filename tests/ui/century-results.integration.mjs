@@ -32,7 +32,7 @@ try{
   await expect.poll(()=>!!socket).toBe(true);
   const send=view=>{snapshot={type:'snapshot',room:fixture.room,view,actionRevision:1,paused:false};socket.send(JSON.stringify(snapshot));};
   send(fixture.active);await page.locator('.ng-century-tabs button').nth(1).click();await page.locator('.ng-goal').first().click();await expect(page.getByRole('dialog')).toBeVisible();
-  send(fixture.finished);await expect(page.getByRole('dialog')).toHaveCount(0);
+  send(fixture.finished);await expect(page.getByRole('dialog').filter({hasNot:page.locator('.century-results')})).toHaveCount(0);
   const table=page.locator('.century-results table'),rows=table.locator('tbody tr');
   await expect(table).toHaveAccessibleName(locale==='zh'?'得分明细':'Score breakdown');
   assert.deepEqual(await rows.evaluateAll(xs=>xs.map(row=>[...row.querySelectorAll('td')].map(x=>x.textContent))),[['4','2','1','49'],['5','2','1','49'],['4','1','2','38'],['4','0','0','35'],['3','0','1','23']]);
@@ -54,8 +54,8 @@ try{
    const box=await reopen.boundingBox();assert(box&&box.width>=44&&box.height>=44&&box.x>=0&&box.y>=0&&box.x+box.width<=width&&box.y+box.height<=height,'Score details remains reachable');
    await reopen.click();await expect(table).toBeVisible();
   }
-  await page.getByRole('button',{name:locale==='zh'?'Switch to English':'切换为中文',exact:true}).click();await expect(rows.nth(1).locator('th')).toContainText('梅林');
-  await page.getByRole('button',{name:locale==='zh'?'切换为中文':'Switch to English',exact:true}).click();await expect(rows.nth(0).locator('small')).toHaveText(locale==='zh'?'胜者':'Winner');
+  await page.keyboard.press('Escape');await page.getByRole('button',{name:locale==='zh'?'Switch to English':'切换为中文',exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'Score breakdown':'得分明细',exact:true}).click();await expect(rows.nth(1).locator('th')).toContainText('梅林');
+  await page.keyboard.press('Escape');await page.getByRole('button',{name:locale==='zh'?'切换为中文':'Switch to English',exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'得分明细':'Score breakdown',exact:true}).click();await expect(rows.nth(0).locator('small')).toHaveText(locale==='zh'?'胜者':'Winner');
   await page.reload();await expect(table).toBeVisible();
   fixture.room={...fixture.room,players:fixture.room.players.slice(0,3),matchID:'century-three',revision:2};send(fixture.small);await expect(rows).toHaveCount(3);await expect(page.locator('.century-results p')).toContainText('：6');
   fixture.room={...fixture.room,matchID:'century-next',revision:3};send(fixture.active);await expect(table).toHaveCount(0);await expect(page.locator('.ng-century-result-heading')).toHaveCount(0);

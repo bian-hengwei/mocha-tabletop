@@ -1,6 +1,9 @@
 {
   "app": [
     {
+      "script": "tests/ui/result-overlay-focus.integration.mjs"
+    },
+    {
       "script": "tests/ui/app-usability.integration.mjs"
     },
     {
