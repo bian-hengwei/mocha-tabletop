@@ -217,6 +217,8 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 ## 单机模式
 
 - `npx vitest run tests/drawguess.test.ts tests/practice.test.ts`：Mocha Sketch 的每人完整作画轮次、提示/答案隐私、受信任时钟、掉线剩余时间冻结、同屏试玩恢复与操作边界。
+- `npx vitest run tests/storage.test.ts`：含合法你画我猜终局的唯一最高分、并列最高分与其他参与者战绩，以及非参与者/缺少胜者数据的安全回退。
+- `BASE_URL=<Vite> node tests/ui/drawguess-history.integration.mjs`：合法试玩前两手通过现有指令与受信任时钟推进，最后一手使用真实 App 选词/猜词与揭晓计时完成；验证中英胜/负/并列标签、第一座位、八尺寸可达性、换座/语言/刷新去重、取消/确认删除与重开。支持 `TEST_BROWSER=webkit`，`TEST_HISTORY_COMPACT=1` 选择 390×844 和 568×320，`TEST_RESULTS_DIR` 指定截图与观察结果目录。需 Vite 源码入口；不连接真实房间，不代表真机安装或联机验收。
 - `BASE_URL=http://127.0.0.1:5311 node tests/ui/drawguess.integration.mjs`：Mocha Sketch 中英八种横竖屏尺寸（含 568×320）的私密选词、画布下边缘真实指针绘画、清空确认/取消、旋转、猜词、完整画布可达性与截图。可用 `TEST_BROWSER=webkit` 检查 WebKit。
 - `BASE_URL=http://127.0.0.1:5344 node tests/ui/drawing-feedback.integration.mjs`：真实浏览器按住时的本地笔迹、长笔划终点、一次提交、落点、右键、失焦、权限/换座/清空、双指归属与取消。可用 `TEST_BROWSER=webkit` 检查 WebKit；使用组件 fixture，不连接房间。
 - `BASE_URL=http://127.0.0.1:5311 node tests/ui/drawguess-input.integration.mjs`：Mocha Sketch 猜词输入在中英界面保留输入法候选草稿，兼容 `isComposing` 和 `keyCode=229` 的 Enter 路径；合成结束后普通 Enter 仍提交。可用 `TEST_BROWSER=webkit` 检查 WebKit；合成事件覆盖浏览器事件边界，不等同于系统输入法真机验收。

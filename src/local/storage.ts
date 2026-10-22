@@ -26,6 +26,9 @@ export function makeRecord(view:GameView,id:string,selfID:string,player:Player,m
   const b=view.board,own=b.players?.find((p:any)=>p.id===selfID);
   let result:Result='completed';
   if(b.isModerator)result='host';
+  else if(view.kind==='drawguess'){
+    if(own&&Array.isArray(b.winnerIDs)&&b.winnerIDs.length)result=b.winnerIDs.includes(selfID)?(b.winnerIDs.length>1?'draw':'win'):'loss';
+  }
   else if(Array.isArray(b.winners)&&b.winners.length)result=b.winners.includes(selfID)?(b.winners.length>1&&['gems','sushi','century','mahjong'].includes(view.kind)?'draw':'win'):'loss';
   else if(view.kind==='mahjong'&&Array.isArray(b.winners)&&!b.winners.length)result='draw';
   else if(typeof b.winner==='string'&&b.ownRole){
