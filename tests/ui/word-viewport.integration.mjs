@@ -5,6 +5,33 @@ const base=process.env.BASE_URL||'http://127.0.0.1:5208',safari=process.env.TEST
 const browser=await(safari?webkit.launch():chromium.launch({executablePath:process.env.CHROME_PATH||undefined}));
 const out=`test-results/word-viewport-${safari?'webkit':'chromium'}`;await fs.mkdir(out,{recursive:true});
 async function fits(page){const clippedWords=await page.locator('.wg-word>strong').evaluateAll(labels=>labels.filter(el=>{const r=el.getBoundingClientRect(),card=el.parentElement.getBoundingClientRect();return el.scrollWidth>el.clientWidth+1||r.left<card.left||r.right>card.right||r.top<card.top||r.bottom>card.bottom||parseFloat(getComputedStyle(el).fontSize)<12;}).map(el=>el.textContent));assert.deepEqual(clippedWords,[],'complete word labels remain readable inside their cards');const bad=await page.locator('.game-surface,.wg-table *').evaluateAll(xs=>xs.filter(x=>x.clientHeight&&x.scrollHeight>x.clientHeight+3&&['auto','scroll','hidden'].includes(getComputedStyle(x).overflowY)&&!x.closest('.wg-help-panel')&&!x.matches('.wg-team>div,.wg-illustrated-heading,.wg-dealt-players')).map(x=>[x.className,x.clientHeight,x.scrollHeight]));assert.deepEqual(bad,[],'no gameplay vertical scrolling or hidden overflow');for(const e of await page.locator('.wg-word,.wg-odd-player,.wg-pages,.wg-secret,.wg-clue-submit,.wg-speaking>.wg-button').all()){const b=await e.boundingBox();assert(b&&b.y>=0&&b.y+b.height<=page.viewportSize().height+1,'visible game control within viewport');}}
+async function markedModernTable(locale){
+ const context=await browser.newContext({viewport:{width:320,height:568}});
+ await context.addInitScript(locale=>{localStorage.setItem('mocha-locale',locale);localStorage.setItem('mocha-profile',JSON.stringify({id:'marked-modern-table',name:'Alex',avatar:'🦊'}));},locale);
+ const page=await context.newPage();
+ await page.goto(base);await page.locator('.cover-codenames').click();
+ await page.getByRole('combobox',{name:locale==='zh'?'词包':'Word pack',exact:true}).selectOption('modern');
+ await page.getByRole('switch').check();await page.locator('.local-play-fields select').selectOption('8');await page.locator('.local-play-actions button').click();await page.locator('.wg-table').waitFor();
+ const words=locale==='zh'?['免密支付','毛绒挂件','露营天幕','隐私设置','居家办公','扫地机器人']:['Password-free payment','Plush keychain','Camping canopy','Privacy settings','Work from home','Robot vacuum'];
+ await page.evaluate(words=>{const s=JSON.parse(localStorage.getItem('mocha-practice-v1'));const all=[...words,...s.practice.game.cards.map(card=>card.word).filter(word=>!words.includes(word))];s.practice.game.cards.forEach((card,index)=>{card.word=all[index];});localStorage.setItem('mocha-practice-v1',JSON.stringify(s));},words);
+ await page.reload();await page.locator('.wg-table').waitFor();assert.deepEqual((await page.locator('.wg-word>strong').allTextContents()).slice(0,6),words,'the actual App restores the long-word checkpoint');
+ const game=await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.game);
+ const operative=game.players.findIndex((player,index)=>game.teams[index]===game.turn&&!game.captains.includes(player.id));
+ await page.locator('.practice-switch select').selectOption(`practice-${operative}`);await page.locator('.wg-mark-toggle').click();
+ for(const [width,height]of [[320,568],[390,844],[430,932],[568,320],[844,390],[932,430],[768,1024],[1440,900]]){
+  await page.setViewportSize({width,height});await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  const previous=page.locator('.wg-pages button').first();while(await previous.count()&&!await previous.isDisabled())await previous.click();
+  await expect(page.locator('.wg-word')).toHaveCount(width<650&&height>=500?9:width<650||height<500?10:25);
+  const mark=page.locator('.wg-mark-toggle');await expect(mark).toHaveAttribute('aria-pressed','true');
+  const target=await mark.boundingBox();assert(target&&target.width>=44&&target.height>=44,'notes remain a reachable touch target');
+  if(await page.locator('.wg-pages').count()){await mark.focus();await page.keyboard.press(safari?'Alt+Tab':'Tab');await expect(page.locator('.wg-pages button').last()).toBeFocused();}
+  await page.screenshot({path:`${out}/actual-marked-${locale}-${width}x${height}.png`});
+  const seen=new Set();
+  do{await fits(page);const overlaps=await page.locator('.wg-word').evaluateAll(cards=>cards.flatMap((card,index)=>{const a=card.getBoundingClientRect();return cards.slice(index+1).filter(other=>{const b=other.getBoundingClientRect();return a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;}).map(other=>[card.textContent,other.textContent]);}));assert.deepEqual(overlaps,[],'actual marked cards must never overlap');for(const id of await page.locator('.wg-cell-index').allTextContents())seen.add(id);const next=page.locator('.wg-pages button').last();if(!await next.count()||await next.isDisabled())break;await next.click();}while(true);
+  assert.equal(seen.size,25,'every marked word remains reachable');
+ }
+ await context.close();console.log('PASS actual marked modern table',locale,'eight sizes, strict card and label bounds, all 25 cards, focus and touch targets');
+}
 try{for(const locale of ['zh','en'])for(const [width,height] of [[320,568],[390,844],[430,932],[568,320],[844,390],[932,430],[768,1024],[1440,900]])for(const kind of ['codenames','undercover']){
 const context=await browser.newContext({viewport:{width,height}});await context.addInitScript(l=>localStorage.setItem('mocha-locale',l),locale);const page=await context.newPage();await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=${kind}&players=max${kind==='codenames'?'&scenario=long-words':''}`);await page.locator('.wg-table').waitFor();await fits(page);
 if(kind==='codenames'&&width===320&&height===568){const refrigerator=page.locator('.wg-word>strong',{hasText:'Refrigerator'});assert.equal(await refrigerator.count(),1);assert.equal(await refrigerator.evaluate(el=>{const range=document.createRange();range.selectNodeContents(el);return range.getClientRects().length;}),1,'Refrigerator stays whole on the 320px board');}
@@ -13,4 +40,4 @@ const count=kind==='codenames'?25:12,seen=new Set();do{for(const text of await p
 if(kind==='codenames'){await page.locator('.wg-key-toggle').click();await expect(page.locator('.wg-key-toggle')).toHaveAttribute('aria-pressed','true');await page.getByLabel('Seat').selectOption('english-player-2');await page.getByLabel('Seat').selectOption('english-player-0');await expect(page.locator('.wg-key-toggle')).toHaveAttribute('aria-pressed','false');if(await page.locator('.wg-clue-form').count()){await page.locator('.wg-clue-form input').fill('Orbiting');await page.locator('.wg-clue-form select').selectOption('unlimited');await fits(page);await page.locator('.wg-clue-submit').click();await expect(page.locator('.wg-clue-form')).toHaveCount(0);await fits(page);}}
 else{await page.locator('.wg-secret').click();await expect(page.locator('.wg-secret')).toHaveAttribute('aria-pressed','true');await fits(page);await page.getByLabel('Seat').selectOption('english-player-1');await page.getByLabel('Seat').selectOption('english-player-0');await expect(page.locator('.wg-secret')).toHaveAttribute('aria-pressed','false');await page.locator('.wg-secret').click();await page.locator('.wg-secret-panel>.wg-primary').click();await fits(page);}
 await page.locator('.wg-help-button').last().click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toHaveCount(0);await page.screenshot({path:`${out}/${kind}-${locale}-${width}.png`});console.log('PASS',kind,locale,width,height);await context.close();
-}}finally{await browser.close();}
+}for(const locale of ['zh','en'])await markedModernTable(locale);}finally{await browser.close();}
