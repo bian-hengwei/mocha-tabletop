@@ -45,9 +45,12 @@
    Opt-in; the paged large-card view stays the default reading mode. */
 .wg-board-tools{display:flex;justify-content:flex-end;gap:6px;flex-shrink:0}
 .wg-whole-toggle[aria-pressed=true]{background:#e8c68a;color:#253c42}
-.wg-signals.wg-whole-board .wg-word-grid{grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr));grid-auto-rows:auto;gap:4px}
-.wg-signals.wg-whole-board .wg-word{min-height:44px;padding:2px 1px;gap:0}
-.wg-signals.wg-whole-board .wg-word>strong{font-size:10px;line-height:1;letter-spacing:-.06em;overflow-wrap:anywhere}
+.game-codenames .game-surface:has(.wg-whole-board){overflow-y:auto}
+.wg-table.wg-whole-board{height:auto;min-height:100%;overflow:visible}
+.wg-signals.wg-whole-board .wg-operation-layout,.wg-signals.wg-whole-board .wg-board-zone{flex:none;min-height:auto}
+.wg-signals.wg-whole-board .wg-word-grid{flex:none;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(5,minmax(56px,max-content));grid-auto-rows:auto;gap:4px}
+.wg-signals.wg-whole-board .wg-word{min-height:56px;padding:13px 3px 4px;gap:0}
+.wg-signals.wg-whole-board .wg-word>strong{font-size:11px;line-height:1.15;letter-spacing:-.02em;overflow-wrap:anywhere}
 .wg-signals.wg-whole-board .wg-cell-index{font-size:8px;top:2px;left:3px}
 .wg-signals.wg-whole-board .wg-card-emblem{width:9px;height:9px;top:2px;right:3px}
 .wg-signals.wg-whole-board .wg-card-emblem>svg{width:9px;height:9px}
