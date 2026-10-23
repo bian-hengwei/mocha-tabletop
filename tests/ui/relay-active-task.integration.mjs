@@ -1,10 +1,19 @@
-import {chromium,expect} from '@playwright/test';
+import {chromium,webkit,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 const base=process.env.BASE_URL||'http://127.0.0.1:5174';
-const browser=await chromium.launch(),out='test-results/relay-active-task-chromium';
+const engine=process.env.TEST_BROWSER||'chromium';
+const browser=await(engine==='webkit'?webkit:chromium).launch(),out=`test-results/relay-active-task-${engine}`;
 const sizes=[[320,568],[390,844],[430,932],[568,320],[844,390],[932,430],[768,1024],[1440,900]];
 await fs.mkdir(out,{recursive:true});
+async function commitComposition(input,text){
+ await input.evaluate((element,value)=>{
+  const setValue=Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set;
+  setValue.call(element,value);
+  element.dispatchEvent(new InputEvent('input',{bubbles:true,composed:true,data:value,inputType:'insertCompositionText',isComposing:true}));
+  element.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true,composed:true,data:value}));
+ },text);
+}
 try{
  for(const locale of ['zh','en']){
   const context=await browser.newContext();let socket,snapshot,revision=0;
@@ -63,17 +72,32 @@ try{
   }
   for(const [width,height] of sizes){
    await page.setViewportSize({width,height});await seed();
-   const text=locale==='zh'?'小猫坐茶杯去旅行':'A cat sails a teacup',input=page.locator('.relay-writing textarea');
-   await input.dispatchEvent('compositionstart');await input.fill(text);await input.focus();
+   const input=page.locator('.relay-writing textarea');
+   const prefix='汉'.repeat(119),provisional=prefix+'zhongguo',text=prefix+'中';
+   await input.dispatchEvent('compositionstart');await input.fill(provisional);await input.focus();
+   // The composing buffer may exceed the product limit; the final candidate is
+   // supplied separately below so this does not pretend compositionend replaces value.
+   await expect(input).toHaveValue(provisional);
    await arrive();
-   await expect(input).toHaveValue(text);await expect(input).toBeFocused();
+   await expect(input).toHaveValue(provisional);await expect(input).toBeFocused();
    const tasks=page.locator('.relay-heading select');await expect(tasks).toHaveValue('1:0');await expect(tasks).toBeDisabled();
-   await input.dispatchEvent('compositionend',{data:text});await expect(page.locator('.relay-draft-status')).toContainText(locale==='zh'?'草稿已保存':'Draft saved');
+   await commitComposition(input,text);await expect(input).toHaveValue(text);
+   await expect(page.locator('.relay-draft-status')).toContainText(locale==='zh'?'草稿已保存':'Draft saved');
    await expect(tasks).toBeEnabled();await expect(tasks).toHaveValue('1:0');
    await page.screenshot({path:`${out}/${locale}-${width}x${height}-arrival-text.png`});
+   await page.locator('.relay-submit button').click();await expect(tasks).not.toHaveValue('1:0');
+   await seed();const switchInput=page.locator('.relay-writing textarea');await arrive();
+   await switchInput.dispatchEvent('compositionstart');await switchInput.fill(provisional);await commitComposition(switchInput,text);
+   await expect(page.locator('.relay-draft-status')).toContainText(locale==='zh'?'草稿已保存':'Draft saved');
    await tasks.selectOption('0:1');await expect(page.locator('.relay-previous')).toContainText('Incoming private page');
-   await tasks.selectOption('1:0');await expect(input).toHaveValue(text);
-   await page.reload();await page.locator('.relay-sealed button').click();await expect(input).toHaveValue(text);await expect(tasks).toHaveValue('1:0');
+   await tasks.selectOption('1:0');await expect(tasks).toHaveValue('1:0');await expect(switchInput).toHaveValue(text);
+   await page.reload();await page.locator('.relay-sealed button').click();await expect(page.locator('.relay-writing textarea')).toHaveValue(text);
+   // A separate final value above the limit must still be trimmed after composition.
+   await seed();const trimInput=page.locator('.relay-writing textarea');
+   await trimInput.dispatchEvent('compositionstart');await trimInput.fill(prefix+'zhonghua');
+   await expect(trimInput).toHaveValue(prefix+'zhonghua');
+   await commitComposition(trimInput,prefix+'中国');await expect(trimInput).toHaveValue(prefix+'中');
+   await expect.poll(()=>page.evaluate(()=>window.relayState.queue.drafts[1].text)).toBe(prefix+'中');
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'page overflow');
    // A lower-numbered task must not replace the canvas while the pointer is down.
    await seed(true);const canvas=page.locator('.relay-paper .relay-canvas'),box=await canvas.boundingBox();
@@ -88,7 +112,7 @@ try{
    await page.screenshot({path:`${out}/${locale}-${width}x${height}-arrival-drawing.png`});
    await tasks.selectOption('0:1');await expect(canvas.locator('polyline')).toHaveCount(0);
    await tasks.selectOption('4:3');await expect(canvas.locator('polyline')).toHaveCount(1);
-   console.log('PASS',locale,width,height,'incoming task, composition draft, focus, explicit switch, reload, live drawing and dialog rotation');
+   console.log('PASS',locale,width,height,'long composing buffer, final 120th codepoint, over-limit trim, task switch, reload, submit, live drawing and dialog rotation');
   }
   assert.deepEqual(errors,[]);await context.close();
  }
