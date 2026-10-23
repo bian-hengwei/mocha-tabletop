@@ -314,6 +314,9 @@
       "script": "tests/ui/codenames-clue-controls.integration.mjs"
     },
     {
+      "script": "tests/ui/codenames-random-teams.integration.mjs"
+    },
+    {
       "script": "tests/ui/drawguess-rejection.integration.mjs"
     },
     {

@@ -17,6 +17,8 @@ npm run check
 
 ## GitHub CI
 
+`npx vitest run tests/codenames-random-teams.test.ts tests/word-games.test.ts tests/network/options.test.ts` checks optional balanced teams, captain authority, option normalization and checkpoint recovery. `BASE_URL=<Vite-proxied-to-local-Worker> node tests/ui/codenames-random-teams.integration.mjs` checks the real App in both languages: setup and lobby controls across eight sizes, guest read-only settings, readiness reset, synchronized teams, play, language switching, reload and seven-/twelve-player same-screen starts. The script is in the CI social group; it uses the group's local Worker and cleans up its rooms. Screenshots remain in ignored `test-results/codenames-random-teams-chromium/` for visual review.
+
 每个 PR 和 main 推送都运行 `npm run check`，以及四组并行的 Chromium/联机回归。分组清单位于 [ci-integration.json](../.github/ci-integration.json)，工作流位于 [ci.yml](../.github/workflows/ci.yml)。四组的完整脚本及参数以分组清单为准：
 
 | 分组 | 范围 |
