@@ -37,8 +37,9 @@ export function validKind(kind:any):asserts kind is GameKind {if(!Object.hasOwn(
 export function normalizeGameOptions(kind:GameKind,input:unknown,hostID:string):GameOptions|undefined {
  if(input!==undefined&&(input===null||typeof input!=='object'||Array.isArray(input)))throw new Error('游戏选项无效');
  const options=(input||{}) as Record<string,unknown>;
- if(Object.keys(options).some(key=>!['mahjongMode','werewolfMode','moderatorID','language','unoMode','unoChallenge','pokerCounter','werewolfPreset','werewolfWin','drawRounds','drawSeconds','relaySeconds','relayMode','sushiEdition','sushiMenu'].includes(key)))throw new Error('未知游戏选项');
+ if(Object.keys(options).some(key=>!['mahjongMode','werewolfMode','moderatorID','language','unoMode','unoChallenge','pokerCounter','werewolfPreset','werewolfWin','drawRounds','drawSeconds','relaySeconds','relayMode','sushiEdition','sushiMenu','wordPack'].includes(key)))throw new Error('未知游戏选项');
  if(options.language!==undefined&&!['zh','en'].includes(options.language as string))throw new Error('游戏语言无效');
+ if(options.wordPack!==undefined&&(!['codenames','undercover','drawguess','drawrelay'].includes(kind)||!['classic','modern'].includes(options.wordPack as string)))throw new Error('词包无效');
  if(options.mahjongMode!==undefined&&(kind!=='mahjong'||!isMahjongMode(options.mahjongMode)))throw new Error('Mahjong mode is invalid');
  if(options.relaySeconds!==undefined&&(kind!=='drawrelay'||![0,60,90,120].includes(options.relaySeconds as number)))throw new Error('接龙时长无效');
  if(options.relayMode!==undefined&&(kind!=='drawrelay'||!['rounds','queue'].includes(options.relayMode as string)))throw new Error('接龙模式无效');
@@ -51,7 +52,7 @@ export function normalizeGameOptions(kind:GameKind,input:unknown,hostID:string):
  if(options.pokerCounter!==undefined&&(!['doudizhu','guandan'].includes(kind)||typeof options.pokerCounter!=='boolean'))throw new Error('记牌器设置无效');
  if(options.drawRounds!==undefined&&(!Number.isInteger(options.drawRounds)||kind!=='drawguess'||(options.drawRounds as number)<1||(options.drawRounds as number)>6))throw new Error('画词回合数无效');
  if(options.drawSeconds!==undefined&&(![45,60,75,90].includes(options.drawSeconds as number)||kind!=='drawguess'))throw new Error('画词时长无效');
- if(kind!=='werewolf'){if(options.werewolfMode!==undefined||options.moderatorID!==undefined||options.werewolfPreset!==undefined||options.werewolfWin!==undefined)throw new Error('此游戏不支持主持模式选项');const result={...language,...sushiOptions,...(options.relayMode?{relayMode:options.relayMode as 'rounds'|'queue'}:{}),...(options.pokerCounter===true?{pokerCounter:true}:{}),...(options.mahjongMode?{mahjongMode:options.mahjongMode as GameOptions['mahjongMode']}:{}),...(options.unoMode?{unoMode:options.unoMode as 'single'|'match'}:{}),...(options.unoChallenge===false?{unoChallenge:false}:{}),...(options.drawRounds?{drawRounds:options.drawRounds as number}:{}),...(options.drawSeconds?{drawSeconds:options.drawSeconds as number}:{}),...(options.relaySeconds!==undefined?{relaySeconds:options.relaySeconds as number}:{})};return Object.keys(result).length?result:undefined;}
+ if(kind!=='werewolf'){if(options.werewolfMode!==undefined||options.moderatorID!==undefined||options.werewolfPreset!==undefined||options.werewolfWin!==undefined)throw new Error('此游戏不支持主持模式选项');const result={...language,...sushiOptions,...(options.wordPack==='modern'?{wordPack:'modern' as const}:{}),...(options.relayMode?{relayMode:options.relayMode as 'rounds'|'queue'}:{}),...(options.pokerCounter===true?{pokerCounter:true}:{}),...(options.mahjongMode?{mahjongMode:options.mahjongMode as GameOptions['mahjongMode']}:{}),...(options.unoMode?{unoMode:options.unoMode as 'single'|'match'}:{}),...(options.unoChallenge===false?{unoChallenge:false}:{}),...(options.drawRounds?{drawRounds:options.drawRounds as number}:{}),...(options.drawSeconds?{drawSeconds:options.drawSeconds as number}:{}),...(options.relaySeconds!==undefined?{relaySeconds:options.relaySeconds as number}:{})};return Object.keys(result).length?result:undefined;}
  if(options.werewolfPreset!==undefined&&!WEREWOLF_PRESETS.some(p=>p.id===options.werewolfPreset))throw new Error('月夜议会配置无效');
  if(options.werewolfWin!==undefined&&!['sides','parity'].includes(options.werewolfWin as string))throw new Error('月夜议会胜负条件无效');
  const rules={...(options.werewolfPreset&&options.werewolfPreset!=='auto'?{werewolfPreset:options.werewolfPreset as GameOptions['werewolfPreset']}:{}),...(options.werewolfWin==='parity'?{werewolfWin:'parity' as const}:{})};
@@ -97,6 +98,10 @@ export function validateMatchForRoom(value:unknown,room:RoomInfo):MatchState {
  }
  if(room.kind==='sushi')validateSushiState(match.game,room.options);
  if(room.kind==='drawrelay')validateRelayState(match.game,room.options?.relaySeconds??90,room.options?.relayMode);
+ if(['codenames','undercover','drawguess','drawrelay'].includes(room.kind)){
+  if((match.game.wordPack??'classic')!==(room.options?.wordPack??'classic'))throw new Error('词包与房间不一致');
+  if((match.game.language??'zh')!==(room.options?.language??'zh'))throw new Error('词语语言与房间不一致');
+ }
  for(const id of ids)viewMatch(match,room.kind,id);
  return structuredClone(match);
 }

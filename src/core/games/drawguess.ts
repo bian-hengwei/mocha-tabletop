@@ -1,14 +1,16 @@
 import { action, assertPlayers, seeded, shuffle, validateCommand, type Action, type Command, type GameModule, type GameOptions, type Player } from '../types';
+import { MODERN_DRAW_WORDS } from './wordBank';
+import type { WordPack } from '../types';
 
 type Point=[number,number];
 export interface DrawStroke {points:Point[];color:string;width?:number}
 /** `rounds` is the number of complete drawing cycles: every player draws once per cycle. */
-export interface DrawGuessState {players:Player[];language:'zh'|'en';round:number;rounds:number;seconds:number;drawer:number;phase:'choose'|'draw'|'reveal'|'finished';choices:{id:string;zh:string;en:string}[];answer?:{id:string;zh:string;en:string};strokes:DrawStroke[];guesses:{playerID:string;text:string;correct:boolean}[];scores:number[];history:string[];deadlineAt:number;revealUntil:number;/** Remaining milliseconds while the online/LAN host has paused for a disconnected player. */ pausedRemaining?:number;/** Missing in legacy checkpoints, which retain the former fixed later-turn sequence. */ seed?:number;finished:boolean;winnerIDs:string[]}
+export interface DrawGuessState {players:Player[];language:'zh'|'en';wordPack?:WordPack;round:number;rounds:number;seconds:number;drawer:number;phase:'choose'|'draw'|'reveal'|'finished';choices:{id:string;zh:string;en:string}[];answer?:{id:string;zh:string;en:string};strokes:DrawStroke[];guesses:{playerID:string;text:string;correct:boolean}[];scores:number[];history:string[];deadlineAt:number;revealUntil:number;/** Remaining milliseconds while the online/LAN host has paused for a disconnected player. */ pausedRemaining?:number;/** Missing in legacy checkpoints, which retain the former fixed later-turn sequence. */ seed?:number;finished:boolean;winnerIDs:string[]}
 
 const WORDS:[string,string][]=[['apple','苹果'],['bicycle','自行车'],['rainbow','彩虹'],['guitar','吉他'],['volcano','火山'],['umbrella','雨伞'],['rocket','火箭'],['panda','熊猫'],['castle','城堡'],['camera','相机'],['pizza','披萨'],['octopus','章鱼'],['balloon','气球'],['train','火车'],['dragon','龙'],['flower','花朵'],['snowman','雪人'],['key','钥匙'],['robot','机器人'],['whale','鲸鱼'],['sunglasses','太阳镜'],['butterfly','蝴蝶'],['mountain','山'],['coffee','咖啡'],['airplane','飞机'],['book','书本'],['fish','小鱼'],['moon','月亮'],['star','星星'],['tree','大树']];
 const label=(s:DrawGuessState,w:{zh:string;en:string})=>s.language==='en'?w.en:w.zh;
 const normalized=(value:string)=>value.trim().normalize('NFKC').toLocaleLowerCase();
-const makeChoices=(s:DrawGuessState,seed:number)=>shuffle(WORDS,seeded(seed)).slice(0,3).map(([en,zh],i)=>({id:`word-${s.round}-${i}`,en,zh}));
+const makeChoices=(s:DrawGuessState,seed:number)=>shuffle(s.wordPack==='modern'?MODERN_DRAW_WORDS:WORDS,seeded(seed)).slice(0,3).map(([en,zh],i)=>({id:`word-${s.round}-${i}`,en,zh}));
 const nextChoiceSeed=(s:DrawGuessState)=>s.seed===undefined?1009+s.round*83+s.drawer:(Math.imul(s.seed^Math.imul(s.round,83),0x9e3779b1)^Math.imul(s.drawer+1,0x85ebca6b))>>>0;
 const player=(s:DrawGuessState,id:string)=>s.players.find(p=>p.id===id);
 const drawerID=(s:DrawGuessState)=>s.players[s.drawer].id;
@@ -45,13 +47,13 @@ export function resumeDrawGuessClock(state:DrawGuessState,now:number):DrawGuessS
  return s;
 }
 export const drawguess:GameModule<DrawGuessState>={
- create(players,seed,options){assertPlayers(players,3,12);const language:'zh'|'en'=options?.language==='en'?'en':'zh',rounds=Math.max(1,Math.min(6,options?.drawRounds||1)),seconds=[45,60,75,90].includes(options?.drawSeconds||60)?options?.drawSeconds||60:60,matchSeed=seed>>>0;const initial:DrawGuessState={players:structuredClone(players),language,round:1,rounds,seconds,drawer:0,phase:'choose',choices:[],strokes:[],guesses:[],scores:players.map(()=>0),history:['每位画手从三个词中秘密选择一个。'],deadlineAt:0,revealUntil:0,seed:matchSeed,finished:false,winnerIDs:[]};initial.choices=makeChoices(initial,matchSeed);return initial;},
+ create(players,seed,options){assertPlayers(players,3,12);const language:'zh'|'en'=options?.language==='en'?'en':'zh',wordPack=options?.wordPack==='modern'?'modern':'classic',rounds=Math.max(1,Math.min(6,options?.drawRounds||1)),seconds=[45,60,75,90].includes(options?.drawSeconds||60)?options?.drawSeconds||60:60,matchSeed=seed>>>0;const initial:DrawGuessState={players:structuredClone(players),language,wordPack,round:1,rounds,seconds,drawer:0,phase:'choose',choices:[],strokes:[],guesses:[],scores:players.map(()=>0),history:['每位画手从三个词中秘密选择一个。'],deadlineAt:0,revealUntil:0,seed:matchSeed,finished:false,winnerIDs:[]};initial.choices=makeChoices(initial,matchSeed);return initial;},
  view(s,id,spectator=false){if(spectator)id='';const me=s.players.findIndex(p=>p.id===id);if(me<0&&!spectator)return {kind:'drawguess',phase:'不在本局',instruction:'仅本局玩家可查看',finished:s.finished,actions:[],sections:[],log:[],board:{}};
   const drawing=id===drawerID(s),inTurn=!s.finished&&s.phase==='draw',canChoose=!s.finished&&s.phase==='choose'&&drawing,canClear=inTurn&&drawing;
   const actions:Action[]=[...(canChoose?[action('choose', '选择要画的词',s.choices.map(word=>({id:word.id,title:label(s,word),translateTitle:false})),1,1)]:[]),...(canClear?[action('clear','清空画布'),...(s.strokes.length?[action('undo','撤销上一笔')]:[])]:[])];
   const answerVisible=(drawing&&s.phase==='draw')||s.phase==='reveal'||s.finished;
   const instruction=s.finished?'本局结束':s.phase==='choose'?`${s.players[s.drawer].name} 正在选词`:s.phase==='draw'?`${s.players[s.drawer].name} 正在作画`: '本轮揭晓';
-  return structuredClone({kind:'drawguess',phase:turnTitle(s),instruction,finished:s.finished,actions,sections:[],log:s.history,board:{phase:s.phase,round:s.round,cycle:cycle(s),rounds:s.rounds,seconds:s.seconds,deadlineAt:drawGuessDeadline(s),drawerID:drawerID(s),isDrawer:drawing,answer:answerVisible&&s.answer?label(s,s.answer):undefined,strokes:s.strokes,guesses:s.guesses.map(g=>({playerID:g.playerID,text:g.correct?'':g.text,correct:g.correct,label:publicGuess(s,g)})),players:s.players.map((p,i)=>({...p,score:s.scores[i],drawing:p.id===drawerID(s)})),winnerIDs:s.winnerIDs,canGuess:inTurn&&!drawing&&!spectator}});
+  return structuredClone({kind:'drawguess',phase:turnTitle(s),instruction,finished:s.finished,actions,sections:[],log:s.history,board:{language:s.language,wordPack:s.wordPack??'classic',phase:s.phase,round:s.round,cycle:cycle(s),rounds:s.rounds,seconds:s.seconds,deadlineAt:drawGuessDeadline(s),drawerID:drawerID(s),isDrawer:drawing,answer:answerVisible&&s.answer?label(s,s.answer):undefined,strokes:s.strokes,guesses:s.guesses.map(g=>({playerID:g.playerID,text:g.correct?'':g.text,correct:g.correct,label:publicGuess(s,g)})),players:s.players.map((p,i)=>({...p,score:s.scores[i],drawing:p.id===drawerID(s)})),winnerIDs:s.winnerIDs,canGuess:inTurn&&!drawing&&!spectator}});
  },
  apply(state,id,command){
   if(!state.players.some(p=>p.id===id))throw Error('不在本局中');

@@ -178,6 +178,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `tests/ui/word-usability.integration.mjs`：异步拒绝保留线索、成功清空、发词确认、换座隐私及移除线上投票/发言流程。
 - `tests/ui/codenames-input.integration.mjs`：线索输入的候选回车、原生 composing 标记、229 兼容、直接表单提交保护、换座清理与正常发送；中英八尺寸，支持 WebKit。输入法事件为浏览器模拟。
 - `tests/ui/codenames-clue-controls.integration.mjs`：真实 App 中英八尺寸的线索输入、数量选择与发送按钮实际 44px 尺寸；0 / 不限 / 普通数量选择、旋转、触控发送及刷新保留。支持 `TEST_BROWSER=webkit`。
+- `BASE_URL=<Vite> node tests/ui/modern-word-packs.integration.mjs`：四款词语游戏的中英七尺寸与旋转；检查现代生活包选择、开局保存、界面语言切换后不重发词语及实际牌桌截图。支持 `TEST_BROWSER=webkit`。
 
 输入法回归使用浏览器 DOM 键盘事件覆盖 `isComposing` 和兼容性的 `keyCode=229` 路径，随后用真实键盘事件验证普通 Enter/Escape；这不等同于系统输入法真机验收。事件边界依据 [MDN 的 IME 键盘事件说明](https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event#keydown_events_with_ime)。
 
