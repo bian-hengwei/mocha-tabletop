@@ -90,6 +90,10 @@
       "script": "tests/ui/invite-practice-recovery.integration.mjs"
     },
     {
+      "script": "tests/ui/invite-qr.integration.mjs",
+      "isolated": true
+    },
+    {
       "script": "tests/ui/drawguess-history.integration.mjs"
     }
   ],
