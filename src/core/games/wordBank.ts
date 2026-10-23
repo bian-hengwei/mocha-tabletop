@@ -554,7 +554,7 @@ export const MODERN_SIGNAL_WORDS:[string,string][]=[
  ['群聊','Group chat'],['语音消息','Voice message'],['视频通话','Video chat'],['头像','Avatar'],['昵称','Nickname'],['空气炸锅','Air fryer'],['咖啡机','Coffee maker'],['毛绒挂件','Plush keychain'],['露营天幕','Camping canopy'],['共享日历','Shared calendar'],
  ['待办清单','To-do list'],['飞盘','Frisbee'],['降噪','Noise canceling'],['露营灯','Camp lantern'],['云相册','Cloud photos'],['扫码支付','Mobile payment'],['自动续费','Auto-renew'],['奶茶','Bubble tea'],['露营椅','Camping chair'],['手办','Collectible figure'],
  ['拍立得','Instant camera'],['电竞椅','Gaming chair'],['野餐垫','Picnic blanket'],['电子票','Digital ticket'],['桌游卡牌','Board game cards'],['免密支付','Password-free payment'],['智能门锁','Smart lock'],['露营地','Campsite'],['数字钱包','Digital wallet'],['短视频','Short video'],
- ['推荐算法','Recommendation algorithm'],['隐私设置','Privacy settings'],['飞行模式','Airplane mode'],['低电量','Low battery'],['屏幕时间','Screen time'],['数字排毒','Digital detox'],['深夜消息','Late-night text'],['群聊静音','Muted chat'],['家庭群','Family group'],['周末计划','Weekend plan'],
+ ['算法','Algorithm'],['隐私设置','Privacy settings'],['飞行模式','Airplane mode'],['低电量','Low battery'],['屏幕时间','Screen time'],['数字排毒','Digital detox'],['深夜消息','Late-night text'],['群聊静音','Muted chat'],['家庭群','Family group'],['周末计划','Weekend plan'],
  ['城市漫步','City walk'],['街角咖啡','Corner cafe'],['拼车','Carpool'],['团购','Group deal'],['遛狗','Dog walk'],['宠物摄像头','Pet camera'],['植物识别','Plant ID'],['居家办公','Work from home'],['邻里群','Neighbor chat'],['搬家清单','Moving list'],
  ['共享厨房','Shared kitchen'],['观鸟','Birdwatching']
 ];
