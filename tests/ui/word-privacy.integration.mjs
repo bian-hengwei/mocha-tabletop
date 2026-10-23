@@ -38,6 +38,11 @@ const overlaps=await page.locator('.wg-word,.wg-odd-player').evaluateAll(xs=>xs.
      const compact=await page.locator('.wg-secret-panel').boundingBox();assert(compact.height<=90,'The hidden secret control must stay compact while voting');
      const first=await page.locator('.wg-odd-player').first().boundingBox();assert(first.y<height,'At least the first voting targets must enter the initial viewport');
     }
+    if(name==='odd-handoff'){
+     const handoff=await page.locator('.wg-secret-panel,.wg-help-button').evaluateAll(nodes=>nodes.map(node=>{const rect=node.getBoundingClientRect();return {name:node.className,left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height};}));
+     const overlaps=handoff.flatMap((item,index)=>handoff.slice(index+1).filter(other=>item.left<other.right-1&&item.right>other.left+1&&item.top<other.bottom-1&&item.bottom>other.top+1).map(other=>[item.name,other.name]));
+     assert.deepEqual(overlaps,[],`${locale} ${width}×${height}: the in-person handoff and table-rules controls must not overlap`);
+    }
    }
    await page.setViewportSize({width:390,height:844});
   };
@@ -59,9 +64,12 @@ const overlaps=await page.locator('.wg-word,.wg-odd-player').evaluateAll(xs=>xs.
   await capture('odd-deal');
   const words=[];for(let index=0;index<3;index++){await seat(index);await page.locator('.wg-secret').click();words.push(await page.locator('.wg-secret>strong').textContent());await page.locator('.wg-secret-panel>.wg-primary').click();}
   assert.equal(await page.locator('.wg-speaking,.wg-odd-player,.end-banner').count(),0);
+  assert.equal(await page.locator('.wg-heading h2').textContent(),locale==='zh'?'开始线下描述':'Start describing in person');
+  assert.equal(await page.locator('.wg-offline-next').textContent(),locale==='zh'?'词已发好。开始轮流描述和讨论；投票与淘汰在线下进行。':'Words are dealt. Take turns describing and discussing; vote and eliminate in person.');
+  await capture('odd-handoff');
   const oddMatch=await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id);
   await page.locator('.wg-secret').click();await page.getByRole('button',{name:locale==='zh'?'牌桌菜单':'Table menu',exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'再来一局':'Play again',exact:true}).click();
-  assert.notEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id),oddMatch);assert.equal(await page.locator('.wg-secret.wg-open').count(),0,'A new deal hides words again');
+  assert.notEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id),oddMatch);assert.equal(await page.locator('.wg-secret.wg-open').count(),0,'A new deal hides words again');assert.equal(await page.locator('.wg-offline-next').count(),0,'A new deal returns to private reading before showing the handoff');
   console.log(`PASS ${locale} dealer seat privacy, menu redeal, hidden new words, layouts`);
   await context.close();
  }
