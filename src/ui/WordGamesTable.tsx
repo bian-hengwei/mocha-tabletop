@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { Eye, EyeOff, KeyRound, MessageCircle, Skull, UserRound, Fingerprint, Check, FileKey, Send } from 'lucide-react';
 import type { Action, Command, GameView } from '../core/types';
 import { t, useLocale } from '../i18n';
@@ -9,6 +9,14 @@ import { IllustratedTile } from './IllustratedTile';
 type Props={view:GameView;selfID:string;command:(c:Command)=>void;open:(a:Action,selected?:string[])=>void};
 const teamText=(team:string)=>t(team==='red'?'红队':'蓝队');
 const identityText=(identity:string)=>identity==='red'||identity==='blue'?teamText(identity):t(identity==='assassin'?'危险目标':'路人');
+function useBackgroundConceal(conceal:()=>void){
+ useEffect(()=>{
+  const visibility=()=>{if(document.hidden)conceal();};
+  document.addEventListener('visibilitychange',visibility);
+  window.addEventListener('pagehide',conceal);
+  return()=>{document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',conceal);};
+ },[conceal]);
+}
 function WordHelp({title,children}:{title:string;children:ReactNode}){const [shown,setShown]=useState(false),ref=useDialog<HTMLDivElement>(shown,()=>setShown(false));return <><button className="wg-help-button" onClick={()=>setShown(true)}>{title}</button>{shown&&<div className="modal-shade wg-help-shade"><div ref={ref} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} className="panel wg-help-panel"><header><h2>{title}</h2><button className="wg-button" onClick={()=>setShown(false)} aria-label={t('关闭')}>×</button></header>{children}</div></div>}</>;}
 function useWordPages(total:number,kind:'words'|'players',follow?:{index:number;key:string}){
  const [compact,setCompact]=useState(()=>({narrow:window.innerWidth<650,short:window.innerHeight<500}));
@@ -33,6 +41,7 @@ function SecretSignals({view,selfID,command,open}:Props){
  const pages=useWordPages(b.cards.length,'words');
  const showKey=keyState.viewer===selfID&&keyState.shown,canClue=view.actions.some(a=>a.id==='clue'),guess=view.actions.find(a=>a.id==='guess'),stop=view.actions.find(a=>a.id==='stop');
  useLayoutEffect(()=>{composing.current=false;setClue('');setCount('1');setError('');},[selfID,b.round,canClue]);
+ useBackgroundConceal(()=>setKeyState({viewer:selfID,shown:false}));
  const send=()=>{if(composing.current)return;setError('');try{command({action:'clue',values:[count],text:clue});}catch(e){setError((e as Error).message);}};
  const clueKeyDown=(event:KeyboardEvent<HTMLInputElement>)=>{if(event.key==='Enter'&&(composing.current||event.nativeEvent.isComposing||event.nativeEvent.keyCode===229))event.preventDefault();};
  return <div className="wg-table wg-signals"><header className="wg-heading wg-illustrated-heading"><IllustratedTile kind="covers" index={3} fit="slice" className="wg-heading-art"/><div><small className="wg-turn-status">{t('回合')} {b.round}</small><h2>{view.finished?`${t('胜方')} · ${teamText(b.winnerTeam)}`:teamText(b.turn)}</h2></div><div className="wg-role-controls">{!view.spectating&&<span className={`wg-role wg-${b.myTeam}`}>{teamText(b.myTeam)} · {t(b.isCaptain?'队长':'队员')}</span>}{b.isCaptain&&!view.finished&&<button type="button" className="wg-button wg-key-toggle" aria-pressed={showKey} onClick={()=>setKeyState({viewer:selfID,shown:!showKey})}>{showKey?<EyeOff size={15}/>:<Eye size={15}/>} {t(showKey?'收起密钥':'查看密钥')}</button>}</div></header>
@@ -49,6 +58,7 @@ function SecretSignals({view,selfID,command,open}:Props){
 function OddWordOut({view,selfID,command}:Props){
  const b=view.board,[peek,setPeek]=useState(false),[read,setRead]=useState(false);
  useLayoutEffect(()=>{setPeek(false);setRead(false);},[selfID,b.word]);
+ useBackgroundConceal(()=>setPeek(false));
  const ready=view.actions.find(a=>a.id==='ready');
  return <div className="wg-table wg-odd wg-word-dealer"><header className="wg-heading"><h2>{t('秘密发词')}</h2><span>{b.players.filter((p:{ready:boolean})=>p.ready).length} / {b.players.length}</span></header>
  {!view.spectating&&<section className="wg-secret-panel"><button type="button" className={`wg-secret ${peek?'wg-open':''}`} onClick={()=>{setPeek(!peek);setRead(true);}} aria-label={t(peek?'收起我的词':'查看我的词')} aria-pressed={peek}><IllustratedTile kind="covers" index={4} className="wg-secret-art"/>{peek?<><strong>{b.word}</strong><EyeOff size={20}/></>:<><FileKey size={32}/><strong>{t('查看我的词')}</strong></>}</button>{ready&&<button type="button" className="wg-button wg-primary" disabled={!read} onClick={()=>{command({action:'ready',values:[]});setPeek(false);}}>{t('记住了')}</button>}</section>}
