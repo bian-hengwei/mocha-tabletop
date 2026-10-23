@@ -1,22 +1,25 @@
 const CACHE = '__MOCHA_CACHE__';
-self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(['__MOCHA_PRECACHE__'])));
-});
+const CACHE_PREFIX = 'mocha-';
+// Do not call skipWaiting(). Existing pages keep the previous build and cache
+// until all controlled clients close, so late-loaded chunks cannot disappear.
 self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('mocha-') && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith(CACHE_PREFIX) && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
-  if (event.request.method !== 'GET' || url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
-  if (event.request.mode === 'navigate') {
-    event.respondWith(fetch(event.request).then(response => {
-      if (response.ok) {const copy = response.clone(); caches.open(CACHE).then(cache => cache.put('/', copy));}
-      return response;
-    }).catch(() => caches.match('/')));
-  } else {
-    event.respondWith(caches.match(event.request).then(hit => hit || fetch(event.request).then(response => {
-      if (response.ok) {const copy = response.clone(); caches.open(CACHE).then(cache => cache.put(event.request, copy));}
-      return response;
-    })));
-  }
+  if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/api/') || url.pathname === '/sw.js') return;
+  // Navigation always reaches the network. Only ordinary static subresources
+  // are eligible for the visited-asset cache.
+  if (event.request.mode === 'navigate' || event.request.destination === 'document') return;
+  event.respondWith(caches.open(CACHE).then(async cache => {
+    const hit = await cache.match(event.request);
+    if (hit) return hit;
+    const response = await fetch(event.request);
+    const type = response.headers.get('content-type') || '';
+    if (response.ok && !type.toLowerCase().includes('text/html')) {
+      try { await cache.put(event.request, response.clone()); } catch {}
+    }
+    return response;
+  }));
 });

@@ -4,7 +4,7 @@
 
 ## 本地选测与完整检查
 
-每次改动运行 `git diff --check`，并根据受影响行为和共享调用方选择下方的规则、界面、联机、存储或离线回归。文档改动检查内容和引用；单个游戏改动优先验证该游戏；共享样式、状态恢复等改动需要覆盖相关调用方。界面改动仍按 AGENTS.md 检查双语、尺寸、真实交互和截图。
+每次改动运行 `git diff --check`，并根据受影响行为和共享调用方选择下方的规则、界面、联机、存储或 PWA 回归。文档改动检查内容和引用；单个游戏改动优先验证该游戏；共享样式、状态恢复等改动需要覆盖相关调用方。界面改动仍按 AGENTS.md 检查双语、尺寸、真实交互和截图。
 
 首次安装依赖使用 `npm ci`。需要完整检查时运行：
 
@@ -24,7 +24,7 @@ npm run check
 | `app` | 入口、姓名、弹窗、存储、PWA、单机、语言、全游戏布局、房间聊天和社交桌面，以及真实 Worker 联机 |
 | `classic` | 麻将、扑克和 UNO 操作与结算、经典牌面和桌面布局 |
 | `cards` | 接龙、寿司、商旅、晶石和猫牌操作、状态与布局，以及全游戏聊天头像接入 |
-| `social` | 房间通信、聊天边界、表情离线素材、身份插画、词语隐私与回合、狼人板型、社交游戏状态与布局 |
+| `social` | 房间通信、聊天边界、表情静态素材、身份插画、词语隐私与回合、狼人板型、社交游戏状态与布局 |
 
 基础检查只构建一次，将通过检查的 `dist/` 作为当前运行的临时 artifact 交给四个集成组，保留一天。各组随后并行启动独立 runner、Vite 和本地 Worker，组内顺序执行。虽然界面脚本通过 Vite 读取源码，Worker 的资源绑定仍需要 `dist/`；不能省略或用其他提交的构建替代。每个脚本输出名称、结果、耗时，并写入 Actions job summary。一组失败后该组剩余脚本标记为未运行，其他组继续完成以提供独立诊断。服务启动失败会及时终止并输出服务日志。
 
@@ -53,7 +53,7 @@ CI 集成组使用与锁定的 Playwright 1.55.1 匹配的[官方 Noble 容器](
 
 `npx vitest run tests/network/social-client.test.ts tests/network/server-recovery.test.ts` 校验发送确认、超时不自动重发、旧确认过滤、时钟偏差、断线、解散清理，以及旧连接回包不能污染新房间；服务端回归检查解散时持久化数据不再含聊天，后续关闭回调不能重建记录。`node tests/ui/room-social-boundaries.integration.mjs` 使用固定传输快照覆盖 80 条记录与滚动位置、关闭弹窗后恢复气泡、失败/超时保留草稿、输入法、双语七尺寸与焦点、观众只读/换席清理、奶牛动图实际逐帧变化及减少动态效果的静态替代图；支持 WebKit，不替代真实联机验收。
 
-`node tests/ui/room-social-assets.integration.mjs` 需要当前 `npm run build` 产物，自启临时 HTTP 服务，检查奶牛 GIF 原始文件哈希、动静态素材缓存、断网重载解码，以及不缓存 API 或已移除表情；使用 Chromium，不代表真机安装验收。
+`node tests/ui/room-social-assets.integration.mjs` 需要当前 `npm run build` 产物，自启临时 HTTP 服务，检查奶牛 GIF 原始文件哈希、访问后静态素材缓存与解码、HTML/API/已移除表情不入缓存及断网冷启动失败；使用 Chromium，不代表真机安装验收。
 
 先按根目录 README 启动 Worker（8787）和 Vite（5174）。安装浏览器：
 
@@ -109,7 +109,8 @@ npx playwright install chromium webkit
 | `node tests/ui/app-usability.integration.mjs` | 首次进入语言切换、原生语言名称、语言记忆、精确教程和多层弹窗键盘操作 |
 | `node tests/ui/player-names.integration.mjs` | 中英昵称与系统术语隔离：座位、秘密情报、法官面板、选人及真实库存弹窗；支持 WebKit |
 | `node tests/ui/action-sheet.integration.mjs` | 最新操作与失效选项、数量范围、错误恢复、取消、竖屏十人完整选项、短横屏可见翻页，以及真实投票昵称和牌面词确认；中英七尺寸与旋转，需 Vite，支持 WebKit |
-| `node tests/ui/pwa-update.integration.mjs` | 独立临时 HTTP 服务上的真实 Service Worker 升级、安装等待、旧缓存清理、断网资源与 API 不缓存；Chromium，无需启动应用服务 |
+| `node tests/ui/pwa-update.integration.mjs` | 独立临时 HTTP 服务上的真实 Service Worker 升级：无预缓存、旧整站缓存清理、HTML/API 排除、localStorage 保留、静态子资源缓存与断网冷启动失败；Chromium，无需启动应用服务 |
+| `node tests/ui/pwa-policy.integration.mjs` | 生产 `dist` 的主页、静态素材、Service Worker 控制和禁止 HTML 离线入口回归；Chromium，需先运行 `npm run build` |
 | `node tests/ui/history-names.integration.mjs` | 历史记录、附近房主及离线名单在中英切换后保留原名；本地模拟网络；支持 WebKit |
 | `node tests/ui/profile-input.integration.mjs` | 中英昵称输入：输入法候选确认不提前提交，普通回车保存、关闭及刷新记忆；支持 WebKit |
 | `node tests/ui/profile-layout.integration.mjs` | 中英八尺寸个人资料：44px 触控、48 个头像首尾滚动、空昵称、旋转与语言切换保留草稿、取消/保存/刷新、焦点恢复，以及压缩可视高度；支持 WebKit |
@@ -124,7 +125,7 @@ npx playwright install chromium webkit
 | `node tests/ui/new-game-results.integration.mjs` | 寿司/商旅/接龙/晶石最终全员积分、晶石同分牌数比较、喵喵危机全员幸存/出局状态、寿司逐轮及布丁分、同分胜者标记、中英八尺寸、长昵称、文字不越出卡片及旋转；使用固定传输 fixture，支持 WebKit |
 | `node tests/ui/new-games.integration.mjs` | 寿司、香料、七彩接龙实际回合操作 |
 | `node tests/ui/word-games.integration.mjs` | 两款词语游戏中英文终局、全部词卡分页与切换语言保留词面；支持 WebKit |
-| `node tests/ui/offline.integration.mjs` | 生产预览 5176 的缓存、断网重载及十二款试玩 |
+不再提供断网重载或离线试玩回归；生产策略分别在上述两项 PWA 测试中检查。
 | `node tests/ui/install.integration.mjs` | 直接安装提示、取消/完成状态、iOS/桌面帮助与竖屏 |
 | `node tests/ui/personal.integration.mjs` | 48 头像、身份保存、试玩恢复、战绩去重/删除、重置身份、存储禁用 |
 | `node tests/ui/responsive.integration.mjs` | 320px 手机至桌面、短横屏、数字溢出、全部座位与操作可达性 |
@@ -159,7 +160,7 @@ BASE_URL=https://mocha-tabletop-web.pages.dev node tests/ui/production.integrati
 TEST_BROWSER=webkit BASE_URL=https://mocha-tabletop-web.pages.dev node tests/ui/production.integration.mjs
 ```
 
-它覆盖九款游戏的真实多人房间、断线恢复、三种狼人模式和缓存资源。可用 `TEST_GAMES=gems,bombs,avalon,undercover` 选择补充浏览器的联机场景；默认运行全部，未知或空的场景名称会在创建房间前报错。连续验收应遵守每 IP 每 10 分钟最多创建 15 个房间的限制，本地大批量测试可以使用独立的 Wrangler `--persist-to` 临时目录。离线检查等待已激活的页面控制器及当前页面所需缓存资源，而非仅统计缓存条数。离线导航由 Chromium 回归验证；WebKit 仅验证控制器和缓存资源，因为测试环境中的最小独立 Service Worker 也无法通过模拟断网导航。真实 iPhone 的主屏幕安装和离线行为仍需真机检查。针对联机的单独复测可设置 `TEST_SKIP_OFFLINE=1`，输出会明确标记跳过。
+它覆盖九款游戏的真实多人房间、断线恢复、三种狼人模式和静态资源。可用 `TEST_GAMES=gems,bombs,avalon,undercover` 选择补充浏览器的联机场景；默认运行全部，未知或空的场景名称会在创建房间前报错。连续验收应遵守每 IP 每 10 分钟最多创建 15 个房间的限制，本地大批量测试可以使用独立的 Wrangler `--persist-to` 临时目录。Service Worker 检查只确认控制器已激活且 HTML 没有进入缓存；真实 iPhone 的主屏幕安装仍需真机检查。针对联机的单独复测可设置 `TEST_SKIP_PWA=1`，输出会明确标记跳过。
 
 ## 独立副本验收
 
@@ -181,7 +182,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 输入法回归使用浏览器 DOM 键盘事件覆盖 `isComposing` 和兼容性的 `keyCode=229` 路径，随后用真实键盘事件验证普通 Enter/Escape；这不等同于系统输入法真机验收。事件边界依据 [MDN 的 IME 键盘事件说明](https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event#keydown_events_with_ime)。
 
-网络延迟回归：`TEST_GAMES=century TEST_ACTION_DELAY_MS=600 TEST_SKIP_OFFLINE=1 BASE_URL=http://127.0.0.1:5174 node tests/ui/production.integration.mjs`。对真实 Worker 的回包延迟 600ms，验证提交中阻止后续操作，并在回包后继续升级/结束回合；也支持 WebKit。
+网络延迟回归：`TEST_GAMES=century TEST_ACTION_DELAY_MS=600 TEST_SKIP_PWA=1 BASE_URL=http://127.0.0.1:5174 node tests/ui/production.integration.mjs`。对真实 Worker 的回包延迟 600ms，验证提交中阻止后续操作，并在回包后继续升级/结束回合；也支持 WebKit。
 
 - `tests/ui/gems-viewport.integration.mjs`：晶石商会中英八尺寸无纵向滚动、全部市场层级、费用完整、牌面查看、六种公共筹码完整可见且保持 44px 触控、精确拿取条件、选择时布局稳定、实际拿取及库存入口；支持 WebKit。
 - `tests/ui/gems-results.integration.mjs`：晶石商会真实 App 的四人终局分数、已购牌/贵族数量及同分胜者，双语八尺寸、结束时清除选择、结算收起/重开、刷新和新局恢复；使用本地模拟 WebSocket，支持 WebKit。
@@ -239,7 +240,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 - `TEST_FRONTEND=http://127.0.0.1:5313 node tests/network/drawguess-lan.integration.mjs`：三浏览器局域网绘画、私密答案、笔画同步、掉线暂停/恢复和牌局中的云端切换。前端应以 `MOCHA_DEV_API=http://127.0.0.1:8911` 启动。
 
 - `npx vitest run tests/practice.test.ts tests/storage.test.ts`：八款人机游戏的全部合法人数与三档难度、合法推进、完整寿司三轮、单人视图/操作边界、旧试玩存档、保存/重开与战绩。
-- `BASE_URL=http://127.0.0.1:5218 node tests/ui/local-play.integration.mjs`：真实 App 单机人数/难度选择、八款人机与四款交流游戏、双语八尺寸与旋转、刷新/语言/重开/战绩/退出；支持 `TEST_BROWSER=webkit`。对生产预览可加 `TEST_OFFLINE=1` 验证缓存后断网开局与恢复（Chromium）。终局界面使用显式 fixture，完整规则终局由单测覆盖。
+- `BASE_URL=http://127.0.0.1:5218 node tests/ui/local-play.integration.mjs`：真实 App 单机人数/难度选择、八款人机与四款交流游戏、双语八尺寸与旋转、刷新/语言/重开/战绩/退出；支持 `TEST_BROWSER=webkit`。终局界面使用显式 fixture，完整规则终局由单测覆盖。
 - `node tests/ui/practice-corrupt-recovery.integration.mjs`：Doudizhu/Guandan 缺少会触发表格崩溃的必需数组时，验证损坏试玩被拒绝并回到首页、资料与战绩保留且可新建试玩；中英八尺寸，`TEST_VIEWPORT_SCOPE=compact` 用于窄 WebKit。
 
 连接生命周期回归使用 `TEST_FRONTEND` 指向运行中的 Vite，并需要对应本地 Worker。`lifecycle.integration.mjs` 在 Chromium 中通过 CDP 暂停真实页面执行，在 WebKit 中通过 Playwright clock 暂停页面定时器；这验证浏览器挂起路径，不等同于手机系统切后台/锁屏的真机验收。关闭双方标签页后以无 sessionStorage 的新标签页自动恢复，比较原玩家、matchID、操作版本和私人视图，再通过界面继续出牌。截图写入 `test-results/lifecycle-*`。

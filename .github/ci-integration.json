@@ -19,6 +19,9 @@
       "script": "tests/ui/pwa-update.integration.mjs"
     },
     {
+      "script": "tests/ui/pwa-policy.integration.mjs"
+    },
+    {
       "script": "tests/ui/history-names.integration.mjs"
     },
     {
@@ -62,7 +65,7 @@
       "env": {
         "TEST_GAMES": "century",
         "TEST_ACTION_DELAY_MS": "600",
-        "TEST_SKIP_OFFLINE": "1"
+        "TEST_SKIP_PWA": "1"
       }
     },
     {
