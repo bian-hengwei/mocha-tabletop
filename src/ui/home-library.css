@@ -1,26 +1,38 @@
 .library-filters{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;padding:10px 2px}
+.library-filter-controls{display:flex;align-items:center;gap:8px;min-width:0}
 .library-filters label{display:flex;align-items:center;gap:8px;min-width:0;font-size:12px;color:#d9ddcf}
 .library-filters label>svg{color:#c9ba93;flex-shrink:0}
 .library-filters select{appearance:none;min-width:116px;height:44px;min-height:44px;padding:8px 30px 8px 12px;border:1px solid #d8c8a345;border-radius:9px;color:#f1e7cd;background-color:#1c3028;font-size:13px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m2 2 4 4 4-4' fill='none' stroke='%23e8dfca' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
 .library-filters select:focus-visible{outline:2px solid #f5d990;outline-offset:3px}
+.library-favorite-filter{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:44px;height:44px;padding:0 8px;border:1px solid #d8c8a345;border-radius:9px;color:#e8dfca;background:#1c3028;font-size:12px;font-variant-numeric:tabular-nums}
+.library-favorite-filter[aria-pressed=true]{border-color:#f1d59c;color:#2a3b2e;background:#e7d397}
+.library-favorite-filter:focus-visible{outline:2px solid #f5d990;outline-offset:3px}
 .library-result-count{font-size:12px;white-space:nowrap;color:#b9c3b8;font-variant-numeric:tabular-nums}
-@media(max-width:360px){.library-filters{gap:8px}.library-filters label{gap:6px;font-size:11px}.library-filters label>svg{display:none}.library-filters select{min-width:106px}.library-result-count{font-size:11px}}
+.game-entry{position:relative;min-width:0;min-height:0;height:100%}
+.game-entry>.game-cover{width:100%;height:100%}
+.game-favorite{position:absolute;z-index:2;top:8px;right:8px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid #f0dc9a55;border-radius:50%;color:#f3dfaa;background:#14271fc7;box-shadow:0 3px 10px #06100b55;backdrop-filter:blur(4px)}
+.game-favorite.active{color:#27382d;border-color:#f6e2a8;background:#ead59b}
+.game-favorite:focus-visible{outline:3px solid #f5d990;outline-offset:2px}
+.game-favorite:hover{background:#20382df2}
+.game-favorite.active:hover{background:#f2dda3}
+.library-empty{grid-column:1/-1;display:grid;place-items:center;align-content:center;gap:10px;min-height:180px;padding:22px;color:#d6cfb9;text-align:center;border:1px dashed #d8c8a345;border-radius:12px;background:#15292088}
+.library-empty>svg{color:#dbc38a}.library-empty strong{font-size:14px;font-weight:600}.library-empty .text-button{min-width:44px;min-height:44px;justify-content:center}
+.library-empty .text-button:focus-visible{outline:2px solid #f5d990;outline-offset:2px}
+@media(max-width:360px){.library-filters{gap:8px}.library-filter-controls{gap:6px}.library-filters label{gap:6px;font-size:11px}.library-filters label>svg,.library-filters label>span{display:none}.library-filters select{min-width:106px}.library-favorite-filter{padding:0}.library-result-count{font-size:11px}}
 @media(max-height:460px) and (orientation:landscape){
  .home-shell:has(.library-filters){display:grid;grid-template-columns:minmax(190px,1fr) minmax(0,1.4fr);grid-template-rows:auto auto minmax(0,1fr) auto;column-gap:12px}
  .home-shell:has(.library-filters) .home-hero{grid-column:2;grid-row:1;padding:4px 0;border-bottom:0;background:none}
  .home-shell:has(.library-filters) .home-title{display:none}
  .home-shell:has(.library-filters) .home-entry-actions{justify-content:flex-end;width:100%;flex-wrap:nowrap}
  .library-filters{grid-column:1;grid-row:1;padding:4px 2px;gap:8px}
- .library-filters label{gap:8px}
+ .library-filters label{gap:8px}.library-filters label>span,.library-filters label>svg,.library-filters>.library-result-count{display:none}.library-filter-controls{gap:6px}
  .home-shell:has(.library-filters) .resume-session{grid-column:1/-1;grid-row:2}
  .home-shell:has(.library-filters) .game-library{grid-column:1/-1;grid-row:3}
  .home-shell:has(.library-filters) .home-footer{grid-column:1/-1;grid-row:4}
  .home-shell:has(.library-filters):has(.resume-session) .game-library{grid-auto-rows:min(116px,100%)}
  .home-shell:has(.library-filters):has(.resume-session) .game-cover{min-height:0}
 }
-@media(max-height:460px) and (orientation:landscape) and (max-width:700px){
- .library-result-count{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-}
+@media(max-height:460px) and (orientation:landscape) and (max-width:700px){.library-result-count{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}}
 
 /* Keep the readable cover layout within the space left by the filters and recovery entry. */
 .app .home-shell:has(.library-filters) .game-library{grid-auto-rows:min(184px,100%)}
