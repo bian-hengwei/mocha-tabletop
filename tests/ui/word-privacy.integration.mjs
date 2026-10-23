@@ -89,5 +89,5 @@ const overlaps=await page.locator('.wg-word,.wg-odd-player').evaluateAll(xs=>xs.
   console.log(`PASS ${locale} dealer seat privacy, menu redeal, hidden new words, layouts`);
   await context.close();
  }
- assert.deepEqual(errors,[]);console.log(`PASS word-game privacy and replay regressions, ${sizes.length*6} bilingual responsive screenshots, loaded atlases, voting priority, no clipped labels or browser errors`);
+ assert.deepEqual(errors,[]);console.log(`PASS word-game privacy and replay regressions, ${sizes.length*4} bilingual responsive screenshots, loaded atlases, voting priority, no clipped labels or browser errors`);
 }finally{await browser.close();}
