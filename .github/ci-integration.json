@@ -249,6 +249,9 @@
       "script": "tests/ui/word-viewport.integration.mjs"
     },
     {
+      "script": "tests/ui/codenames-full-board.integration.mjs"
+    },
+    {
       "script": "tests/ui/undercover-dealer.integration.mjs"
     },
     {

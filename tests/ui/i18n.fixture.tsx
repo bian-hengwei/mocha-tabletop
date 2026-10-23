@@ -144,6 +144,14 @@ function initialGame(){
   state=uno.apply(state,players[0].id,{action:'wild:test-plus-four',values:['blue']});return uno.apply(state,players[1].id,{action:'challenge4',values:[]});
  }
  if(kind==='codenames'&&params.get('scenario')==='long-words'){const state=codenames.create(players,11,{language:'en'});state.cards[0].word='Refrigerator';return state;}
+ if(kind==='codenames'&&params.get('scenario')==='modern-long-words'){
+  // Mirrors long English labels from the separately maintained modern word pack.
+  // Keeping this fixture explicit makes the layout test independent of that PR.
+  const state=codenames.create(players,11,{language:'en'});
+  const words=['Smart speaker','Password-free payment','Board game cards','Camping canopy','Noise canceling','Robot vacuum','Digital wallet','Coffee maker','Shared calendar','Video meeting','Airplane mode','Weekend plan','Screen time','Digital detox','Work from home','Pet camera','Mobile payment','Cloud photos','Gaming chair','Picnic blanket','Instant camera','Recommendation','Late-night text','Privacy settings','Smartwatch'];
+  state.cards.forEach((card,index)=>{card.word=words[index];});
+  return state;
+ }
  return modules[kind].create(players,11,{language:params.get('words')==='zh'?'zh':'en'});
 }
 function Fixture(){const locale=useLocale(),[game,setGame]=useState(initialGame),[viewer,setViewer]=useState(players[params.get("scenario")==="challenge"?1:0].id),[selection,setSelection]=useState<{a:Action;values:string[]}|null>(null);const view=modules[kind].view(game,viewer),command=(c:Command)=>setGame(modules[kind].apply(game,viewer,c)),open=(a:Action,values:string[]=[])=>setSelection({a,values});const props={view,selfID:viewer,command,open};return <main className={`app in-game game-${kind}`}><header className="topbar"><div className="brand"><b>{t(GAMES[kind].name)}</b></div><div className="top-tools"><select aria-label="Seat" value={viewer} onChange={e=>{setViewer(e.target.value);setSelection(null);}}>{players.map(p=><option value={p.id} key={p.id}>{p.name}{modules[kind].view(game,p.id).actions.length?' *':''}</option>)}</select><button className="compact" aria-label="Toggle language" onClick={()=>setLocale(locale==='en'?'zh':'en')}>{locale==='en'?'中文':'English'}</button></div></header><div className="game-surface">{kind==='drawguess'?<DrawGuessTable {...props}/>:kind==='drawrelay'?<DrawRelayTable key={`${viewer}:${view.board.step}`} {...props}/>:['doudizhu','guandan','mahjong'].includes(kind)?<ClassicTable {...props}/>:kind==='gems'?<GemsTable {...props}/>:kind==='bombs'?<BombsTable {...props}/>:kind==='avalon'||kind==='werewolf'?<SocialTable {...props}/>:kind==="codenames"||kind==="undercover"?<WordGamesTable {...props}/>:<NewGamesTable {...props}/>}</div>{['gems','avalon','werewolf'].includes(kind)&&<ActionDock {...props}/>} {selection&&<ActionSheet action={selection.a} selected={selection.values} view={view} onClose={()=>setSelection(null)} onSubmit={command}/>}</main>;}
