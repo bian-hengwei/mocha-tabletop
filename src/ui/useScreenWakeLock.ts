@@ -12,8 +12,8 @@ export function useScreenWakeLock(session: string | null) {
     }
     const controller = controllerRef.current;
     const [state, setState] = useState<WakeLockState>(controller.state);
+    useEffect(() => { controller.start(); return () => controller.stop(); }, [controller]);
     useEffect(() => controller.subscribe(setState), [controller]);
     useEffect(() => { controller.setSession(session); }, [controller, session]);
-    useEffect(() => () => controller.dispose(), [controller]);
     return { ...state, setEnabled: (enabled: boolean) => controller.setEnabled(enabled), retry: () => controller.retry(), endSession: () => controller.setSession(null) };
 }

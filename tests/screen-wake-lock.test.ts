@@ -3,6 +3,10 @@ import { ScreenWakeLockController, type WakeLockSentinelLike } from '../src/ui/s
 
 class FakeDocument extends EventTarget {
     visibilityState = 'visible';
+    added = 0;
+    removed = 0;
+    addEventListener(...args: Parameters<EventTarget['addEventListener']>) { this.added++; return super.addEventListener(...args); }
+    removeEventListener(...args: Parameters<EventTarget['removeEventListener']>) { this.removed++; return super.removeEventListener(...args); }
     setVisibility(state: 'visible' | 'hidden') {
         this.visibilityState = state;
         this.dispatchEvent(new Event('visibilitychange'));
@@ -29,6 +33,8 @@ describe('ScreenWakeLockController', () => {
         const doc = new FakeDocument(), first = new FakeSentinel(), second = new FakeSentinel();
         const request = vi.fn().mockResolvedValueOnce(first).mockResolvedValueOnce(second);
         const controller = new ScreenWakeLockController(doc, { wakeLock: { request } });
+        expect(doc.added).toBe(0);
+        controller.start();
         controller.setSession('table-a');
         expect(controller.state).toMatchObject({ enabled: false, status: 'off' });
         expect(request).not.toHaveBeenCalled();
@@ -47,7 +53,11 @@ describe('ScreenWakeLockController', () => {
         controller.setSession('table-b');
         expect(second.release).toHaveBeenCalledOnce();
         expect(controller.state).toMatchObject({ enabled: false, status: 'off' });
-        controller.dispose();
+        controller.stop();
+        expect(doc.removed).toBe(1);
+        controller.start();
+        expect(doc.added).toBe(2);
+        controller.stop();
     });
 
     it('releases a late sentinel after disable and reports denial, unsupported, and system-release states', async () => {
@@ -92,10 +102,12 @@ describe('ScreenWakeLockController', () => {
         await flush();
         active.systemRelease();
         expect(released.state).toMatchObject({ enabled: true, status: 'released' });
-        controller.dispose();
-        leaving.dispose();
-        denied.dispose();
-        unsupported.dispose();
-        released.dispose();
+        released.setEnabled(false);
+        expect(active.release).not.toHaveBeenCalled();
+        controller.stop();
+        leaving.stop();
+        denied.stop();
+        unsupported.stop();
+        released.stop();
     });
 });

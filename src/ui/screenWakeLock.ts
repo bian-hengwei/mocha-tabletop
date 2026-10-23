@@ -29,9 +29,14 @@ export class ScreenWakeLockController {
     private sentinel: WakeLockSentinelLike | null = null;
     private generation = 0;
     private listeners = new Set<Listener>();
+    private listening = false;
     private readonly onVisibilityChange = () => this.handleVisibilityChange();
 
-    constructor(private readonly doc: WakeLockDocumentLike, private readonly nav: WakeLockNavigatorLike) {
+    constructor(private readonly doc: WakeLockDocumentLike, private readonly nav: WakeLockNavigatorLike) {}
+
+    start() {
+        if (this.listening) return;
+        this.listening = true;
         this.doc.addEventListener('visibilitychange', this.onVisibilityChange);
     }
 
@@ -72,13 +77,17 @@ export class ScreenWakeLockController {
         if (this.enabled) this.request();
     }
 
-    dispose() {
+    stop() {
         this.generation++;
         this.enabled = false;
         this.session = null;
         this.releaseCurrent();
-        this.doc.removeEventListener('visibilitychange', this.onVisibilityChange);
-        this.listeners.clear();
+        if (this.listening) {
+            this.doc.removeEventListener('visibilitychange', this.onVisibilityChange);
+            this.listening = false;
+        }
+        this.status = 'off';
+        this.emit();
     }
 
     private visible() {

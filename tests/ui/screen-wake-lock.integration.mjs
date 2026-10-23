@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 
 const base=process.env.BASE_URL||'http://127.0.0.1:5224';
 const out='test-results/screen-wake-lock';
+const sizes=[[320,568],[390,844],[430,932],[568,320],[844,390],[932,430],[768,1024],[1440,900]];
 await fs.mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true});
 try{
@@ -32,7 +33,12 @@ try{
   const awake=page.getByRole('button',{name:new RegExp(locale==='zh'?'本局保持亮屏':'Keep screen awake')});
   await expect(awake).toContainText(locale==='zh'?'未开启':'Off');
   assert.equal(await page.evaluate(()=>window.__wakeLockTest.requests()),0,'the setting stays off until the player enables it');
-  await page.screenshot({path:`${out}/${locale}-portrait-off.png`});
+  for(const [width,height] of sizes){
+   await page.setViewportSize({width,height});
+   await expect(awake).toBeVisible();
+   await page.screenshot({path:`${out}/${locale}-${width}x${height}-off.png`});
+  }
+  await page.setViewportSize({width:390,height:844});
   await awake.click();
   await expect(awake).toContainText(locale==='zh'?'已开启':'On');
   assert.equal(await page.evaluate(()=>window.__wakeLockTest.requests()),1);
@@ -42,11 +48,16 @@ try{
   await expect(awake).toContainText(locale==='zh'?'已开启':'On');
   await page.setViewportSize({width:844,height:390});
   await expect(awake).toBeVisible();
-  await page.screenshot({path:`${out}/${locale}-landscape-on.png`});
+  await page.screenshot({path:`${out}/${locale}-844x390-on.png`});
+  await page.evaluate(()=>{Object.defineProperty(document,'visibilityState',{configurable:true,value:'hidden'});document.dispatchEvent(new Event('visibilitychange'));});
+  await expect(awake).toContainText(locale==='zh'?'返回页面后恢复':'Resumes when you return');
+  await page.evaluate(()=>{Object.defineProperty(document,'visibilityState',{configurable:true,value:'visible'});document.dispatchEvent(new Event('visibilitychange'));});
+  await expect.poll(()=>page.evaluate(()=>window.__wakeLockTest.requests())).toBe(2);
+  await expect(awake).toContainText(locale==='zh'?'已开启':'On');
   await page.evaluate(()=>window.__wakeLockTest.sentinels.at(-1).release());
   await expect(awake).toContainText(locale==='zh'?'亮屏已停止':'Screen stay-awake stopped');
   await awake.click();
-  await expect.poll(()=>page.evaluate(()=>window.__wakeLockTest.requests())).toBe(2);
+  await expect.poll(()=>page.evaluate(()=>window.__wakeLockTest.requests())).toBe(3);
   await expect(awake).toContainText(locale==='zh'?'已开启':'On');
   await page.setViewportSize({width:390,height:844});
   await page.getByRole('button',{name:locale==='zh'?'结束试玩':'End practice',exact:true}).click();
@@ -56,10 +67,10 @@ try{
   await page.locator('.game-surface').waitFor();
   await menu.click();
   await expect(awake).toContainText(locale==='zh'?'未开启':'Off');
-  assert.equal(await page.evaluate(()=>window.__wakeLockTest.requests()),2,'a new practice session starts opted out');
+  assert.equal(await page.evaluate(()=>window.__wakeLockTest.requests()),3,'a new practice session starts opted out');
   await page.getByRole('button',{name:locale==='zh'?'结束单机':'End solo game',exact:true}).click();
   assert.deepEqual(errors,[]);
   await context.close();
-  console.log(`PASS ${locale}: wake-lock opt-in, menu focus, rotation, released-state retry, and new-practice reset`);
+  console.log(`PASS ${locale}: all required menu viewports, opt-in, focus, visibility restore, released-state retry, and new-practice reset`);
  }
 }finally{await browser.close();}

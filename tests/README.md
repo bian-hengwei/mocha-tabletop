@@ -240,6 +240,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 - `npx vitest run tests/practice.test.ts tests/storage.test.ts`：八款人机游戏的全部合法人数与三档难度、合法推进、完整寿司三轮、单人视图/操作边界、旧试玩存档、保存/重开与战绩。
 - `BASE_URL=http://127.0.0.1:5218 node tests/ui/local-play.integration.mjs`：真实 App 单机人数/难度选择、八款人机与四款交流游戏、双语八尺寸与旋转、刷新/语言/重开/战绩/退出；支持 `TEST_BROWSER=webkit`。对生产预览可加 `TEST_OFFLINE=1` 验证缓存后断网开局与恢复（Chromium）。终局界面使用显式 fixture，完整规则终局由单测覆盖。
+- `BASE_URL=<vite> node tests/ui/screen-wake-lock.integration.mjs`：真实 App 的本局保持亮屏菜单，双语八尺寸、默认关闭、焦点恢复、页面隐藏后恢复、系统释放后的重试和新试玩重置。浏览器测试使用受控 Wake Lock sentinel，不等同于真机或已安装 PWA 验收。
 - `node tests/ui/practice-corrupt-recovery.integration.mjs`：Doudizhu/Guandan 缺少会触发表格崩溃的必需数组时，验证损坏试玩被拒绝并回到首页、资料与战绩保留且可新建试玩；中英八尺寸，`TEST_VIEWPORT_SCOPE=compact` 用于窄 WebKit。
 
 连接生命周期回归使用 `TEST_FRONTEND` 指向运行中的 Vite，并需要对应本地 Worker。`lifecycle.integration.mjs` 在 Chromium 中通过 CDP 暂停真实页面执行，在 WebKit 中通过 Playwright clock 暂停页面定时器；这验证浏览器挂起路径，不等同于手机系统切后台/锁屏的真机验收。关闭双方标签页后以无 sessionStorage 的新标签页自动恢复，比较原玩家、matchID、操作版本和私人视图，再通过界面继续出牌。截图写入 `test-results/lifecycle-*`。
