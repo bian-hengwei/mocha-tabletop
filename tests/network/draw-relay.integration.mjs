@@ -75,9 +75,23 @@ try{for(const mode of ['cloud','lan'])for(const relayMode of ['rounds','queue'])
  assert(!JSON.stringify(await observer.evaluate(()=>client.state.view)).includes('ABAAAAPPPX'));
  const remainingBefore=await host.evaluate(()=>client.state.view.board.deadlineAt-Date.now());
  await third.evaluate(()=>client.destroy());await host.waitForFunction(()=>client.state.paused&&client.state.view.board.deadlineAt===0);
+ // LAN close detection can lag the destroy call; anchor at the host-confirmed freeze.
+ let resumedAnchor=remainingBefore;
+ if(mode==='lan'){
+  resumedAnchor=await host.evaluate(()=>client.localMatch.game.pausedRemaining);
+  assert(resumedAnchor>0&&resumedAnchor<=remainingBefore,'paused time must not increase the remaining deadline');
+  await new Promise(resolve=>setTimeout(resolve,250));
+  assert.equal(await host.evaluate(()=>client.localMatch.game.pausedRemaining),resumedAnchor,'paused deadline must not advance');
+ }
  await third.evaluate(async()=>{const {RoomClient}=await import('/src/net/client.ts');window.client=new RoomClient();await client.connect();});await Promise.all(pages.map(ready));
- assert(await host.evaluate(()=>client.state.view.board.deadlineAt-Date.now())>remainingBefore-2500);
+ const resumedRemaining=await host.evaluate(()=>client.state.view.board.deadlineAt-Date.now());
+ assert(resumedRemaining>0&&resumedRemaining<=resumedAnchor,'reconnect must not extend the confirmed paused deadline');
+ assert(resumedRemaining>resumedAnchor-2500,'reconnect must restore the confirmed paused deadline');
  assert.equal(await third.evaluate(()=>client.state.view.board.draft.strokes.length),1);
+ const activeStart=await host.evaluate(()=>({now:Date.now(),remaining:client.state.view.board.deadlineAt-Date.now()}));
+ await new Promise(resolve=>setTimeout(resolve,250));
+ const activeEnd=await host.evaluate(()=>({now:Date.now(),remaining:client.state.view.board.deadlineAt-Date.now()}));
+ assert(Math.abs((activeStart.remaining-activeEnd.remaining)-(activeEnd.now-activeStart.now))<=100,'active time must consume the restored deadline');
  if(mode==='lan'){
   await host.evaluate(()=>client.switchToCloud());await Promise.all([...pages,observer].map(p=>p.waitForFunction(()=>client.state.mode==='cloud'&&client.state.view&&!client.state.paused)));assert.equal(await guest.evaluate(()=>client.state.view.board.previous.text),'SECRET opening 0');assert.equal(await guest.evaluate(()=>client.state.view.board.draft.strokes.length),1);
  }
