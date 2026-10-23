@@ -75,8 +75,23 @@ try{for(const mode of ['cloud','lan'])for(const relayMode of ['rounds','queue'])
  assert(!JSON.stringify(await observer.evaluate(()=>client.state.view)).includes('ABAAAAPPPX'));
  const remainingBefore=await host.evaluate(()=>client.state.view.board.deadlineAt-Date.now());
  await third.evaluate(()=>client.destroy());await host.waitForFunction(()=>client.state.paused&&client.state.view.board.deadlineAt===0);
+ let pausedRemaining;
+ if(mode==='lan'){
+  pausedRemaining=await host.evaluate(()=>client.localMatch.game.pausedRemaining);const pausedAt=await host.evaluate(()=>Date.now());
+  assert(pausedRemaining>0&&pausedRemaining<=remainingBefore,'paused time must not increase the remaining deadline');
+  await host.clock.install({time:pausedAt});await host.clock.pauseAt(pausedAt+5000);
+  assert.equal(await host.evaluate(()=>client.localMatch.game.pausedRemaining),pausedRemaining,'paused deadline must not advance');
+  // Capture the restored deadline in the state callback, before slower pages settle.
+  await host.evaluate(()=>{window.resumedSnapshot=new Promise(resolve=>{const unsubscribe=client.subscribe(state=>{if(!state.paused&&state.view?.board.deadlineAt>0&&client.localMatch?.game.pausedRemaining===undefined){unsubscribe();resolve({now:Date.now(),deadlineAt:state.view.board.deadlineAt});}});});});
+ }
  await third.evaluate(async()=>{const {RoomClient}=await import('/src/net/client.ts');window.client=new RoomClient();await client.connect();});await Promise.all(pages.map(ready));
- assert(await host.evaluate(()=>client.state.view.board.deadlineAt-Date.now())>remainingBefore-2500);
+ if(mode==='lan'){
+  const resumed=await host.evaluate(()=>window.resumedSnapshot),resumedRemaining=resumed.deadlineAt-resumed.now;
+  assert(resumedRemaining>pausedRemaining-100&&resumedRemaining<=pausedRemaining,'reconnect must restore the host-confirmed freeze');
+  await host.clock.fastForward(250);
+  const activeRemaining=await host.evaluate(()=>client.state.view.board.deadlineAt-Date.now());
+  assert.equal(resumedRemaining-activeRemaining,250,'active time must consume the restored deadline');
+ }else assert(await host.evaluate(()=>client.state.view.board.deadlineAt-Date.now())>remainingBefore-2500);
  assert.equal(await third.evaluate(()=>client.state.view.board.draft.strokes.length),1);
  if(mode==='lan'){
   await host.evaluate(()=>client.switchToCloud());await Promise.all([...pages,observer].map(p=>p.waitForFunction(()=>client.state.mode==='cloud'&&client.state.view&&!client.state.paused)));assert.equal(await guest.evaluate(()=>client.state.view.board.previous.text),'SECRET opening 0');assert.equal(await guest.evaluate(()=>client.state.view.board.draft.strokes.length),1);
