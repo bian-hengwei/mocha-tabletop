@@ -10,9 +10,18 @@ async function effectiveKeyboardViewport(locale){
  await context.addInitScript(locale=>{localStorage.setItem('mocha-locale',locale);localStorage.setItem('mocha-profile',JSON.stringify({id:'word-effective-viewport',name:'Alex',avatar:'🦊'}));},locale);
  const page=await context.newPage();
  await page.goto(base);await page.locator('.cover-codenames').click();await page.getByRole('button',{name:locale==='zh'?'同屏试玩':'Pass & play',exact:true}).click();await page.locator('.wg-table').waitFor();
+ const longWords=locale==='en'?['Refrigerator','Pomegranate','Temperature','Strawberry','Motorcycle','Lighthouse']:['冰箱','石榴','温度','草莓','摩托车','灯塔'];
+ await page.evaluate(longWords=>{
+  const saved=JSON.parse(localStorage.getItem('mocha-practice-v1'));
+  const words=[...longWords,...saved.practice.game.cards.map(card=>card.word).filter(word=>!longWords.includes(word))];
+  saved.practice.game.cards.forEach((card,index)=>{card.word=words[index];});
+  localStorage.setItem('mocha-practice-v1',JSON.stringify(saved));
+ },longWords);
+ await page.reload();await page.locator('.wg-table').waitFor();
+ assert.deepEqual((await page.locator('.wg-word>strong').allTextContents()).slice(0,6),longWords,'actual App restores the independent long-word checkpoint');
  const red=await page.locator('.wg-team.wg-active.wg-red').count()>0;
  await page.locator('.practice-switch select').selectOption(red?'practice-0':'practice-1');
- for(const width of [390,568]){
+ for(const width of [390,421,430,568]){
   await page.setViewportSize({width,height:320});
   const input=page.locator('.wg-clue-form input');await input.fill('Viewport draft');await input.focus();
   await expect(page.locator('.wg-word')).toHaveCount(6);await expect(page.locator('.wg-pages span')).toHaveText('1 / 5');
@@ -27,7 +36,7 @@ async function effectiveKeyboardViewport(locale){
   await expect(input).toHaveValue('Viewport draft');await input.focus();
   const previous=page.locator('.wg-pages button').first();while(!await previous.isDisabled())await previous.click();
  }
- await context.close();console.log('PASS actual App',locale,'focused input at 390x320 and 568x320, all 25 words, retained draft');
+ await context.close();console.log('PASS actual App',locale,'focused input at 390/421/430/568x320, long words, all 25 words, retained draft');
 }
 try{for(const locale of ['zh','en'])for(const [width,height] of [[320,568],[390,844],[430,932],[390,320],[568,320],[844,390],[932,430],[768,1024],[1440,900]])for(const kind of (width===390&&height===320?['codenames']:['codenames','undercover'])){
 const context=await browser.newContext({viewport:{width,height}});await context.addInitScript(l=>localStorage.setItem('mocha-locale',l),locale);const page=await context.newPage();await page.goto(`${base}/tests/ui/i18n.fixture.html?kind=${kind}&players=max${kind==='codenames'?'&scenario=long-words':''}`);await page.locator('.wg-table').waitFor();await fits(page);
