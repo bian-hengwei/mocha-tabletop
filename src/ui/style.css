@@ -68,3 +68,11 @@ html[lang=en] .compact,html[lang=en] .text-button{letter-spacing:0}html[lang=en]
 @media(max-height:460px) and (orientation:landscape){.home-hero{align-items:center;flex-direction:row;gap:14px;padding:10px 0}.home-title>span,.home-title p{display:none}.home-title h1{font-size:21px}.home-entry-actions .compact{min-height:44px}.home-shell .library-heading{padding:8px 0}.home-shell .game-library{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:116px;gap:9px;padding-bottom:8px}.home-shell .game-cover{min-height:116px}.home-shell .cover-caption{inset:auto 10px 9px;gap:4px}.home-shell .cover-caption strong{font-size:17px}.home-shell .cover-caption>span{font-size:8px}.home-shell .cover-caption small,.home-shell .cover-caption b{font-size:8px}.home-shell .cover-caption b svg{width:12px;height:12px}.home-shell .home-footer{display:flex;min-height:44px}}
 .home-shell .library-heading .text-button,.home-shell .install-button{min-height:44px}
 .session-awake-toggle>span{display:flex;flex-direction:column;gap:3px}.session-awake-toggle b{font-weight:inherit}.session-awake-toggle small{color:#91a894;font-size:10px}.session-awake-toggle[aria-pressed=true] small{color:#dfc587}
+/* Online room QR invitation: local SVG with standard 4-module quiet zone. */
+.lobby-invite-actions{display:flex;align-items:center;gap:8px}
+.lobby-invite-actions .invite-qr-trigger{width:44px;height:44px;padding:0}
+.app-modal.invite-qr-modal{width:min(360px,100%)}
+.invite-qr{aspect-ratio:1;width:min(220px,62vw,38dvh);margin:0 auto;background:#fff;border-radius:10px;padding:12px;display:flex}
+.invite-qr svg{width:100%;height:100%}
+.invite-qr.pending{align-items:center;justify-content:center}
+.invite-qr-note{text-align:center;margin-top:14px}
