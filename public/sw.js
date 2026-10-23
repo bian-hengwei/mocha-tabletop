@@ -1,6 +1,14 @@
 const CACHE = '__MOCHA_CACHE__';
+const PRECACHE = ['__MOCHA_PRECACHE__'];
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(['__MOCHA_PRECACHE__'])));
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(PRECACHE)));
+});
+self.addEventListener('message', event => {
+  if (event.data?.type !== 'OFFLINE_STATUS' || !event.ports[0]) return;
+  event.waitUntil(caches.open(CACHE).then(async cache => {
+    const ready = (await Promise.all(PRECACHE.map(url => cache.match(url)))).every(Boolean);
+    event.ports[0].postMessage({ready, cache:CACHE});
+  }));
 });
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('mocha-') && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));

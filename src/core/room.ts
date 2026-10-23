@@ -13,7 +13,7 @@ export interface RoomPlayer extends Player { ready:boolean; connected:boolean }
 export interface RoomSpectator extends Player {connected:boolean}
 export interface JoinRequest extends Player {spectator?:boolean}
 export const MAX_SPECTATORS=20;
-export interface RoomInfo {botError?:string;spectators?:RoomSpectator[];allowSpectators?:boolean;expiresAt?:number;matchID?:string;code:string;kind:GameKind;mode:RoomMode;hostID:string;options?:GameOptions;players:RoomPlayer[];pending:JoinRequest[];started:boolean;revision:number}
+export interface RoomInfo {offline?:boolean;botError?:string;spectators?:RoomSpectator[];allowSpectators?:boolean;expiresAt?:number;matchID?:string;code:string;kind:GameKind;mode:RoomMode;hostID:string;options?:GameOptions;players:RoomPlayer[];pending:JoinRequest[];started:boolean;revision:number}
 export interface RoomCandidate {code:string;kind:GameKind;mode:RoomMode;hostName:string;count:number;max:number}
 interface SocialClientState {social?:SocialView;socialPending?:string;socialError?:string;socialAck?:string;socialOnline?:boolean}
 export interface ClientState extends SocialClientState {status:'idle'|'connecting'|'lobby'|'playing'|'reconnecting'|'disconnected';mode?:RoomMode;room?:RoomInfo;selfID?:string;view?:GameView;error?:string;transport:'none'|'cloud'|'lan';paused:boolean;inviteURL?:string;actionRevision:number;actionPending?:boolean;waitingApproval?:boolean}

@@ -95,6 +95,9 @@
   ],
   "classic": [
     {
+      "script": "tests/network/offline-lan.integration.mjs"
+    },
+    {
       "script": "tests/ui/mahjong-actions.integration.mjs"
     },
     {

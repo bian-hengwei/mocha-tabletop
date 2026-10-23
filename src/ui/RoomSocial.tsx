@@ -66,7 +66,7 @@ export function SocialControls({children}:{children:ReactNode}){
 export function RoomSocial({state,client,active,children}:{state:ClientState;client:RoomClient;active:boolean;children:ReactNode}){
  const locale=useLocale(),[panel,setPanel]=useState<'chat'|'reaction'|null>(null),[draft,setDraft]=useState(''),[now,setNow]=useState(Date.now),[read,setRead]=useState<string>();
  const [catalog,setCatalog]=useState<ReactionAsset[]>(BUILTIN_REACTIONS),[catalogError,setCatalogError]=useState(false);
- useEffect(()=>{if(panel!=='reaction')return;const controller=new AbortController();setCatalogError(false);loadReactions(controller.signal).then(setCatalog).catch(()=>{if(!controller.signal.aborted)setCatalogError(true);});return()=>controller.abort();},[panel]);
+ useEffect(()=>{if(state.room?.offline){setCatalog(BUILTIN_REACTIONS);setCatalogError(false);return;}if(panel!=='reaction')return;const controller=new AbortController();setCatalogError(false);loadReactions(controller.signal).then(setCatalog).catch(()=>{if(!controller.signal.aborted)setCatalogError(true);});return()=>controller.abort();},[panel,state.room?.offline]);
  const room=state.room,enabled=active&&!!room&&supportsRoomSocial(room.kind)&&!state.waitingApproval;
  const canSend=enabled&&!!room.players.find(p=>p.id===state.selfID&&!p.bot);
  const dialog=useDialog<HTMLElement>(enabled&&!!panel,()=>setPanel(null)),log=useRef<HTMLDivElement>(null),pending=useRef<{id:string;type:'chat'|'reaction';draft:string}|undefined>(undefined),atBottom=useRef(true);

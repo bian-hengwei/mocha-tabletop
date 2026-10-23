@@ -53,10 +53,24 @@
 | --- | --- | --- |
 | 云端房间 | 游戏过程中保持联网 | 大家用各自的手机，异地也能加入 |
 | 局域网房间 | 创建和配对时需要联网；设备之间还需能直接连通 | 同一网络聚会，游戏数据通过 WebRTC 直连房主 |
+| 离线联机 | 每台设备事先缓存网页；同一 Wi-Fi / 热点允许设备互通 | 本地交换配对文件，建房、准备与游戏均无需互联网 |
 | 单人人机 | 首次加载并完成缓存后可离线 | 选择总人数与统一难度，一位真人对阵其余人机 |
 | 同屏试玩 | 首次加载并完成缓存后可离线 | 一台设备切换座位，熟悉规则和操作 |
 
 单机开局前可选择总人数，固定人数玩法按规则显示。八款非自由交流游戏支持单人人机；同屏试玩可切换座位，不是隐藏身份的多人房间。局域网模式没有 TURN 中继，访客 Wi-Fi 的设备隔离等限制可能使直连失败，此时可以使用云端房间。
+
+### 无互联网的多人聚会
+
+1. **每台设备**先联网打开网页，在「加入牌桌 → 离线加入 / 重新配对」确认离线资源已就绪。建议提前断开外网并重新打开一次，确认缓存可用。
+2. 连接同一 Wi-Fi 或热点。房主选择游戏和「离线联机」，创建牌桌后点「邀请」。
+3. 客人生成加入请求，下载文件并通过隔空投送、附近分享或其他不需要互联网的本地传输交给房主。房主导入、核对昵称并同意，将应答文件传回同一位客人；客人导入应答后连接。也可复制粘贴配对文本。每位客人分别进行一次。
+4. 所有人准备后开局。房主保持网页打开；刷新或断线后重新交换请求和应答。房主用同一浏览器重开可恢复本机存档，客人用原浏览器重新配对保留座位。
+
+离线配对文件含连接信息和本桌身份凭据，只交给对应玩家，用完可删除。离线房间不进入附近列表，六位房间码不能代替文件配对。聊天和内置表情走直连；在线上传的表情不在离线房间中加载。离线牌桌结束后，可另建云端房间。
+
+浏览器必须提供可互通的本地 WebRTC 地址；有设备隔离的热点、访客网络或限制本地地址的浏览器可能无法连接。没有 STUN/TURN 或后台服务器，也不申请摄像头或麦克风来绕过限制。iPhone 主屏幕安装、系统文件分享和实际热点需要真机确认。系统清理网站数据后需要重新联网缓存，无法承诺一次下载永久保留。
+
+Offline multiplayer uses the same flow: cache the app on **every device**, connect to a local network that allows device-to-device traffic, then exchange each guest's request file and the host's answer through local sharing. The host keeps the app open; after a reload or connection loss, exchange new files using the original browsers to recover the seats and saved game. Browser storage can be removed by the system, and some browsers or hotspots cannot establish local WebRTC connections.
 
 ## 本机记忆与恢复
 

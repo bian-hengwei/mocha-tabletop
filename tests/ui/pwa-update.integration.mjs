@@ -45,6 +45,7 @@ const cachedPaths=async(page,key)=>page.evaluate(async key=>{
  if(!(await caches.keys()).includes(key))return [];
  return(await(await caches.open(key)).keys()).map(request=>new URL(request.url).pathname).sort();
 },key);
+const cacheStatus=page=>page.evaluate(()=>new Promise(resolve=>{const channel=new MessageChannel();channel.port1.onmessage=e=>{channel.port1.close();resolve(e.data);};navigator.serviceWorker.controller.postMessage({type:'OFFLINE_STATUS'},[channel.port2]);}));
 try{
  browser=await chromium.launch({executablePath:process.env.CHROME_PATH||undefined});
  const context=await browser.newContext({viewport:{width:390,height:844}});
@@ -55,6 +56,10 @@ try{
  assert.equal(await page.locator('h1').textContent(),'Build 1');
  await until(async()=>JSON.stringify(await cachedPaths(page,cacheName(1)))===JSON.stringify([...resources].sort()),'initial precache');
  await waitForOfflineReady(page,{paths:resources});
+ assert.deepEqual(await cacheStatus(page),{ready:true,cache:cacheName(1)});
+ await page.evaluate(async key=>{await(await caches.open(key)).delete('/tile.svg');},cacheName(1));
+ assert.deepEqual(await cacheStatus(page),{ready:false,cache:cacheName(1)});
+ await page.evaluate(async key=>{await(await caches.open(key)).add('/tile.svg');},cacheName(1));
  // Exercise the shared production-readiness helper, including an async false
  // result and a waiter that must remain pending until its missing asset exists.
  const probe='/uncached-probe.txt';
@@ -81,6 +86,7 @@ try{
  releaseAsset();
  await until(()=>page.evaluate(async()=>(await navigator.serviceWorker.getRegistration()).waiting?.state==='installed'),'new worker waiting');
  assert.equal(await page.evaluate(()=>navigator.serviceWorker.controller===window.initialController),true);
+ assert.deepEqual(await cacheStatus(page),{ready:true,cache:cacheName(1)},'waiting update must not advertise the newer cache version');
  assert.deepEqual(await cachedPaths(page,cacheName(2)),[...resources].sort());
  await assert.rejects(until(()=>nextWorker.evaluate(()=>self.auditActivated),'activation with old client open',200),/Timed out: activation with old client open/);
  console.log('PASS the new worker is installed/waiting and cannot activate while the old client stays open');
@@ -96,6 +102,7 @@ try{
  assert.equal(await page.locator('h1').textContent(),'Build 2');
  for(const path of resources)assert.equal(await page.evaluate(async({key,path})=>(await(await caches.open(key)).match(path)).text(),{key:cacheName(2),path}),asset(path,2));
  assert.deepEqual(await page.evaluate(()=>caches.keys()),[cacheName(2)]);
+ assert.deepEqual(await cacheStatus(page),{ready:true,cache:cacheName(2)});
  await waitForOfflineReady(page,{paths:resources});
  console.log('PASS the new worker really activates, removes the old cache and serves the complete new build');
 

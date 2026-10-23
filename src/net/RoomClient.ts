@@ -1,13 +1,14 @@
 import {botTurnDelay,nextBotSeat,stepBot,continueBotRound} from '../core/roomBots';
 import type {BotDifficulty} from '../core/bots/types';
-import {supportsRoomSocial,type SocialCommand,type SocialView} from '../core/roomSocial';
+import {applyRoomSocial,emptySocial,socialView,supportsRoomSocial,type SocialCommand,type SocialView} from '../core/roomSocial';
+import {OfflineRoom,readPairing,completeLocalDescription,type OfflineRequest,type OfflineAnswer} from './offlineRoom';
 import {isRelayGalleryNavigation,independentRelay,advanceMatchClock,pauseMatchClock,resumeMatchClock,applyMatch,createMatch,matchDeadline,validProfile,viewRoomMatch,optionsKey,validateMatchForRoom,type ClientState,type MatchState,type RoomInfo,type RoomCandidate,type RoomMode} from '../core/room';
 import type {Command,GameKind,Player,GameOptions} from '../core/types';
 export type {ClientState,RoomCandidate,RoomMode} from '../core/room';
 const API=(import.meta.env.VITE_API_BASE||'').replace(/\/$/,'');
 const randomToken=()=>Array.from(crypto.getRandomValues(new Uint8Array(24)),b=>b.toString(16).padStart(2,'0')).join('');
 const initial=():ClientState=>({status:'idle',transport:'none',paused:false,actionRevision:0});
-interface Session {spectator?:boolean;profile:Player;code:string;invite?:string;token:string;savedAt?:number;expiresAt?:number;pendingApproval?:boolean;unconfirmed?:boolean}
+interface Session {offline?:boolean;spectator?:boolean;profile:Player;code:string;invite?:string;token:string;savedAt?:number;expiresAt?:number;pendingApproval?:boolean;unconfirmed?:boolean}
 export interface SavedSession {profile:Player;code:string;savedAt:number;expiresAt:number}
 const SESSION_KEY='mocha-room-session';
 const SESSION_TTL=6*60*60*1000;
@@ -21,6 +22,11 @@ function availableStorage(localFirst=false):Storage[]{
 interface Peer {pc:RTCPeerConnection;dc?:RTCDataChannel;proven:boolean;syncServed?:boolean;nonce:string;pending:RTCIceCandidateInit[];pairingTimer?:ReturnType<typeof setTimeout>}
 /** One client per tab. Cloud sockets hibernate; LAN game traffic never enters the signaling socket. */
 export class RoomClient {
+ private offline?:OfflineRoom;
+ private offlineSocial=emptySocial();
+ private offlineOffer?:{id:string;profile:Player;token:string;spectator:boolean;peer:Peer};
+ private offlinePairTimer?:ReturnType<typeof setTimeout>;
+ private offlineRequests=new Set<string>();
  state:ClientState=initial();private listeners=new Set<(state:ClientState)=>void>();
  private socialTimer?:ReturnType<typeof setTimeout>;
  private botTimer?:ReturnType<typeof setTimeout>;private clockTimer?:ReturnType<typeof setTimeout>;private botMatch?:MatchState;private localBotError?:string;
@@ -39,14 +45,78 @@ export class RoomClient {
   ))patch={...patch,actionPending:false};
   this.state={...this.state,...patch};for(const listener of this.listeners)listener(this.state);}
  clearError(){this.patch({error:undefined});}
+ createOffline(profile:Player,kind:GameKind,options?:GameOptions){
+  this.reset();
+  try{const token=randomToken();this.offline=new OfflineRoom(profile,kind,options,token);const room=this.offline.room;this.session={offline:true,profile,code:room.code,token,savedAt:Date.now(),expiresAt:Date.now()+SESSION_TTL};this.stopped=false;this.patch({room,mode:'lan',selfID:profile.id,status:'lobby',transport:'lan',socialOnline:true});this.saveSession();this.broadcastLocal();}catch(e){this.fail(e);}
+ }
+ get isOffline(){return !!(this.session?.offline||this.offlineOffer);}
+ async prepareOfflineJoin(profile:Player,spectator=false):Promise<string>{
+  if(this.isHost)throw new Error('请使用另一台设备加入');
+  const previous=this.session||this.readSession();const token=previous?.offline?previous.token:randomToken();
+  this.reset();this.patch(initial());profile=validProfile(profile);
+  const pc=new RTCPeerConnection({iceServers:[],iceTransportPolicy:'all'}),dc=pc.createDataChannel('mocha-tabletop',{ordered:true});
+  const pending={id:crypto.randomUUID(),profile,token,spectator,peer:{pc,dc,proven:false,nonce:crypto.randomUUID(),pending:[]} as Peer};
+  this.offlineOffer=pending;
+  try{await pc.setLocalDescription(await pc.createOffer());const description=await completeLocalDescription(pc);if(this.offlineOffer!==pending)throw new Error('离线配对已取消');return JSON.stringify({version:1,type:'request',id:pending.id,expiresAt:Date.now()+600000,profile,token:pending.token,spectator,description} satisfies OfflineRequest);}
+  catch(e){if(this.offlineOffer===pending){pc.close();this.offlineOffer=undefined;}throw e;}
+ }
+ async acceptOfflineRequest(text:string):Promise<string>{
+  if(!this.offline||!this.isHost)throw new Error('请先创建离线牌桌');
+  const request=readPairing(text);if(request.type!=='request')throw new Error('请导入客人的加入请求');
+  if(this.offlineRequests.has(request.id))throw new Error('此请求已处理，请让客人重新生成');
+  if(this.peers.get(request.profile.id)?.proven)throw new Error('此玩家仍已连接，无需重复配对');
+  const authority=this.offline,generation=this.connectGeneration;
+  // Validate admission before replacing a connection or allocating a seat.
+  const trial=OfflineRoom.restore({room:authority.room,tokens:authority.tokens},this.session!.profile,this.session!.token);trial.admit(request);
+  const peer=this.peer(request.profile.id);
+  try{await peer.pc.setRemoteDescription(request.description);await peer.pc.setLocalDescription(await peer.pc.createAnswer());const description=await completeLocalDescription(peer.pc);if(!this.currentPeer(request.profile.id,peer,generation)||this.offline!==authority)throw new Error('离线配对已取消');authority.admit(request);this.offlineRequests.add(request.id);this.patch({room:authority.room});this.broadcastLocal();return JSON.stringify({version:1,type:'answer',id:request.id,expiresAt:request.expiresAt,room:{...authority.room,pending:[]},description} satisfies OfflineAnswer);}
+  catch(e){if(this.peers.get(request.profile.id)===peer){this.peers.delete(request.profile.id);peer.pc.close();this.broadcastLocal();}throw e;}
+ }
+ async finishOfflineJoin(text:string){
+  const answer=readPairing(text),pending=this.offlineOffer;
+  if(answer.type!=='answer'||!pending||answer.id!==pending.id)throw new Error('应答不属于这次请求，请重新配对');
+  const room=answer.room;if(room.hostID===pending.profile.id||![...room.players,...room.spectators||[]].some(p=>p.id===pending.profile.id))throw new Error('应答不属于这次请求，请重新配对');
+  this.session={offline:true,profile:pending.profile,code:room.code,token:pending.token,spectator:pending.spectator,savedAt:Date.now(),expiresAt:Date.now()+SESSION_TTL};this.stopped=false;
+  this.peers.set(room.hostID,pending.peer);this.bindDC(room.hostID,pending.peer,pending.peer.dc!);
+  pending.peer.pc.onconnectionstatechange=()=>{if(this.peers.get(room.hostID)===pending.peer&&['failed','closed','disconnected'].includes(pending.peer.pc.connectionState)){pending.peer.proven=false;this.localStatus();}};
+  this.patch({room,mode:'lan',selfID:pending.profile.id,status:room.started?'playing':'lobby',transport:'none',paused:room.started,error:undefined});
+  try{await pending.peer.pc.setRemoteDescription(answer.description);this.offlineOffer=undefined;this.saveSession();this.offlinePairTimer=setTimeout(()=>{if(!pending.peer.proven)this.fail('未能直连，请确认同一网络允许设备互通，再重新配对');},20000);}
+  catch(e){this.fail(e);throw e;}
+ }
+ cancelOfflinePairing(){if(this.offlineOffer){this.offlineOffer.peer.pc.close();this.offlineOffer=undefined;}}
+ private saveOffline(){const r=this.state.room;if(!this.offline||!r)return;this.offline.room=r;let saved=false;const raw=JSON.stringify({room:r,tokens:this.offline.tokens,match:this.localMatch});for(const storage of availableStorage(true))try{storage.setItem('mocha-offline-host-'+r.code,raw);saved=true;}catch{}if(!saved)this.fail('离线房间无法保存，请保持房主页打开');}
+ private restoreOffline(session:Session){
+  this.reset();this.session=session;this.stopped=false;
+  let recoverable:OfflineRoom|undefined;
+  for(const storage of availableStorage(true))try{const raw=storage.getItem('mocha-offline-host-'+session.code);if(!raw)continue;const saved=JSON.parse(raw),authority=OfflineRoom.restore(saved,session.profile,session.token),room=authority.room;if(room.code!==session.code)continue;recoverable=authority;const match=room.started?validateMatchForRoom(saved.match,room):undefined;this.offline=authority;this.localMatch=match;this.patch({room,mode:'lan',selfID:session.profile.id,status:room.started?'playing':'lobby',socialOnline:true});this.broadcastLocal();return;}catch{}
+  if(recoverable){this.offline=recoverable;this.patch({room:recoverable.room,mode:'lan',selfID:session.profile.id,status:'playing',paused:true,socialOnline:true,error:'房主本机的牌局状态已丢失，请结束本局重新开始'});this.localStatus();return;}
+  this.patch({status:'disconnected',selfID:session.profile.id,mode:'lan',error:'请重新交换加入请求和应答，恢复离线牌桌'});
+ }
+ private offlineControl(actor:string,msg:Record<string,unknown>){
+  const authority=this.offline;if(!authority)throw new Error('请先创建离线牌桌');
+  authority.room=this.state.room!;
+  if(msg.type==='social'){
+   try{this.offlineSocial=applyRoomSocial(this.offlineSocial,authority.room,actor,msg.command,msg.requestID,Date.now());this.offlineReply(actor,{type:'socialAck',requestID:msg.requestID});this.broadcastLocal();}
+   catch(e){this.offlineReply(actor,{type:'socialError',requestID:msg.requestID,error:e instanceof Error?e.message:String(e)});}return;
+  }
+  const previousRoom=authority.room,previousTokens={...authority.tokens};
+  const result=authority.control(actor,msg);
+  try{if(result.start)this.localMatch=createMatch(authority.room.kind,authority.room.players,authority.room.options);}
+  catch(e){authority.room=previousRoom;authority.tokens=previousTokens;throw e;}
+  if(result.end){this.localMatch=undefined;this.localBotError=undefined;}
+  if(result.closed){for(const p of this.peers.values())this.sendDC(p,{type:'ended',error:'房主已解散房间'});this.removeLocal();this.clearSavedSession();this.reset();this.patch(initial());return;}
+  for(const id of result.removed){const p=this.peers.get(id);if(p){this.sendDC(p,{type:'ended',error:'已离开离线牌桌'});this.peers.delete(id);p.pc.close();}}
+  this.patch({room:authority.room,status:authority.room.started?'playing':'lobby',...(!authority.room.started?{view:undefined,actionRevision:0}:{})});this.broadcastLocal();
+ }
+ private offlineReply(id:string,msg:Record<string,unknown>){if(id===this.state.selfID){if(msg.requestID!==this.state.socialPending)return;if(msg.type==='socialAck'||msg.type==='socialError'){clearTimeout(this.socialTimer);this.patch({socialPending:undefined,socialAck:msg.type==='socialAck'?msg.requestID as string:undefined,socialError:msg.type==='socialError'?msg.error as string:undefined});}}else {const p=this.peers.get(id);if(p)this.sendDC(p,msg);}}
  sendSocial(command:SocialCommand):string|undefined {
   const room=this.state.room;
   if(this.state.socialPending)return;
   if(!room||!supportsRoomSocial(room.kind)||!room.players.some(p=>p.id===this.state.selfID&&!p.bot)){this.patch({socialError:'只有在座玩家可以发言'});return;}
-  if(this.ws?.readyState!==WebSocket.OPEN){this.patch({socialError:'聊天连接中断，请重连后发送'});return;}
+  if(!this.isOffline&&this.ws?.readyState!==WebSocket.OPEN){this.patch({socialError:'聊天连接中断，请重连后发送'});return;}
   const requestID=crypto.randomUUID();
   this.patch({socialPending:requestID,socialError:undefined,socialAck:undefined});
-  try{this.ws.send(JSON.stringify({type:'social',requestID,command}));}
+  try{if(this.isOffline){this.socialTimer=setTimeout(()=>this.patch({socialPending:undefined,socialError:'未确认发送，请检查记录后重试'}),8000);this.control({type:'social',requestID,command});return requestID;}this.ws!.send(JSON.stringify({type:'social',requestID,command}));}
   catch{this.patch({socialPending:undefined,socialError:'聊天连接中断，请重连后发送'});return;}
   this.socialTimer=setTimeout(()=>this.patch({socialPending:undefined,socialError:'未确认发送，请检查记录后重试'}),8000);
   return requestID;
@@ -82,14 +152,14 @@ export class RoomClient {
  /** Withdraw a known pending request; retain admitted or legacy room recovery. */
  cancelConnection(){const pending=this.session?.pendingApproval===true;if(pending&&this.ws?.readyState===WebSocket.OPEN)this.control({type:'leave'});if(pending||this.session?.unconfirmed===true)this.clearSavedSession();this.reset();this.patch(initial());}
  /** Only available outside a room; affects this browser's identity, never other players. */
- resetIdentity(){if(this.state.room||this.state.status==='connecting'||this.state.status==='reconnecting')throw new Error('请先离开牌桌，再重置本机用户');this.clearSavedSession();this.reset();this.networkToken=undefined;for(const storage of availableStorage())try{storage.removeItem('mocha-network-token');for(let i=storage.length-1;i>=0;i--){const key=storage.key(i);if(key?.startsWith('mocha-host-'))storage.removeItem(key);}}catch{}this.patch(initial());}
+ resetIdentity(){if(this.state.room||this.state.status==='connecting'||this.state.status==='reconnecting')throw new Error('请先离开牌桌，再重置本机用户');this.clearSavedSession();this.reset();this.networkToken=undefined;for(const storage of availableStorage())try{storage.removeItem('mocha-network-token');for(let i=storage.length-1;i>=0;i--){const key=storage.key(i);if(key?.startsWith('mocha-host-')||key?.startsWith('mocha-offline-host-'))storage.removeItem(key);}}catch{}this.patch(initial());}
  /** Restore the last room even after closing the tab, or retry a dropped connection. */
- async connect(){if(this.session){this.stopped=false;this.reconnects=0;this.patch({status:'reconnecting',waitingApproval:false});this.openSocket();return;}const s=this.readSession();if(s){this.reset();this.session=s;this.stopped=false;this.patch({status:'connecting',selfID:s.profile.id});this.openSocket();}}
+ async connect(){const saved=this.session||this.readSession();if(saved?.offline){this.restoreOffline(saved);return;}if(this.session){this.stopped=false;this.reconnects=0;this.patch({status:'reconnecting',waitingApproval:false});this.openSocket();return;}const s=this.readSession();if(s){this.reset();this.session=s;this.stopped=false;this.patch({status:'connecting',selfID:s.profile.id});this.openSocket();}}
  private readSession():Session|undefined {
   for(const storage of availableStorage()){try{const raw=storage.getItem(SESSION_KEY);if(!raw)continue;const s=JSON.parse(raw) as Session;validProfile(s.profile);if(!/^[A-Z2-9]{6}$/.test(s.code)||typeof s.token!=='string'||!/^[a-f0-9]{48,128}$/.test(s.token))throw new Error('invalid session');
    s.savedAt=typeof s.savedAt==='number'?s.savedAt:Date.now();s.expiresAt=typeof s.expiresAt==='number'?s.expiresAt:s.savedAt+SESSION_TTL;
    // An admitted player's cached lease can lag renewals by the other players.
-   if(s.expiresAt+(s.pendingApproval===false?SESSION_TTL:0)<=Date.now())throw new Error('expired session');return s;
+   if(!s.offline&&s.expiresAt+(s.pendingApproval===false?SESSION_TTL:0)<=Date.now())throw new Error('expired session');return s;
   }catch{try{storage.removeItem(SESSION_KEY);}catch{}}}return undefined;
  }
  private saveSession(){if(!this.session)return;const raw=JSON.stringify(this.session);let saved=false;for(const storage of availableStorage())try{storage.setItem(SESSION_KEY,raw);saved=true;}catch{}if(!saved)this.fail('浏览器无法保存房间；关闭网页后可能无法恢复');}
@@ -117,13 +187,14 @@ export class RoomClient {
    if(r.mode==='cloud')this.control(msg);else if(this.session?.profile.id===r.hostID)this.applyLocal(r.hostID,msg);else {const p=this.peers.get(r.hostID);if(!p?.proven||p.dc?.readyState!=='open'||p.dc.bufferedAmount>=1000000)throw new Error('与房主的连接已中断');this.sendDC(p,msg);}
   }catch(e){this.fail(e);}
  }
- switchToCloud(){const r=this.state.room;if(!r||r.hostID!==this.session?.profile.id){this.fail('请由房主切换');return;}if(r.started&&!this.localMatch){this.fail('房主牌局状态丢失，请结束本局重新开桌');return;}this.control({type:'switchToCloud',match:this.localMatch});}
+ switchToCloud(){if(this.isOffline){this.fail('离线牌桌请结束后另建云端房间');return;}const r=this.state.room;if(!r||r.hostID!==this.session?.profile.id){this.fail('请由房主切换');return;}if(r.started&&!this.localMatch){this.fail('房主牌局状态丢失，请结束本局重新开桌');return;}this.control({type:'switchToCloud',match:this.localMatch});}
  leave(){if(this.state.room?.started&&this.state.room.hostID!==this.session?.profile.id&&this.state.room.players.some(p=>p.id===this.session?.profile.id)){this.fail('请让房主结束本局，再离开牌桌');return;}this.control({type:'leave'});this.removeLocal();this.clearSavedSession();this.reset();this.patch(initial());}
  destroy(){this.reset();window.removeEventListener('online',this.onOnline);document.removeEventListener('visibilitychange',this.onVisible);window.removeEventListener('pageshow',this.onResume);this.listeners.clear();}
  private onOnline=()=>this.onResume();
  private onVisible=()=>{if(document.visibilityState==='visible')this.onResume();};
  private onResume=()=>{
   if(this.stopped)return;
+  if(this.isOffline){if(this.isHost)this.broadcastLocal();else this.localStatus();return;}
   if(this.ws?.readyState===WebSocket.OPEN)this.probeSocket();
   else if(!this.ws)void this.connect();
   if(this.state.room?.mode==='lan'){
@@ -159,7 +230,7 @@ export class RoomClient {
  }
  private async http(path:string,body?:unknown){const response=await fetch(API+path,{signal:AbortSignal.timeout(15000),method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:undefined,body:body?JSON.stringify(body):undefined});const data=await response.json();if(!response.ok)throw new Error(data.error||'连接暂不可用');return data;}
  private async checkRoomAvailability(generation:number){if(!this.session)return;try{const response=await fetch(API+'/api/rooms/'+this.session.code,{signal:AbortSignal.timeout(5000)});if(generation===this.connectGeneration&&!this.stopped&&response.status===404)this.terminal('房间已结束或不存在，请重新建房或检查房间码');}catch{/* Network errors remain recoverable; only an explicit 404 ends the session. */}}
- private control(msg:any){try{if(this.ws?.readyState!==WebSocket.OPEN)throw new Error('云端连接中断，请重连');this.ws.send(JSON.stringify({...msg,requestID:msg.requestID||crypto.randomUUID()}));}catch(e){this.fail(e);}}
+ private control(msg:any){try{msg={...msg,requestID:msg.requestID||crypto.randomUUID()};if(this.isOffline){if(this.isHost)this.offlineControl(this.state.selfID!,msg);else {const peer=this.state.room&&this.peers.get(this.state.room.hostID);if(!peer?.proven||peer.dc?.readyState!=='open'||peer.dc.bufferedAmount>=1000000)throw new Error('请重新交换加入请求和应答，恢复离线牌桌');this.sendDC(peer,{type:'offlineControl',message:msg});}return;}if(this.ws?.readyState!==WebSocket.OPEN)throw new Error('云端连接中断，请重连');this.ws.send(JSON.stringify(msg));}catch(e){this.fail(e);}}
  private openSocket(){
   if(!this.session||this.stopped)return;clearTimeout(this.reconnectTimer);clearInterval(this.socketHeartbeat);clearTimeout(this.socketProbe);this.socketProbe=undefined;const generation=++this.connectGeneration;this.ws?.close();
   const url=new URL(API+'/api/rooms/'+this.session.code,location.origin);url.protocol=url.protocol==='https:'?'wss:':'ws:';const ws=this.ws=new WebSocket(url);clearTimeout(this.handshakeTimer);this.handshakeTimer=setTimeout(()=>this.socketClosed(ws,generation),10000);
@@ -205,12 +276,13 @@ export class RoomClient {
   }
   this.starting=false;this.ensurePeers();this.localStatus();if(host)this.broadcastLocal();
  }
- private reset(){this.stopped=true;this.reconnects=0;this.starting=false;++this.connectGeneration;clearTimeout(this.socialTimer);clearTimeout(this.reconnectTimer);clearTimeout(this.handshakeTimer);clearInterval(this.socketHeartbeat);clearTimeout(this.socketProbe);this.socketProbe=undefined;this.ws?.close();this.ws=undefined;this.session=undefined;this.dropPeers();this.localMatch=undefined;this.state=initial();}
+ private reset(){this.stopped=true;this.reconnects=0;this.starting=false;++this.connectGeneration;clearTimeout(this.offlinePairTimer);this.cancelOfflinePairing();this.offline=undefined;this.offlineRequests.clear();this.offlineSocial=emptySocial();clearTimeout(this.socialTimer);clearTimeout(this.reconnectTimer);clearTimeout(this.handshakeTimer);clearInterval(this.socketHeartbeat);clearTimeout(this.socketProbe);this.socketProbe=undefined;this.ws?.close();this.ws=undefined;this.session=undefined;this.dropPeers();this.localMatch=undefined;this.state=initial();}
  private dropPeers(){clearTimeout(this.botTimer);clearTimeout(this.clockTimer);this.botTimer=undefined;this.clockTimer=undefined;this.botMatch=undefined;this.localBotError=undefined;for(const timer of this.peerRetry.values())clearTimeout(timer);this.peerRetry.clear();this.peerAttempts.clear();clearInterval(this.heartbeat);this.heartbeat=undefined;for(const peer of this.peers.values()){clearTimeout(peer.pairingTimer);peer.dc?.close();peer.pc.close();}this.peers.clear();}
- private removeLocal(){if(this.state.room)for(const storage of availableStorage())try{storage.removeItem('mocha-host-'+this.state.room.code);}catch{}}
- private persistLocal(){const r=this.state.room;if(r&&this.localMatch){const raw=JSON.stringify({kind:r.kind,options:r.options,matchID:r.matchID,expiresAt:r.expiresAt,players:r.players.map(p=>p.id).join(','),match:this.localMatch});let saved=false;for(const storage of availableStorage())try{storage.setItem('mocha-host-'+r.code,raw);saved=true;}catch{}if(!saved)this.fail('本地牌局存档失败，请保持房主页打开或切换云端');}}
+ private removeLocal(){if(this.state.room)for(const storage of availableStorage())try{storage.removeItem('mocha-host-'+this.state.room.code);if(this.isHost)storage.removeItem('mocha-offline-host-'+this.state.room.code);}catch{}}
+ private persistLocal(){if(this.isOffline){this.saveOffline();return;}const r=this.state.room;if(r&&this.localMatch){const raw=JSON.stringify({kind:r.kind,options:r.options,matchID:r.matchID,expiresAt:r.expiresAt,players:r.players.map(p=>p.id).join(','),match:this.localMatch});let saved=false;for(const storage of availableStorage())try{storage.setItem('mocha-host-'+r.code,raw);saved=true;}catch{}if(!saved)this.fail('本地牌局存档失败，请保持房主页打开或切换云端');}}
  private ensurePeers(){
   const r=this.state.room;if(!r||r.mode!=='lan'||!this.session)return;
+  if(this.isOffline)return;
   if(typeof RTCPeerConnection==='undefined'){this.fail('此浏览器不支持直连，请由房主切换云端');return;}
   const host=this.session.profile.id===r.hostID;const wanted=host?[...r.players.filter(p=>!p.bot),...(r.spectators||[])].filter(p=>p.id!==r.hostID).map(p=>p.id):[r.hostID];
   for(const [id,peer]of this.peers)if(!wanted.includes(id)){clearTimeout(peer.pairingTimer);peer.pc.close();peer.dc?.close();this.peers.delete(id);}
@@ -229,8 +301,8 @@ export class RoomClient {
   const pc=new RTCPeerConnection({iceServers:[],iceTransportPolicy:'all'});const p:Peer={pc,proven:false,nonce:crypto.randomUUID(),pending:[]};this.peers.set(id,p);previous?.dc?.close();previous?.pc.close();
   // Safari can leave initial gathering in 'new' indefinitely, without a failure event.
   // A bounded handshake watchdog also covers lost offer/answer signaling.
-  if(this.isHost)p.pairingTimer=setTimeout(()=>{if(this.peers.get(id)===p&&!p.proven)this.retryPeer(id,p);},8000);
-  pc.onicecandidate=e=>{if(e.candidate&&this.peers.get(id)===p)this.sendSignal(id,{candidate:e.candidate.toJSON()});};
+  if(this.isHost&&!this.isOffline)p.pairingTimer=setTimeout(()=>{if(this.peers.get(id)===p&&!p.proven)this.retryPeer(id,p);},8000);
+  pc.onicecandidate=e=>{if(!this.isOffline&&e.candidate&&this.peers.get(id)===p)this.sendSignal(id,{candidate:e.candidate.toJSON()});};
   pc.ondatachannel=e=>{if(this.peers.get(id)===p)this.bindDC(id,p,e.channel);};
   pc.onconnectionstatechange=()=>{if(this.peers.get(id)!==p)return;if(['failed','disconnected','closed'].includes(pc.connectionState)){p.proven=false;this.localStatus();if(this.isHost){this.broadcastLocal();this.retryPeer(id,p);}}};
   // A replacement connection is untrusted until its data channel proves the nonce.
@@ -238,7 +310,7 @@ export class RoomClient {
   return p;
  }
  private currentPeer(id:string,p:Peer,generation:number){return generation===this.connectGeneration&&this.peers.get(id)===p;}
- private retryPeer(id:string,peer:Peer){if(this.peerRetry.has(id)||this.stopped)return;if((this.peerAttempts.get(id)||0)>=4){if(this.state.room?.spectators?.some(p=>p.id===id))return;this.fail('局域网尚未连通；可由房主切换云端模式');return;}const attempt=(this.peerAttempts.get(id)||0)+1;this.peerAttempts.set(id,attempt);this.peerRetry.set(id,setTimeout(()=>{this.peerRetry.delete(id);if(this.peers.get(id)!==peer||peer.proven||this.ws?.readyState!==WebSocket.OPEN)return;peer.pc.close();void this.offer(id);},Math.min(1500*attempt,6000)));}
+ private retryPeer(id:string,peer:Peer){if(this.isOffline)return;if(this.peerRetry.has(id)||this.stopped)return;if((this.peerAttempts.get(id)||0)>=4){if(this.state.room?.spectators?.some(p=>p.id===id))return;this.fail('局域网尚未连通；可由房主切换云端模式');return;}const attempt=(this.peerAttempts.get(id)||0)+1;this.peerAttempts.set(id,attempt);this.peerRetry.set(id,setTimeout(()=>{this.peerRetry.delete(id);if(this.peers.get(id)!==peer||peer.proven||this.ws?.readyState!==WebSocket.OPEN)return;peer.pc.close();void this.offer(id);},Math.min(1500*attempt,6000)));}
  private async offer(id:string){const generation=this.connectGeneration;let p:Peer|undefined;try{p=this.peer(id);this.bindDC(id,p,p.pc.createDataChannel('mocha-tabletop',{ordered:true}));const offer=await p.pc.createOffer();if(!this.currentPeer(id,p,generation))return;await p.pc.setLocalDescription(offer);if(!this.currentPeer(id,p,generation))return;this.sendSignal(id,{description:p.pc.localDescription});}catch(e){if(generation===this.connectGeneration&&(!p||this.peers.get(id)===p))this.fail(e);}}
  private sendSignal(to:string,data:any){this.control({type:'signal',to,data});}
  private async signal(id:string,data:any){const generation=this.connectGeneration;const r=this.state.room;if(!r||r.mode!=='lan'||![...r.players,...(r.spectators||[])].some(p=>p.id===id))return;let p=this.peers.get(id);
@@ -249,33 +321,37 @@ export class RoomClient {
    else if(data.candidate){if(!p)p=this.peer(id);if(p.pc.remoteDescription){await p.pc.addIceCandidate(data.candidate);if(!this.currentPeer(id,p,generation))return;}else p.pending.push(data.candidate);}
   }catch(e){if(p&&this.currentPeer(id,p,generation))this.fail(e);}
  }
- private get isHost(){return this.state.room?.hostID===this.session?.profile.id;}
+ private get isHost(){return !!this.state.room&&this.state.room.hostID===this.session?.profile.id;}
  private bindDC(id:string,p:Peer,dc:RTCDataChannel){p.dc=dc;
   dc.onopen=()=>{if(this.peers.get(id)!==p)return;this.sendDC(p,{type:'probe',nonce:p.nonce});};
   dc.onclose=()=>{if(this.peers.get(id)!==p)return;p.proven=false;this.localStatus();if(this.isHost){this.broadcastLocal();this.retryPeer(id,p);}};
   dc.onmessage=e=>{if(this.peers.get(id)!==p)return;try{if(typeof e.data!=='string'||e.data.length>150000)throw new Error('局域网消息过大');const msg=JSON.parse(e.data);
     if(msg.type==='probe'){this.sendDC(p,{type:'proof',nonce:msg.nonce});return;}
-    if(msg.type==='proof'&&msg.nonce===p.nonce){if(p.proven)return;p.proven=true;p.syncServed=false;clearTimeout(p.pairingTimer);this.peerAttempts.delete(id);const retry=this.peerRetry.get(id);if(retry)clearTimeout(retry);this.peerRetry.delete(id);this.localStatus();if(this.isHost)this.broadcastLocal();else this.sendDC(p,{type:'sync'});return;}
+    if(msg.type==='proof'&&msg.nonce===p.nonce){if(p.proven)return;p.proven=true;p.syncServed=false;clearTimeout(this.offlinePairTimer);clearTimeout(p.pairingTimer);this.peerAttempts.delete(id);const retry=this.peerRetry.get(id);if(retry)clearTimeout(retry);this.peerRetry.delete(id);this.localStatus();if(this.isHost)this.broadcastLocal();else this.sendDC(p,{type:'sync'});return;}
     if(msg.type==='ping'){this.sendDC(p,{type:'pong'});return;}
     if(msg.type==='pong'){if(!p.proven)this.sendDC(p,{type:'probe',nonce:p.nonce});return;}
     if(!p.proven)return;
+    if(this.isOffline&&msg.type==='offlineControl'&&this.isHost){try{this.offlineControl(id,msg.message);}catch(e){this.sendDC(p,{type:'error',error:e instanceof Error?e.message:'操作无效'});}return;}
+    if(this.isOffline&&!this.isHost&&(msg.type==='ended'||msg.type==='socialAck'||msg.type==='socialError')){if(msg.type==='ended')this.terminal(msg.error);else this.offlineReply(this.state.selfID!,msg);return;}
     // The first host snapshot may arrive before this side's nonce proof.
     if(msg.type==='sync'&&this.isHost){if(!p.syncServed){p.syncServed=true;this.broadcastLocal(id);}return;}
     if(msg.type==='action'&&this.isHost){try{this.applyLocal(id,msg);}catch(e){this.sendDC(p,{type:'error',error:e instanceof Error?e.message:'操作无效'});}return;}
     if(msg.type==='error'){this.fail(msg.error);return;}
-    if(msg.type==='lanSnapshot'&&!this.isHost&&id===this.state.room?.hostID){if(msg.room.revision<this.state.room.revision)return;this.patch({room:msg.room,view:msg.view,actionRevision:msg.actionRevision||0,paused:!!msg.paused,transport:'lan',status:msg.room.started?'playing':'lobby',error:undefined});}
+    if(msg.type==='lanSnapshot'&&!this.isHost&&id===this.state.room?.hostID){if(msg.room.revision<this.state.room.revision)return;if(this.isOffline&&msg.social)this.receiveSocial(msg.social,msg.serverNow);this.patch({room:msg.room,view:msg.view,actionRevision:msg.actionRevision||0,paused:!!msg.paused,transport:'lan',status:msg.room.started?'playing':'lobby',error:undefined,...(this.isOffline?{socialOnline:true}:{})});}
    }catch(e){this.fail(e);}
   };
  }
  private sendDC(p:Peer,msg:any){if(p.dc?.readyState==='open'&&p.dc.bufferedAmount<1000000)p.dc.send(JSON.stringify(msg));}
- private localStatus(){const r=this.state.room;if(!r||r.mode!=='lan')return;const connected=this.isHost?independentRelay(r)||r.players.every(p=>p.bot||p.id===r.hostID||this.peers.get(p.id)?.proven):!!this.peers.get(r.hostID)?.proven;this.patch({transport:connected?'lan':'none',paused:r.started&&(!connected||this.isHost&&!this.localMatch)});}
+ private localStatus(){const r=this.state.room;if(!r||r.mode!=='lan')return;const connected=this.isHost?independentRelay(r)||r.players.every(p=>p.bot||p.id===r.hostID||this.peers.get(p.id)?.proven):!!this.peers.get(r.hostID)?.proven;this.patch({transport:connected?'lan':'none',paused:r.started&&(!connected||this.isHost&&!this.localMatch),...(this.isOffline?{socialOnline:this.isHost||connected,...(!connected&&!this.isHost?{error:'请重新交换加入请求和应答，恢复离线牌桌'}:{})}:{})});}
  private applyLocal(actor:string,msg:any){const r=this.state.room;if(!r||!this.localMatch||!r.started||!this.isHost)throw new Error('等待房主开始');if(this.state.paused&&!isRelayGalleryNavigation(r.kind,this.localMatch.game.finished,msg.command))throw new Error('有玩家掉线，恢复连接后继续');const timed=advanceMatchClock(this.localMatch,r.kind,r.players,Date.now());if(timed!==this.localMatch){this.localMatch=timed;this.persistLocal();this.broadcastLocal();throw new Error('牌局已变化，请重选');}this.localMatch=applyMatch(this.localMatch,r.kind,r.players,actor,msg.command,msg.requestID,msg.actionRevision);this.persistLocal();this.broadcastLocal();}
  private broadcastLocal(recipientID?:string){const r=this.state.room;if(!r||r.mode!=='lan'||!this.isHost)return;const now=Date.now(),allConnected=r.players.every(p=>!!p.bot||p.id===r.hostID||!!this.peers.get(p.id)?.proven);if(this.localMatch){let timed=allConnected?resumeMatchClock(this.localMatch,r.kind,r.players,now):pauseMatchClock(this.localMatch,r.kind,r.players,now);if(allConnected)timed=advanceMatchClock(timed,r.kind,r.players,now);if(timed!==this.localMatch){this.localMatch=timed;this.persistLocal();}}this.localStatus();const room={...r,botError:this.localBotError,spectators:(r.spectators||[]).map(p=>({...p,connected:!!this.peers.get(p.id)?.proven})),players:r.players.map(p=>({...p,connected:!!p.bot||p.id===r.hostID||!!this.peers.get(p.id)?.proven}))};
   for(const p of [...room.players.filter(p=>!p.bot),...room.spectators]){if(recipientID&&p.id!==recipientID)continue;const data={type:'lanSnapshot',room:{...room,pending:p.id===r.hostID?room.pending:[]},...(this.localMatch?viewRoomMatch(this.localMatch,r,p.id):{view:undefined,actionRevision:0}),paused:this.state.paused};
-   if(p.id===r.hostID)this.patch({room,view:data.view,actionRevision:data.actionRevision});else {const peer=this.peers.get(p.id);if(peer?.proven)this.sendDC(peer,data);}
+   const offlineData=this.isOffline?{social:socialView(this.offlineSocial,room,now),serverNow:now}:{};
+   if(p.id===r.hostID){this.patch({room,view:data.view,actionRevision:data.actionRevision});if(this.isOffline)this.receiveSocial(socialView(this.offlineSocial,room,now),now);}else {const peer=this.peers.get(p.id);if(peer?.proven)this.sendDC(peer,{...data,...offlineData});}
   }
   if(!recipientID)this.scheduleLocalBot();
   this.scheduleLocalClock();
+  if(this.isOffline)this.saveOffline();
  }
  private scheduleLocalClock(){const r=this.state.room,deadline=this.localMatch&&r?matchDeadline(this.localMatch,r.kind):0,allConnected=!!r&&r.players.every(p=>!!p.bot||p.id===r.hostID||!!this.peers.get(p.id)?.proven);clearTimeout(this.clockTimer);this.clockTimer=undefined;if(!r||!deadline||r.mode!=='lan'||!this.isHost||!allConnected)return;this.clockTimer=setTimeout(()=>{this.clockTimer=undefined;this.broadcastLocal();},Math.max(20,deadline-Date.now()+10));}
  private scheduleLocalBot(){

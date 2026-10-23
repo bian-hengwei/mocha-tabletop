@@ -43,6 +43,8 @@ BASE_URL=http://127.0.0.1:5174 TEST_API_BASE=http://127.0.0.1:8787 node scripts/
 
 ## 浏览器与联机回归
 
+离线多人回归：`npx vitest run tests/network/offline-room.test.ts` 检查本地控制权限、身份恢复、去重、准备/容量/观战、私有视图和配对文件边界。`npm run build` 后运行 `node tests/network/offline-lan.integration.mjs`，脚本自启临时静态服务，各设备完成真实生产缓存后关闭服务并拦截全部 HTTP/WebSocket，保留真实 WebRTC 本地连接。三个独立上下文通过 UI 下载/导入配对文件，验证取消/错应答、聊天确认、寿司秘密手牌与选牌、房主刷新、原局重新配对、继续操作、解散和缓存隐私。覆盖中英七尺寸、旋转和截图；`TEST_LOCALES=zh` 可选单语言。该脚本在 `classic` CI 组执行，不需要 Worker。截图在忽略的 `test-results/offline-lan/`，配对临时文件成功使用后删除；失败残留也不得提交。`TEST_BROWSER=webkit` 可探测本机 WebKit，无法生成本地候选或离线导航不受模拟环境支持时必须报告失败，不记作直连通过。自动化的多个上下文不代替物理手机、真实 Wi-Fi/热点、AirDrop 或 iPhone 主屏幕安装验收。
+
 `node tests/ui/connection-overlays.integration.mjs` 用隔离的 API/WebSocket 快照检查等待房主批准、断线恢复、取消/重连/菜单、Escape、Tab/Shift+Tab、背景隔离与嵌套弹窗焦点恢复。覆盖中英双语八种尺寸（包含 568×320）及弹窗旋转；支持 `TEST_BROWSER=webkit` 和 `TEST_OUTPUT`。仅需 Vite，不创建真实 Worker 房间；此项在 app CI 组单独注册，不重复全游戏联机覆盖。
 
 房间聊天与头像表情的新增验收：`npx vitest run tests/room-social.test.ts` 校验输入、授权、禁用游戏、限流、去重、上限和过期；`node tests/network/room-social.integration.mjs` 使用真实 Worker 覆盖 cloud/LAN 房间、重连、换局与换游戏保留记录、解散后不再广播和新房间隔离。`node tests/ui/room-social.integration.mjs` 用两个浏览器验证聊天、头像动画、IME、焦点、双语七尺寸、刷新、LAN 转云端，以及解散时清空聊天/草稿/恢复入口；支持 `TEST_BROWSER=webkit` 与 `TEST_MODES=cloud,lan`。`node tests/ui/room-social-games.integration.mjs` 覆盖八款游戏最大人数与四款禁用游戏，逐尺寸检查右上角头像仍打开资料编辑、只有自己的座位头像能发表情；支持 `TEST_GAMES` 选择游戏。联机脚本用 `BASE_URL` / `TEST_API_BASE` 指定隔离服务，批量运行时避免与其他脚本共用限流窗口；不得因此放宽产品限流。

@@ -1,0 +1,10 @@
+.offline-pairing{display:grid;gap:14px;min-width:0}
+.offline-pairing p{margin:0;line-height:1.5;overflow-wrap:anywhere}
+.offline-pairing section{display:grid;gap:10px;border:1px solid var(--border, #d6d8d2);padding:12px;border-radius:12px;min-width:0}
+.offline-pairing button,.offline-pairing summary,.offline-file{min-height:44px}
+.offline-pairing button{white-space:normal}
+.offline-pairing summary{cursor:pointer;display:flex;align-items:center}
+.offline-pairing textarea{width:100%;height:100px;resize:vertical;font:12px monospace;word-break:break-all}
+.offline-file{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
+.offline-file input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.offline-file:focus-within{outline:2px solid currentColor;outline-offset:2px}
