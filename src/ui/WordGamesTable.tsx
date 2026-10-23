@@ -18,7 +18,7 @@ function useWordPages(total:number,kind:'words'|'players',follow?:{index:number;
   window.addEventListener('resize',resize);
   return()=>window.removeEventListener('resize',resize);
  },[]);
- const size=compact.narrow||compact.short?(kind==='words'?(compact.narrow&&!compact.short?9:10):4):total;
+ const size=compact.narrow&&compact.short?(kind==='words'?6:4):compact.narrow||compact.short?(kind==='words'?(compact.narrow?9:10):4):total;
  const pages=Math.max(1,Math.ceil(total/size)),current=Math.max(0,Math.min(page,pages-1));
  const followIndex=follow?.index,followKey=follow?.key;
  useLayoutEffect(()=>{

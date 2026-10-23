@@ -19,7 +19,7 @@ try{
   const confirm=()=>page.locator('.action-sheet footer button').click();
   const capture=async(name,{voting=false}={})=>{
    for(const [width,height]of sizes){
-    await page.setViewportSize({width,height});await page.locator('.game-surface').evaluate(el=>{el.scrollTop=0;});
+    await page.setViewportSize({width,height});await page.locator('.game-surface').evaluate(el=>{el.scrollTop=0;});await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`${locale} ${name} ${width}: horizontal page overflow`);
     const overflow=await page.locator('.wg-table button,.wg-table strong,.wg-table input,.wg-table select').evaluateAll(nodes=>nodes.flatMap(el=>{const r=el.getBoundingClientRect();return r.width&&el.scrollWidth>el.clientWidth+2?[{text:el.textContent,client:el.clientWidth,scroll:el.scrollWidth}]:[];}));
     assert.deepEqual(overflow,[],`${locale} ${name} ${width}: clipped labels`);
