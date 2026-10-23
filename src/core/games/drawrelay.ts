@@ -1,6 +1,6 @@
 import {makeRelayOpeningPrompts} from './relayPrompts';
 import {freshQueueDraft,viewRelayQueue,applyRelayQueue,type RelayQueue} from './relayQueue';
-import {action, assertPlayers, type GameModule, type Player, type Command} from '../types';
+import {action, assertPlayers, type GameModule, type Player, type Command, type WordPack} from '../types';
 
 /** Mocha drawing telephone rules: docs/DRAW_RELAY.md. No external art or word bank. */
 export const RELAY_COLORS=['#253c42','#ce5345','#e5ab3e','#438468','#518bb0','#9162a7','#ffffff','#e57c3a','#dc649a','#92c94b','#33b9bb','#a6774b','#888888','#111111','#efdfad','#adc5ee'] as const;
@@ -10,7 +10,7 @@ export const RELAY_MAX_POINTS=48;
 const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 export type RelayPoint=[number,number];
 export interface RelayEntry {author:string;kind:'text'|'drawing';text?:string;strokes?:string[];skipped?:boolean;timedOut?:boolean}
-export interface DrawRelayState {version:1;queue?:RelayQueue;openingPrompts?:string[][];players:Player[];seconds:number;step:number;books:RelayEntry[][];drafts:RelayEntry[];submitted:boolean[];deadlineAt:number;pausedRemaining?:number;finished:boolean;cursors:Record<string,{book:number;page:number}>}
+export interface DrawRelayState {version:1;queue?:RelayQueue;openingPrompts?:string[][];language?:'zh'|'en';wordPack?:WordPack;players:Player[];seconds:number;step:number;books:RelayEntry[][];drafts:RelayEntry[];submitted:boolean[];deadlineAt:number;pausedRemaining?:number;finished:boolean;cursors:Record<string,{book:number;page:number}>}
 export function encodeRelayStroke(points:RelayPoint[],color:number,width:number):string {
  return alphabet[color]+alphabet[width]+points.map(([x,y])=>alphabet[x>>5]+alphabet[x&31]+alphabet[y>>5]+alphabet[y&31]).join('');
 }
@@ -41,14 +41,14 @@ export function pauseRelayClock(state:DrawRelayState,now:number){if(!state.secon
 export function resumeRelayClock(state:DrawRelayState,now:number){if(state.pausedRemaining===undefined)return state;const s={...state,deadlineAt:now+state.pausedRemaining};delete s.pausedRemaining;return s;}
 function assertStep(s:DrawRelayState,command:Command){if(command.values[0]!==String(s.step))throw new Error('接龙已换页，请重新查看');}
 export const drawrelay:GameModule<DrawRelayState>={
- create(players,seed,options){assertPlayers(players,3,12);const seconds=options?.relayMode==='queue'?0:options?.relaySeconds??90;if(![0,60,90,120].includes(seconds))throw new Error('接龙时长无效');const s:DrawRelayState={version:1,openingPrompts:makeRelayOpeningPrompts(players.length,seed,options?.language==='en'?'en':'zh'),players:structuredClone(players),seconds,step:0,books:players.map(()=>[]),drafts:[],submitted:[],deadlineAt:0,finished:false,cursors:{}};if(options?.relayMode==='queue'){s.queue={drafts:players.map((_,b)=>freshQueueDraft(s,b)),selected:{}};}else freshDrafts(s);return s;},
+ create(players,seed,options){assertPlayers(players,3,12);const seconds=options?.relayMode==='queue'?0:options?.relaySeconds??90,language=options?.language==='en'?'en':'zh',wordPack=options?.wordPack==='modern'?'modern':'classic';if(![0,60,90,120].includes(seconds))throw new Error('接龙时长无效');const s:DrawRelayState={version:1,openingPrompts:makeRelayOpeningPrompts(players.length,seed,language,wordPack),language,wordPack,players:structuredClone(players),seconds,step:0,books:players.map(()=>[]),drafts:[],submitted:[],deadlineAt:0,finished:false,cursors:{}};if(options?.relayMode==='queue'){s.queue={drafts:players.map((_,b)=>freshQueueDraft(s,b)),selected:{}};}else freshDrafts(s);return s;},
  view(s,id,spectator=false){const seat=spectator?-1:s.players.findIndex(p=>p.id===id);if(seat<0&&!spectator)throw new Error('不在本局中');
   if(s.queue&&!s.finished)return viewRelayQueue(s,id,spectator);
   const stage=s.finished?'gallery':s.step===0?'prompt':s.step%2?'draw':'guess',editable=seat>=0&&!s.finished&&!s.submitted[seat];
   const marker=[{id:String(s.step),title:'当前页'}],actions=editable?[action('submit','传给下一位',marker,1,1),...(stage==='draw'?[action('stroke','画笔',marker,1,1),...(s.drafts[seat].strokes!.length?[action('undo','撤销上一笔',marker,1,1),action('clear','清空画布',marker,1,1)]:[])]:[action('draft','保存草稿',marker,1,1)])]:[];
   const cursor=s.cursors[seat<0?s.players[0].id:id]||{book:0,page:0};
   if(s.finished&&seat>=0)actions.push(action('album','选择画册',s.players.map((p,i)=>({id:String(i),title:p.name,translateTitle:false})),1,1),action('page','选择页码',s.players.map((_,i)=>({id:String(i),title:String(i+1)})),1,1));
-  return structuredClone({kind:'drawrelay',phase:s.finished?'画册揭晓':stage==='prompt'?'开场句':stage==='draw'?'画图':'猜图',instruction:s.finished?'查看每句话怎样传到最后':seat<0?'等待玩家完成接龙':s.submitted[seat]?'已提交，等待其他玩家':stage==='prompt'?'写一句话，交给下一位画出来':stage==='draw'?'根据上一页的句子作画':'只看这幅画，写下你的理解',finished:s.finished,actions,sections:[],log:[],board:{stage,step:s.step,totalSteps:s.players.length,seconds:s.seconds,deadlineAt:relayDeadline(s),players:s.players.map((p,i)=>({...p,ready:s.finished||s.submitted[i]})),...(s.finished?{gallery:{...cursor,entry:s.books[cursor.book][cursor.page]}}:seat>=0?{submitted:s.submitted[seat],...(stage==='prompt'&&editable&&s.openingPrompts?{openingPrompts:s.openingPrompts[seat]}:{}),previous:s.step?s.books[bookAt(s,seat)].at(-1):undefined,draft:s.drafts[seat]}:{})}});
+  return structuredClone({kind:'drawrelay',phase:s.finished?'画册揭晓':stage==='prompt'?'开场句':stage==='draw'?'画图':'猜图',instruction:s.finished?'查看每句话怎样传到最后':seat<0?'等待玩家完成接龙':s.submitted[seat]?'已提交，等待其他玩家':stage==='prompt'?'写一句话，交给下一位画出来':stage==='draw'?'根据上一页的句子作画':'只看这幅画，写下你的理解',finished:s.finished,actions,sections:[],log:[],board:{language:s.language??'zh',wordPack:s.wordPack??'classic',stage,step:s.step,totalSteps:s.players.length,seconds:s.seconds,deadlineAt:relayDeadline(s),players:s.players.map((p,i)=>({...p,ready:s.finished||s.submitted[i]})),...(s.finished?{gallery:{...cursor,entry:s.books[cursor.book][cursor.page]}}:seat>=0?{submitted:s.submitted[seat],...(stage==='prompt'&&editable&&s.openingPrompts?{openingPrompts:s.openingPrompts[seat]}:{}),previous:s.step?s.books[bookAt(s,seat)].at(-1):undefined,draft:s.drafts[seat]}:{})}});
  },
  apply(state,id,command){const seat=member(state,id);if(!command||!Array.isArray(command.values))throw new Error('操作无效');
   if(state.finished){if(!['album','page'].includes(command.action)||command.values.length!==1||!/^(0|[1-9]\d*)$/.test(command.values[0]))throw new Error('操作无效');const n=Number(command.values[0]);if(n>=state.players.length)throw new Error('操作无效');const s=structuredClone(state),cursor=s.cursors[id]||{book:0,page:0};s.cursors[id]=command.action==='album'?{book:n,page:0}:{...cursor,page:n};return s;}
@@ -74,7 +74,7 @@ export const drawrelay:GameModule<DrawRelayState>={
 /** Reject malformed/oversized restored LAN and practice state before any projection. */
 export function validateRelayState(value:unknown,seconds:number,mode:'rounds'|'queue'='rounds'):asserts value is DrawRelayState {
  const s=value as DrawRelayState,fail=()=>{throw new Error('接龙存档无效');};
- if(!s||s.version!==1||s.seconds!==(mode==='queue'?0:seconds)||![0,60,90,120].includes(s.seconds)||!Array.isArray(s.players)||s.players.length<3||s.players.length>12)return fail();
+ if(!s||s.version!==1||s.seconds!==(mode==='queue'?0:seconds)||![0,60,90,120].includes(s.seconds)||!Array.isArray(s.players)||s.players.length<3||s.players.length>12||s.language!==undefined&&!['zh','en'].includes(s.language)||s.wordPack!==undefined&&!['classic','modern'].includes(s.wordPack))return fail();
  const n=s.players.length,ids=s.players.map(p=>p.id);
  // Optional for old checkpoints: do not invent or redeal ideas while restoring.
  if(s.openingPrompts!==undefined&&(!Array.isArray(s.openingPrompts)||s.openingPrompts.length!==n||s.openingPrompts.some(choices=>!Array.isArray(choices)||choices.length!==3||new Set(choices).size!==3||choices.some(text=>typeof text!=='string'||!text.trim()||[...text].length>120||/[\u0000-\u001f\u007f]/.test(text)))))return fail();
