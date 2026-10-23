@@ -69,6 +69,13 @@ try{
  await host.keyboard.press('Escape');await expect(host.getByRole('dialog')).toHaveCount(0);await expect(host.getByRole('button',{name:labels.zh.scan,exact:true})).toBeFocused();
  assert(!(await host.locator('body').innerText()).includes(first.token));assert(!(await host.locator('body').innerHTML()).includes(first.token));
 
+ // A fresh browser context opens the URL recovered from the host QR pixels and is
+ // admitted by that existing fragment credential, without entering the approval queue.
+ const direct=await pageFor('zh','InviteGuest');await direct.goto(hostUrl);
+ await direct.getByRole('dialog',{name:'加入朋友的牌桌'}).getByRole('button',{name:labels.zh.enter,exact:true}).click();
+ await direct.locator('.lobby').waitFor();await host.getByText('InviteGuest',{exact:true}).waitFor();
+ await expect(host.getByRole('button',{name:'同意InviteGuest',exact:true})).toHaveCount(0);
+
  // Actual App + isolated Worker: the ordinary room-code path remains pending until approval,
  // and the admitted player shares only the ordinary room URL.
  const guest=await pageFor('zh','Guest');await guest.goto(base);
