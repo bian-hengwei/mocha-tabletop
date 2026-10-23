@@ -66,6 +66,7 @@ const overlaps=await page.locator('.wg-word,.wg-odd-player').evaluateAll(xs=>xs.
   assert.equal(await page.locator('.wg-speaking,.wg-odd-player,.end-banner').count(),0);
   assert.equal(await page.locator('.wg-heading h2').textContent(),locale==='zh'?'开始线下描述':'Start describing in person');
   assert.equal(await page.locator('.wg-offline-next').textContent(),locale==='zh'?'词已发好。开始轮流描述和讨论；投票与淘汰在线下进行。':'Words are dealt. Take turns describing and discussing; vote and eliminate in person.');
+  assert.equal(await page.locator('.wg-word-dealer>.wg-heading>span').evaluate(node=>getComputedStyle(node).whiteSpace),'nowrap','The ready count must stay on one line beside the all-ready heading');
   await capture('odd-handoff');
   const oddMatch=await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id);
   await page.locator('.wg-secret').click();await page.getByRole('button',{name:locale==='zh'?'牌桌菜单':'Table menu',exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'再来一局':'Play again',exact:true}).click();
