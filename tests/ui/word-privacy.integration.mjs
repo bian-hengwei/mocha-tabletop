@@ -38,6 +38,11 @@ const overlaps=await page.locator('.wg-word,.wg-odd-player').evaluateAll(xs=>xs.
      const compact=await page.locator('.wg-secret-panel').boundingBox();assert(compact.height<=90,'The hidden secret control must stay compact while voting');
      const first=await page.locator('.wg-odd-player').first().boundingBox();assert(first.y<height,'At least the first voting targets must enter the initial viewport');
     }
+    if(name==='odd-handoff'){
+     const handoff=await page.locator('.wg-secret-panel,.wg-help-button').evaluateAll(nodes=>nodes.map(node=>{const rect=node.getBoundingClientRect();return {name:node.className,left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height};}));
+     const overlaps=handoff.flatMap((item,index)=>handoff.slice(index+1).filter(other=>item.left<other.right-1&&item.right>other.left+1&&item.top<other.bottom-1&&item.bottom>other.top+1).map(other=>[item.name,other.name]));
+     assert.deepEqual(overlaps,[],`${locale} ${width}×${height}: the in-person handoff and table-rules controls must not overlap`);
+    }
    }
    await page.setViewportSize({width:390,height:844});
   };
@@ -46,8 +51,24 @@ const overlaps=await page.locator('.wg-word,.wg-odd-player').evaluateAll(xs=>xs.
   await seat(captain);await page.locator('.wg-key-toggle').click();assert.equal((await collectWordPages(page,'.wg-word.wg-assassin')).length,1);
   await seat(operative);assert.equal(await page.locator('.wg-word.wg-assassin').count(),0);await seat(captain);
   assert.equal(await page.locator('.wg-word.wg-assassin').count(),0,'Returning to the captain must not reveal the previous key');assert.equal(await page.locator('.wg-key-toggle').getAttribute('aria-pressed'),'false');
+  const backgroundClue=locale==='en'?'Background Draft':'背景草稿';
+  await page.locator('.wg-clue-form input').fill(backgroundClue);await page.locator('.wg-key-toggle').click();
+  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});
+  await page.waitForFunction(()=>document.querySelector('.wg-key-toggle').getAttribute('aria-pressed')==='false',undefined,{timeout:2000});
+  assert.equal((await collectWordPages(page,'.wg-word.wg-assassin')).length,0,'Codenames key must be concealed while hidden');
+  assert.equal(await page.locator('.wg-clue-form input').inputValue(),backgroundClue,'Background concealment must preserve the captain clue draft');
+  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
+  assert.equal((await collectWordPages(page,'.wg-word.wg-assassin')).length,0,'An ordinary visible event must not reveal the key');
+  await page.locator('.wg-key-toggle').click();assert.equal((await collectWordPages(page,'.wg-word.wg-assassin')).length,1,'Explicit rereveal must show the key after return');
+  await seat(operative);await page.locator('.wg-mark-toggle').click();await page.locator('.wg-word.wg-selectable').first().click();await page.locator('.wg-personal-mark').waitFor();
+  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});
+  assert(await page.locator('.wg-personal-mark').count()>0,'Background concealment must preserve personal marks');
+  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
+  assert(await page.locator('.wg-personal-mark').count()>0,'Returning visible must preserve personal marks');
+  await seat(captain);
   await capture('signals-captain');
-  await page.locator('.wg-key-toggle').click();const targets=await collectWordPages(page,'.wg-word.wg-'+(red?'red':'blue')+' .wg-cell-index');
+  await page.locator('.wg-key-toggle').click();
+  const targets=await collectWordPages(page,'.wg-word.wg-'+(red?'red':'blue')+' .wg-cell-index');
   const boardWords=await collectWordPages(page,'.wg-word>strong');const clue=(locale==='en'?['Mystery','Journey','Harmony']:['联想','旅途','回忆']).find(word=>!boardWords.includes(word));
   await page.setViewportSize({width:320,height:568});await page.locator('.wg-clue-form input').fill(clue);await page.locator('.wg-clue-form select').selectOption('unlimited');await page.locator('.wg-clue-form button[type=submit]').click();await seat(operative);await page.setViewportSize({width:390,height:844});
   for(const target of targets){await (await findWordPage(page,page.locator('.wg-word').filter({has:page.locator('.wg-cell-index',{hasText:new RegExp('^'+target+'$')})}))).click();await confirm();}
@@ -57,13 +78,25 @@ const overlaps=await page.locator('.wg-word,.wg-odd-player').evaluateAll(xs=>xs.
   await begin('undercover');await page.locator('.wg-secret').click();assert.equal(await page.locator('.wg-secret.wg-open').count(),1);await seat(1);await seat(0);
   assert.equal(await page.locator('.wg-secret.wg-open').count(),0,'Returning to a seat must not reveal its previous secret word');assert.equal(await page.locator('.wg-secret').getAttribute('aria-pressed'),'false');
   await capture('odd-deal');
+  await seat(0);await page.locator('.wg-secret').click();const backgroundWord=await page.locator('.wg-secret>strong').textContent();
+  await page.evaluate(()=>window.dispatchEvent(new Event('pagehide')));
+  await page.waitForFunction(()=>document.querySelector('.wg-secret').getAttribute('aria-pressed')==='false',undefined,{timeout:2000});
+  assert.equal(await page.locator('.wg-secret.wg-open').count(),0,'Odd Word Out secret must be concealed on pagehide');
+  assert.equal(await page.locator('.wg-secret-panel>.wg-primary').isEnabled(),true,'Pagehide concealment must preserve confirmed read state');
+  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
+  assert.equal(await page.locator('.wg-secret.wg-open').count(),0,'An ordinary visible event must not reveal the secret word');
+  await page.locator('.wg-secret').click();assert.equal(await page.locator('.wg-secret>strong').textContent(),backgroundWord,'Explicit rereveal must show the same secret word');
   const words=[];for(let index=0;index<3;index++){await seat(index);await page.locator('.wg-secret').click();words.push(await page.locator('.wg-secret>strong').textContent());await page.locator('.wg-secret-panel>.wg-primary').click();}
   assert.equal(await page.locator('.wg-speaking,.wg-odd-player,.end-banner').count(),0);
+  assert.equal(await page.locator('.wg-heading h2').textContent(),locale==='zh'?'开始线下描述':'Start describing in person');
+  assert.equal(await page.locator('.wg-offline-next').textContent(),locale==='zh'?'词已发好。开始轮流描述和讨论；投票与淘汰在线下进行。':'Words are dealt. Take turns describing and discussing; vote and eliminate in person.');
+  assert.equal(await page.locator('.wg-word-dealer>.wg-heading>span').evaluate(node=>getComputedStyle(node).whiteSpace),'nowrap','The ready count must stay on one line beside the all-ready heading');
+  await capture('odd-handoff');
   const oddMatch=await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id);
   await page.locator('.wg-secret').click();await page.getByRole('button',{name:locale==='zh'?'牌桌菜单':'Table menu',exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'再来一局':'Play again',exact:true}).click();
-  assert.notEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id),oddMatch);assert.equal(await page.locator('.wg-secret.wg-open').count(),0,'A new deal hides words again');
+  assert.notEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.id),oddMatch);assert.equal(await page.locator('.wg-secret.wg-open').count(),0,'A new deal hides words again');assert.equal(await page.locator('.wg-offline-next').count(),0,'A new deal returns to private reading before showing the handoff');
   console.log(`PASS ${locale} dealer seat privacy, menu redeal, hidden new words, layouts`);
   await context.close();
  }
- assert.deepEqual(errors,[]);console.log(`PASS word-game privacy and replay regressions, ${sizes.length*6} bilingual responsive screenshots, loaded atlases, voting priority, no clipped labels or browser errors`);
+ assert.deepEqual(errors,[]);console.log(`PASS word-game privacy and replay regressions, ${sizes.length*4} bilingual responsive screenshots, loaded atlases, voting priority, no clipped labels or browser errors`);
 }finally{await browser.close();}

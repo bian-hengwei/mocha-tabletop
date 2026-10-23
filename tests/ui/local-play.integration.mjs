@@ -1,7 +1,6 @@
 import {chromium,webkit,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import {waitForOfflineReady} from './offline-ready.mjs';
 const base=process.env.BASE_URL||'http://127.0.0.1:5218',engine=process.env.TEST_BROWSER==='webkit'?'webkit':'chromium';
 const out=`test-results/local-play-${engine}`;await fs.mkdir(out,{recursive:true});
 const browser=await(engine==='webkit'?webkit:chromium).launch({headless:true});
@@ -14,7 +13,6 @@ try{
  for(const locale of ['zh','en']){
   const context=await browser.newContext({viewport:{width:390,height:844}}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
   await page.goto(base);await page.evaluate(locale=>{localStorage.setItem('mocha-locale',locale);localStorage.setItem('mocha-profile',JSON.stringify({id:'local-play-human',name:'MorganLongName',avatar:'🦊'}));},locale);await page.reload();
-  if(process.env.TEST_OFFLINE==='1'){await waitForOfflineReady(page);await context.setOffline(true);await page.reload();}
   for(const [i,[kind,count]] of Object.entries(maxCounts).entries()){
    await page.locator('.cover-'+kind).click();const counts=page.locator('.local-play-fields select').first();
    if(count<=4&&['doudizhu','guandan','mahjong'].includes(kind)){await expect(counts).toBeDisabled();await expect(counts).toHaveValue(String(count));}else await counts.selectOption(String(count));
@@ -44,6 +42,6 @@ try{
   await page.evaluate(()=>{const s=JSON.parse(localStorage.getItem('mocha-practice-v1'));s.practice.game.finished=true;s.practice.game.winners=[s.practice.players[0].id];localStorage.setItem('mocha-practice-v1',JSON.stringify(s));});await page.reload();await page.locator('.end-banner').waitFor();
   const records=await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-history-v1')).records);assert.equal(records.filter(r=>r.id===before.id).length,1);assert.equal(records.find(r=>r.id===before.id).mode,'solo');
   await page.getByRole('button',{name:locale==='zh'?'再来一局':'Play again',exact:true}).click();await expect(page.locator('.end-banner')).toHaveCount(0);const replay=await saved(page);assert.notEqual(replay.id,before.id);assert.equal(replay.players.length,3);assert.equal(replay.difficulty,'hard');await exit(page,locale);await page.reload();await expect(page.locator('.game-surface')).toHaveCount(0);
-  assert.deepEqual(errors,[]);await context.close();console.log(`PASS ${locale}: eight solo games, counts, difficulty, bot progress, discussion pass & play, eight viewports and rotation, resume/language/replay/history/exit${process.env.TEST_OFFLINE==='1'?', offline':''}`);
+  assert.deepEqual(errors,[]);await context.close();console.log(`PASS ${locale}: eight solo games, counts, difficulty, bot progress, discussion pass & play, eight viewports and rotation, resume/language/replay/history/exit`);
  }
 }finally{await browser.close();}

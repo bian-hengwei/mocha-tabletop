@@ -1,9 +1,8 @@
-import {waitForOfflineReady} from './offline-ready.mjs';
 import {chromium,webkit,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const base=process.env.BASE_URL||'https://mocha-tabletop-web.pages.dev';
-const safari=process.env.TEST_BROWSER==='webkit',skipOffline=process.env.TEST_SKIP_OFFLINE==='1';
+const safari=process.env.TEST_BROWSER==='webkit',skipPwa=process.env.TEST_SKIP_PWA==='1';
 const contexts=[],pages=[],errors=[];
 fs.mkdirSync('test-results',{recursive:true});
 const scenarios=[
@@ -142,18 +141,15 @@ try{
   console.log('PASS live UI room',key,count,'people');
  }
  const manifest=await host.evaluate(async()=>await(await fetch(document.querySelector('link[rel=manifest]').href)).json());assert.equal(manifest.orientation,'any');assert.equal(manifest.display,'standalone');
- if(skipOffline)console.log('SKIP service worker/offline checks (TEST_SKIP_OFFLINE=1); manifest checked');
+ if(skipPwa)console.log('SKIP deployed Service Worker policy checks (TEST_SKIP_PWA=1); manifest checked');
  else{
-  await waitForOfflineReady(host);
-  if(!safari){
-   await contexts[0].setOffline(true);await host.reload();await host.getByRole('button',{name:'选择晶石商会',exact:true}).waitFor();
-   for(const title of ['晶石商会','喵喵危机','月夜议会','迷雾远征','寿司小宴','香料商旅','七彩接龙','密语行动','异词同伴','斗地主','掼蛋','麻将']){
-    await host.getByRole('button',{name:'选择'+title,exact:true}).click();await host.getByRole('button',{name:'同屏试玩',exact:true}).click();await host.locator('.game-surface').waitFor();
-    await host.getByRole('button',{name:'牌桌菜单',exact:true}).click();host.once('dialog',d=>d.accept());await host.getByRole('button',{name:'结束试玩',exact:true}).click();
-   }
-   assert.equal(await host.locator('.game-cover img').evaluateAll(imgs=>imgs.every(i=>i.complete&&i.naturalWidth>0)),true);
-   console.log('PASS service worker installation, offline reload, all twelve offline practices, cached cover images');
-  }else console.log('PASS WebKit manifest, activated controller and cached page assets; offline navigation excluded because this environment also fails a minimal service-worker offline control');
+  await expect.poll(()=>host.evaluate(()=>navigator.serviceWorker.controller?.state)).toBe('activated');
+  const cachedEntries=await host.evaluate(async()=>{
+   const paths=[];for(const name of await caches.keys())for(const request of await(await caches.open(name)).keys())paths.push(new URL(request.url).pathname);
+   return paths;
+  });
+  assert.equal(cachedEntries.some(path=>path==='/'||path==='/index.html'),false,'the Service Worker must not cache HTML navigation');
+  console.log('PASS deployed manifest, activated Service Worker and no cached HTML entry');
  }
  assert.deepEqual(errors,[]);console.log('PASS production acceptance',safari?'WebKit':'Chromium',base);
 }catch(error){

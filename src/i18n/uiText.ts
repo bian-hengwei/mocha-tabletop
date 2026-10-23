@@ -33,6 +33,7 @@ export const uiText: Record<string,string> = {
   "开桌选项": "Table options",
   "宝石银行，可左右滑动": "Gem bank; swipe left or right", "宝石银行翻页": "Browse gem bank", "上一组宝石": "Previous gems", "下一组宝石": "Next gems",
   "选项翻页": "Browse choices", "上一组选项": "Previous choices", "下一组选项": "Next choices", "可选项": "Available choices",
+  "待猜词": "Word to guess", "返回牌桌另选": "Back to board to pick another",
   '这张发展牌已经购入': 'This development card has already been purchased.',
   '这是其他玩家的预留牌': 'This card is reserved by another player.',
   '请先确认或取消当前购买': 'Confirm or cancel the current purchase first.',

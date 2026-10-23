@@ -2,6 +2,8 @@
 
 `src/core/games/wordBank.ts` contains 454 Chinese/English entries for Secret Signals and 287 related pairs for Odd Word Out. Both games choose from the entire respective bank. Words are fixed when a match starts and saved in the game state; changing interface language or expanding the bank does not replace words in a saved match.
 
+The optional Modern life pack adds 82 Secret Signals words and 40 Odd Word Out pairs. It also supplies 40 concrete DrawGuess subjects and 30 Draw Relay opening prompts. The pack is selected when a game starts and saved with its language; checkpoints without a pack selection reopen as Classic. The material covers everyday social and leisure scenes without claiming a current trend list.
+
 The selection covers animals, food, nature, buildings, household objects, tools, clothing, arts, sports, occupations and abstract concepts. Secret Signals uses single English words. Odd Word Out also uses familiar compound nouns. Each pair names related but distinguishable things, with the distinction retained in both languages. Translations are chosen for the intended meaning, rather than literal character substitutions.
 
 ## Reference and editorial process

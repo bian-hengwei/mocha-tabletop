@@ -14,9 +14,9 @@ Moonlit Council, Mistbound Quest, Secret Signals and Odd Word Out require free-f
 
 Choose a total player count and difficulty under Local play, then select Solo vs bots. You control the first seat; all other seats use the selected difficulty. Fixed-count games show their required count. Pass & play remains available with a player-count selector and seat switching; discussion games offer this local mode only. Moonlit Council's total includes the moderator when enabled.
 
-首次完成资源缓存后，两种单机模式均可离线游玩。刷新恢复及终局重开保留人数、难度和规则；单人人机只显示你的视图，战绩单独标记。轮间确认与人机重试沿用房间人机的操作。
+两种单机模式都需要当前页面保持联网。刷新恢复及终局重开保留人数、难度和规则；单人人机只显示你的视图，战绩单独标记。轮间确认与人机重试沿用房间人机的操作。
 
-Both local modes work offline after assets are cached. Reloading and replaying preserve player count, difficulty and rules. Solo renders only your seat's view and labels its results separately. Between-round confirmation and bot retry work as in room games.
+Both local modes require the current page to stay online. Reloading and replaying preserve player count, difficulty and rules. Solo renders only your seat's view and labels its results separately. Between-round confirmation and bot retry work as in room games.
 
 ## 决策与恢复 / Decisions and recovery
 

@@ -19,6 +19,9 @@
       "script": "tests/ui/pwa-update.integration.mjs"
     },
     {
+      "script": "tests/ui/pwa-policy.integration.mjs"
+    },
+    {
       "script": "tests/ui/history-names.integration.mjs"
     },
     {
@@ -38,6 +41,9 @@
     },
     {
       "script": "tests/ui/local-play.integration.mjs"
+    },
+    {
+      "script": "tests/ui/screen-wake-lock.integration.mjs"
     },
     {
       "script": "tests/ui/practice-corrupt-recovery.integration.mjs"
@@ -62,7 +68,7 @@
       "env": {
         "TEST_GAMES": "century",
         "TEST_ACTION_DELAY_MS": "600",
-        "TEST_SKIP_OFFLINE": "1"
+        "TEST_SKIP_PWA": "1"
       }
     },
     {
@@ -88,6 +94,10 @@
     },
     {
       "script": "tests/ui/invite-practice-recovery.integration.mjs"
+    },
+    {
+      "script": "tests/ui/invite-qr.integration.mjs",
+      "isolated": true
     },
     {
       "script": "tests/ui/drawguess-history.integration.mjs"
@@ -312,6 +322,9 @@
     },
     {
       "script": "tests/ui/codenames-clue-controls.integration.mjs"
+    },
+    {
+      "script": "tests/ui/codenames-random-teams.integration.mjs"
     },
     {
       "script": "tests/ui/drawguess-rejection.integration.mjs"

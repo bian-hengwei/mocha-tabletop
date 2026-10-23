@@ -48,8 +48,20 @@ try{for(const language of ['zh','en']){
   const text=await page.locator('.action-sheet').innerText();for(const redundant of ['你的决定','Your decision','确认后执行','Execute after confirming'])assert(!text.includes(redundant));
   await page.locator('.action-sheet footer button').click();assert.deepEqual(JSON.parse(await page.getByTestId('commands').textContent()),[{action:'explode',values:[]}]);
  }
+ // A single-pick confirmation shows the chosen word on its own card, keeps it after a
+ // rejected submit, and can be dismissed without acting.
+ await visit('confirm');await page.locator('.choice').first().click();
+ await expect(page.locator('.action-sheet .confirm-word')).toHaveText('黄金');
+ await expect(page.locator('.action-sheet .choices')).toHaveCount(0);
+ await expect(page.locator('.action-sheet footer button')).toBeFocused();
+ await page.locator('.action-sheet footer button').click();
+ await expect(page.locator('.action-sheet .error')).toBeVisible();
+ await expect(page.locator('.action-sheet .confirm-word')).toHaveText('黄金');
+ await page.screenshot({path:`test-results/action-sheet/${safari?'webkit':'chrome'}-${language}-confirm-rejected.png`});
+ await page.locator('.action-sheet .confirm-back').click();await expect(page.locator('.action-sheet')).toHaveCount(0);
+ assert.deepEqual(JSON.parse(await page.getByTestId('commands').textContent()),[]);
  // Drive real stored practice states through the shared confirmation sheet.
- for(const scenario of ['guess','penalty']){
+ const openCodenames=async scenario=>{
   await page.goto(`${base}/tests/ui/action-sheet.fixture.html`);
   await page.evaluate(async({scenario,language})=>{
    const {modules}=await import('/src/core/registry.ts');
@@ -66,11 +78,33 @@ try{for(const language of ['zh','en']){
    }
    localStorage.setItem('mocha-locale',language);localStorage.setItem('mocha-profile',JSON.stringify(players[0]));localStorage.setItem('mocha-practice-v1',JSON.stringify({at:Date.now(),practice:{id:crypto.randomUUID(),kind,players,game,viewer,options:{language:'zh'}}}));
   },{scenario,language});await page.goto(base);
+ };
+ const pickBoardWord=async()=>{
+  const word=page.locator('.wg-word').filter({has:page.locator('strong',{hasText:/^黄金$/})});
+  await (await findWordPage(page,word)).click();
+  return word;
+ };
+ for(const scenario of ['guess','penalty']){
+  await openCodenames(scenario);
   if(scenario==='penalty'){await page.locator('.wg-extra-actions button').first().click();await page.locator('.choice').filter({has:page.locator('span',{hasText:/^黄金$/})}).click();}
-  else await (await findWordPage(page,page.locator('.wg-word').filter({has:page.locator('strong',{hasText:/^黄金$/})}))).click();
-  await expect(page.locator('.choice.selected span')).toHaveText('黄金');
+  else await pickBoardWord();
+  if(scenario==='guess'){
+   // A guess shows the picked word on its own card instead of repeating the whole board.
+   await expect(page.locator('.action-sheet .confirm-word')).toHaveText('黄金');
+   await expect(page.locator('.action-sheet .choices')).toHaveCount(0);
+   await expect(page.locator('.action-sheet footer button')).toHaveCount(1);
+   await expect(page.locator('.action-sheet .confirm-back')).toHaveText(language==='zh'?'返回牌桌另选':'Back to board to pick another');
+  }else{
+   await expect(page.locator('.choice.selected span')).toHaveText('黄金');
+   await expect(page.locator('.action-sheet .confirm-word')).toHaveCount(0);
+  }
   await expect(page.locator('.action-sheet footer button')).toBeEnabled();await page.screenshot({path:`test-results/action-sheet/${safari?'webkit':'chrome'}-${language}-${scenario}-literal.png`});
   await page.locator('.action-sheet footer button').click();await expect(page.locator('.action-sheet')).toHaveCount(0);
  }
+ // Cancelling the guess sheet closes it and hands focus back to the board word that opened it.
+ await openCodenames('guess');const word=await pickBoardWord();
+ await expect(page.locator('.action-sheet .confirm-word')).toHaveText('黄金');
+ await page.keyboard.press('Escape');await expect(page.locator('.action-sheet')).toHaveCount(0);
+ await expect(word).toBeFocused();
  assert.deepEqual(errors,[]);await page.close();console.log(`PASS ${language}: current action constraints, invalid selection recovery, cancellation, range/zero-choice confirmation and seven-size rotation`);
 }}finally{await browser.close();}

@@ -6,7 +6,7 @@ function walk(dir){for(const entry of fs.readdirSync(dir,{withFileTypes:true})){
 walk('dist');
 const hash=createHash('sha256');
 for(const file of files.sort()){hash.update(file);hash.update(fs.readFileSync(file));}
-const precache=['/',...files.filter(f=>f!=='dist/index.html').map(f=>'/'+f.slice(5))];
-let sw=fs.readFileSync('public/sw.js','utf8').replace("'__MOCHA_CACHE__'",JSON.stringify('mocha-'+hash.digest('hex').slice(0,12))).replace("['__MOCHA_PRECACHE__']",JSON.stringify(precache));
+const cache='mocha-assets-'+hash.digest('hex').slice(0,12);
+let sw=fs.readFileSync('public/sw.js','utf8').replace("'__MOCHA_CACHE__'",JSON.stringify(cache));
 fs.writeFileSync('dist/sw.js',sw);
-console.log(`Offline cache: ${precache.length} resources, ${files.reduce((n,f)=>n+fs.statSync(f).size,0)} bytes`);
+console.log(`Service worker static asset cache: ${cache}; HTML navigation is excluded`);

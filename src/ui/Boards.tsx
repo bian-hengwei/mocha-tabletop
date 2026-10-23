@@ -8,6 +8,7 @@ import { Check, ChevronLeft, ChevronRight, Crown, Eye, Gem, LockKeyhole, Moon, S
 import type { Action, Command, GameView } from '../core/types';
 import { GEM_COLORS } from '../core/games/gems';
 import './action-sheet-viewport.css';
+import './action-sheet-confirm.css';
 const colors = ['#ebe4ca', '#7fb9e8', '#7bc8a2', '#dd807e', '#7f8597', '#e8bd67'];
 const names = ['白钻', '蓝宝石', '祖母绿', '红宝石', '黑玛瑙', '黄金'];
 type BoardProps = {
@@ -170,9 +171,14 @@ export function ActionSheet({ action, selected, view, onClose, onSubmit }: {
     onClose: () => void;
     onSubmit: (cmd: Command) => void;
 }) {
-    const dialogRef = useDialog(true, onClose);
     const [values, setValues] = useState(selected), [error, setError] = useState('');
     const fresh = view.actions.find(a => a.id === action.id), current = fresh || action;
+    // Actions that ask for a single pick (Secret Signals guessing) show the chosen word
+    // as one card instead of repeating the whole board inside the sheet.
+    const confirmChoice = current.confirmSelection && values.length === 1 ? current.choices.find(c => c.id === values[0]) : undefined;
+    const confirmMode = !!confirmChoice;
+    const confirmRef = useRef<HTMLButtonElement>(null);
+    const dialogRef = useDialog(true, onClose, { initialFocus: () => (confirmMode ? confirmRef.current : null) });
     const valid = fresh && values.length >= fresh.min && values.length <= fresh.max && values.every(id => fresh.choices.some(c => c.id === id));
     useEffect(() => {
         if (!fresh) { onClose(); return; }
@@ -190,7 +196,7 @@ export function ActionSheet({ action, selected, view, onClose, onSubmit }: {
     const [choiceScroll, setChoiceScroll] = useState({ before: false, after: false });
     useLayoutEffect(() => {
         const element = choicesRef.current;
-        if (!element) return;
+        if (!element) { setChoiceScroll(old => (old.before || old.after) ? { before: false, after: false } : old); return; }
         const update = () => {
             const before = element.scrollLeft > 4, after = element.scrollLeft + element.clientWidth < element.scrollWidth - 4;
             setChoiceScroll(old => old.before === before && old.after === after ? old : { before, after });
@@ -200,14 +206,19 @@ export function ActionSheet({ action, selected, view, onClose, onSubmit }: {
         element.addEventListener('scroll', update);
         update();
         return () => { observer.disconnect(); element.removeEventListener('scroll', update); };
-    }, [current.id, current.choices]);
+    }, [current.id, current.choices, confirmMode]);
+    // Picking a word replaces the grid with the confirmation card, so the focused choice
+    // disappears with it; move focus to the confirmation button instead of losing it.
+    useLayoutEffect(() => {
+        if (confirmMode && confirmRef.current) confirmRef.current.focus({ preventScroll: true });
+    }, [confirmMode]);
     const scrollChoices = (direction: number) => {
         const element = choicesRef.current;
         if (element) element.scrollBy({ left: direction * element.clientWidth, behavior: 'auto' });
     };
     const selectionSummary = current.max === 0 ? '' : current.min === current.max ? `已选 ${values.length} / ${current.max}` : `可选 ${current.min}–${current.max} 项 · 已选 ${values.length}`;
 
-    return <div className="modal-shade" onClick={onClose}><section ref={dialogRef} tabIndex={-1} className="action-sheet" role="dialog" aria-modal="true" aria-label={tx(current.title)} onClick={e => e.stopPropagation()}><div className="sheet-heading"><div><h2>{tx(current.title)}</h2></div>{(choiceScroll.before || choiceScroll.after) && <div className="choice-paging" role="group" aria-label={t("选项翻页")}><button type="button" aria-label={t("上一组选项")} disabled={!choiceScroll.before} onClick={() => scrollChoices(-1)}><ChevronLeft size={20}/></button><button type="button" aria-label={t("下一组选项")} disabled={!choiceScroll.after} onClick={() => scrollChoices(1)}><ChevronRight size={20}/></button></div>}<button className="icon" aria-label={t("关闭选择")} onClick={onClose}><X /></button></div>{tx(current.help && <p>{tx(current.help)}</p>)}{tx(action.id === 'pay_custom' && view.board.payment && <div className="inline-actions"><span>{t("折扣后费用")}</span><Cost values={view.board.payment.needed}/><small>{t("黄金可代任意颜色")}</small></div>)}<div ref={choicesRef} className={`choices${playerChoices ? " player-choices" : ""}`} style={playerChoices ? { "--choice-rows": Math.min(5, Math.ceil(current.choices.length / 2)) } as CSSProperties : undefined} tabIndex={0} aria-label={t("可选项")}>{tx(current.choices.map(c => <button className={`choice ${values.includes(c.id) ? 'selected' : ''}`} key={c.id} aria-pressed={values.includes(c.id)} onClick={() => choose(c.id)}><span>{c.translateTitle === false || view.board.players?.some((player: { id: string; name: string }) => player.id === c.id && player.name === c.title) ? c.title : t(c.title)}</span>{tx(c.subtitle && <small>{tx(c.subtitle)}</small>)}{tx(values.includes(c.id) && <Check size={15}/>)}</button>))}</div>{tx(error && <p className="error" role="alert">{tx(error)}</p>)}<footer>{selectionSummary && <small role="status">{tx(selectionSummary)}</small>}<button style={{ marginLeft: 'auto' }} className="compact primary" disabled={!valid} onClick={() => {
+    return <div className="modal-shade" onClick={onClose}><section ref={dialogRef} tabIndex={-1} className="action-sheet" role="dialog" aria-modal="true" aria-label={tx(current.title)} onClick={e => e.stopPropagation()}><div className="sheet-heading"><div><h2>{tx(current.title)}</h2></div>{(choiceScroll.before || choiceScroll.after) && !confirmMode && <div className="choice-paging" role="group" aria-label={t("选项翻页")}><button type="button" aria-label={t("上一组选项")} disabled={!choiceScroll.before} onClick={() => scrollChoices(-1)}><ChevronLeft size={20}/></button><button type="button" aria-label={t("下一组选项")} disabled={!choiceScroll.after} onClick={() => scrollChoices(1)}><ChevronRight size={20}/></button></div>}<button className="icon" aria-label={t("关闭选择")} onClick={onClose}><X /></button></div>{tx(current.help && <p>{tx(current.help)}</p>)}{tx(action.id === 'pay_custom' && view.board.payment && <div className="inline-actions"><span>{t("折扣后费用")}</span><Cost values={view.board.payment.needed}/><small>{t("黄金可代任意颜色")}</small></div>)}{confirmMode ? <div className="confirm-choice"><small className="confirm-hint">{t('待猜词')}</small><strong className="confirm-word">{confirmChoice!.translateTitle === false ? confirmChoice!.title : t(confirmChoice!.title)}</strong><button type="button" className="confirm-back" onClick={onClose}>{t('返回牌桌另选')}</button></div> : <div ref={choicesRef} className={`choices${playerChoices ? " player-choices" : ""}`} style={playerChoices ? { "--choice-rows": Math.min(5, Math.ceil(current.choices.length / 2)) } as CSSProperties : undefined} tabIndex={0} aria-label={t("可选项")}>{tx(current.choices.map(c => <button className={`choice ${values.includes(c.id) ? 'selected' : ''}`} key={c.id} aria-pressed={values.includes(c.id)} onClick={() => choose(c.id)}><span>{c.translateTitle === false || view.board.players?.some((player: { id: string; name: string }) => player.id === c.id && player.name === c.title) ? c.title : t(c.title)}</span>{tx(c.subtitle && <small>{tx(c.subtitle)}</small>)}{tx(values.includes(c.id) && <Check size={15}/>)}</button>))}</div>}{tx(error && <p className="error" role="alert">{tx(error)}</p>)}<footer>{selectionSummary && <small role="status">{tx(selectionSummary)}</small>}<button ref={confirmRef} style={{ marginLeft: 'auto' }} className="compact primary" disabled={!valid} onClick={() => {
             try {
                 onSubmit({ action: action.id, values });
                 onClose();

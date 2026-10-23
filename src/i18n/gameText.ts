@@ -54,6 +54,7 @@ export const gameText:Record<string,string>={
  '这个操作已失效，请重新选择':'This choice is no longer available. Choose again.',
  '玩家身份无效':'Invalid player identity','昵称限 1–16 个字':'Use a name of 1–16 characters','请选择一个头像':'Choose an avatar','未知游戏':'Unknown game',
  '游戏选项无效':'Invalid game options','未知游戏选项':'Unknown game option','游戏语言无效':'Invalid game language','此游戏不支持主持模式选项':'This game does not support moderator options',
+ '随机分队设置无效':'Invalid random team setting','随机分队存档无效':'Invalid random team checkpoint','随机队长存档无效':'Invalid random captain checkpoint',
  '画词回合数无效':'Invalid drawing-round count','画词时长无效':'Invalid drawing time',
  '此游戏不支持狼人杀选项':'This game does not support council options','狼人杀模式无效':'Invalid council mode','标准模式不设置法官':'Standard mode has no moderator',
  '房主身份无效':'Invalid host identity','法官或发牌人必须是房主':'The host must be the moderator or dealer','牌局存档无效':'Invalid game checkpoint',
@@ -207,6 +208,7 @@ export const gamePatterns:[RegExp,string,number[]?][]=[
 
  [/^需要 (\d+) 位不同玩家$/,'Needs $1 distinct players'],[/^需要 (\d+)[–-](\d+) 位不同玩家$/,'Needs $1–$2 distinct players'],[/^需要 (\d+)[–-](\d+) 人$/,'Needs $1–$2 players'],
  [/^选择 (\d+) 名队员$/,'Choose $1 team members'],[/^第 (\d+) 次任务 · (.+)$/,'Mission $1 · $2',[2]],
+ [/^(.+) 正在挑选 (\d+) 名队员$/,'$1 is choosing $2 team members'],
  [/^第 (\d+) 次任务(成功|失败)，(\d+) 张失败牌。$/,'Mission $1: $2 · $3 Fail cards',[2]],
  [/^刺客选择了 (.+)。$/,'The Assassin chose $1.'],[/^表决：(.+)$/,'Votes: $1',[1]],[/^([^；]+) (赞成|反对)$/,'$1: $2',[2]],
  [/^(\d+) 张同名组合$/,'$1 matching cards'],[/^(\d+) 张(.+)$/,'$1 × $2',[2]],
