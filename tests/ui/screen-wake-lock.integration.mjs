@@ -13,13 +13,16 @@ try{
   await context.addInitScript(locale=>{
    localStorage.setItem('mocha-locale',locale);
    localStorage.setItem('mocha-profile',JSON.stringify({id:'wake-lock-player',name:'Wake Lock',avatar:'🦊'}));
-   const sentinels=[];
-   Object.defineProperty(navigator,'wakeLock',{configurable:true,value:{request:async()=>{
+   const sentinels=[],pending=[];let calls=0,deferred=false,rejectNext=false;
+   Object.defineProperty(navigator,'wakeLock',{configurable:true,value:{request:()=>{
+    calls++;
+    if(rejectNext){rejectNext=false;return Promise.reject(new DOMException('Denied','NotAllowedError'));}
     const sentinel=new EventTarget();sentinel.released=false;
     sentinel.release=async()=>{if(!sentinel.released){sentinel.released=true;sentinel.dispatchEvent(new Event('release'));}};
-    sentinels.push(sentinel);return sentinel;
+    sentinels.push(sentinel);
+    return deferred?new Promise(resolve=>pending.push(()=>resolve(sentinel))):Promise.resolve(sentinel);
    }}});
-   window.__wakeLockTest={sentinels,requests:()=>sentinels.length};
+   window.__wakeLockTest={sentinels,requests:()=>calls,setDeferred:value=>{deferred=value;},rejectNext:()=>{rejectNext=true;},resolvePending:()=>pending.shift()?.()};
   },locale);
   const page=await context.newPage(),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
@@ -57,7 +60,36 @@ try{
   await page.evaluate(()=>window.__wakeLockTest.sentinels.at(-1).release());
   await expect(awake).toContainText(locale==='zh'?'亮屏已停止':'Screen stay-awake stopped');
   await awake.click();
+  await expect(awake).toContainText(locale==='zh'?'未开启':'Off');
+  assert.equal(await page.evaluate(()=>window.__wakeLockTest.requests()),2,'turning off after a release does not retry');
+  await awake.click();
   await expect.poll(()=>page.evaluate(()=>window.__wakeLockTest.requests())).toBe(3);
+  await expect(awake).toContainText(locale==='zh'?'已开启':'On');
+  await awake.click();
+  await page.evaluate(()=>window.__wakeLockTest.setDeferred(true));
+  await awake.click();
+  await expect(awake).toContainText(locale==='zh'?'正在开启':'Turning on');
+  await expect(awake).toHaveAttribute('aria-pressed','true');
+  assert.equal(await page.evaluate(()=>window.__wakeLockTest.requests()),4);
+  await awake.click();
+  await expect(awake).toContainText(locale==='zh'?'未开启':'Off');
+  await expect(awake).toHaveAttribute('aria-pressed','false');
+  await page.evaluate(()=>window.__wakeLockTest.resolvePending());
+  await expect.poll(()=>page.evaluate(()=>window.__wakeLockTest.sentinels.at(-1).released)).toBe(true);
+  assert.equal(await page.evaluate(()=>window.__wakeLockTest.requests()),4,'turning off a pending request prevents another request');
+  await page.evaluate(()=>window.__wakeLockTest.setDeferred(false));
+  await page.evaluate(()=>window.__wakeLockTest.rejectNext());
+  await awake.click();
+  await expect(awake).toContainText(locale==='zh'?'未能开启':'Could not turn on');
+  await expect(awake).toHaveAttribute('aria-pressed','true');
+  assert.equal(await page.evaluate(()=>window.__wakeLockTest.requests()),5);
+  await awake.click();
+  await expect(awake).toContainText(locale==='zh'?'未开启':'Off');
+  await expect(awake).toHaveAttribute('aria-pressed','false');
+  await page.evaluate(()=>{Object.defineProperty(document,'visibilityState',{configurable:true,value:'hidden'});document.dispatchEvent(new Event('visibilitychange'));Object.defineProperty(document,'visibilityState',{configurable:true,value:'visible'});document.dispatchEvent(new Event('visibilitychange'));});
+  assert.equal(await page.evaluate(()=>window.__wakeLockTest.requests()),5,'turning off after denial prevents visibility retry');
+  await awake.click();
+  await expect.poll(()=>page.evaluate(()=>window.__wakeLockTest.requests())).toBe(6);
   await expect(awake).toContainText(locale==='zh'?'已开启':'On');
   await page.setViewportSize({width:390,height:844});
   await page.getByRole('button',{name:locale==='zh'?'结束试玩':'End practice',exact:true}).click();
@@ -67,10 +99,10 @@ try{
   await page.locator('.game-surface').waitFor();
   await menu.click();
   await expect(awake).toContainText(locale==='zh'?'未开启':'Off');
-  assert.equal(await page.evaluate(()=>window.__wakeLockTest.requests()),3,'a new practice session starts opted out');
+  assert.equal(await page.evaluate(()=>window.__wakeLockTest.requests()),6,'a new practice session starts opted out');
   await page.getByRole('button',{name:locale==='zh'?'结束单机':'End solo game',exact:true}).click();
   assert.deepEqual(errors,[]);
   await context.close();
-  console.log(`PASS ${locale}: all required menu viewports, opt-in, focus, visibility restore, released-state retry, and new-practice reset`);
+  console.log(`PASS ${locale}: all required menu viewports, opt-in toggle, visibility restore, pending cancellation, denied opt-out, explicit retry, and new-practice reset`);
  }
 }finally{await browser.close();}
