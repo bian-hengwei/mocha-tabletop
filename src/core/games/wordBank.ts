@@ -551,7 +551,7 @@ export const MODERN_SIGNAL_WORDS:[string,string][]=[
  ['智能手机','Smartphone'],['笔记本电脑','Laptop'],['平板电脑','Tablet'],['无线耳机','Earbuds'],['充电线','Cable'],['充电宝','Power bank'],['无线网络','Wi-Fi'],['密码','Password'],['表情符号','Emoji'],['自拍','Selfie'],
  ['直播','Livestream'],['播客','Podcast'],['歌单','Playlist'],['键盘','Keyboard'],['鼠标','Mouse'],['浏览器','Browser'],['应用程序','App'],['二维码','QR code'],['智能手表','Smartwatch'],['扫地机器人','Robot vacuum'],
  ['智能音箱','Smart speaker'],['视频会议','Video meeting'],['盲盒','Blind box'],['社交动态','Social post'],['评论区','Comments'],['关注','Follow'],['点赞','Like'],['转发','Share'],['收藏','Save'],['通知','Notification'],
- ['群聊','Group chat'],['语音消息','Voice message'],['视频通话','Video chat'],['头像','Avatar'],['昵称','Username'],['空气炸锅','Air fryer'],['咖啡机','Coffee maker'],['毛绒挂件','Plush keychain'],['露营天幕','Camping canopy'],['共享日历','Shared calendar'],
+ ['群聊','Group chat'],['语音消息','Voice message'],['视频通话','Video chat'],['头像','Avatar'],['昵称','Nickname'],['空气炸锅','Air fryer'],['咖啡机','Coffee maker'],['毛绒挂件','Plush keychain'],['露营天幕','Camping canopy'],['共享日历','Shared calendar'],
  ['待办清单','To-do list'],['飞盘','Frisbee'],['降噪','Noise canceling'],['露营灯','Camp lantern'],['云相册','Cloud photos'],['扫码支付','Mobile payment'],['自动续费','Auto-renew'],['奶茶','Bubble tea'],['露营椅','Camping chair'],['手办','Collectible figure'],
  ['拍立得','Instant camera'],['电竞椅','Gaming chair'],['野餐垫','Picnic blanket'],['电子票','Digital ticket'],['桌游卡牌','Board game cards'],['免密支付','Password-free payment'],['智能门锁','Smart lock'],['露营地','Campsite'],['数字钱包','Digital wallet'],['短视频','Short video'],
  ['推荐算法','Recommendation'],['隐私设置','Privacy settings'],['飞行模式','Airplane mode'],['低电量','Low battery'],['屏幕时间','Screen time'],['数字排毒','Digital detox'],['深夜消息','Late-night text'],['群聊静音','Muted chat'],['家庭群','Family group'],['周末计划','Weekend plan'],
@@ -604,7 +604,7 @@ export const MODERN_ODD_WORD_PAIRS:[[string,string],[string,string]][]=[
 
 /** DrawGuess uses English first and Chinese second. */
 export const MODERN_DRAW_WORDS:[string,string][]=[
- ['Smartphone','智能手机'],['Laptop','笔记本电脑'],['Wireless earbuds','无线耳机'],['Power bank','充电宝'],['Robot vacuum','扫地机器人'],['Air fryer','空气炸锅'],['Smartwatch','智能手表'],['Camping canopy','露营天幕'],['Bubble tea','奶茶'],['Plush keychain','毛绒挂件'],
+ ['Smartphone','智能手机'],['Laptop','笔记本电脑'],['Headphones','头戴耳机'],['Power bank','充电宝'],['Robot vacuum','扫地机器人'],['Air fryer','空气炸锅'],['Smartwatch','智能手表'],['Camping canopy','露营天幕'],['Bubble tea','奶茶'],['Plush keychain','毛绒挂件'],
  ['Frisbee','飞盘'],['Instant camera','拍立得'],['Collectible figure','手办'],['Gaming chair','电竞椅'],['Camp lantern','露营灯'],['Picnic basket','野餐篮'],['Campfire','篝火'],['Polaroid photo','拍立得相片'],['Blind box','盲盒'],['Karaoke microphone','卡拉OK麦克风'],
  ['Party balloons','派对气球'],['Birthday cake','生日蛋糕'],['Movie ticket','电影票'],['Popcorn','爆米花'],['Takeout noodles','外卖面条'],['Sushi platter','寿司拼盘'],['Backpack','背包'],['Water bottle','水壶'],['Bicycle','自行车'],['Group photo','合影'],
  ['Skateboard','滑板'],['Coffee cup','咖啡杯'],['Dog on leash','牵绳小狗'],['Picnic blanket','野餐垫'],['Hotpot','火锅'],['Potted plant','盆栽'],['Board game box','桌游盒'],['Dice','骰子'],['Video call','视频通话'],['Board game meetup','桌游聚会']

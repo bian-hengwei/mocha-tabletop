@@ -30,9 +30,12 @@ describe('modern life word packs',()=>{
   expect(MODERN_SIGNAL_WORDS).toContainEqual(['视频会议','Video meeting']);
   expect(MODERN_SIGNAL_WORDS).toContainEqual(['视频通话','Video chat']);
   expect(MODERN_SIGNAL_WORDS).toContainEqual(['免密支付','Password-free payment']);
+  expect(MODERN_SIGNAL_WORDS).toContainEqual(['昵称','Nickname']);
+  expect(MODERN_SIGNAL_WORDS).not.toContainEqual(['昵称','Username']);
   const drawWords=new Set(MODERN_DRAW_WORDS.map(([en])=>en));
   for(const word of ['Blind box','Plush keychain','Camping canopy','Frisbee','Instant camera','Bubble tea','Collectible figure','Gaming chair'])expect(drawWords).toContain(word);
   for(const word of ['Noise-canceling headphones','Podcast microphone','Smart scale'])expect(drawWords).not.toContain(word);
+  expect(drawWords).not.toContain('Wireless earbuds');
   for(const pair of MODERN_ODD_WORD_PAIRS){expect(pair).toHaveLength(2);expect(pair[0]).not.toEqual(pair[1]);}
   expect(JSON.stringify([MODERN_SIGNAL_WORDS,MODERN_ODD_WORD_PAIRS,MODERN_DRAW_WORDS])).not.toMatch(/202\d|latest|trending/i);
  });

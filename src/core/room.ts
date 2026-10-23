@@ -73,7 +73,7 @@ export function createMatch(kind:GameKind,players:Player[],options?:GameOptions)
 /** Validate room identity/options before trusting a LAN checkpoint or cloud handoff. */
 export function validateMatchForRoom(value:unknown,room:RoomInfo):MatchState {
  if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('牌局存档无效');
- const match=value as MatchState;
+ const match=structuredClone(value) as MatchState;
  if(match.schemaVersion!==undefined&&match.schemaVersion!==2)throw new Error('牌局存档版本不支持');
  if(!Number.isSafeInteger(match.revision)||match.revision<1||!match.game||typeof match.game!=='object')throw new Error('牌局存档无效');
  if(optionsKey(room.kind,match.options,room.hostID)!==optionsKey(room.kind,room.options,room.hostID))throw new Error('牌局模式与房间不一致');
@@ -99,8 +99,12 @@ export function validateMatchForRoom(value:unknown,room:RoomInfo):MatchState {
  if(room.kind==='sushi')validateSushiState(match.game,room.options);
  if(room.kind==='drawrelay')validateRelayState(match.game,room.options?.relaySeconds??90,room.options?.relayMode);
  if(['codenames','undercover','drawguess','drawrelay'].includes(room.kind)){
-  if((match.game.wordPack??'classic')!==(room.options?.wordPack??'classic'))throw new Error('词包与房间不一致');
-  if((match.game.language??'zh')!==(room.options?.language??'zh'))throw new Error('词语语言与房间不一致');
+  const expected=normalizeGameOptions(room.kind,room.options,room.hostID),expectedPack=expected?.wordPack??'classic',expectedLanguage=expected?.language??'zh';
+  if(match.game.wordPack===undefined){if(expectedPack!=='classic')throw new Error('词包与房间不一致');match.game.wordPack='classic';}
+  else if(match.game.wordPack!==expectedPack)throw new Error('词包与房间不一致');
+  if(match.game.language===undefined&&room.kind==='drawrelay')match.game.language=expectedLanguage;
+  const stateLanguage=match.game.language===undefined?'zh':match.game.language;
+  if(stateLanguage!==expectedLanguage)throw new Error('词语语言与房间不一致');
  }
  for(const id of ids)viewMatch(match,room.kind,id);
  return structuredClone(match);
