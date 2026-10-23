@@ -43,6 +43,9 @@
       "script": "tests/ui/local-play.integration.mjs"
     },
     {
+      "script": "tests/ui/screen-wake-lock.integration.mjs"
+    },
+    {
       "script": "tests/ui/practice-corrupt-recovery.integration.mjs"
     },
     {

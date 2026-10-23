@@ -17,6 +17,8 @@ npm run check
 
 ## GitHub CI
 
+`npx vitest run tests/codenames-random-teams.test.ts tests/word-games.test.ts tests/network/options.test.ts` checks optional balanced teams, captain authority, option normalization and checkpoint recovery. `BASE_URL=<Vite-proxied-to-local-Worker> node tests/ui/codenames-random-teams.integration.mjs` checks the real App in both languages: setup and lobby controls across eight sizes, guest read-only settings, readiness reset, synchronized teams, play, language switching, reload and seven-/twelve-player same-screen starts. The script is in the CI social group; it uses the group's local Worker and cleans up its rooms. Screenshots remain in ignored `test-results/codenames-random-teams-chromium/` for visual review.
+
 每个 PR 和 main 推送都运行 `npm run check`，以及四组并行的 Chromium/联机回归。分组清单位于 [ci-integration.json](../.github/ci-integration.json)，工作流位于 [ci.yml](../.github/workflows/ci.yml)。四组的完整脚本及参数以分组清单为准：
 
 | 分组 | 范围 |
@@ -119,6 +121,7 @@ npx playwright install chromium webkit
 | `node tests/ui/storage-boundaries.integration.mjs` | 存储区属性不可读时首屏、临时身份及标签页恢复入口可用；恢复 socket 在测试内拦截，不连接真实房间；支持 WebKit |
 | `node tests/ui/lobby-usability.integration.mjs` | 开局等待原因、访客只读规则、修改规则后重新准备和手机布局 |
 | `node tests/ui/lobby-layout.integration.mjs` | 狼人杀长规则、入桌申请的房间与昵称提示、待审批请求的中英七尺寸旋转、取消申请后刷新不再自动申请、按钮触控、实际批准/准备/开局；需要本地 Worker，支持 WebKit |
+| `node tests/ui/invite-qr.integration.mjs` | 独立 Worker 与真实 App：房主/普通玩家/长邀请 URL 从渲染像素解码，房间码申请与批准、首次入座、取消/焦点、语言与房间切换、双语八尺寸及旋转；本地生成二维码，不请求外部图片或二维码服务 |
 | `node tests/ui/dialogs.integration.mjs` | 宝石、卡牌与秘密身份弹窗的焦点保护、Escape 和恢复；支持 WebKit |
 | `node tests/ui/i18n.integration.mjs` | 九款牌桌正文/无障碍标签英文检查、词库独立切换、确认出牌、私密 +4 核验与手机/短横屏 |
 | `node tests/ui/uno-selection.integration.mjs` | 接龙选牌高亮/抬升/取消、确认出牌、万能选色、换座清理、质疑开关与双语三尺寸 |
@@ -242,6 +245,7 @@ WebKit 自动化环境可能无法建立本机 WebRTC ICE 连接；这不算 LAN
 
 - `npx vitest run tests/practice.test.ts tests/storage.test.ts`：八款人机游戏的全部合法人数与三档难度、合法推进、完整寿司三轮、单人视图/操作边界、旧试玩存档、保存/重开与战绩。
 - `BASE_URL=http://127.0.0.1:5218 node tests/ui/local-play.integration.mjs`：真实 App 单机人数/难度选择、八款人机与四款交流游戏、双语八尺寸与旋转、刷新/语言/重开/战绩/退出；支持 `TEST_BROWSER=webkit`。终局界面使用显式 fixture，完整规则终局由单测覆盖。
+- `BASE_URL=<vite> node tests/ui/screen-wake-lock.integration.mjs`：真实 App 的本局保持亮屏菜单，双语八尺寸、默认关闭、焦点恢复、页面隐藏后恢复、系统释放后的重试和新试玩重置。浏览器测试使用受控 Wake Lock sentinel，不等同于真机或已安装 PWA 验收。
 - `node tests/ui/practice-corrupt-recovery.integration.mjs`：Doudizhu/Guandan 缺少会触发表格崩溃的必需数组时，验证损坏试玩被拒绝并回到首页、资料与战绩保留且可新建试玩；中英八尺寸，`TEST_VIEWPORT_SCOPE=compact` 用于窄 WebKit。
 
 连接生命周期回归使用 `TEST_FRONTEND` 指向运行中的 Vite，并需要对应本地 Worker。`lifecycle.integration.mjs` 在 Chromium 中通过 CDP 暂停真实页面执行，在 WebKit 中通过 Playwright clock 暂停页面定时器；这验证浏览器挂起路径，不等同于手机系统切后台/锁屏的真机验收。关闭双方标签页后以无 sessionStorage 的新标签页自动恢复，比较原玩家、matchID、操作版本和私人视图，再通过界面继续出牌。截图写入 `test-results/lifecycle-*`。

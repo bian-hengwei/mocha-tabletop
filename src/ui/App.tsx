@@ -35,6 +35,7 @@ import { werewolfPresetLimits } from '../core/werewolfPresets';
 import { RuleOptions } from './RuleOptions';
 import { WordGamesTable } from './WordGamesTable';
 import { useDialog } from './useDialog';
+import { useScreenWakeLock } from './useScreenWakeLock';
 import './app-quality.css';
 import { IllustratedTile } from './IllustratedTile';
 import {HomeLibrary} from './HomeLibrary';
@@ -113,6 +114,7 @@ export function App() {
     const [localDifficulty, setLocalDifficulty] = useState<BotDifficulty>('normal');
     const connectionTarget = client.getConnectionTarget();
     const room = state.room, kind = practice?.kind || room?.kind || selectedGame;
+    const wakeLock = useScreenWakeLock(practice?.id || room?.code || null);
     const view = practice ? practiceView(practice) : state.view;
     const selfID = (practice?.mode === 'solo' ? practice.players[0].id : practice?.viewer) || state.selfID || profile?.id || '';
     const matchKey = practice?.id || room?.matchID;
@@ -306,7 +308,7 @@ export function App() {
     const fullscreen = () => { const el = document.documentElement as HTMLElement & {
         webkitRequestFullscreen?: () => Promise<void>;
     }; void (el.requestFullscreen?.() || el.webkitRequestFullscreen?.())?.catch(() => { }); };
-    const leave = () => { if (practice) {
+    const leave = () => { wakeLock.endSession(); if (practice) {
         discardPractice();
         setSheet(null);
         return;
@@ -357,7 +359,7 @@ export function App() {
     {sheet==='audience'&&room&&<Modal title={t('观战席')} onClose={()=>setSheet(null)}><RoomAudience room={room} selfID={selfID} client={client}/></Modal>}
     {tx(sheet === 'history' && <Modal title={t("个人战绩")} onClose={() => setSheet(null)}><HistoryPanel records={records} onDelete={removeHistory}/></Modal>)}
     {tx(sheet === 'log' && view && <Modal title={t("对局记录")} onClose={() => setSheet(null)}><ol className="game-log">{tx(view.log.slice().reverse().map((line, i) => <li key={i}>{formatGameText(line,view.logText?.[view.log.length-1-i])}</li>))}</ol></Modal>)}
-    {tx(sheet === 'menu' && <Modal title={t("牌桌菜单")} onClose={() => setSheet(null)}><div className="menu-list"><button onClick={() => { setName(profile?.name || ''); setAvatar(profile?.avatar || AVATARS[0]); setSheet('profile'); }}><Settings2 size={18}/>{t("修改昵称头像")}</button>{tx((view?.finished||view?.kind==='undercover') && (practice || host) && <button onClick={() => { if (practice)
+    {tx(sheet === 'menu' && <Modal title={t("牌桌菜单")} onClose={() => setSheet(null)}><div className="menu-list"><button onClick={() => { setName(profile?.name || ''); setAvatar(profile?.avatar || AVATARS[0]); setSheet('profile'); }}><Settings2 size={18}/>{t("修改昵称头像")}</button><button className="session-awake-toggle" aria-pressed={wakeLock.enabled} onClick={() => wakeLock.setEnabled(!wakeLock.enabled)}><Smartphone size={18}/><span><b>{t('本局保持亮屏')}</b><small>{t(wakeLock.status === 'active' ? '已开启' : wakeLock.status === 'requesting' ? '正在开启' : wakeLock.status === 'paused' ? '返回页面后恢复' : wakeLock.status === 'unsupported' ? '此浏览器不支持保持亮屏' : wakeLock.status === 'denied' ? '未能开启' : wakeLock.status === 'released' ? '亮屏已停止' : '未开启')}</small></span></button>{tx((view?.finished||view?.kind==='undercover') && (practice || host) && <button onClick={() => { if (practice)
         startPractice(practice.kind);
     else
         client.replay(); setSheet(null); }}><RotateCcw size={18}/>{tx(practice ? '再来一局' : '返回准备，开新一局')}</button>)}<button onClick={() => setSheet('history')}><History size={18}/>{t("\u4E2A\u4EBA\u6218\u7EE9")}<ChevronRight size={16}/></button>{tx(!practice && <button onClick={() => void share()}><Share2 size={18}/>{t("\u5206\u4EAB\u9080\u8BF7")}<ChevronRight size={16}/></button>)}{tx(host && state.mode === 'lan' && <button onClick={() => { client.switchToCloud(); setSheet(null); }}><Cloud size={18}/>{t("\u5207\u6362\u4E91\u7AEF\u8054\u673A")}<ChevronRight size={16}/></button>)}{tx(host && room?.started && <button onClick={() => { if (window.confirm(t('结束当前对局，所有玩家返回准备？'))) {
