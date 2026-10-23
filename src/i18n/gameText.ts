@@ -207,6 +207,7 @@ export const gamePatterns:[RegExp,string,number[]?][]=[
 
  [/^需要 (\d+) 位不同玩家$/,'Needs $1 distinct players'],[/^需要 (\d+)[–-](\d+) 位不同玩家$/,'Needs $1–$2 distinct players'],[/^需要 (\d+)[–-](\d+) 人$/,'Needs $1–$2 players'],
  [/^选择 (\d+) 名队员$/,'Choose $1 team members'],[/^第 (\d+) 次任务 · (.+)$/,'Mission $1 · $2',[2]],
+ [/^(.+) 正在挑选 (\d+) 名队员$/,'$1 is choosing $2 team members'],
  [/^第 (\d+) 次任务(成功|失败)，(\d+) 张失败牌。$/,'Mission $1: $2 · $3 Fail cards',[2]],
  [/^刺客选择了 (.+)。$/,'The Assassin chose $1.'],[/^表决：(.+)$/,'Votes: $1',[1]],[/^([^；]+) (赞成|反对)$/,'$1: $2',[2]],
  [/^(\d+) 张同名组合$/,'$1 matching cards'],[/^(\d+) 张(.+)$/,'$1 × $2',[2]],
