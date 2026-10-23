@@ -49,9 +49,10 @@ function SecretSignals({view,selfID,command,open}:Props){
 function OddWordOut({view,selfID,command}:Props){
  const b=view.board,[peek,setPeek]=useState(false),[read,setRead]=useState(false);
  useLayoutEffect(()=>{setPeek(false);setRead(false);},[selfID,b.word]);
- const ready=view.actions.find(a=>a.id==='ready');
- return <div className="wg-table wg-odd wg-word-dealer"><header className="wg-heading"><h2>{t('秘密发词')}</h2><span>{b.players.filter((p:{ready:boolean})=>p.ready).length} / {b.players.length}</span></header>
+ const ready=view.actions.find(a=>a.id==='ready'),allReady=b.players.every((p:{ready:boolean})=>p.ready);
+ return <div className="wg-table wg-odd wg-word-dealer"><header className="wg-heading"><h2>{t(allReady?'开始线下描述':'秘密发词')}</h2><span>{b.players.filter((p:{ready:boolean})=>p.ready).length} / {b.players.length}</span></header>
  {!view.spectating&&<section className="wg-secret-panel"><button type="button" className={`wg-secret ${peek?'wg-open':''}`} onClick={()=>{setPeek(!peek);setRead(true);}} aria-label={t(peek?'收起我的词':'查看我的词')} aria-pressed={peek}><IllustratedTile kind="covers" index={4} className="wg-secret-art"/>{peek?<><strong>{b.word}</strong><EyeOff size={20}/></>:<><FileKey size={32}/><strong>{t('查看我的词')}</strong></>}</button>{ready&&<button type="button" className="wg-button wg-primary" disabled={!read} onClick={()=>{command({action:'ready',values:[]});setPeek(false);}}>{t('记住了')}</button>}</section>}
+ {allReady&&<p className="wg-offline-next" role="status">{t('词已发好。开始轮流描述和讨论；投票与淘汰在线下进行。')}</p>}
  <div className="wg-dealt-players">{b.players.map((p:{id:string;name:string;avatar:string;ready:boolean})=><span key={p.id}><i>{p.avatar}</i><b>{p.name}</b>{p.ready?<Check size={16} aria-label={t('已看词')}/>:<span aria-label={t('等待看词')}>·</span>}</span>)}</div>
  <WordHelp title={t('查看本桌规则')}><p>{t('每人收到一个秘密词。多数人拿到相同词，少数人拿到相近的另一词；你只知道自己的词，不知道阵营。请用一句话轮流描述，不直接说出词本身。')}</p><p>{t('描述、讨论和投票在线下进行。重新开局可再次发词。')}</p><p>{t('3–6 人有 1 位异词玩家，7–10 人有 2 位，11–12 人有 3 位。不含白板。')}</p><p>{t('词库语言')}：{t(b.language==='en'?'英文':'中文')} · {t('词包')}：{t(b.wordPack==='modern'?'现代生活':'经典')}</p></WordHelp></div>;
 }
