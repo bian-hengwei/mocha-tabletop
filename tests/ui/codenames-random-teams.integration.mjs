@@ -37,9 +37,13 @@ async function newPlayer(locale,index,errors){
  await page.goto(base);
  return {context,page};
 }
-async function leave(host){
+async function leave(host,locale,practice=false){
  await host.locator('.topbar .brand button').click();
  await host.locator('.menu-list button').last().click();
+ if(practice){
+  await host.locator('.practice-exit-modal').getByRole('button',{name:locale==='zh'?'结束当前游戏':'End current game',exact:true}).click();
+  assert.equal(await host.evaluate(()=>localStorage.getItem('mocha-practice-v1')),null,'Confirmed practice exit clears its checkpoint');
+ }
  await host.locator('.cover-codenames').waitFor();
 }
 
@@ -115,7 +119,7 @@ try{
     assert.deepEqual(teams.map(team=>team.members.length),[Math.ceil(count/2),Math.floor(count/2)]);
     assert(teams.every(team=>team.members.filter(member=>member.captain).length===1));
     await host.reload();await host.locator('.wg-table').waitFor();assert.deepEqual(await readTeams(host),teams);
-    await host.screenshot({path:`${out}/${locale}-practice-${count}.png`});await leave(host);
+    await host.screenshot({path:`${out}/${locale}-practice-${count}.png`});await leave(host,locale,true);
    }
    assert.deepEqual(errors,[]);
    console.log('PASS',locale,'setup/lobby eight sizes, keyboard, host-only option, readiness reset, balanced teams/captains, synchronized play, language, reload and 7/12-player practice');

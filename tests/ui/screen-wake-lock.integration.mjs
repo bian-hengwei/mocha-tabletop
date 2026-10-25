@@ -92,7 +92,7 @@ try{
   await expect.poll(()=>page.evaluate(()=>window.__wakeLockTest.requests())).toBe(6);
   await expect(awake).toContainText(locale==='zh'?'已开启':'On');
   await page.setViewportSize({width:390,height:844});
-  await page.getByRole('button',{name:locale==='zh'?'结束试玩':'End practice',exact:true}).click();
+  await page.getByRole('button',{name:locale==='zh'?'结束试玩':'End practice',exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'结束当前游戏':'End current game',exact:true}).click();
   await expect(page.locator('.game-surface')).toHaveCount(0);
   await page.locator('.cover-gems').click();
   await page.getByRole('button',{name:locale==='zh'?'单人人机':'Solo vs bots',exact:true}).click();
@@ -100,7 +100,7 @@ try{
   await menu.click();
   await expect(awake).toContainText(locale==='zh'?'未开启':'Off');
   assert.equal(await page.evaluate(()=>window.__wakeLockTest.requests()),6,'a new practice session starts opted out');
-  await page.getByRole('button',{name:locale==='zh'?'结束单机':'End solo game',exact:true}).click();
+  await page.getByRole('button',{name:locale==='zh'?'结束单机':'End solo game',exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'结束当前游戏':'End current game',exact:true}).click();
   assert.deepEqual(errors,[]);
   await context.close();
   console.log(`PASS ${locale}: all required menu viewports, opt-in toggle, visibility restore, pending cancellation, denied opt-out, explicit retry, and new-practice reset`);

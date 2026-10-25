@@ -71,7 +71,7 @@ try{
   await page.keyboard.press('Escape');await expect(page.locator('.mj-history')).toBeFocused();
   await page.reload();await page.locator('.mj-table').waitFor();
   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')).practice.game.discards.flat().length),4,'reload preserves the human turn');
-  await page.getByRole('button',{name:locale==='zh'?'牌桌菜单':'Table menu',exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'结束单机':'End solo game',exact:true}).click();
+  await page.getByRole('button',{name:locale==='zh'?'牌桌菜单':'Table menu',exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'结束单机':'End solo game',exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'结束当前游戏':'End current game',exact:true}).click();
   await page.waitForTimeout(1450);assert.equal(await page.evaluate(()=>localStorage.getItem('mocha-practice-v1')),null,'exit cannot resurrect a delayed save');
   assert.deepEqual(errors,[]);await fs.writeFile(`${out}/${locale}-${width}-trace.json`,JSON.stringify(trace));await context.close();
   console.log(`PASS ${engine} ${locale} ${width}x${height}: full clockwise circuit, animation gap, rotation, reload and exit`);
@@ -92,10 +92,10 @@ try{
  await page.clock.runFor(1);assert.equal(await revision(),3);
  await page.clock.fastForward(10000);assert.equal(await revision(),4,'late wake-up executes one bot, not a catch-up batch');
  await page.clock.runFor(1399);assert.equal(await revision(),4);
- await page.getByRole('button',{name:'Table menu',exact:true}).click();await page.getByRole('button',{name:'End solo game',exact:true}).click();
+ await page.getByRole('button',{name:'Table menu',exact:true}).click();await page.getByRole('button',{name:'End solo game',exact:true}).click();await page.getByRole('button',{name:'End current game',exact:true}).click();
  await page.locator('.cover-mahjong').click();await page.getByRole('button',{name:'Solo vs bots',exact:true}).click();
  assert.equal(await revision(),1);await page.clock.runFor(100);assert.equal(await revision(),1,'old callback cannot play into a new match');
- await page.getByRole('button',{name:'Table menu',exact:true}).click();await page.getByRole('button',{name:'End solo game',exact:true}).click();
+ await page.getByRole('button',{name:'Table menu',exact:true}).click();await page.getByRole('button',{name:'End solo game',exact:true}).click();await page.getByRole('button',{name:'End current game',exact:true}).click();
  await page.clock.runFor(5000);assert.equal(await page.evaluate(()=>localStorage.getItem('mocha-practice-v1')),null);
  await context.close();console.log(`PASS ${engine}: pending reload, late wake-up, fresh wait, new match and cancellation`);
 }finally{await browser.close();}

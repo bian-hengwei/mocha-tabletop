@@ -42,9 +42,14 @@ try{
  const stillBytes=Array.from(new Uint8Array(await (await request('/api/admin/reactions/'+batch[0].id+'/still')).arrayBuffer()));
  const firstPixel=await page.evaluate(async bytes=>{const bitmap=await createImageBitmap(new Blob([Uint8Array.from(bytes)],{type:'image/png'}));const canvas=document.createElement('canvas');canvas.width=bitmap.width;canvas.height=bitmap.height;const context=canvas.getContext('2d');context.drawImage(bitmap,0,0);bitmap.close();return Array.from(context.getImageData(0,0,1,1).data);},stillBytes);
  assert.deepEqual(firstPixel,[255,0,0,255]);
- await page.emulateMedia({reducedMotion:'reduce'});await expect(page.locator('li').nth(1).locator('img')).toBeVisible();
- assert.equal(await page.locator('li').nth(1).locator('picture').evaluate(el=>el.querySelector('img').currentSrc===el.querySelector('source').srcset),true);
- await page.emulateMedia({reducedMotion:'no-preference'});
+ const preview=page.locator('li').nth(1).locator('picture'),previewImage=preview.locator('img');await expect(previewImage).toBeVisible();
+ const sources=await preview.evaluate(el=>({image:el.querySelector('img').src,still:el.querySelector('source').srcset}));
+ assert(sources.image&&sources.still);assert.notEqual(sources.image,sources.still);
+ const previewBytes=await page.evaluate(async sources=>Promise.all([sources.image,sources.still].map(async src=>Array.from(new Uint8Array(await (await fetch(src)).arrayBuffer())))),sources);
+ assert.deepEqual(previewBytes[0],Array.from(animated));assert.deepEqual(previewBytes[1],stillBytes);
+ // Media emulation changes the query before the browser finishes native picture selection.
+ await page.emulateMedia({reducedMotion:'reduce'});await expect(previewImage).toHaveJSProperty('currentSrc',sources.still);await expect(previewImage).toHaveJSProperty('naturalWidth',1);
+ await page.emulateMedia({reducedMotion:'no-preference'});await expect(previewImage).toHaveJSProperty('currentSrc',sources.image);await expect(previewImage).toHaveJSProperty('naturalWidth',1);
  for(const item of batch)assert.equal((await request('/api/admin/reactions/'+item.id,JSON.stringify({delete:true}))).status,200);
  await page.getByRole('button',{name:'刷新目录',exact:true}).click();await expect(page.locator('li')).toHaveCount(1);
  for(const locale of ['zh','en']){await page.getByRole('combobox').selectOption(locale);await expect(page.locator('li').first().getByRole('button',{name:locale==='zh'?'删除':'Delete',exact:true})).toBeVisible();for(const [width,height]of [[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900]]){await page.setViewportSize({width,height});await page.locator('.reaction-admin').evaluate(el=>el.scrollTo(0,0));await page.screenshot({animations:'disabled',path:`${out}/${locale}-${width}-top.png`});await page.getByRole('button',{name:locale==='zh'?'上架':'Publish',exact:true}).scrollIntoViewIfNeeded();await page.screenshot({animations:'disabled',path:`${out}/${locale}-${width}-list.png`});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert(await page.locator('.reaction-admin').evaluate(el=>el.scrollWidth<=el.clientWidth));}}

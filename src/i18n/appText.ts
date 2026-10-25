@@ -1,4 +1,6 @@
 export const appText:Record<string,string>={
+"结束后返回首页，当前游戏将无法恢复。":"Return to the home screen. This game cannot be resumed.",
+"结束当前游戏":"End current game",
 "观战席":"Spectators",
 "正在观战":"Watching",
 "观众":"Audience",

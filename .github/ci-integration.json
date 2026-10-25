@@ -7,9 +7,6 @@
       "script": "tests/ui/home-experience.integration.mjs"
     },
     {
-      "script": "tests/ui/home-cover-readability.integration.mjs"
-    },
-    {
       "script": "tests/ui/player-names.integration.mjs"
     },
     {
@@ -43,6 +40,9 @@
       "script": "tests/ui/local-play.integration.mjs"
     },
     {
+      "script": "tests/ui/practice-exit.integration.mjs"
+    },
+    {
       "script": "tests/ui/screen-wake-lock.integration.mjs"
     },
     {
@@ -72,9 +72,6 @@
       }
     },
     {
-      "script": "tests/ui/bot-pacing.integration.mjs"
-    },
-    {
       "script": "tests/ui/social-app-viewport.integration.mjs"
     },
     {
@@ -96,14 +93,13 @@
       "script": "tests/ui/invite-practice-recovery.integration.mjs"
     },
     {
-      "script": "tests/ui/invite-qr.integration.mjs",
-      "isolated": true
-    },
-    {
       "script": "tests/ui/drawguess-history.integration.mjs"
     }
   ],
   "classic": [
+    {
+      "script": "tests/ui/bot-pacing.integration.mjs"
+    },
     {
       "script": "tests/ui/mahjong-actions.integration.mjs"
     },
@@ -170,6 +166,9 @@
   ],
   "cards": [
     {
+      "script": "tests/ui/home-cover-readability.integration.mjs"
+    },
+    {
       "script": "tests/ui/room-social-games.integration.mjs"
     },
     {
@@ -225,6 +224,10 @@
     }
   ],
   "social": [
+    {
+      "script": "tests/ui/invite-qr.integration.mjs",
+      "isolated": true
+    },
     {
       "script": "tests/ui/avalon-ballot-receipts.integration.mjs"
     },

@@ -1,7 +1,7 @@
 import {validateSushiState} from '../core/games/sushiValidation';
 import {AVATARS, GAMES, type Command, type GameKind, type GameOptions, type Player} from '../core/types';
 import {modules} from '../core/registry';
-import {advanceMatchClock,applyMatch, normalizeGameOptions, roomLimits, validateMatchForRoom, type MatchState, type RoomInfo} from '../core/room';
+import {advanceMatchClock,applyMatch, pauseMatchClock, resumeMatchClock, normalizeGameOptions, roomLimits, validateMatchForRoom, type MatchState, type RoomInfo} from '../core/room';
 import {continueBotRound, nextBotSeat, stepBot} from '../core/roomBots';
 import {supportsBots, validBotDifficulty} from '../core/bots';
 import type {BotDifficulty} from '../core/bots/types';
@@ -42,6 +42,14 @@ export function advancePracticeClock(p:Practice,now=Date.now()):Practice {
  const match=matchFor(p),next=advanceMatchClock(match,p.kind,p.players,now);
  return next===match?p:withMatch(p,next);
 }
+export function pausePracticeClock(p:Practice,now=Date.now()):Practice {
+ const match=matchFor(p),next=pauseMatchClock(match,p.kind,p.players,now);
+ return next===match?p:withMatch(p,next);
+}
+export function resumePracticeClock(p:Practice,now=Date.now()):Practice {
+ const match=matchFor(p),next=resumeMatchClock(match,p.kind,p.players,now);
+ return next===match?p:withMatch(p,next);
+}
 export function hasPracticeBotTurn(p:Practice){return p.mode==='solo'&&!p.botError&&!!nextBotSeat(roomFor(p),matchFor(p));}
 export function stepPracticeBot(p:Practice):Practice {return hasPracticeBotTurn(p)?withMatch(p,stepBot(roomFor(p),matchFor(p))):p;}
 export function practiceBotRoundWaiting(p:Practice){return p.mode==='solo'&&!practiceView(p).finished&&!practiceView(p).actions.some(a=>a.id==='nextRound')&&p.players.some(player=>player.bot&&modules[p.kind].view(p.game,player.id).actions.some(a=>a.id==='nextRound'));}
@@ -64,7 +72,7 @@ export function readPractice():Practice|null {
   }else if(p.players.some(player=>player.bot))return null;
   if(p.kind==='sushi')validateSushiState(p.game,p.options);
    if(p.kind==='drawrelay'){const restoredMatch=validateMatchForRoom(matchFor(p),roomFor(p));p.game=restoredMatch.game;p.revision=restoredMatch.revision;}
-  const restored=advancePracticeClock(p,Date.now()),view=practiceView(restored);if(!Array.isArray(view.board.players)||!view.board.players.length)return null;
+  const now=Date.now(),restored=advancePracticeClock(resumePracticeClock(p,now),now),view=practiceView(restored);if(!Array.isArray(view.board.players)||!view.board.players.length)return null;
   return restored;
  }catch{return null;}
 }
