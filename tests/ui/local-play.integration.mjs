@@ -7,7 +7,7 @@ const browser=await(engine==='webkit'?webkit:chromium).launch({headless:true});
 const sizes=[[320,568],[390,844],[430,932],[844,390],[932,430],[768,1024],[1440,900],[667,375]];
 const maxCounts={doudizhu:3,guandan:4,mahjong:4,gems:4,bombs:5,sushi:5,century:5,uno:10};
 async function saved(page){return page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1'))?.practice);}
-async function exit(page,locale,solo=true){await page.getByRole('button',{name:locale==='zh'?'牌桌菜单':'Table menu',exact:true}).click();await page.getByRole('button',{name:solo?(locale==='zh'?'结束单机':'End solo game'):(locale==='zh'?'结束试玩':'End practice'),exact:true}).click();await expect(page.locator('.game-surface')).toHaveCount(0);}
+async function exit(page,locale,solo=true){await page.getByRole('button',{name:locale==='zh'?'牌桌菜单':'Table menu',exact:true}).click();await page.getByRole('button',{name:solo?(locale==='zh'?'结束单机':'End solo game'):(locale==='zh'?'结束试玩':'End practice'),exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'结束当前游戏':'End current game',exact:true}).click();await expect(page.locator('.game-surface')).toHaveCount(0);}
 async function reachable(locator){await locator.scrollIntoViewIfNeeded();assert(await locator.evaluate(el=>{const r=el.getBoundingClientRect();return r.width>=44&&r.height>=44&&r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}));}
 try{
  for(const locale of ['zh','en']){

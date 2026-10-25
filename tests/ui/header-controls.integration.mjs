@@ -16,7 +16,7 @@ try{
     assert(controls.every(r=>r.width>=44&&r.height>=44&&r.x>=0&&r.y>=0&&r.right<=width&&r.bottom<=height&&r.hit),`${engine} ${kind} ${locale} ${width}: visible, unobscured 44px header controls ${JSON.stringify(controls)}`);
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No page overflow');
    }
-   await page.getByRole('button',{name:locale==='zh'?'牌桌菜单':'Table menu',exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'结束试玩':'End practice',exact:true}).click();await expect(page.locator('.game-library')).toBeVisible();console.log(`PASS ${engine} ${locale} ${kind}: seven viewports and rotation, header controls visible and touchable`);
+   await page.getByRole('button',{name:locale==='zh'?'牌桌菜单':'Table menu',exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'结束试玩':'End practice',exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'结束当前游戏':'End current game',exact:true}).click();await expect(page.locator('.game-library')).toBeVisible();console.log(`PASS ${engine} ${locale} ${kind}: seven viewports and rotation, header controls visible and touchable`);
   }
   assert.deepEqual(errors,[]);await context.close();
  }

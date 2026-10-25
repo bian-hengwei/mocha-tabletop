@@ -3,11 +3,30 @@ import {beforeEach,describe,expect,it} from 'vitest';
 import {BOT_GAMES,BOT_DIFFICULTIES,chooseBotCommand} from '../src/core/bots';
 import {modules} from '../src/core/registry';
 import {GAMES} from '../src/core/types';
-import {createPractice,applyPractice,advancePracticeClock,practiceView,hasPracticeBotTurn,stepPracticeBot,continuePracticeRound,practiceBotRoundWaiting,readPractice,writePractice,restartPractice} from '../src/local/practice';
+import {createPractice,applyPractice,advancePracticeClock,pausePracticeClock,resumePracticeClock,practiceView,hasPracticeBotTurn,stepPracticeBot,continuePracticeRound,practiceBotRoundWaiting,readPractice,writePractice,restartPractice} from '../src/local/practice';
 import {makeRecord,readHistory,saveRecord} from '../src/local/storage';
 const human={id:'human-0001',name:'Human',avatar:'🦊'};
 const entries=new Map<string,string>();
 beforeEach(()=>{entries.clear();Object.defineProperty(globalThis,'localStorage',{configurable:true,value:{getItem:(key:string)=>entries.get(key)||null,setItem:(key:string,value:string)=>entries.set(key,value),removeItem:(key:string)=>entries.delete(key)}});});
+it.each(['drawguess','drawrelay'] as const)('freezes and resumes %s without counting confirmation time',kind=>{
+ const now=Date.now();
+ const initial=advancePracticeClock(createPractice(kind,3,human,kind==='drawrelay'?{language:'en',relayMode:'rounds',relaySeconds:60}:{language:'en'},undefined,17),now);
+ const deadline=practiceView(initial).board.deadlineAt as number;
+ const paused=pausePracticeClock(initial,now+1000);
+ expect(practiceView(paused).board.deadlineAt).toBe(0);
+ expect(advancePracticeClock(paused,now+120000)).toBe(paused);
+ expect(pausePracticeClock(paused,now+2000)).toBe(paused);
+ const resumed=resumePracticeClock(paused,now+120000);
+ expect(practiceView(resumed).board.deadlineAt).toBe(deadline+119000);
+ expect(resumed.id).toBe(initial.id);expect(resumed.players).toEqual(initial.players);expect(resumed.options).toEqual(initial.options);
+ writePractice(paused);const restored=readPractice()!;
+ expect(restored.id).toBe(initial.id);expect(practiceView(restored).board.deadlineAt).toBeGreaterThan(0);
+ expect((restored.game as {pausedRemaining?:number}).pausedRemaining).toBeUndefined();
+});
+it('leaves untimed practice unchanged when pausing and resuming',()=>{
+ const initial=createPractice('gems',2,human,undefined,'easy',17);
+ expect(pausePracticeClock(initial)).toBe(initial);expect(resumePracticeClock(initial)).toBe(initial);
+});
 describe('local solo configuration',()=>{
  it.each(BOT_GAMES)('starts %s at every supported count and difficulty and progresses legal actions',kind=>{
   for(let count=roomLimits(kind).min;count<=roomLimits(kind).max;count++)for(const difficulty of BOT_DIFFICULTIES){

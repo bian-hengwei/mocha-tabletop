@@ -5,7 +5,7 @@ import {RoomSocial,SocialControls,PlayerAvatar} from './RoomSocial';
 import {supportsBots} from '../core/bots';
 import type {BotDifficulty} from '../core/bots/types';
 import {botTurnDelay} from '../core/roomBots';
-import {type Practice, readPractice, writePractice, createPractice, restartPractice, practiceView, applyPractice, advancePracticeClock, hasPracticeBotTurn, stepPracticeBot, practiceBotRoundWaiting, continuePracticeRound} from '../local/practice';
+import {type Practice, readPractice, writePractice, createPractice, restartPractice, practiceView, applyPractice, advancePracticeClock, pausePracticeClock, resumePracticeClock, hasPracticeBotTurn, stepPracticeBot, practiceBotRoundWaiting, continuePracticeRound} from '../local/practice';
 import {LocalPlayOptions} from './LocalPlayOptions';
 import {AddSeatChoices,BotSeatControls,BotRosterSummary,botDifficultyLabel} from './BotControls';
 import {formatGameText} from './gameText';
@@ -118,6 +118,8 @@ export function App() {
     useEffect(()=>{if(sheet!=='nearby'){discoveryRequest.current++;setFinding(false);}},[sheet]);
     const [records, setRecords] = useState(readHistory), [dismissedResult, setDismissedResult] = useState<string | null>(null);
     const practiceRef = useRef(practice);
+    const [exitPracticeID, setExitPracticeID] = useState<string | null>(null);
+    const exitPracticeRef = useRef<string | null>(null);
     const practiceBackupRef = useRef(practiceRecovery.backup);
     const setRecovery = (active: Practice | null, backup = practiceBackupRef.current) => { practiceRef.current = active; practiceBackupRef.current = backup; setPracticeRecovery({active, backup}); };
     const updatePractice = (next: Practice) => { setRecovery(next, next); };
@@ -148,6 +150,13 @@ export function App() {
     const defaultLocalCount = selectedGame === 'werewolf' ? Math.min(wolfLimits.max,Math.max(wolfLimits.min,9)) + (wolfMode === 'judge' ? 1 : 0) : selectedGame === 'bombs' || selectedGame === 'undercover' ? 3 : localLimits.min;
     const localCount = Math.min(localLimits.max, Math.max(localLimits.min, (selectedGame && localCounts[selectedGame]) ?? defaultLocalCount));
     const soloRoundWaiting = !!practice && practiceBotRoundWaiting(practice);
+    const confirmingPracticeExit = !!practice && exitPracticeID === practice.id;
+    useEffect(() => {
+        if (exitPracticeID && exitPracticeID !== practice?.id) {
+            exitPracticeRef.current = null;
+            setExitPracticeID(null);
+        }
+    }, [practice?.id, exitPracticeID]);
     useEffect(() => client.subscribe(setState), []);
     useEffect(() => {
         if (!boot.showJoin && boot.roomIntent && client.state.status === 'idle') {
@@ -184,7 +193,7 @@ export function App() {
     // The browser is the trusted host for pass-and-play. Restore and schedule the persisted deadline;
     // player commands themselves never carry a time-advance action.
     useEffect(() => {
-        if (!practice || !['drawguess','drawrelay'].includes(practice.kind)) return;
+        if (!practice || confirmingPracticeExit || !['drawguess','drawrelay'].includes(practice.kind)) return;
         const current = practiceRef.current;
         if (current) {
             const advanced = advancePracticeClock(current, Date.now());
@@ -197,21 +206,21 @@ export function App() {
         if (!deadline) return;
         const timer = setTimeout(() => {
             const saved = practiceRef.current;
-            if (saved && saved.id === practice.id)
+            if (saved && saved.id === practice.id && exitPracticeRef.current !== saved.id)
                 updatePractice(advancePracticeClock(saved, Date.now()));
         }, Math.max(20, deadline - Date.now() + 10));
         return () => clearTimeout(timer);
-    }, [practice]);
+    }, [practice, confirmingPracticeExit]);
     useEffect(() => {
-        if (!practice || !hasPracticeBotTurn(practice)) return;
+        if (!practice || confirmingPracticeExit || !hasPracticeBotTurn(practice)) return;
         const timer = setTimeout(() => {
             const current = practiceRef.current;
-            if (!current || current.id !== practice.id || current.revision !== practice.revision) return;
+            if (!current || current.id !== practice.id || current.revision !== practice.revision || exitPracticeRef.current === current.id) return;
             try { updatePractice(stepPracticeBot(current)); }
             catch { updatePractice({...current, botError:true}); }
         }, botTurnDelay(practice.kind));
         return () => clearTimeout(timer);
-    }, [practice]);
+    }, [practice, confirmingPracticeExit]);
     useEffect(() => { setAction(null); }, [view?.kind, view?.phase, selfID, matchKey]);
     useEffect(() => { if (message) {
         const timer = setTimeout(() => setMessage(''), 4000);
@@ -329,6 +338,31 @@ export function App() {
         setSheet(null);
         return;
     } client.leave(); setSheet(null); };
+    const requestPracticeExit = () => {
+        const current = practiceRef.current;
+        if (!current) return;
+        // Gate pending bot callbacks before React commits the confirmation dialog.
+        exitPracticeRef.current = current.id;
+        setExitPracticeID(current.id);
+        const paused = pausePracticeClock(current);
+        if (paused !== current) updatePractice(paused);
+    };
+    const cancelPracticeExit = () => {
+        const current = practiceRef.current;
+        if (current && current.id === exitPracticeRef.current) {
+            const resumed = resumePracticeClock(current);
+            if (resumed !== current) updatePractice(resumed);
+        }
+        exitPracticeRef.current = null;
+        setExitPracticeID(null);
+    };
+    const confirmPracticeExit = () => {
+        const current = practiceRef.current;
+        if (!current || current.id !== exitPracticeID || current.id !== exitPracticeRef.current) return;
+        exitPracticeRef.current = null;
+        setExitPracticeID(null);
+        leave();
+    };
     const usableRoom = room && state.status !== 'idle';
     const savedSession = client.getSavedSession();
     const disconnected = room?.players.filter(p => !p.connected) || [];
@@ -382,8 +416,9 @@ export function App() {
         client.replay(); setSheet(null); }}><RotateCcw size={18}/>{tx(practice ? '再来一局' : '返回准备，开新一局')}</button>)}<button onClick={() => setSheet('history')}><History size={18}/>{t("\u4E2A\u4EBA\u6218\u7EE9")}<ChevronRight size={16}/></button>{tx(!practice && <button onClick={() => void share()}><Share2 size={18}/>{t("\u5206\u4EAB\u9080\u8BF7")}<ChevronRight size={16}/></button>)}{tx(host && state.mode === 'lan' && <button onClick={() => { client.switchToCloud(); setSheet(null); }}><Cloud size={18}/>{t("\u5207\u6362\u4E91\u7AEF\u8054\u673A")}<ChevronRight size={16}/></button>)}{tx(host && room?.started && <button onClick={() => { if (window.confirm(t('结束当前对局，所有玩家返回准备？'))) {
         client.endGame();
         setSheet(null);
-    } }}><RotateCcw size={18}/>{t("\u7ED3\u675F\u672C\u5C40\uFF0C\u8FD4\u56DE\u51C6\u5907")}</button>)}<button onClick={() => { if (spectating || (!view && !host) || window.confirm(t(practice ? practice.mode === 'solo' ? '结束这局单人人机？' : '结束这局同屏试玩？' : host ? '离开将关闭这张牌桌，确定？' : '请房主结束本局后再离开。')))
+    } }}><RotateCcw size={18}/>{t("\u7ED3\u675F\u672C\u5C40\uFF0C\u8FD4\u56DE\u51C6\u5907")}</button>)}<button onClick={() => { if (practice) { requestPracticeExit(); return; } if (spectating || (!view && !host) || window.confirm(t(host ? '离开将关闭这张牌桌，确定？' : '请房主结束本局后再离开。')))
         leave(); }}><LogOut size={18}/>{tx(practice ? practice.mode === 'solo' ? '结束单机' : '结束试玩' : '离开牌桌')}</button></div></Modal>)}
+    {confirmingPracticeExit && <Modal title={t(practice.mode === 'solo' ? '结束这局单人人机？' : '结束这局同屏试玩？')} onClose={cancelPracticeExit} className="practice-exit-modal"><p>{t('结束后返回首页，当前游戏将无法恢复。')}</p><footer><button className="compact" onClick={cancelPracticeExit}>{t('取消')}</button><button className="compact primary" onClick={confirmPracticeExit}>{t('结束当前游戏')}</button></footer></Modal>}
     {tx(action && view && <ActionSheet key={`${selfID}:${action.a.id}`} action={action.a} selected={action.values} view={view} onClose={() => setAction(null)} onSubmit={run}/>)}
     {tx((message || state.error) && <div className="toast" role="status"><span>{tx(message || state.error)}</span><button className="icon" aria-label={t("关闭提示")} onClick={() => { setMessage(''); client.clearError(); }}><X size={14}/></button></div>)}
   </main></RoomSocial>;

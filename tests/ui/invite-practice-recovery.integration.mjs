@@ -46,7 +46,7 @@ async function invite(page,code,{token,keep=true,other=true}={}){
 async function expectCleanURL(page){const url=await page.evaluate(()=>location.href);const parsed=new URL(url);assert.equal(parsed.searchParams.has('room'),false);assert.equal(parsed.search,'?keep=a%20b&z=1+2');assert.equal(new URLSearchParams(parsed.hash.slice(1)).has('invite'),false);assert.equal(parsed.hash,'#anchor');}
 async function restored(page,id){await page.waitForFunction(id=>JSON.parse(localStorage.getItem('mocha-practice-v1')||'null')?.practice?.id===id,id);await page.locator('.game-surface').waitFor();}
 async function fitDialog(page,width,height){const box=await page.getByRole('dialog').boundingBox();assert(box&&box.x>=-1&&box.y>=-1&&box.x+box.width<=width+1&&box.y+box.height<=height+1);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}
-async function endPractice(page,locale,pass=false){await page.getByRole('button',{name:labels[locale].menu,exact:true}).click();await page.getByRole('button',{name:pass?labels[locale].endPass:labels[locale].endSolo,exact:true}).click();await page.locator('.game-surface').waitFor({state:'detached'});assert.equal(await raw(page),null);}
+async function endPractice(page,locale,pass=false){await page.getByRole('button',{name:labels[locale].menu,exact:true}).click();await page.getByRole('button',{name:pass?labels[locale].endPass:labels[locale].endSolo,exact:true}).click();await page.getByRole('button',{name:locale==='zh'?'结束当前游戏':'End current game',exact:true}).click();await page.locator('.game-surface').waitFor({state:'detached'});assert.equal(await raw(page),null);}
 
 await fs.mkdir(out,{recursive:true});
 try{

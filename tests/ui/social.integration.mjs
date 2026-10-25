@@ -32,7 +32,7 @@ for(const viewport of [{width:667,height:375},{width:844,height:390}]){
     }
   }
   async function start(name){await page.getByRole('button',{name:`选择${name}`,exact:true}).click();if(name==='月夜议会')await page.locator('.wolf-mode-picker button').filter({hasText:'玩家操作'}).click();await page.getByRole('button',{name:'同屏试玩',exact:true}).click();await select.waitFor();}
-  async function stop(){await page.getByRole('button',{name:'牌桌菜单'}).click();await page.getByRole('button',{name:'结束试玩',exact:true}).click();await select.waitFor({state:'hidden'});}
+  async function stop(){await page.getByRole('button',{name:'牌桌菜单'}).click();await page.getByRole('button',{name:'结束试玩',exact:true}).click();await page.getByRole('button',{name:'结束当前游戏',exact:true}).click();await select.waitFor({state:'hidden'});}
   async function inspectIdentity(){
     const count=await page.getByRole('button',{name:'查看我的身份',exact:true}).count();if(count!==1){await page.screenshot({path:new URL(`${viewport.width}-identity-regression-failure.png`,output).pathname});console.log('Identity failure DOM:',await page.locator('body').innerText());}assert.equal(count,1,'Identity starts concealed after changing viewpoint');
     await page.getByRole('button',{name:'查看我的身份',exact:true}).click();

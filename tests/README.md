@@ -4,6 +4,8 @@
 
 ## 本地选测与完整检查
 
+`BASE_URL=<Vite> node tests/ui/practice-exit.integration.mjs` checks local practice exit confirmation in both languages at seven required sizes, dialog rotation, language switching, keyboard focus/Escape, cancel preserving the match, confirmed storage removal, pending bot pause/resume, drawing-clock pause/resume and reload of a paused checkpoint. It belongs to the app CI group and supports `TEST_BROWSER=webkit` and `TEST_OUTPUT`; no Worker is required.
+
 每次改动运行 `git diff --check`，并根据受影响行为和共享调用方选择下方的规则、界面、联机、存储或 PWA 回归。文档改动检查内容和引用；单个游戏改动优先验证该游戏；共享样式、状态恢复等改动需要覆盖相关调用方。界面改动仍按 AGENTS.md 检查双语、尺寸、真实交互和截图。
 
 首次安装依赖使用 `npm ci`。需要完整检查时运行：

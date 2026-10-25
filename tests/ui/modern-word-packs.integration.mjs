@@ -62,7 +62,7 @@ try{
 
    const nextLocale=locale==='zh'?'en':'zh';
    await page.getByRole('button',{name:nextLocale==='zh'?'牌桌菜单':'Table menu'}).click();
-   await page.getByRole('button',{name:nextLocale==='zh'?'结束试玩':'End practice'}).click();
+   await page.getByRole('button',{name:nextLocale==='zh'?'结束试玩':'End practice'}).click();await page.getByRole('button',{name:nextLocale==='zh'?'结束当前游戏':'End current game',exact:true}).click();
    await expect(page.locator('.home-shell')).toBeVisible();
    await page.locator('.language-toggle').click();
    firstGame=false;
