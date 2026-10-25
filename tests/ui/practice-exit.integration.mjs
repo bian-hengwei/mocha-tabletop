@@ -16,7 +16,7 @@ async function seed(page,locale,kind='gems',solo=false){
   let p=mod.createPractice(kind,kind==='gems'?2:3,profile,kind==='drawrelay'?{language:locale,relayMode:'rounds',relaySeconds:60}:{language:locale},solo?'easy':undefined,17);
   if(solo){const bots=await import('/src/core/bots/index.ts');for(let i=0;i<12&&!mod.hasPracticeBotTurn(p);i++){const cmd=bots.chooseBotCommand(mod.practiceView(p),p.players[0].id,'easy',p.revision);if(!cmd)break;p=mod.applyPractice(p,cmd);}if(!mod.hasPracticeBotTurn(p))throw Error('Missing pending bot fixture');}
   if(kind!=='gems')p=mod.advancePracticeClock(p,Date.now());
-  mod.writePractice(p);return p;
+  mod.writePractice(p);return JSON.parse(JSON.stringify(p));
  },{locale,kind,solo});
  await page.goto(base);await page.locator('.game-surface').waitFor();
  assert.equal((await stored(page)).id,saved.id,`Rejected ${kind} fixture`);return saved;
