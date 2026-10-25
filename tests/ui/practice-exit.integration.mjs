@@ -22,6 +22,13 @@ async function seed(page,locale,kind='gems',solo=false){
  assert.equal((await stored(page)).id,saved.id,`Rejected ${kind} fixture`);return saved;
 }
 const stored=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('mocha-practice-v1')||'null')?.practice||null);
+async function committed(page,predicate,message){
+ const now=await page.evaluate(()=>Date.now());
+ // runFor executes clock callbacks, but React may persist their state in a later browser task.
+ await expect.poll(async()=>predicate(await stored(page)),{message}).toBe(true);
+ assert.equal(await page.evaluate(()=>Date.now()),now,'Waiting for persistence must not advance the paused clock');
+ return stored(page);
+}
 async function open(page,locale,solo=false){await page.getByRole('button',{name:labels[locale].menu,exact:true}).click();await page.getByRole('button',{name:solo?labels[locale].solo:labels[locale].end,exact:true}).click();await expect(page.locator('.practice-exit-modal')).toBeVisible();}
 async function fit(page,width,height){const box=await page.locator('.practice-exit-modal').boundingBox();assert(box&&box.x>=-1&&box.y>=-1&&box.x+box.width<=width+1&&box.y+box.height<=height+1);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}
 await fs.mkdir(out,{recursive:true});
@@ -49,15 +56,16 @@ try{
  {
   const context=await browser.newContext(),page=await context.newPage();await page.clock.install();await page.clock.pauseAt(new Date());
   const saved=await seed(page,'en','gems',true);await open(page,'en',true);await page.clock.runFor(5000);assert.deepEqual(await stored(page),saved);
-  await page.locator('.practice-exit-modal').getByRole('button',{name:'Cancel',exact:true}).click();await page.clock.runFor(5000);assert((await stored(page)).revision>saved.revision);
+  await page.locator('.practice-exit-modal').getByRole('button',{name:'Cancel',exact:true}).click();await expect(page.locator('.practice-exit-modal')).toHaveCount(0);await page.clock.runFor(5000);
+  const advanced=await committed(page,p=>p?.revision>saved.revision,'Cancelled exit resumes and persists the bot turn');assert(advanced.revision>saved.revision);assert.equal(advanced.id,saved.id);assert.equal(advanced.botError,undefined);
   await page.keyboard.press('Escape');await open(page,'en',true);await page.getByRole('button',{name:'End current game',exact:true}).click();await page.clock.runFor(5000);assert.equal(await stored(page),null);await context.close();
  }
  for(const kind of ['drawguess','drawrelay']){
   const context=await browser.newContext(),page=await context.newPage();await page.clock.install();await page.clock.pauseAt(new Date());
   const initial=await seed(page,'en',kind);const deadline=initial.game.deadlineAt;await open(page,'en');const paused=await stored(page);
   assert.equal(paused.game.deadlineAt,0);assert(paused.game.pausedRemaining>0);await page.clock.runFor(120000);assert.deepEqual(await stored(page),paused);
-  await page.getByRole('button',{name:'Cancel',exact:true}).click();const resumed=await stored(page);assert.equal(resumed.id,initial.id);assert.equal(resumed.game.deadlineAt,deadline+120000);assert.equal(resumed.game.pausedRemaining,undefined);
-  await page.keyboard.press('Escape');await page.clock.runFor(paused.game.pausedRemaining+20);assert((await stored(page)).revision>resumed.revision,'clock resumes after cancel');
+  await page.getByRole('button',{name:'Cancel',exact:true}).click();await expect(page.locator('.practice-exit-modal')).toHaveCount(0);const resumed=await committed(page,p=>p?.game.pausedRemaining===undefined,'Cancelled exit persists the resumed drawing clock');assert.equal(resumed.id,initial.id);assert.equal(resumed.game.deadlineAt,deadline+120000);assert.equal(resumed.game.pausedRemaining,undefined);
+  await page.keyboard.press('Escape');await page.clock.runFor(paused.game.pausedRemaining+20);const advanced=await committed(page,p=>p?.revision>resumed.revision,'Drawing deadline callback persists its new revision');assert(advanced.revision>resumed.revision,'clock resumes after cancel');
   await open(page,'en');await page.reload();await page.locator('.game-surface').waitFor();assert.equal((await stored(page)).game.pausedRemaining,undefined,'reload cannot strand a paused checkpoint');
   await context.close();
  }
